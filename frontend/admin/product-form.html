@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Form — eStore Admin</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <a href="index.html" class="nav-brand">⚙️ Admin Panel</a>
+      <div class="nav-links">
+        <a href="index.html">Dashboard</a>
+        <a href="products.html" class="active">Products</a>
+        <a href="orders.html">Orders</a>
+        <a href="#" onclick="logout()" style="color:var(--danger)">Logout</a>
+      </div>
+    </div>
+  </nav>
+  <main class="page-content">
+    <div class="container" style="max-width:800px">
+      <h1 class="page-title" id="form-title">Add Product</h1>
+      <p class="page-subtitle"><a href="products.html">← Back to Products</a></p>
+      <form id="product-form">
+        <div class="card" style="padding:24px;margin-bottom:24px">
+          <h3 class="mb-16">Basic Info</h3>
+          <div class="grid-2" style="gap:16px">
+            <div class="form-group">
+              <label class="form-label" for="p-name">Product Name *</label>
+              <input class="form-control" id="p-name" required placeholder="Product name">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="p-price">Base Price (EGP) *</label>
+              <input class="form-control" id="p-price" type="number" min="0" required placeholder="0">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="p-image">Image URL</label>
+            <input class="form-control" id="p-image" type="url" placeholder="https://...">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="p-desc">Description</label>
+            <textarea class="form-control" id="p-desc" placeholder="Product description..."></textarea>
+          </div>
+        </div>
+        <div class="card" style="padding:24px;margin-bottom:24px">
+          <div class="flex-between mb-16">
+            <h3>Option Groups (Radio)</h3>
+            <button type="button" class="btn btn-secondary btn-sm" id="add-option-group">+ Add Group</button>
+          </div>
+          <div id="option-groups"></div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block" style="padding:16px;font-size:1.05rem">Save Product</button>
+      </form>
+    </div>
+  </main>
+  <script src="../js/api.js"></script>
+  <script src="../js/admin/auth.js"></script>
+  <script src="../js/admin/product-form.js"></script>
+</body>
+</html>

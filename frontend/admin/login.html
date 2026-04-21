@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login — eStore</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <main class="page-content flex-center" style="min-height:100vh">
+    <div class="card" style="max-width:420px;width:100%;padding:40px">
+      <div class="text-center mb-24">
+        <h1 class="page-title" style="font-size:2rem">🔒 Admin Login</h1>
+        <p class="text-muted">Enter your admin API key</p>
+      </div>
+      <form id="login-form">
+        <div class="form-group">
+          <label class="form-label" for="admin-key">API Key</label>
+          <input class="form-control" id="admin-key" type="password" required placeholder="Enter admin key...">
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Login →</button>
+      </form>
+      <div class="text-center mt-16">
+        <a href="../index.html" class="text-sm">← Back to Store</a>
+      </div>
+    </div>
+  </main>
+  <script>
+    const API_BASE = window.API_BASE || 'http://localhost:5000/api';
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const key = document.getElementById('admin-key').value.trim();
+      if (!key) return;
+      sessionStorage.setItem('adminKey', key);
+      try {
+        const res = await fetch(`${API_BASE}/orders`, { headers: { 'x-admin-key': key } });
+        if (res.ok) { window.location.href = 'index.html'; }
+        else { sessionStorage.removeItem('adminKey'); alert('Invalid API key'); }
+      } catch (err) { alert('Cannot reach server'); sessionStorage.removeItem('adminKey'); }
+    });
+  </script>
+</body>
+</html>

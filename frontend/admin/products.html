@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Products — eStore Admin</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <a href="index.html" class="nav-brand">⚙️ Admin Panel</a>
+      <div class="nav-links">
+        <a href="index.html">Dashboard</a>
+        <a href="products.html" class="active">Products</a>
+        <a href="orders.html">Orders</a>
+        <a href="../index.html">Store →</a>
+        <a href="#" onclick="logout()" style="color:var(--danger)">Logout</a>
+      </div>
+    </div>
+  </nav>
+  <main class="page-content">
+    <div class="container">
+      <div class="flex-between mb-24">
+        <div><h1 class="page-title">Products</h1></div>
+        <a href="product-form.html" class="btn btn-primary">+ Add Product</a>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Image</th><th>Name</th><th>Price</th><th>Options</th><th>Actions</th></tr></thead>
+          <tbody id="products-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+  <script src="../js/api.js"></script>
+  <script src="../js/admin/auth.js"></script>
+  <script src="../js/admin/products.js"></script>
+</body>
+</html>

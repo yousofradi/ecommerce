@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — eStore</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <a href="index.html" class="nav-brand">⚙️ Admin Panel</a>
+      <div class="nav-links">
+        <a href="index.html" class="active">Dashboard</a>
+        <a href="products.html">Products</a>
+        <a href="orders.html">Orders</a>
+        <a href="../index.html">Store →</a>
+        <a href="#" onclick="logout()" style="color:var(--danger)">Logout</a>
+      </div>
+    </div>
+  </nav>
+  <main class="page-content">
+    <div class="container">
+      <h1 class="page-title">Dashboard</h1>
+      <p class="page-subtitle">Overview of your store</p>
+      <div class="grid grid-3 mb-24" id="stats">
+        <div class="stat-card"><div class="stat-value" id="stat-products">—</div><div class="stat-label">Products</div></div>
+        <div class="stat-card"><div class="stat-value" id="stat-orders">—</div><div class="stat-label">Orders</div></div>
+        <div class="stat-card"><div class="stat-value" id="stat-revenue">—</div><div class="stat-label">Revenue</div></div>
+      </div>
+      <div class="grid grid-2">
+        <a href="products.html" class="card" style="padding:32px;text-align:center;text-decoration:none;color:inherit">
+          <h2>🛍️ Products</h2><p class="text-muted mt-8">Add, edit, and manage your products</p>
+        </a>
+        <a href="orders.html" class="card" style="padding:32px;text-align:center;text-decoration:none;color:inherit">
+          <h2>📦 Orders</h2><p class="text-muted mt-8">View and manage customer orders</p>
+        </a>
+      </div>
+    </div>
+  </main>
+  <script src="../js/api.js"></script>
+  <script src="../js/admin/auth.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!requireAdmin()) return;
+      try {
+        const [products, orders] = await Promise.all([api.getProducts(), api.getOrders()]);
+        document.getElementById('stat-products').textContent = products.length;
+        document.getElementById('stat-orders').textContent = orders.length;
+        const revenue = orders.reduce((s, o) => s + o.paidAmount, 0);
+        document.getElementById('stat-revenue').textContent = formatPrice(revenue);
+      } catch (err) { showToast('Failed to load stats', 'error'); }
+    });
+  </script>
+</body>
+</html>

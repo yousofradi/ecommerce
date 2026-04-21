@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Orders — eStore Admin</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <a href="index.html" class="nav-brand">⚙️ Admin Panel</a>
+      <div class="nav-links">
+        <a href="index.html">Dashboard</a>
+        <a href="products.html">Products</a>
+        <a href="orders.html" class="active">Orders</a>
+        <a href="../index.html">Store →</a>
+        <a href="#" onclick="logout()" style="color:var(--danger)">Logout</a>
+      </div>
+    </div>
+  </nav>
+  <main class="page-content">
+    <div class="container">
+      <h1 class="page-title">Orders</h1>
+      <p class="page-subtitle">View and manage all customer orders</p>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Paid</th><th>Actions</th></tr></thead>
+          <tbody id="orders-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+  <script src="../js/api.js"></script>
+  <script src="../js/admin/auth.js"></script>
+  <script src="../js/admin/orders.js"></script>
+</body>
+</html>
