@@ -14,6 +14,19 @@ app.use('/api/products', require('./routes/products'));
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/shipping', require('./routes/shipping'));
 
+// ── Root route ──────────────────────────────────────────
+app.get('/', (req, res) => {
+  res.json({
+    message: 'eCommerce API is running',
+    endpoints: {
+      health: 'GET /api/health',
+      products: 'GET /api/products',
+      shipping: 'GET /api/shipping',
+      orders: 'POST /api/orders'
+    }
+  });
+});
+
 // ── Health check ────────────────────────────────────────
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
