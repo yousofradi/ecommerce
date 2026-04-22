@@ -10,10 +10,12 @@ const selectedOptionSchema = new mongoose.Schema({
 const orderItemSchema = new mongoose.Schema({
   productId: { type: String, required: true },
   name: { type: String, required: true },
+  imageUrl: { type: String, default: '' },
   basePrice: { type: Number, required: true },
   selectedOptions: { type: [selectedOptionSchema], default: [] },
   finalPrice: { type: Number, required: true },
-  quantity: { type: Number, required: true, min: 1 }
+  quantity: { type: Number, required: true, min: 1 },
+  discount: { type: Number, default: 0, min: 0 }  // per-item discount in EGP
 }, { _id: false });
 
 const customerSchema = new mongoose.Schema({
@@ -33,12 +35,13 @@ const orderSchema = new mongoose.Schema({
     required: true,
     validate: v => v.length > 0
   },
+  discount: { type: Number, default: 0, min: 0 },    // total order discount in EGP
   totalPrice: { type: Number, required: true, min: 0 },
   shippingFee: { type: Number, required: true, min: 0 },
   paymentMethod: {
     type: String,
     required: true,
-    enum: ['instapay', 'vodafone_cash']
+    enum: ['instapay', 'vodafone_cash', 'cash_on_delivery']
   },
   paid: { type: Boolean, default: false },
   paidAmount: { type: Number, default: 0, min: 0 }

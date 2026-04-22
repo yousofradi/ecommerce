@@ -1,49 +1,73 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard — eStore</title>
+  <title>لوحة التحكم — Sundura</title>
   <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
   <div class="admin-layout">
     <aside class="admin-sidebar">
-      <div class="admin-brand">⚙️ Sundura Admin</div>
+      <div class="admin-sidebar-header">
+        <div class="admin-brand">⚙️ Sundura</div>
+        <button class="sidebar-toggle" title="القائمة">☰</button>
+      </div>
+      <div class="admin-brand" style="display:none" id="brand-desktop">⚙️ Sundura Admin</div>
       <nav class="admin-nav">
-        <a href="index.html" class="active">Dashboard</a>
-        <a href="products.html">Products</a>
-        <a href="collections.html">Collections</a>
-        <a href="orders.html">Orders</a>
-        <a href="shipment.html">Shipment</a>
-        <a href="webhooks.html">Webhooks</a>
-        <a href="../index.html" target="_blank">View Store ↗</a>
-        <a href="#" onclick="logout()" class="logout">Logout</a>
+        <a href="index.html" class="active">🏠 لوحة التحكم</a>
+        <a href="products.html">📦 المنتجات</a>
+        <a href="collections.html">🗂️ التصنيفات</a>
+        <a href="orders.html">🛒 الطلبات</a>
+        <a href="shipment.html">🚚 الشحن</a>
+        <a href="webhooks.html">🔗 Webhooks</a>
+        <a href="../index.html" target="_blank">🏪 المتجر ↗</a>
+        <a href="#" onclick="logout()" class="logout">🚪 خروج</a>
       </nav>
     </aside>
 
     <main class="admin-main">
-      <div class="container" style="max-width:1000px;margin:0">
-        <h1 class="page-title">Dashboard</h1>
-        <p class="page-subtitle">Overview of your store performance</p>
-        
+      <div style="max-width:1000px">
+        <h1 class="page-title">لوحة التحكم</h1>
+        <p class="page-subtitle">نظرة عامة على أداء متجرك</p>
+
         <div class="grid grid-3 mb-24" id="stats">
-          <div class="admin-card text-center"><div class="page-title" style="color:var(--primary)" id="stat-products">—</div><div class="text-muted">Products</div></div>
-          <div class="admin-card text-center"><div class="page-title" style="color:var(--primary)" id="stat-orders">—</div><div class="text-muted">Orders</div></div>
-          <div class="admin-card text-center"><div class="page-title" style="color:var(--primary)" id="stat-revenue">—</div><div class="text-muted">Revenue</div></div>
+          <div class="admin-card text-center">
+            <div style="font-size:2rem;font-weight:700;color:var(--primary)" id="stat-products">—</div>
+            <div class="text-muted mt-8">المنتجات</div>
+          </div>
+          <div class="admin-card text-center">
+            <div style="font-size:2rem;font-weight:700;color:var(--primary)" id="stat-orders">—</div>
+            <div class="text-muted mt-8">الطلبات</div>
+          </div>
+          <div class="admin-card text-center">
+            <div style="font-size:2rem;font-weight:700;color:var(--success)" id="stat-revenue">—</div>
+            <div class="text-muted mt-8">الإيرادات</div>
+          </div>
         </div>
-        
+
         <div class="grid grid-2">
-          <a href="products.html" class="admin-card" style="text-align:center;text-decoration:none;display:block">
-            <h3>🛍️ Manage Products</h3><p class="text-muted mt-8">Add, edit, and manage your inventory</p>
+          <a href="products.html" class="admin-card" style="text-decoration:none;display:block;transition:box-shadow .2s" onmouseover="this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.boxShadow=''">
+            <h3 style="margin-bottom:8px">📦 إدارة المنتجات</h3>
+            <p class="text-muted">إضافة وتعديل وحذف منتجاتك</p>
           </a>
-          <a href="orders.html" class="admin-card" style="text-align:center;text-decoration:none;display:block">
-            <h3>📦 View Orders</h3><p class="text-muted mt-8">Process customer orders</p>
+          <a href="orders.html" class="admin-card" style="text-decoration:none;display:block;transition:box-shadow .2s" onmouseover="this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.boxShadow=''">
+            <h3 style="margin-bottom:8px">🛒 إدارة الطلبات</h3>
+            <p class="text-muted">متابعة ومعالجة طلبات العملاء</p>
+          </a>
+          <a href="shipment.html" class="admin-card" style="text-decoration:none;display:block;transition:box-shadow .2s" onmouseover="this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.boxShadow=''">
+            <h3 style="margin-bottom:8px">🚚 رسوم الشحن</h3>
+            <p class="text-muted">إدارة تكاليف الشحن لكل محافظة</p>
+          </a>
+          <a href="order-form.html" class="admin-card" style="text-decoration:none;display:block;transition:box-shadow .2s;border-color:var(--primary);background:var(--primary-light)" onmouseover="this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.boxShadow=''">
+            <h3 style="margin-bottom:8px;color:var(--primary)">➕ إنشاء طلب جديد</h3>
+            <p class="text-muted">إضافة طلب يدوي من لوحة التحكم</p>
           </a>
         </div>
       </div>
     </main>
   </div>
+
   <script src="../js/api.js"></script>
   <script src="../js/admin/auth.js"></script>
   <script>
@@ -53,9 +77,9 @@
         const [products, orders] = await Promise.all([api.getProducts(), api.getOrders()]);
         document.getElementById('stat-products').textContent = products.length;
         document.getElementById('stat-orders').textContent = orders.length;
-        const revenue = orders.reduce((s, o) => s + o.paidAmount, 0);
+        const revenue = orders.reduce((s, o) => s + (o.paidAmount || 0), 0);
         document.getElementById('stat-revenue').textContent = formatPrice(revenue);
-      } catch (err) { showToast('Failed to load stats', 'error'); }
+      } catch (err) { showToast('فشل تحميل الإحصائيات', 'error'); }
     });
   </script>
 </body>

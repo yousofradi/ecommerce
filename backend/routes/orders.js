@@ -3,63 +3,74 @@ const router = express.Router();
 const Order = require('../models/Order');
 const adminAuth = require('../middleware/adminAuth');
 const sendWebhook = require('../utils/webhook');
-const shippingFees = require('../config/shipping');
+
+// Helper: recalculate totals from items + shipping + discount
+function calcTotals(items, shippingFee, orderDiscount = 0) {
+  let subtotal = 0;
+  for (const item of items) {
+    const optionsPrice = (item.selectedOptions || []).reduce((s, o) => s + (o.price || 0), 0);
+    const itemDiscount = item.discount || 0;
+    item.finalPrice = Math.max(0, ((item.basePrice + optionsPrice) * item.quantity) - itemDiscount);
+    subtotal += item.finalPrice;
+  }
+  const totalPrice = Math.max(0, subtotal + shippingFee - orderDiscount);
+  return { subtotal, totalPrice };
+}
 
 // ── Public ──────────────────────────────────────────────
 
-// POST /api/orders — create order
+// POST /api/orders — create order (public from storefront OR admin)
 router.post('/', async (req, res) => {
   try {
-    const { customer, items, paymentMethod } = req.body;
+    const { customer, items, paymentMethod, discount = 0 } = req.body;
 
-    // Validate required fields
     if (!customer || !items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'Customer info and at least one item are required' });
     }
     if (!customer.name || !customer.phone || !customer.address || !customer.government) {
       return res.status(400).json({ error: 'Customer name, phone, address, and government are required' });
     }
-    if (!paymentMethod || !['instapay', 'vodafone_cash'].includes(paymentMethod)) {
-      return res.status(400).json({ error: 'Valid payment method is required (instapay or vodafone_cash)' });
+    if (!paymentMethod || !['instapay', 'vodafone_cash', 'cash_on_delivery'].includes(paymentMethod)) {
+      return res.status(400).json({ error: 'Valid payment method is required' });
     }
 
-    // Calculate shipping fee from DB
-    const Shipping = require('../models/Shipping');
-    const shippingRecord = await Shipping.findOne({ governorate: customer.government });
-    if (!shippingRecord) {
+    // Shipping fee: try DB first, fall back to static config
+    let shippingFee = 0;
+    try {
+      const Shipping = require('../models/Shipping');
+      const record = await Shipping.findOne({ governorate: customer.government });
+      if (record) {
+        shippingFee = record.fee;
+      } else {
+        const defaultFees = require('../config/shipping');
+        shippingFee = defaultFees[customer.government] || 0;
+      }
+    } catch (e) {
+      const defaultFees = require('../config/shipping');
+      shippingFee = defaultFees[customer.government] || 0;
+    }
+
+    if (shippingFee === 0 && !customer.government) {
       return res.status(400).json({ error: `Unknown government: ${customer.government}` });
     }
-    const shippingFee = shippingRecord.fee;
 
-    // Calculate total price
-    let subtotal = 0;
-    for (const item of items) {
-      const optionsPrice = (item.selectedOptions || []).reduce((sum, opt) => sum + (opt.price || 0), 0);
-      item.finalPrice = (item.basePrice + optionsPrice) * item.quantity;
-      subtotal += item.finalPrice;
-    }
-
-    const totalPrice = subtotal + shippingFee;
+    const { totalPrice } = calcTotals(items, shippingFee, discount);
 
     const order = new Order({
       customer,
       items,
+      discount,
       totalPrice,
       shippingFee,
       paymentMethod
     });
 
     await order.save();
-
-    // Fire webhook (non-blocking)
     sendWebhook('order.created', order.toObject());
-
     res.status(201).json(order);
   } catch (err) {
     console.error('Order creation error:', err);
-    if (err.name === 'ValidationError') {
-      return res.status(400).json({ error: err.message });
-    }
+    if (err.name === 'ValidationError') return res.status(400).json({ error: err.message });
     res.status(500).json({ error: 'Failed to create order' });
   }
 });
@@ -91,26 +102,31 @@ router.get('/:orderId', adminAuth, async (req, res) => {
 router.put('/:orderId', adminAuth, async (req, res) => {
   try {
     const updates = req.body;
-
-    // Recalculate total if items changed
-    if (updates.items && Array.isArray(updates.items)) {
-      let subtotal = 0;
-      for (const item of updates.items) {
-        const optionsPrice = (item.selectedOptions || []).reduce((sum, opt) => sum + (opt.price || 0), 0);
-        item.finalPrice = (item.basePrice + optionsPrice) * item.quantity;
-        subtotal += item.finalPrice;
-      }
-      // Recalculate shipping if government changed
-      if (updates.customer && updates.customer.government) {
-        const Shipping = require('../models/Shipping');
-        const shippingRecord = await Shipping.findOne({ governorate: updates.customer.government });
-        if (shippingRecord) updates.shippingFee = shippingRecord.fee;
-      }
-      updates.totalPrice = subtotal + (updates.shippingFee || 0);
-    }
-
     const oldOrder = await Order.findOne({ orderId: req.params.orderId });
     if (!oldOrder) return res.status(404).json({ error: 'Order not found' });
+
+    // Recalculate totals if items or discount changed
+    if (updates.items && Array.isArray(updates.items)) {
+      let shippingFee = oldOrder.shippingFee;
+      if (updates.customer && updates.customer.government) {
+        try {
+          const Shipping = require('../models/Shipping');
+          const record = await Shipping.findOne({ governorate: updates.customer.government });
+          if (record) shippingFee = record.fee;
+        } catch (e) {}
+      }
+      updates.shippingFee = shippingFee;
+      const { totalPrice } = calcTotals(updates.items, shippingFee, updates.discount || 0);
+      updates.totalPrice = totalPrice;
+    } else if (updates.discount !== undefined) {
+      // Only discount changed — recalculate from existing items
+      const { totalPrice } = calcTotals(
+        updates.items || oldOrder.items,
+        updates.shippingFee || oldOrder.shippingFee,
+        updates.discount
+      );
+      updates.totalPrice = totalPrice;
+    }
 
     const order = await Order.findOneAndUpdate(
       { orderId: req.params.orderId },
@@ -118,7 +134,6 @@ router.put('/:orderId', adminAuth, async (req, res) => {
       { new: true, runValidators: true }
     );
 
-    // Fire webhook (non-blocking)
     if (!oldOrder.paid && order.paid) {
       sendWebhook('order.paid', order.toObject());
     } else {
@@ -127,9 +142,7 @@ router.put('/:orderId', adminAuth, async (req, res) => {
 
     res.json(order);
   } catch (err) {
-    if (err.name === 'ValidationError') {
-      return res.status(400).json({ error: err.message });
-    }
+    if (err.name === 'ValidationError') return res.status(400).json({ error: err.message });
     res.status(500).json({ error: 'Failed to update order' });
   }
 });

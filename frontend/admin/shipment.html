@@ -1,106 +1,160 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Manage Shipment — eStore Admin</title>
+  <title>الشحن — Sundura Admin</title>
   <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
   <div class="admin-layout">
     <aside class="admin-sidebar">
-      <div class="admin-brand">⚙️ Sundura Admin</div>
+      <div class="admin-sidebar-header">
+        <div class="admin-brand">⚙️ Sundura</div>
+        <button class="sidebar-toggle">☰</button>
+      </div>
       <nav class="admin-nav">
-        <a href="index.html">Dashboard</a>
-        <a href="products.html">Products</a>
-        <a href="collections.html">Collections</a>
-        <a href="orders.html">Orders</a>
-        <a href="shipment.html" class="active">Shipment</a>
-        <a href="webhooks.html">Webhooks</a>
-        <a href="../index.html" target="_blank">View Store ↗</a>
-        <a href="#" onclick="logout()" class="logout">Logout</a>
+        <a href="index.html">🏠 لوحة التحكم</a>
+        <a href="products.html">📦 المنتجات</a>
+        <a href="collections.html">🗂️ التصنيفات</a>
+        <a href="orders.html">🛒 الطلبات</a>
+        <a href="shipment.html" class="active">🚚 الشحن</a>
+        <a href="webhooks.html">🔗 Webhooks</a>
+        <a href="../index.html" target="_blank">🏪 المتجر ↗</a>
+        <a href="#" onclick="logout()" class="logout">🚪 خروج</a>
       </nav>
     </aside>
-
     <main class="admin-main">
-      <div class="container" style="max-width:800px;margin:0">
+      <div style="max-width:900px">
         <div class="flex-between mb-24">
-          <div><h1 class="page-title">Shipment Fees</h1><p class="text-muted">Manage shipping costs per governorate.</p></div>
+          <div>
+            <h1 class="page-title" style="margin-bottom:4px">رسوم الشحن</h1>
+            <p class="page-subtitle" style="margin-bottom:0">تحديد تكلفة الشحن لكل محافظة</p>
+          </div>
+          <button class="btn btn-primary" onclick="showAddForm()">+ إضافة محافظة</button>
         </div>
-        <div class="admin-card mb-24">
-          <form id="add-shipment-form" class="flex gap-16">
-            <input type="text" id="s-gov" class="form-control" required placeholder="Governorate name (e.g., Cairo)">
-            <input type="number" id="s-fee" class="form-control" required placeholder="Fee (EGP)" style="width:120px">
-            <button type="submit" class="btn btn-primary">Add</button>
-          </form>
+
+        <!-- Add/Edit Form -->
+        <div class="admin-card mb-24" id="add-form" style="display:none">
+          <h3 class="mb-16" id="form-title">إضافة محافظة</h3>
+          <div class="grid-2" style="gap:16px">
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">اسم المحافظة *</label>
+              <input type="text" class="form-control" id="ship-gov" placeholder="مثال: القاهرة">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">رسوم الشحن (ج.م) *</label>
+              <input type="number" class="form-control" id="ship-fee" min="0" placeholder="85">
+            </div>
+          </div>
+          <div class="flex gap-8 mt-16">
+            <button class="btn btn-primary" id="save-ship-btn" onclick="saveShipping()">حفظ</button>
+            <button class="btn btn-secondary" onclick="hideAddForm()">إلغاء</button>
+          </div>
+          <input type="hidden" id="ship-edit-id">
         </div>
+
         <div class="table-wrapper">
           <table>
-            <thead><tr><th>Governorate</th><th>Fee (EGP)</th><th>Actions</th></tr></thead>
-            <tbody id="shipment-tbody"></tbody>
+            <thead><tr><th>المحافظة</th><th>الرسوم</th><th>إجراءات</th></tr></thead>
+            <tbody id="shipping-tbody">
+              <tr><td colspan="3" class="text-center"><div class="spinner"></div></td></tr>
+            </tbody>
           </table>
         </div>
       </div>
     </main>
   </div>
+
   <script src="../js/api.js"></script>
   <script src="../js/admin/auth.js"></script>
   <script>
+    let shippingList = [];
+
     document.addEventListener('DOMContentLoaded', async () => {
       if (!requireAdmin()) return;
       loadShipping();
-
-      document.getElementById('add-shipment-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        try {
-          await api.createShipping({
-            governorate: document.getElementById('s-gov').value.trim(),
-            fee: Number(document.getElementById('s-fee').value)
-          });
-          document.getElementById('s-gov').value = '';
-          document.getElementById('s-fee').value = '';
-          showToast('Added successfully');
-          loadShipping();
-        } catch (err) { showToast('Error adding fee', 'error'); }
-      });
     });
 
     async function loadShipping() {
-      const tbody = document.getElementById('shipment-tbody');
+      const tbody = document.getElementById('shipping-tbody');
       try {
-        const list = await api.getShippingList();
+        // Try DB list first, fall back to flat map
+        let list = [];
+        try {
+          list = await api.getShippingList();
+        } catch {
+          const map = await api.getShipping();
+          list = Object.entries(map).map(([governorate, fee]) => ({ governorate, fee }));
+        }
+        shippingList = list;
+        if (!list.length) {
+          tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted" style="padding:30px">لا توجد بيانات شحن</td></tr>';
+          return;
+        }
         tbody.innerHTML = list.map(s => `
           <tr>
-            <td><strong>${s.governorate}</strong></td>
-            <td>
-              <input type="number" value="${s.fee}" class="form-control" style="width:100px" id="fee-${s._id}">
-            </td>
+            <td style="font-weight:600">${s.governorate}</td>
+            <td style="color:var(--primary);font-weight:600">${formatPrice(s.fee)}</td>
             <td>
               <div class="flex gap-8">
-                <button class="btn btn-sm btn-primary" onclick="updateFee('${s._id}')">Save</button>
-                <button class="btn btn-sm btn-secondary" onclick="deleteFee('${s._id}')">Delete</button>
+                <button class="btn btn-secondary btn-sm" onclick="editShipping('${s._id||''}','${s.governorate}',${s.fee})">تعديل</button>
+                ${s._id ? `<button class="btn btn-danger btn-sm" onclick="deleteShipping('${s._id}')">حذف</button>` : ''}
               </div>
             </td>
-          </tr>
-        `).join('');
-      } catch (err) { showToast('Error loading shipping fees', 'error'); }
+          </tr>`).join('');
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">فشل التحميل</td></tr>';
+      }
     }
 
-    async function updateFee(id) {
-      try {
-        const fee = Number(document.getElementById(`fee-${id}`).value);
-        await api.updateShipping(id, { fee });
-        showToast('Fee updated');
-      } catch (err) { showToast('Error updating fee', 'error'); }
+    function showAddForm() {
+      document.getElementById('add-form').style.display = 'block';
+      document.getElementById('form-title').textContent = 'إضافة محافظة';
+      document.getElementById('ship-gov').value = '';
+      document.getElementById('ship-fee').value = '';
+      document.getElementById('ship-edit-id').value = '';
+      document.getElementById('ship-gov').disabled = false;
     }
 
-    async function deleteFee(id) {
-      if (!confirm('Delete this governorate?')) return;
+    function hideAddForm() {
+      document.getElementById('add-form').style.display = 'none';
+    }
+
+    function editShipping(id, gov, fee) {
+      document.getElementById('add-form').style.display = 'block';
+      document.getElementById('form-title').textContent = 'تعديل رسوم الشحن';
+      document.getElementById('ship-gov').value = gov;
+      document.getElementById('ship-gov').disabled = true; // can't change governorate name
+      document.getElementById('ship-fee').value = fee;
+      document.getElementById('ship-edit-id').value = id;
+    }
+
+    async function saveShipping() {
+      const gov = document.getElementById('ship-gov').value.trim();
+      const fee = parseFloat(document.getElementById('ship-fee').value);
+      const id  = document.getElementById('ship-edit-id').value;
+      if (!gov || isNaN(fee)) return showToast('يرجى ملء جميع الحقول', 'error');
+
+      const btn = document.getElementById('save-ship-btn');
+      btn.disabled = true;
       try {
-        await api.deleteShipping(id);
-        showToast('Deleted');
+        if (id) {
+          await api.updateShipping(id, { fee });
+        } else {
+          await api.createShipping({ governorate: gov, fee });
+        }
+        hideAddForm();
+        showToast('تم الحفظ ✓');
         loadShipping();
-      } catch (err) { showToast('Error deleting', 'error'); }
+      } catch (e) { showToast(e.message, 'error'); }
+      finally { btn.disabled = false; }
+    }
+
+    async function deleteShipping(id) {
+      if (!confirm('حذف هذه المحافظة؟')) return;
+      try { await api.deleteShipping(id); showToast('تم الحذف'); loadShipping(); }
+      catch (e) { showToast(e.message, 'error'); }
     }
   </script>
 </body>

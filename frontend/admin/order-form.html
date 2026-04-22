@@ -1,19 +1,266 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Create Order — eStore Admin</title>
+  <title>إنشاء طلب — لوحة التحكم</title>
   <link rel="stylesheet" href="../css/style.css">
   <style>
-    .order-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
-    .product-search { position: relative; margin-bottom: 16px; }
-    .search-results { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid var(--border); border-radius: var(--radius); max-height: 200px; overflow-y: auto; z-index: 10; display: none; }
-    .search-item { padding: 8px 12px; cursor: pointer; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); }
-    .search-item:hover { background: var(--bg); }
-    .selected-items { display: flex; flex-direction: column; gap: 12px; }
-    .selected-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); }
-    @media (max-width: 768px) { .order-grid { grid-template-columns: 1fr; } }
+    /* ── Order Form Layout ── */
+    .order-create-layout {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 28px;
+      align-items: start;
+    }
+
+    /* ── Product Search ── */
+    .product-search-box {
+      position: relative;
+      margin-bottom: 20px;
+    }
+    .product-search-box .search-icon {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-light);
+      font-size: 1rem;
+      pointer-events: none;
+    }
+    .product-search-box input {
+      padding-right: 40px;
+    }
+    .search-dropdown {
+      position: absolute;
+      top: calc(100% + 4px);
+      right: 0; left: 0;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+      max-height: 260px;
+      overflow-y: auto;
+      z-index: 50;
+      display: none;
+    }
+    .search-dropdown.open { display: block; }
+    .search-result-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border-color);
+      transition: background 0.15s;
+    }
+    .search-result-item:last-child { border-bottom: none; }
+    .search-result-item:hover { background: var(--bg-hover); }
+    .search-result-img {
+      width: 48px; height: 48px;
+      border-radius: var(--radius-sm);
+      object-fit: cover;
+      border: 1px solid var(--border-color);
+      flex-shrink: 0;
+    }
+    .search-result-info { flex: 1; min-width: 0; }
+    .search-result-name { font-weight: 600; font-size: 0.92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .search-result-price { font-size: 0.82rem; color: var(--primary); font-weight: 500; }
+
+    /* ── Cart Item (order form style) ── */
+    .order-cart-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 12px;
+      transition: box-shadow 0.15s;
+    }
+    .order-cart-item:hover { box-shadow: var(--shadow); }
+    .order-cart-item-top {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+    .order-cart-img {
+      width: 72px; height: 72px;
+      border-radius: var(--radius-sm);
+      object-fit: cover;
+      border: 1px solid var(--border-color);
+      flex-shrink: 0;
+    }
+    .order-cart-meta { flex: 1; min-width: 0; }
+    .order-cart-name { font-weight: 600; font-size: 1rem; margin-bottom: 4px; }
+    .order-cart-base-price { color: var(--text-muted); font-size: 0.85rem; }
+    .order-cart-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* ── Qty Stepper ── */
+    .qty-stepper {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+    .qty-stepper button {
+      width: 34px; height: 34px;
+      background: var(--bg-body);
+      border: none;
+      cursor: pointer;
+      font-size: 1.1rem;
+      color: var(--text-main);
+      transition: background 0.15s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .qty-stepper button:hover { background: var(--border-color); }
+    .qty-stepper .qty-num {
+      width: 42px; text-align: center;
+      font-weight: 600; font-size: 0.95rem;
+      border-left: 1px solid var(--border-color);
+      border-right: 1px solid var(--border-color);
+      line-height: 34px;
+    }
+
+    /* ── Item discount ── */
+    .item-discount-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .item-discount-row label { font-size: 0.82rem; color: var(--text-muted); white-space: nowrap; }
+    .item-discount-row input {
+      width: 90px;
+      padding: 5px 10px;
+      font-size: 0.88rem;
+    }
+    .item-price-final {
+      font-weight: 700;
+      color: var(--primary);
+      font-size: 1rem;
+    }
+
+    /* ── Options inside cart item ── */
+    .order-item-options { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .order-item-options .option-group-label { font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px; font-weight: 500; }
+    .order-item-options .radio-options { display: flex; flex-wrap: wrap; gap: 6px; }
+    .order-item-options .radio-option label { font-size: 0.8rem; padding: 4px 10px; }
+
+    /* ── Empty state ── */
+    .empty-cart {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--text-muted);
+    }
+    .empty-cart-icon { font-size: 3rem; margin-bottom: 12px; }
+    .empty-cart h3 { font-size: 1.1rem; margin-bottom: 6px; color: var(--text-main); }
+
+    /* ── Summary sticky card ── */
+    .order-summary-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      position: sticky;
+      top: 24px;
+    }
+    .order-summary-card h3 {
+      font-size: 1.1rem;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .summary-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 0.95rem;
+    }
+    .summary-line span:first-child { color: var(--text-muted); }
+    .summary-line.discount-line span:last-child { color: var(--danger); }
+    .summary-total {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 2px solid var(--border-color);
+      padding-top: 14px;
+      margin-top: 14px;
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+    .summary-total span:last-child { color: var(--primary); }
+
+    /* ── Payment Method Cards ── */
+    .payment-methods { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+    .payment-method-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all 0.15s;
+      background: var(--bg-card);
+    }
+    .payment-method-card:hover { border-color: var(--primary); background: #eff6ff; }
+    .payment-method-card.selected { border-color: var(--primary); background: #eff6ff; }
+    .payment-method-card input[type="radio"] { accent-color: var(--primary); width: 18px; height: 18px; cursor: pointer; }
+    .payment-method-icon { font-size: 1.4rem; }
+    .payment-method-label { font-weight: 600; font-size: 0.95rem; }
+    .payment-method-desc { font-size: 0.8rem; color: var(--text-muted); }
+
+    /* ── Order discount row ── */
+    .order-discount-section {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 0;
+      border-top: 1px solid var(--border-color);
+      margin-top: 8px;
+    }
+    .order-discount-section label { font-size: 0.9rem; color: var(--text-muted); white-space: nowrap; }
+    .order-discount-section input { flex: 1; padding: 6px 10px; font-size: 0.9rem; }
+
+    /* ── Section Headers ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .section-header h3 { font-size: 1.05rem; margin: 0; }
+    .section-step {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* ── Mobile ── */
+    @media (max-width: 900px) {
+      .order-create-layout {
+        grid-template-columns: 1fr;
+      }
+      .order-summary-card {
+        position: static;
+      }
+    }
+    @media (max-width: 480px) {
+      .order-cart-item-top { flex-wrap: wrap; }
+      .order-cart-controls { flex-direction: column; align-items: flex-start; }
+    }
   </style>
 </head>
 <body>
@@ -21,87 +268,172 @@
     <aside class="admin-sidebar">
       <div class="admin-brand">⚙️ Sundura Admin</div>
       <nav class="admin-nav">
-        <a href="index.html">Dashboard</a>
-        <a href="products.html">Products</a>
-        <a href="collections.html">Collections</a>
-        <a href="orders.html" class="active">Orders</a>
-        <a href="shipment.html">Shipment</a>
+        <a href="index.html">لوحة التحكم</a>
+        <a href="products.html">المنتجات</a>
+        <a href="collections.html">التصنيفات</a>
+        <a href="orders.html" class="active">الطلبات</a>
+        <a href="shipment.html">الشحن</a>
         <a href="webhooks.html">Webhooks</a>
-        <a href="../index.html" target="_blank">View Store ↗</a>
-        <a href="#" onclick="logout()" class="logout">Logout</a>
+        <a href="../index.html" target="_blank">عرض المتجر ↗</a>
+        <a href="#" onclick="logout()" class="logout">تسجيل الخروج</a>
       </nav>
     </aside>
 
     <main class="admin-main">
-      <div class="container" style="max-width:1000px;margin:0">
-        <h1 class="page-title">Create Order</h1>
-        <p class="page-subtitle"><a href="orders.html">← Back to Orders</a></p>
+      <div style="max-width:1100px">
+        <div class="flex-between mb-24">
+          <div>
+            <h1 class="page-title" style="margin-bottom:4px">إنشاء طلب جديد</h1>
+            <a href="orders.html" style="color:var(--text-muted);font-size:0.9rem">← العودة إلى الطلبات</a>
+          </div>
+          <button type="button" class="btn btn-primary" id="submit-btn" onclick="submitOrder()" style="padding:12px 28px;font-size:1rem">
+            ✓ حفظ الطلب
+          </button>
+        </div>
 
-        <form id="create-order-form">
-          <div class="order-grid">
-            
-            <!-- Left Column: Items -->
-            <div>
-              <div class="admin-card mb-24">
-                <h3 class="mb-16">Select Products</h3>
-                <div class="product-search">
-                  <input type="text" class="form-control" id="product-search-input" placeholder="Search products by name...">
-                  <div class="search-results" id="search-results"></div>
-                </div>
-                <div class="selected-items" id="selected-items">
-                  <!-- Selected items appear here -->
+        <div class="order-create-layout">
+
+          <!-- ═══ LEFT COLUMN: Products + Customer ═══ -->
+          <div>
+
+            <!-- STEP 1: Products -->
+            <div class="admin-card mb-24">
+              <div class="section-header">
+                <div class="section-step">١</div>
+                <h3>المنتجات</h3>
+              </div>
+
+              <div class="product-search-box">
+                <span class="search-icon">🔍</span>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="product-search-input"
+                  placeholder="ابحث عن منتج بالاسم..."
+                  autocomplete="off"
+                >
+                <div class="search-dropdown" id="search-dropdown"></div>
+              </div>
+
+              <div id="cart-items-container">
+                <div class="empty-cart" id="empty-cart-msg">
+                  <div class="empty-cart-icon">🛒</div>
+                  <h3>السلة فارغة</h3>
+                  <p style="font-size:0.9rem">ابحث عن منتج أعلاه لإضافته</p>
                 </div>
               </div>
             </div>
 
-            <!-- Right Column: Customer Details -->
-            <div>
-              <div class="admin-card mb-24">
-                <h3 class="mb-16">Customer Details</h3>
+            <!-- STEP 2: Customer Info -->
+            <div class="admin-card">
+              <div class="section-header">
+                <div class="section-step">٢</div>
+                <h3>بيانات العميل</h3>
+              </div>
+
+              <div class="grid-2" style="gap:16px">
                 <div class="form-group">
-                  <label class="form-label">Full Name *</label>
-                  <input type="text" id="c-name" class="form-control" required>
+                  <label class="form-label">الاسم الكامل *</label>
+                  <input type="text" id="c-name" class="form-control" placeholder="اسم العميل" required>
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Phone *</label>
-                  <input type="tel" id="c-phone" class="form-control" required>
+                  <label class="form-label">رقم الهاتف *</label>
+                  <input type="tel" id="c-phone" class="form-control" placeholder="01xxxxxxxxx" required>
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Second Phone</label>
-                  <input type="tel" id="c-second-phone" class="form-control">
+                  <label class="form-label">رقم هاتف آخر</label>
+                  <input type="tel" id="c-second-phone" class="form-control" placeholder="اختياري">
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Governorate *</label>
-                  <select id="c-gov" class="form-control" required onchange="calculateTotal()">
-                    <option value="">Select Governorate</option>
+                  <label class="form-label">المحافظة *</label>
+                  <select id="c-gov" class="form-control" required onchange="recalcSummary()">
+                    <option value="">اختر المحافظة</option>
                   </select>
                 </div>
-                <div class="form-group">
-                  <label class="form-label">Address *</label>
-                  <textarea id="c-address" class="form-control" required rows="2"></textarea>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Notes</label>
-                  <textarea id="c-notes" class="form-control" rows="2"></textarea>
-                </div>
               </div>
-
-              <div class="admin-card mb-24">
-                <h3 class="mb-16">Summary</h3>
-                <div class="flex-between mb-8"><span class="text-muted">Subtotal</span><span id="summ-sub">0 EGP</span></div>
-                <div class="flex-between mb-8"><span class="text-muted">Shipping</span><span id="summ-ship">0 EGP</span></div>
-                <hr style="margin:12px 0; border:none; border-top:1px solid var(--border)">
-                <div class="flex-between" style="font-weight:700;font-size:1.2rem"><span>Total</span><span id="summ-total" style="color:var(--primary)">0 EGP</span></div>
+              <div class="form-group">
+                <label class="form-label">العنوان التفصيلي *</label>
+                <textarea id="c-address" class="form-control" required rows="2" placeholder="الشارع، الحي، المدينة..."></textarea>
               </div>
-
-              <button type="submit" class="btn btn-primary btn-block" style="padding:16px;font-size:1.05rem" id="submit-btn">Create Order</button>
+              <div class="form-group" style="margin-bottom:0">
+                <label class="form-label">ملاحظات</label>
+                <textarea id="c-notes" class="form-control" rows="2" placeholder="أي ملاحظات إضافية..."></textarea>
+              </div>
             </div>
-
           </div>
-        </form>
+
+          <!-- ═══ RIGHT COLUMN: Summary + Payment ═══ -->
+          <div>
+            <div class="order-summary-card">
+              <h3>ملخص الطلب</h3>
+
+              <!-- Items mini list -->
+              <div id="summary-items-list" style="margin-bottom:16px"></div>
+
+              <!-- Price breakdown -->
+              <div class="summary-line">
+                <span>المجموع الفرعي</span>
+                <span id="sum-subtotal" style="font-weight:600">0 ج.م</span>
+              </div>
+              <div class="summary-line">
+                <span>رسوم الشحن</span>
+                <span id="sum-shipping">0 ج.م</span>
+              </div>
+
+              <!-- Order-level discount -->
+              <div class="order-discount-section">
+                <label for="order-discount">خصم الطلب:</label>
+                <input type="number" id="order-discount" class="form-control" min="0" value="0" placeholder="0" oninput="recalcSummary()">
+                <span style="font-size:0.85rem;color:var(--text-muted)">ج.م</span>
+              </div>
+
+              <div class="summary-total">
+                <span>الإجمالي</span>
+                <span id="sum-total">0 ج.م</span>
+              </div>
+
+              <!-- Payment Method -->
+              <div style="margin-top:24px;margin-bottom:8px">
+                <p style="font-size:0.9rem;font-weight:600;margin-bottom:12px;color:var(--text-main)">طريقة الدفع *</p>
+                <div class="payment-methods" id="payment-methods">
+                  <label class="payment-method-card selected">
+                    <input type="radio" name="payment" value="cash_on_delivery" checked onchange="updatePaymentUI()">
+                    <span class="payment-method-icon">💵</span>
+                    <div>
+                      <div class="payment-method-label">الدفع عند الاستلام</div>
+                      <div class="payment-method-desc">Cash on Delivery</div>
+                    </div>
+                  </label>
+                  <label class="payment-method-card">
+                    <input type="radio" name="payment" value="vodafone_cash" onchange="updatePaymentUI()">
+                    <span class="payment-method-icon">📱</span>
+                    <div>
+                      <div class="payment-method-label">فودافون كاش</div>
+                      <div class="payment-method-desc">Vodafone Cash</div>
+                    </div>
+                  </label>
+                  <label class="payment-method-card">
+                    <input type="radio" name="payment" value="instapay" onchange="updatePaymentUI()">
+                    <span class="payment-method-icon">💳</span>
+                    <div>
+                      <div class="payment-method-label">إنستاباي</div>
+                      <div class="payment-method-desc">InstaPay</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <button type="button" class="btn btn-primary btn-block" id="submit-btn-bottom" onclick="submitOrder()" style="padding:14px;font-size:1rem;margin-top:8px">
+                ✓ إنشاء الطلب
+              </button>
+            </div>
+          </div>
+
+        </div><!-- .order-create-layout -->
       </div>
     </main>
   </div>
+
   <script src="../js/api.js"></script>
   <script src="../js/admin/auth.js"></script>
   <script src="../js/admin/order-form.js"></script>

@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch(e) {}
 
   if (editId) {
-    document.getElementById('form-title').textContent = 'Edit Product';
+    document.getElementById('form-title').textContent = 'تعديل المنتج';
     try {
       const p = await api.getProduct(editId);
       document.getElementById('p-name').value = p.name;
@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if(p.collectionId) document.getElementById('p-collection').value = p.collectionId;
       optionGroups = (p.options || []).map(g => ({ name: g.name, required: g.required, values: [...g.values] }));
       renderOptionGroups();
-    } catch (err) { showToast('Failed to load product', 'error'); }
+    } catch (err) { showToast('فشل تحميل المنتج', 'error'); }
   }
 
   document.getElementById('product-form').addEventListener('submit', saveProduct);
@@ -34,33 +34,33 @@ document.addEventListener('DOMContentLoaded', async () => {
 function renderOptionGroups() {
   const container = document.getElementById('option-groups');
   container.innerHTML = optionGroups.map((g, gi) => `
-    <div class="card" style="padding:16px;margin-bottom:12px">
+    <div class="admin-card" style="margin-bottom:12px">
       <div class="flex-between mb-16">
-        <h4>Option Group ${gi + 1}</h4>
-        <button type="button" class="btn btn-danger btn-sm" onclick="removeGroup(${gi})">Remove</button>
+        <h4>مجموعة خيارات ${gi + 1}</h4>
+        <button type="button" class="btn btn-danger btn-sm" onclick="removeGroup(${gi})">حذف</button>
       </div>
       <div class="grid-2" style="gap:12px;margin-bottom:12px">
         <div class="form-group" style="margin-bottom:0">
-          <label class="form-label">Group Name</label>
-          <input class="form-control" value="${g.name}" onchange="optionGroups[${gi}].name=this.value" required>
+          <label class="form-label">اسم المجموعة</label>
+          <input class="form-control" value="${g.name}" onchange="optionGroups[${gi}].name=this.value" required placeholder="مثال: الحجم">
         </div>
         <div class="form-group" style="margin-bottom:0">
-          <label class="form-label">Required?</label>
+          <label class="form-label">إجباري؟</label>
           <select class="form-control" onchange="optionGroups[${gi}].required=this.value==='true'">
-            <option value="true" ${g.required ? 'selected' : ''}>Yes</option>
-            <option value="false" ${!g.required ? 'selected' : ''}>No</option>
+            <option value="true" ${g.required ? 'selected' : ''}>نعم</option>
+            <option value="false" ${!g.required ? 'selected' : ''}>لا</option>
           </select>
         </div>
       </div>
-      <div class="form-label">Values</div>
+      <div class="form-label mb-8">القيم</div>
       ${g.values.map((v, vi) => `
-        <div class="flex gap-8 mb-16" style="align-items:end">
-          <div style="flex:2"><input class="form-control" placeholder="Label" value="${v.label}" onchange="optionGroups[${gi}].values[${vi}].label=this.value" required></div>
-          <div style="flex:1"><input class="form-control" type="number" placeholder="Price ±" value="${v.price}" onchange="optionGroups[${gi}].values[${vi}].price=Number(this.value)" required></div>
+        <div class="flex gap-8 mb-8" style="align-items:center">
+          <div style="flex:2"><input class="form-control" placeholder="الاسم (مثال: كبير)" value="${v.label}" onchange="optionGroups[${gi}].values[${vi}].label=this.value" required></div>
+          <div style="flex:1"><input class="form-control" type="number" placeholder="السعر ±" value="${v.price}" onchange="optionGroups[${gi}].values[${vi}].price=Number(this.value)"></div>
           <button type="button" class="btn btn-danger btn-sm" onclick="removeValue(${gi},${vi})">×</button>
         </div>
       `).join('')}
-      <button type="button" class="btn btn-secondary btn-sm" onclick="addValue(${gi})">+ Add Value</button>
+      <button type="button" class="btn btn-secondary btn-sm mt-8" onclick="addValue(${gi})">+ إضافة قيمة</button>
     </div>
   `).join('');
 }
@@ -72,7 +72,7 @@ function addOptionGroup() {
 function removeGroup(gi) { optionGroups.splice(gi, 1); renderOptionGroups(); }
 function addValue(gi) { optionGroups[gi].values.push({ label: '', price: 0 }); renderOptionGroups(); }
 function removeValue(gi, vi) {
-  if (optionGroups[gi].values.length <= 1) return showToast('Need at least one value', 'error');
+  if (optionGroups[gi].values.length <= 1) return showToast('يجب أن تحتوي المجموعة على قيمة واحدة على الأقل', 'error');
   optionGroups[gi].values.splice(vi, 1); renderOptionGroups();
 }
 
@@ -91,11 +91,11 @@ async function saveProduct(e) {
   };
 
   try {
-    if (editId) { await api.updateProduct(editId, data); showToast('Product updated'); }
-    else { await api.createProduct(data); showToast('Product created'); }
+    if (editId) { await api.updateProduct(editId, data); showToast('تم تحديث المنتج ✓'); }
+    else { await api.createProduct(data); showToast('تم إضافة المنتج ✓'); }
     setTimeout(() => window.location.href = 'products.html', 800);
   } catch (err) {
-    showToast(err.message, 'error');
+    showToast(err.message || 'حدث خطأ', 'error');
     btn.disabled = false;
   }
 }

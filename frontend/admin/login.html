@@ -1,43 +1,60 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Login — eStore</title>
+  <title>تسجيل الدخول — Sundura Admin</title>
   <link rel="stylesheet" href="../css/style.css">
 </head>
-<body>
-  <main class="page-content" style="min-height:100vh; display:flex; align-items:center; justify-content:center;">
-    <div class="admin-card" style="max-width:420px;width:100%;padding:40px">
-      <div class="text-center mb-24">
-        <h1 class="page-title" style="font-size:2rem">🔒 Admin Login</h1>
-        <p class="text-muted">Enter your admin API key</p>
-      </div>
-      <form id="login-form">
-        <div class="form-group">
-          <label class="form-label" for="admin-key">API Key</label>
-          <input class="form-control" id="admin-key" type="password" required placeholder="Enter admin key...">
-        </div>
-        <button type="submit" class="btn btn-primary btn-block">Login →</button>
-      </form>
-      <div class="text-center mt-16">
-        <a href="../index.html" class="text-sm">← Back to Store</a>
-      </div>
+<body style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg-body)">
+  <div class="admin-card" style="max-width:420px;width:100%;padding:40px;margin:20px">
+    <div style="text-align:center;margin-bottom:32px">
+      <div style="font-size:2.5rem;margin-bottom:12px">⚙️</div>
+      <h1 style="font-size:1.5rem;margin-bottom:6px">Sundura Admin</h1>
+      <p class="text-muted">أدخل مفتاح الوصول للمتابعة</p>
     </div>
-  </main>
+
+    <div class="form-group">
+      <label class="form-label">مفتاح الإدارة (API Key)</label>
+      <input type="password" id="api-key" class="form-control" placeholder="••••••••••••"
+        style="font-size:1rem;padding:12px 14px"
+        onkeydown="if(event.key==='Enter') doLogin()">
+    </div>
+    <div id="login-error" style="color:var(--danger);font-size:0.88rem;margin-bottom:12px;display:none">
+      ❌ مفتاح غير صحيح، يرجى المحاولة مرة أخرى
+    </div>
+    <button class="btn btn-primary btn-block" id="login-btn" onclick="doLogin()" style="padding:13px;font-size:1rem">
+      دخول
+    </button>
+  </div>
+
+  <script src="../js/api.js"></script>
   <script>
-    const API_BASE = window.API_BASE || 'https://sundurashop-manage.onrender.com/api';
-    document.getElementById('login-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const key = document.getElementById('admin-key').value.trim();
+    // If already logged in, redirect
+    if (sessionStorage.getItem('adminKey')) window.location.href = 'index.html';
+
+    async function doLogin() {
+      const key = document.getElementById('api-key').value.trim();
+      const btn = document.getElementById('login-btn');
+      const err = document.getElementById('login-error');
       if (!key) return;
+
+      btn.disabled = true;
+      btn.textContent = 'جارٍ التحقق...';
+      err.style.display = 'none';
+
       sessionStorage.setItem('adminKey', key);
-      try {
-        const res = await fetch(`${API_BASE}/orders`, { headers: { 'x-admin-key': key } });
-        if (res.ok) { window.location.href = 'index.html'; }
-        else { sessionStorage.removeItem('adminKey'); alert('Invalid API key'); }
-      } catch (err) { alert('Cannot reach server'); sessionStorage.removeItem('adminKey'); }
-    });
+      const ok = await api.checkAdmin();
+
+      if (ok) {
+        window.location.href = 'index.html';
+      } else {
+        sessionStorage.removeItem('adminKey');
+        err.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'دخول';
+      }
+    }
   </script>
 </body>
 </html>

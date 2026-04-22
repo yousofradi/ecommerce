@@ -1,38 +1,40 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Manage Collections — eStore Admin</title>
+  <title>التصنيفات — Sundura Admin</title>
   <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
   <div class="admin-layout">
     <aside class="admin-sidebar">
-      <div class="admin-brand">⚙️ Sundura Admin</div>
+      <div class="admin-sidebar-header">
+        <div class="admin-brand">⚙️ Sundura</div>
+        <button class="sidebar-toggle">☰</button>
+      </div>
       <nav class="admin-nav">
-        <a href="index.html">Dashboard</a>
-        <a href="products.html">Products</a>
-        <a href="collections.html" class="active">Collections</a>
-        <a href="orders.html">Orders</a>
-        <a href="shipment.html">Shipment</a>
-        <a href="webhooks.html">Webhooks</a>
-        <a href="../index.html" target="_blank">View Store ↗</a>
-        <a href="#" onclick="logout()" class="logout">Logout</a>
+        <a href="index.html">🏠 لوحة التحكم</a>
+        <a href="products.html">📦 المنتجات</a>
+        <a href="collections.html" class="active">🗂️ التصنيفات</a>
+        <a href="orders.html">🛒 الطلبات</a>
+        <a href="shipment.html">🚚 الشحن</a>
+        <a href="webhooks.html">🔗 Webhooks</a>
+        <a href="../index.html" target="_blank">🏪 المتجر ↗</a>
+        <a href="#" onclick="logout()" class="logout">🚪 خروج</a>
       </nav>
     </aside>
-
     <main class="admin-main">
-      <div class="container" style="max-width:1000px;margin:0">
+      <div style="max-width:1000px">
         <div class="flex-between mb-24">
-          <div><h1 class="page-title">Collections</h1></div>
-          <a href="collection-form.html" class="btn btn-primary">+ Add Collection</a>
+          <div>
+            <h1 class="page-title" style="margin-bottom:4px">التصنيفات</h1>
+            <p class="page-subtitle" style="margin-bottom:0">تنظيم منتجاتك في فئات</p>
+          </div>
+          <a href="collection-form.html" class="btn btn-primary">+ إضافة تصنيف</a>
         </div>
-        <div class="table-wrapper">
-          <table>
-            <thead><tr><th>Image</th><th>Name</th><th>Description</th><th>Actions</th></tr></thead>
-            <tbody id="collections-tbody"></tbody>
-          </table>
+        <div id="collections-grid" class="grid grid-3">
+          <div class="admin-card text-center"><div class="spinner"></div></div>
         </div>
       </div>
     </main>
@@ -42,37 +44,30 @@
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       if (!requireAdmin()) return;
-      const tbody = document.getElementById('collections-tbody');
+      const grid = document.getElementById('collections-grid');
       try {
-        const collections = await api.getCollections();
-        if (!collections.length) {
-          tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-24">No collections found. Add one!</td></tr>';
+        const cols = await api.getCollections();
+        if (!cols.length) {
+          grid.innerHTML = '<div class="admin-card text-center text-muted" style="grid-column:1/-1;padding:40px">لا توجد تصنيفات بعد</div>';
           return;
         }
-        tbody.innerHTML = collections.map(c => `
-          <tr>
-            <td><img src="${c.imageUrl || ''}" style="width:50px;height:50px;object-fit:cover;border-radius:4px" onerror="this.style.display='none'"></td>
-            <td style="font-weight:500">${c.name}</td>
-            <td class="text-muted">${c.description || '—'}</td>
-            <td>
-              <div class="flex gap-8">
-                <button class="btn btn-sm btn-secondary" onclick="deleteCol('${c._id}')">Delete</button>
-              </div>
-            </td>
-          </tr>
-        `).join('');
-      } catch (err) {
-        showToast('Error loading collections', 'error');
-      }
+        grid.innerHTML = cols.map(c => `
+          <div class="admin-card">
+            ${c.imageUrl ? `<img src="${c.imageUrl}" alt="${c.name}" style="width:100%;height:140px;object-fit:cover;border-radius:8px;margin-bottom:12px">` : ''}
+            <h3 style="margin-bottom:6px">${c.name}</h3>
+            <p class="text-muted text-sm">${c.description || ''}</p>
+            <div class="flex gap-8 mt-16">
+              <a href="collection-form.html?id=${c._id}" class="btn btn-secondary btn-sm">تعديل</a>
+              <button class="btn btn-danger btn-sm" onclick="deleteCol('${c._id}')">حذف</button>
+            </div>
+          </div>`).join('');
+      } catch (e) { grid.innerHTML = '<p class="text-muted text-center" style="grid-column:1/-1">فشل التحميل</p>'; }
     });
 
     async function deleteCol(id) {
-      if (!confirm('Are you sure you want to delete this collection?')) return;
-      try {
-        await api.deleteCollection(id);
-        showToast('Collection deleted');
-        window.location.reload();
-      } catch (err) { showToast('Error deleting collection', 'error'); }
+      if (!confirm('حذف هذا التصنيف؟')) return;
+      try { await api.deleteCollection(id); location.reload(); }
+      catch (e) { showToast(e.message, 'error'); }
     }
   </script>
 </body>

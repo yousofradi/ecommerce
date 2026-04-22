@@ -1,111 +1,162 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Manage Webhooks — eStore Admin</title>
+  <title>Webhooks — Sundura Admin</title>
   <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
   <div class="admin-layout">
     <aside class="admin-sidebar">
-      <div class="admin-brand">⚙️ Sundura Admin</div>
+      <div class="admin-sidebar-header">
+        <div class="admin-brand">⚙️ Sundura</div>
+        <button class="sidebar-toggle">☰</button>
+      </div>
       <nav class="admin-nav">
-        <a href="index.html">Dashboard</a>
-        <a href="products.html">Products</a>
-        <a href="collections.html">Collections</a>
-        <a href="orders.html">Orders</a>
-        <a href="shipment.html">Shipment</a>
-        <a href="webhooks.html" class="active">Webhooks</a>
-        <a href="../index.html" target="_blank">View Store ↗</a>
-        <a href="#" onclick="logout()" class="logout">Logout</a>
+        <a href="index.html">🏠 لوحة التحكم</a>
+        <a href="products.html">📦 المنتجات</a>
+        <a href="collections.html">🗂️ التصنيفات</a>
+        <a href="orders.html">🛒 الطلبات</a>
+        <a href="shipment.html">🚚 الشحن</a>
+        <a href="webhooks.html" class="active">🔗 Webhooks</a>
+        <a href="../index.html" target="_blank">🏪 المتجر ↗</a>
+        <a href="#" onclick="logout()" class="logout">🚪 خروج</a>
       </nav>
     </aside>
-
     <main class="admin-main">
-      <div class="container" style="max-width:800px;margin:0">
-        <div class="flex-between mb-24">
-          <div><h1 class="page-title">Webhooks</h1><p class="text-muted">Send real-time order updates to external URLs.</p></div>
-        </div>
+      <div style="max-width:900px">
+        <h1 class="page-title" style="margin-bottom:4px">Webhooks</h1>
+        <p class="page-subtitle">استقبال إشعارات فورية عند حدوث أحداث في المتجر</p>
+
+        <!-- Add Form -->
         <div class="admin-card mb-24">
-          <form id="add-webhook-form">
-            <div class="grid-2 gap-16 mb-16">
-              <input type="url" id="w-url" class="form-control" required placeholder="https://your-webhook.url">
-              <input type="text" id="w-desc" class="form-control" placeholder="Description (e.g., Zapier Integration)">
+          <h3 class="mb-16">إضافة Webhook</h3>
+          <div class="form-group">
+            <label class="form-label">رابط الـ Webhook (URL) *</label>
+            <input type="url" class="form-control" id="w-url" placeholder="https://your-webhook.url/endpoint">
+          </div>
+          <div class="form-group">
+            <label class="form-label">الوصف</label>
+            <input type="text" class="form-control" id="w-desc" placeholder="مثال: Zapier integration">
+          </div>
+          <div class="form-group">
+            <label class="form-label">الأحداث *</label>
+            <div class="flex gap-16" style="flex-wrap:wrap">
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+                <input type="checkbox" id="ev-created" checked style="accent-color:var(--primary)"> order.created
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+                <input type="checkbox" id="ev-paid" style="accent-color:var(--primary)"> order.paid
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+                <input type="checkbox" id="ev-updated" style="accent-color:var(--primary)"> order.updated
+              </label>
             </div>
-            <div class="mb-16">
-              <label class="form-label">Triggers</label>
-              <div class="flex gap-16">
-                <label><input type="checkbox" name="w-events" value="order.created" checked> Order Created</label>
-                <label><input type="checkbox" name="w-events" value="order.paid"> Order Paid</label>
-              </div>
-            </div>
-            <button type="submit" class="btn btn-primary">Add Webhook</button>
-          </form>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="checkbox" id="w-active" checked style="accent-color:var(--primary)">
+              <span>مفعّل</span>
+            </label>
+          </div>
+          <button class="btn btn-primary mt-16" onclick="createWebhook()">+ إضافة Webhook</button>
         </div>
+
+        <!-- List -->
         <div class="table-wrapper">
           <table>
-            <thead><tr><th>URL</th><th>Description</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody id="webhooks-tbody"></tbody>
+            <thead>
+              <tr>
+                <th>الرابط</th>
+                <th>الأحداث</th>
+                <th>الحالة</th>
+                <th>إجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="webhooks-tbody">
+              <tr><td colspan="4" class="text-center"><div class="spinner"></div></td></tr>
+            </tbody>
           </table>
         </div>
       </div>
     </main>
   </div>
+
   <script src="../js/api.js"></script>
   <script src="../js/admin/auth.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       if (!requireAdmin()) return;
       loadWebhooks();
-
-      document.getElementById('add-webhook-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        try {
-          const events = Array.from(document.querySelectorAll('input[name="w-events"]:checked')).map(cb => cb.value);
-          if (events.length === 0) return showToast('Please select at least one trigger', 'error');
-
-          await api.createWebhook({
-            url: document.getElementById('w-url').value.trim(),
-            description: document.getElementById('w-desc').value.trim(),
-            events
-          });
-          document.getElementById('w-url').value = '';
-          document.getElementById('w-desc').value = '';
-          showToast('Webhook added successfully');
-          loadWebhooks();
-        } catch (err) { showToast('Error adding webhook', 'error'); }
-      });
     });
 
     async function loadWebhooks() {
       const tbody = document.getElementById('webhooks-tbody');
       try {
         const list = await api.getWebhooks();
-        if(!list.length) {
-          tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No webhooks registered.</td></tr>';
+        if (!list.length) {
+          tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted" style="padding:30px">لا توجد webhooks بعد</td></tr>';
           return;
         }
         tbody.innerHTML = list.map(w => `
           <tr>
-            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">${w.url}</td>
-            <td class="text-muted">${w.description || '—'}<br><small>${(w.events || []).join(', ')}</small></td>
-            <td><span class="badge ${w.active ? 'badge-success' : 'badge-warning'}">${w.active ? 'Active' : 'Inactive'}</span></td>
-            <td>
-              <button class="btn btn-sm btn-secondary" onclick="deleteWebhook('${w._id}')">Delete</button>
+            <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+              <code style="font-size:0.8rem;background:var(--bg-body);padding:3px 8px;border-radius:4px">${w.url}</code>
+              ${w.description ? `<div class="text-sm text-muted mt-8">${w.description}</div>` : ''}
             </td>
-          </tr>
-        `).join('');
-      } catch (err) { showToast('Error loading webhooks', 'error'); }
+            <td>${(w.events||[]).map(e=>`<span class="badge badge-info" style="margin:2px">${e}</span>`).join('')}</td>
+            <td>
+              <span class="badge ${w.active ? 'badge-success' : 'badge-warning'}">
+                ${w.active ? 'مفعّل' : 'معطّل'}
+              </span>
+            </td>
+            <td>
+              <div class="flex gap-8">
+                <button class="btn btn-secondary btn-sm" onclick="toggleWebhook('${w._id}',${!w.active})">
+                  ${w.active ? 'تعطيل' : 'تفعيل'}
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="deleteWebhook('${w._id}')">حذف</button>
+              </div>
+            </td>
+          </tr>`).join('');
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">فشل التحميل</td></tr>';
+      }
+    }
+
+    async function createWebhook() {
+      const url  = document.getElementById('w-url').value.trim();
+      const desc = document.getElementById('w-desc').value.trim();
+      const events = [];
+      if (document.getElementById('ev-created').checked) events.push('order.created');
+      if (document.getElementById('ev-paid').checked)    events.push('order.paid');
+      if (document.getElementById('ev-updated').checked) events.push('order.updated');
+      const active = document.getElementById('w-active').checked;
+
+      if (!url) return showToast('يرجى إدخال الرابط', 'error');
+      if (!events.length) return showToast('اختر حدثاً واحداً على الأقل', 'error');
+
+      try {
+        await api.createWebhook({ url, description: desc, events, active });
+        showToast('تم إضافة الـ Webhook ✓');
+        document.getElementById('w-url').value = '';
+        document.getElementById('w-desc').value = '';
+        loadWebhooks();
+      } catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function toggleWebhook(id, active) {
+      try {
+        await api.updateWebhook(id, { active });
+        loadWebhooks();
+      } catch (e) { showToast(e.message, 'error'); }
     }
 
     async function deleteWebhook(id) {
-      if (!confirm('Delete this webhook?')) return;
-      try {
-        await api.deleteWebhook(id);
-        showToast('Deleted');
-        loadWebhooks();
-      } catch (err) { showToast('Error deleting', 'error'); }
+      if (!confirm('حذف هذا الـ Webhook؟')) return;
+      try { await api.deleteWebhook(id); showToast('تم الحذف'); loadWebhooks(); }
+      catch (e) { showToast(e.message, 'error'); }
     }
   </script>
 </body>
