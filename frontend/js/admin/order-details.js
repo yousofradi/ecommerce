@@ -36,28 +36,23 @@ function renderOrder() {
   document.getElementById('page-order-id').textContent = `تعديل الطلب #${o.orderId}`;
   
   // Customer Info
-  document.getElementById('view-c-name').textContent = o.customer.name;
-  document.getElementById('edit-c-name').value = o.customer.name;
-  
-  document.getElementById('view-c-phone').textContent = o.customer.phone;
-  document.getElementById('edit-c-phone').value = o.customer.phone;
-  
+  document.getElementById('view-c-name').textContent = o.customer.name || '—';
+  document.getElementById('view-c-phone').textContent = o.customer.phone || '—';
   document.getElementById('view-c-phone2').textContent = o.customer.secondPhone || '—';
-  document.getElementById('edit-c-phone2').value = o.customer.secondPhone || '';
   
   // Shipping Info
-  document.getElementById('view-c-address').textContent = o.customer.address;
-  document.getElementById('edit-c-address').value = o.customer.address;
-  
-  document.getElementById('view-c-gov').textContent = o.customer.government;
-  document.getElementById('edit-c-gov').value = o.customer.government;
-  
+  document.getElementById('view-c-address').textContent = o.customer.address || '—';
+  document.getElementById('view-c-gov').textContent = o.customer.government || '—';
   document.getElementById('view-c-notes').textContent = o.customer.notes || 'لا يوجد ملاحظات';
-  document.getElementById('edit-c-notes').value = o.customer.notes || '';
   
   // Payment
-  document.getElementById('edit-payment-method').value = o.paymentMethod;
-  document.getElementById('edit-paid-amount').value = o.paidAmount || 0;
+  const paymentLabels = {
+    'cash_on_delivery': 'الدفع عند الاستلام',
+    'vodafone_cash': 'فودافون كاش',
+    'instapay': 'إنستاباي'
+  };
+  document.getElementById('view-payment-method').textContent = paymentLabels[o.paymentMethod] || o.paymentMethod;
+  document.getElementById('view-paid-amount').textContent = formatPrice(o.paidAmount || 0);
   
   renderItems();
   updateTotals();
@@ -78,25 +73,24 @@ function renderItems() {
     const optText = (item.selectedOptions || []).map(op => `${op.groupName}: ${op.label}`).join(' • ');
     
     return `
-      <div class="item-row">
-        <div class="item-actions">
-          <div style="font-weight:700;font-size:1rem">${formatPrice(item.finalPrice)}</div>
-          <div style="font-size:0.85rem;color:var(--text-muted)">
-            ${formatPrice(item.basePrice)} × <input type="number" value="${item.quantity}" min="1" onchange="updateItemQty(${idx}, this.value)" style="width:40px;text-align:center;border:1px solid #ddd;border-radius:4px;padding:2px">
-          </div>
-          <div class="item-actions-row mt-8">
-            <button class="btn btn-sm" style="background:#fff;border:1px solid #ddd;color:#333;font-size:0.75rem;padding:4px 8px" onclick="promptItemDiscount(${idx})">تطبيق خصم</button>
-            <button class="btn btn-sm" style="background:#fff;border:1px solid #ddd;color:var(--danger);font-size:0.75rem;padding:4px 8px" onclick="removeItem(${idx})">إزالة</button>
-          </div>
-        </div>
+      <div class="item-row" style="position:relative; align-items:center; flex-direction:row-reverse;">
+        <button class="btn btn-sm" style="position:absolute; left:0; top:0; background:none; border:none; color:var(--text-muted); font-size:1.4rem; cursor:pointer; padding:0; line-height:1;" onclick="removeItem(${idx})">×</button>
         
-        <div class="item-details" style="text-align:right">
-          <div>
+        <div class="item-details" style="display:flex; align-items:center; gap:16px;">
+          ${imgHtml}
+          <div style="text-align:right">
             <div style="font-weight:600;font-size:0.95rem;color:var(--text-main)">${item.name}</div>
             ${optText ? `<div style="font-size:0.85rem;color:var(--text-muted);margin-top:4px">${optText}</div>` : ''}
             ${item.discount ? `<div style="font-size:0.8rem;color:var(--danger);margin-top:4px">خصم: ${formatPrice(item.discount)}</div>` : ''}
           </div>
-          ${imgHtml}
+        </div>
+
+        <div class="item-actions" style="display:flex; align-items:center; gap:24px; flex-direction:row;">
+          <div style="font-weight:700;font-size:1.1rem;color:var(--primary)">${formatPrice(item.finalPrice)}</div>
+          <div style="font-size:0.9rem;color:var(--text-muted);display:flex;align-items:center;gap:8px;">
+            <input type="number" value="${item.quantity}" min="1" onchange="updateItemQty(${idx}, this.value)" style="width:50px;text-align:center;border:1px solid #ddd;border-radius:4px;padding:4px"> × ${formatPrice(item.basePrice)}
+          </div>
+          <button class="btn btn-sm" style="background:#fff;border:1px solid var(--border-color);color:#333;font-size:0.75rem;padding:4px 8px" onclick="promptItemDiscount(${idx})">تطبيق خصم</button>
         </div>
       </div>
     `;
@@ -133,9 +127,7 @@ function updateTotals() {
 
 function updatePaymentStatusUI() {
   const o = currentOrder;
-  o.paidAmount = parseFloat(document.getElementById('edit-paid-amount').value) || 0;
-  
-  const remaining = Math.max(0, o.totalPrice - o.paidAmount);
+  const remaining = Math.max(0, o.totalPrice - (o.paidAmount || 0));
   document.getElementById('sum-remaining').textContent = formatPrice(remaining);
   
   const btn = document.getElementById('btn-mark-paid');
@@ -146,12 +138,56 @@ function updatePaymentStatusUI() {
   }
 }
 
-// ── Actions ────────────────────────────────────────────
+// ── Modals & Editing ───────────────────────────────────
 
-window.toggleEdit = function(cardId) {
-  const card = document.getElementById('card-' + cardId);
-  card.classList.toggle('editing');
+window.closeModal = function(modalId) {
+  document.getElementById(modalId).style.display = 'none';
 };
+
+window.openCustomerModal = function() {
+  document.getElementById('modal-c-name').value = currentOrder.customer.name || '';
+  document.getElementById('modal-c-phone').value = currentOrder.customer.phone || '';
+  document.getElementById('modal-c-phone2').value = currentOrder.customer.secondPhone || '';
+  document.getElementById('customer-modal').style.display = 'flex';
+};
+
+window.applyCustomerChanges = function() {
+  currentOrder.customer.name = document.getElementById('modal-c-name').value.trim();
+  currentOrder.customer.phone = document.getElementById('modal-c-phone').value.trim();
+  currentOrder.customer.secondPhone = document.getElementById('modal-c-phone2').value.trim();
+  renderOrder();
+  closeModal('customer-modal');
+};
+
+window.openShippingModal = function() {
+  document.getElementById('modal-c-address').value = currentOrder.customer.address || '';
+  document.getElementById('modal-c-gov').value = currentOrder.customer.government || '';
+  document.getElementById('modal-c-notes').value = currentOrder.customer.notes || '';
+  document.getElementById('shipping-modal').style.display = 'flex';
+};
+
+window.applyShippingChanges = function() {
+  currentOrder.customer.address = document.getElementById('modal-c-address').value.trim();
+  currentOrder.customer.government = document.getElementById('modal-c-gov').value.trim();
+  currentOrder.customer.notes = document.getElementById('modal-c-notes').value.trim();
+  renderOrder();
+  closeModal('shipping-modal');
+};
+
+window.openPaymentModal = function() {
+  document.getElementById('modal-payment-method').value = currentOrder.paymentMethod || 'cash_on_delivery';
+  document.getElementById('modal-paid-amount').value = currentOrder.paidAmount || 0;
+  document.getElementById('payment-modal').style.display = 'flex';
+};
+
+window.applyPaymentChanges = function() {
+  currentOrder.paymentMethod = document.getElementById('modal-payment-method').value;
+  currentOrder.paidAmount = parseFloat(document.getElementById('modal-paid-amount').value) || 0;
+  renderOrder();
+  closeModal('payment-modal');
+};
+
+// ── Actions ────────────────────────────────────────────
 
 window.updateItemQty = function(idx, val) {
   const qty = parseInt(val, 10);
@@ -189,8 +225,8 @@ window.promptOrderDiscount = function() {
 };
 
 window.markFullyPaid = function() {
-  document.getElementById('edit-paid-amount').value = currentOrder.totalPrice;
-  updatePaymentStatusUI();
+  currentOrder.paidAmount = currentOrder.totalPrice;
+  renderOrder();
 };
 
 // ── Save ───────────────────────────────────────────────
@@ -201,25 +237,13 @@ window.saveOrderChanges = async function() {
   btn.textContent = 'جارٍ الحفظ...';
   
   try {
-    const isCustomerEditing = document.getElementById('card-customer').classList.contains('editing');
-    const isShippingEditing = document.getElementById('card-shipping').classList.contains('editing');
-    
     const updates = {
       items: currentOrder.items,
       discount: currentOrder.discount,
-      paymentMethod: document.getElementById('edit-payment-method').value,
+      paymentMethod: currentOrder.paymentMethod,
       paidAmount: currentOrder.paidAmount,
-      paid: currentOrder.paidAmount >= currentOrder.totalPrice
-    };
-    
-    // Include customer updates if edited or always (safer to always grab current input values)
-    updates.customer = {
-      name: document.getElementById('edit-c-name').value.trim(),
-      phone: document.getElementById('edit-c-phone').value.trim(),
-      secondPhone: document.getElementById('edit-c-phone2').value.trim(),
-      address: document.getElementById('edit-c-address').value.trim(),
-      government: document.getElementById('edit-c-gov').value.trim(),
-      notes: document.getElementById('edit-c-notes').value.trim()
+      paid: currentOrder.paidAmount >= currentOrder.totalPrice,
+      customer: currentOrder.customer
     };
 
     await api.updateOrder(currentOrder.orderId, updates);

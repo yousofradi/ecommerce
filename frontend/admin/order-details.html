@@ -54,18 +54,8 @@
       font-size: 0.95rem;
     }
     
-    /* Edit input styles */
-    .edit-input {
-      border: 1px solid var(--border-color);
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 0.9rem;
-      width: 100%;
-      margin-bottom: 8px;
-      display: none;
-    }
-    .editing .edit-input { display: block; }
-    .editing .read-only-text { display: none; }
+    /* Modals for Editing */
+    .edit-input { display: none; }
 
     /* ── Products Modal ── */
     .modal-overlay {
@@ -139,24 +129,14 @@
             <div class="info-card" id="card-customer">
               <div class="info-card-header">
                 <h3>بيانات العميل</h3>
-                <button class="btn btn-sm" onclick="toggleEdit('customer')" style="background:none;border:none;cursor:pointer">✏️</button>
+                <button class="btn btn-sm" onclick="openCustomerModal()" style="background:none;border:none;cursor:pointer">✏️</button>
               </div>
               <div class="info-card-body">
-                <div style="font-weight:700;color:var(--primary);margin-bottom:16px;font-size:1.1rem">
-                  <span class="read-only-text" id="view-c-name"></span>
-                  <input type="text" id="edit-c-name" class="edit-input" placeholder="الاسم">
-                </div>
-                
+                <div style="font-weight:700;color:var(--primary);margin-bottom:16px;font-size:1.1rem" id="view-c-name"></div>
                 <h4 style="font-size:0.85rem;color:var(--text-muted);margin-bottom:8px">بيانات التواصل</h4>
                 <div class="grid-2" style="gap:12px">
-                  <div style="font-size:0.95rem;margin-bottom:8px">
-                    <span class="read-only-text" id="view-c-phone"></span>
-                    <input type="text" id="edit-c-phone" class="edit-input" placeholder="رقم الهاتف">
-                  </div>
-                  <div style="font-size:0.95rem;margin-bottom:8px">
-                    <span class="read-only-text" id="view-c-phone2"></span>
-                    <input type="text" id="edit-c-phone2" class="edit-input" placeholder="هاتف آخر">
-                  </div>
+                  <div style="font-size:0.95rem;margin-bottom:8px" id="view-c-phone"></div>
+                  <div style="font-size:0.95rem;margin-bottom:8px" id="view-c-phone2"></div>
                 </div>
               </div>
             </div>
@@ -165,23 +145,13 @@
             <div class="info-card" id="card-shipping">
               <div class="info-card-header">
                 <h3>عنوان الشحن</h3>
-                <button class="btn btn-sm" onclick="toggleEdit('shipping')" style="background:none;border:none;cursor:pointer">✏️</button>
+                <button class="btn btn-sm" onclick="openShippingModal()" style="background:none;border:none;cursor:pointer">✏️</button>
               </div>
               <div class="info-card-body">
-                <div style="font-size:0.95rem;margin-bottom:8px">
-                  <span class="read-only-text" id="view-c-address"></span>
-                  <input type="text" id="edit-c-address" class="edit-input" placeholder="العنوان">
-                </div>
-                <div style="font-size:0.95rem;margin-bottom:8px;color:var(--text-muted)">
-                  <span class="read-only-text" id="view-c-gov"></span>
-                  <input type="text" id="edit-c-gov" class="edit-input" placeholder="المحافظة">
-                </div>
-                
+                <div style="font-size:0.95rem;margin-bottom:8px" id="view-c-address"></div>
+                <div style="font-size:0.95rem;margin-bottom:8px;color:var(--text-muted)" id="view-c-gov"></div>
                 <h4 style="font-size:0.85rem;color:var(--text-muted);margin-top:16px;margin-bottom:8px">ملاحظات</h4>
-                <div style="font-size:0.95rem">
-                  <span class="read-only-text" id="view-c-notes"></span>
-                  <textarea id="edit-c-notes" class="edit-input" rows="2" placeholder="ملاحظات"></textarea>
-                </div>
+                <div style="font-size:0.95rem" id="view-c-notes"></div>
               </div>
             </div>
           </div>
@@ -227,19 +197,11 @@
                 
                 <div style="margin-top:24px;border-top:1px solid var(--border-color);padding-top:16px">
                   <div class="summary-row">
-                    <span>
-                      <select id="edit-payment-method" class="form-control" style="padding:4px;font-size:0.9rem;width:auto">
-                        <option value="cash_on_delivery">الدفع عند الاستلام</option>
-                        <option value="vodafone_cash">فودافون كاش</option>
-                        <option value="instapay">إنستاباي</option>
-                      </select>
-                    </span>
+                    <span id="view-payment-method"></span>
                     <span style="color:var(--text-muted)">وسيلة الدفع</span>
                   </div>
                   <div class="summary-row">
-                    <span>
-                      <input type="number" id="edit-paid-amount" class="form-control" style="width:100px;padding:4px;text-align:left" oninput="updatePaymentStatusUI()"> ج.م
-                    </span>
+                    <span id="view-paid-amount">0 ج.م</span>
                     <span style="color:var(--text-muted)">المدفوع</span>
                   </div>
                   <div class="summary-row" style="font-weight:700">
@@ -249,6 +211,7 @@
                   
                   <div class="flex gap-8 mt-16" style="justify-content:flex-start">
                     <button class="btn btn-primary btn-sm" id="btn-mark-paid" onclick="markFullyPaid()">مدفوع بالكامل</button>
+                    <button class="btn btn-secondary btn-sm" onclick="openPaymentModal()">تعديل الدفع</button>
                   </div>
                 </div>
 
@@ -281,6 +244,93 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-primary" onclick="addSelectedProducts()">أضف منتج</button>
         <button type="button" class="btn btn-secondary" onclick="closeProductsModal()" style="background:#fff;color:#333;border:1px solid #ccc">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Customer Edit Modal -->
+  <div class="modal-overlay" id="customer-modal" style="display: none;">
+    <div class="modal-box" style="max-width: 400px;">
+      <div class="modal-header">
+        <button type="button" class="modal-close" onclick="closeModal('customer-modal')">×</button>
+        <h3>تعديل بيانات العميل</h3>
+        <div style="width:24px"></div>
+      </div>
+      <div class="modal-body">
+        <div class="form-group mb-16">
+          <label class="form-label">الاسم</label>
+          <input type="text" id="modal-c-name" class="form-control">
+        </div>
+        <div class="form-group mb-16">
+          <label class="form-label">رقم الهاتف</label>
+          <input type="text" id="modal-c-phone" class="form-control">
+        </div>
+        <div class="form-group mb-16">
+          <label class="form-label">هاتف آخر</label>
+          <input type="text" id="modal-c-phone2" class="form-control">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" onclick="applyCustomerChanges()">تطبيق</button>
+        <button type="button" class="btn btn-secondary" onclick="closeModal('customer-modal')">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shipping Edit Modal -->
+  <div class="modal-overlay" id="shipping-modal" style="display: none;">
+    <div class="modal-box" style="max-width: 400px;">
+      <div class="modal-header">
+        <button type="button" class="modal-close" onclick="closeModal('shipping-modal')">×</button>
+        <h3>تعديل عنوان الشحن</h3>
+        <div style="width:24px"></div>
+      </div>
+      <div class="modal-body">
+        <div class="form-group mb-16">
+          <label class="form-label">العنوان</label>
+          <input type="text" id="modal-c-address" class="form-control">
+        </div>
+        <div class="form-group mb-16">
+          <label class="form-label">المحافظة</label>
+          <input type="text" id="modal-c-gov" class="form-control">
+        </div>
+        <div class="form-group mb-16">
+          <label class="form-label">ملاحظات</label>
+          <textarea id="modal-c-notes" class="form-control" rows="3"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" onclick="applyShippingChanges()">تطبيق</button>
+        <button type="button" class="btn btn-secondary" onclick="closeModal('shipping-modal')">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment Edit Modal -->
+  <div class="modal-overlay" id="payment-modal" style="display: none;">
+    <div class="modal-box" style="max-width: 400px;">
+      <div class="modal-header">
+        <button type="button" class="modal-close" onclick="closeModal('payment-modal')">×</button>
+        <h3>تعديل الدفع</h3>
+        <div style="width:24px"></div>
+      </div>
+      <div class="modal-body">
+        <div class="form-group mb-16">
+          <label class="form-label">وسيلة الدفع</label>
+          <select id="modal-payment-method" class="form-control">
+            <option value="cash_on_delivery">الدفع عند الاستلام</option>
+            <option value="vodafone_cash">فودافون كاش</option>
+            <option value="instapay">إنستاباي</option>
+          </select>
+        </div>
+        <div class="form-group mb-16">
+          <label class="form-label">المبلغ المدفوع (ج.م)</label>
+          <input type="number" id="modal-paid-amount" class="form-control" min="0">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" onclick="applyPaymentChanges()">تطبيق</button>
+        <button type="button" class="btn btn-secondary" onclick="closeModal('payment-modal')">إلغاء</button>
       </div>
     </div>
   </div>
