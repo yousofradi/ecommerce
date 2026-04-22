@@ -1,23 +1,78 @@
 /** Products page — renders product grid with option selectors */
+let allProducts = [];
+let currentCategory = null;
+
 document.addEventListener('DOMContentLoaded', async () => {
   const grid = document.getElementById('products-grid');
   const loading = document.getElementById('products-loading');
+  const catNav = document.getElementById('categories-nav');
 
   try {
-    const products = await api.getProducts();
+    const [products, collections] = await Promise.all([
+      api.getProducts(),
+      api.getCollections()
+    ]);
+    allProducts = products;
     loading.classList.add('hidden');
 
-    if (!products.length) {
-      grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🛍️</div><h3 class="empty-title">No products yet</h3><p class="empty-desc">Check back soon!</p></div>';
-      return;
+    // Render Categories
+    if (collections.length > 0) {
+      catNav.innerHTML = `
+        <button class="btn btn-sm ${!currentCategory ? 'btn-primary' : 'btn-secondary'}" onclick="filterProducts(null)">All</button>
+        ${collections.map(c => `
+          <button class="btn btn-sm ${currentCategory === c._id ? 'btn-primary' : 'btn-secondary'}" onclick="filterProducts('${c._id}')">${c.name}</button>
+        `).join('')}
+      `;
     }
 
-    grid.innerHTML = products.map(p => renderProductCard(p)).join('');
+    renderProducts();
   } catch (err) {
     loading.classList.add('hidden');
     grid.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><h3 class="empty-title">Failed to load products</h3><p class="empty-desc">Please try again later.</p></div>';
   }
 });
+
+window.filterProducts = function(collectionId) {
+  currentCategory = collectionId;
+  const buttons = document.querySelectorAll('#categories-nav button');
+  buttons.forEach(btn => {
+    btn.classList.remove('btn-primary');
+    btn.classList.add('btn-secondary');
+  });
+  
+  // Quick and dirty toggle for active state
+  if(!collectionId) buttons[0].classList.replace('btn-secondary', 'btn-primary');
+  else {
+    const activeBtn = Array.from(buttons).find(b => b.textContent === (allProducts.find(p => p.collectionId === collectionId)?.collection?.name || b.textContent)); // rough fallback
+    // Actually we can just re-render the nav but it's fine, let's just re-render everything
+  }
+  
+  // Re-render everything to update buttons reliably
+  api.getCollections().then(collections => {
+    const catNav = document.getElementById('categories-nav');
+    catNav.innerHTML = `
+      <button class="btn btn-sm ${!currentCategory ? 'btn-primary' : 'btn-secondary'}" onclick="filterProducts(null)">All</button>
+      ${collections.map(c => `
+        <button class="btn btn-sm ${currentCategory === c._id ? 'btn-primary' : 'btn-secondary'}" onclick="filterProducts('${c._id}')">${c.name}</button>
+      `).join('')}
+    `;
+  });
+
+  renderProducts();
+};
+
+function renderProducts() {
+  const grid = document.getElementById('products-grid');
+  const filtered = currentCategory 
+    ? allProducts.filter(p => p.collectionId === currentCategory)
+    : allProducts;
+
+  if (!filtered.length) {
+    grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🛍️</div><h3 class="empty-title">No products found</h3><p class="empty-desc">Try another category!</p></div>';
+    return;
+  }
+  grid.innerHTML = filtered.map(p => renderProductCard(p)).join('');
+}
 
 function renderProductCard(product) {
   const optionsHTML = (product.options || []).map((group, gi) => {

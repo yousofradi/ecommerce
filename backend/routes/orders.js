@@ -23,11 +23,13 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Valid payment method is required (instapay or vodafone_cash)' });
     }
 
-    // Calculate shipping fee
-    const shippingFee = shippingFees[customer.government];
-    if (shippingFee == null) {
+    // Calculate shipping fee from DB
+    const Shipping = require('../models/Shipping');
+    const shippingRecord = await Shipping.findOne({ governorate: customer.government });
+    if (!shippingRecord) {
       return res.status(400).json({ error: `Unknown government: ${customer.government}` });
     }
+    const shippingFee = shippingRecord.fee;
 
     // Calculate total price
     let subtotal = 0;
@@ -100,8 +102,9 @@ router.put('/:orderId', adminAuth, async (req, res) => {
       }
       // Recalculate shipping if government changed
       if (updates.customer && updates.customer.government) {
-        const fee = shippingFees[updates.customer.government];
-        if (fee != null) updates.shippingFee = fee;
+        const Shipping = require('../models/Shipping');
+        const shippingRecord = await Shipping.findOne({ governorate: updates.customer.government });
+        if (shippingRecord) updates.shippingFee = shippingRecord.fee;
       }
       updates.totalPrice = subtotal + (updates.shippingFee || 0);
     }

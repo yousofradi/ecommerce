@@ -2,23 +2,34 @@
  * Webhook utility — sends POST to WEBHOOK_URL.
  * Fire-and-forget: logs errors but never blocks the response.
  */
-const sendWebhook = async (event, data) => {
-  const url = process.env.WEBHOOK_URL;
-  if (!url) {
-    console.log(`ℹ️  Webhook skipped (WEBHOOK_URL not set) — event: ${event}`);
-    return;
-  }
+const Webhook = require('../models/Webhook');
 
+async function sendWebhook(event, data) {
   try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ event, data, timestamp: new Date().toISOString() })
+    const webhooks = await Webhook.find({ active: true });
+    if (webhooks.length === 0) return;
+
+    const payload = JSON.stringify({
+      event,
+      timestamp: new Date().toISOString(),
+      data
     });
-    console.log(`🔔 Webhook sent: ${event} — status: ${response.status}`);
+
+    const promises = webhooks.map(wh => 
+      fetch(wh.url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload,
+        signal: AbortSignal.timeout(5000)
+      }).catch(err => {
+        console.error(`Failed to send webhook to ${wh.url}:`, err.message);
+      })
+    );
+
+    await Promise.all(promises);
   } catch (err) {
-    console.error(`❌ Webhook failed: ${event} —`, err.message);
+    console.error('Webhook system error:', err.message);
   }
-};
+}
 
 module.exports = sendWebhook;

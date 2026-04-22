@@ -13,6 +13,8 @@ app.use(express.json());
 app.use('/api/products', require('./routes/products'));
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/shipping', require('./routes/shipping'));
+app.use('/api/collections', require('./routes/collectionRoutes'));
+app.use('/api/webhooks', require('./routes/webhookRoutes'));
 
 // ── Root route ──────────────────────────────────────────
 app.get('/', (req, res) => {
@@ -21,6 +23,7 @@ app.get('/', (req, res) => {
     endpoints: {
       health: 'GET /api/health',
       products: 'GET /api/products',
+      collections: 'GET /api/collections',
       shipping: 'GET /api/shipping',
       orders: 'POST /api/orders'
     }

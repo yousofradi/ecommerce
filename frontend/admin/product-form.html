@@ -13,7 +13,10 @@
       <nav class="admin-nav">
         <a href="index.html">Dashboard</a>
         <a href="products.html" class="active">Products</a>
+        <a href="collections.html">Collections</a>
         <a href="orders.html">Orders</a>
+        <a href="shipment.html">Shipment</a>
+        <a href="webhooks.html">Webhooks</a>
         <a href="../index.html" target="_blank">View Store ↗</a>
         <a href="#" onclick="logout()" class="logout">Logout</a>
       </nav>
@@ -35,6 +38,12 @@
                 <label class="form-label" for="p-price">Base Price (EGP) *</label>
                 <input class="form-control" id="p-price" type="number" min="0" required placeholder="0">
               </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="p-collection">Collection</label>
+              <select class="form-control" id="p-collection">
+                <option value="">None</option>
+              </select>
             </div>
             <div class="form-group">
               <label class="form-label" for="p-image">Image URL</label>

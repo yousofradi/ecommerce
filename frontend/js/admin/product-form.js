@@ -7,6 +7,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const params = new URLSearchParams(window.location.search);
   editId = params.get('id');
 
+  try {
+    const collections = await api.getCollections();
+    const select = document.getElementById('p-collection');
+    collections.forEach(c => select.add(new Option(c.name, c._id)));
+  } catch(e) {}
+
   if (editId) {
     document.getElementById('form-title').textContent = 'Edit Product';
     try {
@@ -15,6 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('p-price').value = p.basePrice;
       document.getElementById('p-image').value = p.imageUrl || '';
       document.getElementById('p-desc').value = p.description || '';
+      if(p.collectionId) document.getElementById('p-collection').value = p.collectionId;
       optionGroups = (p.options || []).map(g => ({ name: g.name, required: g.required, values: [...g.values] }));
       renderOptionGroups();
     } catch (err) { showToast('Failed to load product', 'error'); }
@@ -79,6 +86,7 @@ async function saveProduct(e) {
     basePrice: Number(document.getElementById('p-price').value),
     imageUrl: document.getElementById('p-image').value.trim(),
     description: document.getElementById('p-desc').value.trim(),
+    collectionId: document.getElementById('p-collection').value || null,
     options: optionGroups.filter(g => g.name && g.values.length && g.values[0].label)
   };
 

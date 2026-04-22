@@ -16,6 +16,7 @@ const productSchema = new mongoose.Schema({
   basePrice: { type: Number, required: true, min: 0 },
   imageUrl: { type: String, default: '' },
   description: { type: String, default: '' },
+  collectionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Collection', default: null },
   options: { type: [optionGroupSchema], default: [] }
 }, { timestamps: true });
 

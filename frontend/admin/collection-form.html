@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add Collection — eStore Admin</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <div class="admin-brand">⚙️ Sundura Admin</div>
+      <nav class="admin-nav">
+        <a href="index.html">Dashboard</a>
+        <a href="products.html">Products</a>
+        <a href="collections.html" class="active">Collections</a>
+        <a href="orders.html">Orders</a>
+        <a href="shipment.html">Shipment</a>
+        <a href="webhooks.html">Webhooks</a>
+        <a href="../index.html" target="_blank">View Store ↗</a>
+        <a href="#" onclick="logout()" class="logout">Logout</a>
+      </nav>
+    </aside>
+
+    <main class="admin-main">
+      <div class="container" style="max-width:600px;margin:0">
+        <h1 class="page-title">Add Collection</h1>
+        <p class="page-subtitle"><a href="collections.html">← Back to Collections</a></p>
+        
+        <form id="collection-form">
+          <div class="admin-card" style="margin-bottom:24px">
+            <div class="form-group">
+              <label class="form-label" for="c-name">Collection Name *</label>
+              <input class="form-control" id="c-name" required placeholder="e.g., Summer Sale">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="c-image">Image URL</label>
+              <input class="form-control" id="c-image" type="url" placeholder="https://...">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="c-desc">Description</label>
+              <textarea class="form-control" id="c-desc" placeholder="A short description..."></textarea>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block" style="padding:16px;font-size:1.05rem">Save Collection</button>
+        </form>
+      </div>
+    </main>
+  </div>
+  <script src="../js/api.js"></script>
+  <script src="../js/admin/auth.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!requireAdmin()) return;
+      document.getElementById('collection-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const data = {
+          name: document.getElementById('c-name').value.trim(),
+          imageUrl: document.getElementById('c-image').value.trim(),
+          description: document.getElementById('c-desc').value.trim()
+        };
+        try {
+          await api.createCollection(data);
+          showToast('Collection created!');
+          setTimeout(() => window.location.href = 'collections.html', 1000);
+        } catch (err) { showToast('Error creating collection', 'error'); }
+      });
+    });
+  </script>
+</body>
+</html>

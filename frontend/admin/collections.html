@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Collections — eStore Admin</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <div class="admin-brand">⚙️ Sundura Admin</div>
+      <nav class="admin-nav">
+        <a href="index.html">Dashboard</a>
+        <a href="products.html">Products</a>
+        <a href="collections.html" class="active">Collections</a>
+        <a href="orders.html">Orders</a>
+        <a href="shipment.html">Shipment</a>
+        <a href="webhooks.html">Webhooks</a>
+        <a href="../index.html" target="_blank">View Store ↗</a>
+        <a href="#" onclick="logout()" class="logout">Logout</a>
+      </nav>
+    </aside>
+
+    <main class="admin-main">
+      <div class="container" style="max-width:1000px;margin:0">
+        <div class="flex-between mb-24">
+          <div><h1 class="page-title">Collections</h1></div>
+          <a href="collection-form.html" class="btn btn-primary">+ Add Collection</a>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>Image</th><th>Name</th><th>Description</th><th>Actions</th></tr></thead>
+            <tbody id="collections-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="../js/api.js"></script>
+  <script src="../js/admin/auth.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!requireAdmin()) return;
+      const tbody = document.getElementById('collections-tbody');
+      try {
+        const collections = await api.getCollections();
+        if (!collections.length) {
+          tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-24">No collections found. Add one!</td></tr>';
+          return;
+        }
+        tbody.innerHTML = collections.map(c => `
+          <tr>
+            <td><img src="${c.imageUrl || ''}" style="width:50px;height:50px;object-fit:cover;border-radius:4px" onerror="this.style.display='none'"></td>
+            <td style="font-weight:500">${c.name}</td>
+            <td class="text-muted">${c.description || '—'}</td>
+            <td>
+              <div class="flex gap-8">
+                <button class="btn btn-sm btn-secondary" onclick="deleteCol('${c._id}')">Delete</button>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        showToast('Error loading collections', 'error');
+      }
+    });
+
+    async function deleteCol(id) {
+      if (!confirm('Are you sure you want to delete this collection?')) return;
+      try {
+        await api.deleteCollection(id);
+        showToast('Collection deleted');
+        window.location.reload();
+      } catch (err) { showToast('Error deleting collection', 'error'); }
+    }
+  </script>
+</body>
+</html>
