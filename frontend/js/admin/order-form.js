@@ -140,14 +140,21 @@ window.removeCartItem = function(index) {
   renderCart();
 };
 
+window.updateItemQty = function(idx, val) {
+  const qty = parseInt(val, 10);
+  if (qty >= 1) {
+    cartItems[idx].quantity = qty;
+    recalcSummary();
+    renderCart();
+  }
+};
+
 window.setQty = function(index, delta) {
   const item = cartItems[index];
   if (!item) return;
   item.quantity = Math.max(1, item.quantity + delta);
-  // Update displayed number
-  const qtyEl = document.querySelector(`#cart-item-${index} .qty-num`);
-  if (qtyEl) qtyEl.textContent = item.quantity;
   recalcSummary();
+  renderCart();
 };
 
 window.setItemDiscount = function(index, val) {
@@ -175,7 +182,6 @@ window.setOption = function(index, groupIndex, optIndex) {
 // ── Render Cart ────────────────────────────────────────
 function renderCart() {
   const container = document.getElementById('cart-items-container');
-  const emptyMsg = document.getElementById('empty-cart-msg');
 
   if (cartItems.length === 0) {
     container.innerHTML = `
@@ -192,51 +198,49 @@ function renderCart() {
     const p = c.product;
     const imgSrc = p.imageUrl || '';
     const imgHtml = imgSrc
-      ? `<img class="order-cart-img" src="${imgSrc}" alt="${p.name}" onerror="this.style.display='none'">`
-      : `<div class="order-cart-img" style="background:var(--bg-body);display:flex;align-items:center;justify-content:center;font-size:2rem">📦</div>`;
+      ? `<img src="${imgSrc}" style="width:56px;height:56px;border-radius:8px;object-fit:cover;border:1px solid #e2e8f0;" alt="${p.name}" onerror="this.style.display='none'">`
+      : `<div style="width:56px;height:56px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.5rem">📦</div>`;
 
-    // Options HTML (Pills)
-    const optionsHtml = (p.options || []).map((group, gi) => {
-      const selected = c.selectedOptions.find(o => o.groupName === group.name);
-      return `
-        <div class="order-item-options">
-          <span class="option-group-label">${group.name}${group.required ? ' *' : ''}</span>
-          <div class="radio-options">
-            ${!group.required ? `<div class="radio-option"><input type="radio" id="opt_${i}_${gi}_none" name="opt_${i}_${gi}" value="" ${!selected ? 'checked' : ''} onchange="setOption(${i},${gi},-1)"><label for="opt_${i}_${gi}_none">بدون</label></div>` : ''}
-            ${group.values.map((v, vi) => `
-              <div class="radio-option">
-                <input type="radio" id="opt_${i}_${gi}_${vi}" name="opt_${i}_${gi}" value="${vi}" ${selected && selected.label === v.label ? 'checked' : ''} onchange="setOption(${i},${gi},${vi})">
-                <label for="opt_${i}_${gi}_${vi}">${v.label}${v.price ? ` (+${v.price})` : ''}</label>
-              </div>`).join('')}
-          </div>
-        </div>`;
-    }).join('');
+    const optText = (c.selectedOptions || []).map(op => op.label).join(' / ');
 
     return `
-      <div class="order-cart-item" id="cart-item-${i}">
-        <div class="order-cart-item-top">
-          ${imgHtml}
-          <div class="order-cart-meta">
-            <div class="order-cart-name">${p.name}</div>
-            <div class="order-cart-base-price">${formatPrice(p.basePrice)}</div>
-            ${optionsHtml}
+      <div class="product-card-item" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin-bottom: 12px; background: #fff;">
+        <!-- Top Row: Info & Pricing -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+          <!-- Right side: Name & Image -->
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="text-align: right;">
+              <div style="font-weight: 600; font-size: 1rem; color: #1e293b;">${p.name}</div>
+              ${optText ? `<div style="font-size: 0.85rem; color: #64748b; margin-top: 4px;">${optText}</div>` : ''}
+              ${c.discount ? `<div style="font-size:0.8rem;color:var(--danger);margin-top:4px">خصم: ${formatPrice(c.discount)}</div>` : ''}
+            </div>
+            ${imgHtml}
           </div>
-          <button type="button" class="btn btn-sm btn-danger" onclick="removeCartItem(${i})" title="حذف" style="flex-shrink:0">✕</button>
+          <!-- Left side: Pricing -->
+          <div style="display: flex; align-items: center; gap: 16px; flex-direction: row-reverse;">
+            <div style="font-size: 0.9rem; color: #64748b;" dir="ltr">${c.quantity} x ${formatPrice(p.basePrice)}</div>
+            <div style="font-weight: 700; font-size: 1.1rem; color: #1e293b;">${formatPrice(itemTotal(c))}</div>
+          </div>
         </div>
 
-        <div class="order-cart-controls">
-          <div class="qty-stepper">
-            <button type="button" onclick="setQty(${i},-1)">−</button>
-            <span class="qty-num">${c.quantity}</span>
-            <button type="button" onclick="setQty(${i},+1)">+</button>
+        <!-- Bottom Row: Actions -->
+        <div style="display: flex; gap: 8px; justify-content: flex-start; flex-direction: row-reverse; align-items: center;">
+          <button type="button" class="btn btn-sm" onclick="openItemDiscountModal(${i})" style="background: #fff; border: 1px solid #e2e8f0; color: #475569; display: flex; align-items: center; gap: 6px; font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; height: 32px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="2"></circle><circle cx="15" cy="15" r="2"></circle><path d="M19 5L5 19"></path></svg>
+            تطبيق خصم
+          </button>
+          
+          <!-- Quantity Stepper -->
+          <div style="display:flex; align-items:center; border:1px solid #e2e8f0; border-radius:6px; overflow:hidden; background:#fff; height: 32px;">
+            <button type="button" onclick="updateItemQty(${i}, ${c.quantity + 1})" style="width:28px;height:32px;background:#fff;border:none;border-left:1px solid #e2e8f0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">+</button>
+            <div style="width:32px;text-align:center;font-size:0.95rem;line-height:32px;font-weight:600;">${c.quantity}</div>
+            <button type="button" onclick="${c.quantity > 1 ? `updateItemQty(${i}, ${c.quantity - 1})` : ''}" style="width:28px;height:32px;background:${c.quantity > 1 ? '#fff' : '#f8fafc'};border:none;border-right:1px solid #e2e8f0;cursor:${c.quantity > 1 ? 'pointer' : 'not-allowed'};display:flex;align-items:center;justify-content:center;color:${c.quantity > 1 ? 'inherit' : '#cbd5e1'};font-size:1.1rem;" ${c.quantity <= 1 ? 'disabled' : ''}>-</button>
           </div>
-          <div class="item-discount-row">
-            <label>خصم المنتج:</label>
-            <input type="number" class="form-control" min="0" value="${c.discount}"
-              oninput="setItemDiscount(${i},this.value)" placeholder="0" style="width:90px">
-            <span style="font-size:0.82rem;color:var(--text-muted)">ج.م</span>
-          </div>
-          <span class="item-price-final" id="item-final-${i}">${formatPrice(itemTotal(c))}</span>
+
+          <button type="button" class="btn btn-sm" onclick="removeItem(${i})" style="background: #fff; border: 1px solid #fee2e2; color: #ef4444; display: flex; align-items: center; gap: 6px; font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; height: 32px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            إزالة
+          </button>
         </div>
       </div>`;
   }).join('');
@@ -353,5 +357,58 @@ window.submitOrder = async function() {
   } catch (err) {
     btns.forEach(b => { b.disabled = false; b.textContent = '✓ إنشاء الطلب'; });
     showToast(err.message || 'حدث خطأ أثناء إنشاء الطلب', 'error');
+  }
+};
+
+// ── Modals ─────────────────────────────────────────────
+window.openModal = function(modalId) {
+  document.getElementById(modalId).style.display = 'flex';
+};
+window.closeModal = function(modalId) {
+  document.getElementById(modalId).style.display = 'none';
+};
+
+window.openItemDiscountModal = function(idx) {
+  const item = cartItems[idx];
+  document.getElementById('modal-item-idx').value = idx;
+  document.getElementById('modal-item-discount').value = item.discount || 0;
+  openModal('item-discount-modal');
+};
+
+window.applyItemDiscount = function() {
+  const idx = parseInt(document.getElementById('modal-item-idx').value);
+  const val = document.getElementById('modal-item-discount').value;
+  const item = cartItems[idx];
+  if (item) {
+    item.discount = Math.max(0, parseFloat(val) || 0);
+    closeModal('item-discount-modal');
+    recalcSummary();
+    renderCart();
+  }
+};
+
+window.removeItem = function(idx) {
+  const item = cartItems[idx];
+  if (!item) return;
+  document.getElementById('modal-delete-idx').value = idx;
+  const previewEl = document.getElementById('delete-item-preview');
+  const p = item.product;
+  const imgHtml = p.imageUrl
+    ? `<div style="position:relative"><img src="${p.imageUrl}" style="width:80px;height:80px;border-radius:8px;object-fit:cover;"><span style="position:absolute;bottom:-5px;left:-5px;background:#64748b;color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;border:2px solid #fff;">${item.quantity}</span></div>`
+    : `<div style="width:80px;height:80px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.5rem">📦</div>`;
+  previewEl.innerHTML = `
+    <div style="font-weight:600; color:#1e293b; font-size:1rem; text-align:right; flex:1; margin-right:16px;">${p.name}</div>
+    ${imgHtml}
+  `;
+  openModal('delete-confirm-modal');
+};
+
+window.confirmRemoveItem = function() {
+  const idx = parseInt(document.getElementById('modal-delete-idx').value);
+  if (!isNaN(idx)) {
+    cartItems.splice(idx, 1);
+    closeModal('delete-confirm-modal');
+    recalcSummary();
+    renderCart();
   }
 };

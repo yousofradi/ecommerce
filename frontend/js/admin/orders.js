@@ -22,7 +22,7 @@ async function loadOrders() {
       }[o.paymentMethod] || o.paymentMethod;
 
       return `
-        <tr>
+        <tr onclick="viewOrder('${o.orderId}')" style="cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
           <td><code style="font-size:0.78rem;background:var(--bg-body);padding:3px 7px;border-radius:4px">${o.orderId.substring(0, 8)}…</code></td>
           <td>
             <div style="font-weight:600">${o.customer.name}</div>
@@ -43,8 +43,8 @@ async function loadOrders() {
           <td class="text-sm text-muted">${date}</td>
           <td>
             <div class="flex gap-8">
-              <button class="btn btn-secondary btn-sm" onclick="viewOrder('${o.orderId}')">عرض</button>
-              <button class="btn btn-danger btn-sm" onclick="deleteOrder('${o.orderId}')">حذف</button>
+              <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); viewOrder('${o.orderId}')">عرض</button>
+              <button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); deleteOrder('${o.orderId}')">حذف</button>
             </div>
           </td>
         </tr>`;

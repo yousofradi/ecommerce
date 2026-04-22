@@ -315,6 +315,10 @@
     @media (max-width: 480px) {
       .order-cart-item-top { flex-wrap: wrap; }
       .order-cart-controls { flex-direction: column; align-items: flex-start; }
+      /* Product card action row wraps on phone */
+      .product-card-item > div:last-child { flex-wrap: wrap !important; }
+      .product-card-item > div:first-child { flex-direction: column !important; gap: 8px !important; }
+      .flex-between { flex-direction: column; align-items: flex-start !important; gap: 12px; }
     }
   </style>
 </head>
@@ -338,8 +342,9 @@
       <div style="max-width:1100px">
         <div class="flex-between mb-24">
           <div>
-            <h1 class="page-title" style="margin-bottom:4px">إنشاء طلب جديد</h1>
-            <a href="orders.html" style="color:var(--text-muted);font-size:0.9rem">← العودة إلى الطلبات</a>
+            <h1 class="page-title" style="margin-bottom:4px;display:flex;align-items:center;gap:12px">
+              <a href="orders.html" style="font-size:1.2rem;color:var(--text-main);text-decoration:none;font-weight:700">الطلبات ></a>
+            </h1>
           </div>
           <button type="button" class="btn btn-primary" id="submit-btn" onclick="submitOrder()" style="padding:12px 28px;font-size:1rem">
             ✓ حفظ الطلب
@@ -382,24 +387,14 @@
                 <label class="form-label">الاسم الكامل *</label>
                 <input type="text" id="c-name" class="form-control" placeholder="اسم العميل" required>
               </div>
-              <div class="grid-2-always" style="gap:16px; margin-bottom:16px;">
+              <div class="grid-2" style="gap:16px; margin-bottom:16px;">
                 <div class="form-group" style="margin-bottom:0">
                   <label class="form-label">رقم الهاتف *</label>
-                  <div class="phone-input-wrapper">
-                    <div class="phone-input-flag">
-                      <img src="https://flagcdn.com/w20/eg.png" alt="EG"> +20
-                    </div>
-                    <input type="tel" id="c-phone" placeholder="1xxxxxxxxx" required>
-                  </div>
+                  <input type="tel" id="c-phone" class="form-control" placeholder="01xxxxxxxxx" required>
                 </div>
                 <div class="form-group" style="margin-bottom:0">
                   <label class="form-label">رقم هاتف آخر</label>
-                  <div class="phone-input-wrapper">
-                    <div class="phone-input-flag">
-                      <img src="https://flagcdn.com/w20/eg.png" alt="EG"> +20
-                    </div>
-                    <input type="tel" id="c-second-phone" placeholder="اختياري (Optional)">
-                  </div>
+                  <input type="tel" id="c-second-phone" class="form-control" placeholder="اختياري">
                 </div>
               </div>
               <div class="form-group">
@@ -519,6 +514,46 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-primary" onclick="addSelectedProducts()">أضف منتج</button>
         <button type="button" class="btn btn-secondary" onclick="closeProductsModal()" style="background:#fff;color:#333;border:1px solid #ccc">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+    <!-- Item Discount Modal -->
+  <div class="modal-overlay" id="item-discount-modal" style="display: none;">
+    <div class="modal-box" style="max-width: 400px; border-radius: 16px;">
+      <div class="modal-header" style="border:none; padding-bottom:0;">
+        <h3 style="width:100%; text-align:right; font-size:1.1rem; color:#1e293b; font-weight:600;">خصم خاص</h3>
+      </div>
+      <div class="modal-body" style="padding-top:12px;">
+        <input type="hidden" id="modal-item-idx">
+        <div class="form-group">
+          <div style="position:relative; display:flex; align-items:center;">
+            <input type="number" id="modal-item-discount" class="form-control" style="border-radius:12px; padding:12px 16px; padding-left:45px; text-align:right;" placeholder="أضف قيمة الخصم">
+            <span style="position:absolute; left:16px; color:#64748b; font-size:0.9rem;">ج.م.</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="border:none; justify-content: flex-start; gap: 12px; flex-direction: row-reverse;">
+        <button type="button" class="btn" style="background:#10b981; color:#fff; border-radius:24px; padding:8px 48px; font-weight:600;" onclick="applyItemDiscount()">تطبيق</button>
+        <button type="button" class="btn" style="background:#fff; border:1px solid #e2e8f0; color:#1e293b; border-radius:24px; padding:8px 48px; font-weight:600;" onclick="closeModal('item-discount-modal')">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal-overlay" id="delete-confirm-modal" style="display: none;">
+    <div class="modal-box" style="max-width: 450px; border-radius: 16px;">
+      <div class="modal-header" style="border:none; padding-bottom:8px;">
+        <h3 style="width:100%; text-align:right; font-size:1.1rem; color:#1e293b; font-weight:600;">هل أنت متأكد أنك تريد إزالة هذا العنصر؟</h3>
+      </div>
+      <div class="modal-body" style="padding: 16px;">
+        <input type="hidden" id="modal-delete-idx">
+        <div id="delete-item-preview" style="border:1px solid #f1f5f9; border-radius:12px; padding:12px; display:flex; align-items:center; justify-content:space-between; flex-direction:row-reverse; background:#fff;">
+        </div>
+      </div>
+      <div class="modal-footer" style="border:none; justify-content: flex-start; gap: 12px; flex-direction: row-reverse; border-top: 1px solid #f1f5f9; padding-top:20px;">
+        <button type="button" class="btn" style="background:#10b981; color:#fff; border-radius:24px; padding:8px 40px; font-weight:600;" onclick="confirmRemoveItem()">إزالة</button>
+        <button type="button" class="btn" style="background:#fff; border:1px solid #e2e8f0; color:#1e293b; border-radius:24px; padding:8px 40px; font-weight:600;" onclick="closeModal('delete-confirm-modal')">إلغاء</button>
       </div>
     </div>
   </div>

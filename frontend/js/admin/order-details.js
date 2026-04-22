@@ -172,6 +172,10 @@ function updatePaymentStatusUI() {
 
 // ── Modals & Editing ───────────────────────────────────
 
+window.openModal = function(modalId) {
+  document.getElementById(modalId).style.display = 'flex';
+};
+
 window.closeModal = function(modalId) {
   document.getElementById(modalId).style.display = 'none';
 };
@@ -189,6 +193,7 @@ window.applyCustomerChanges = function() {
   currentOrder.customer.secondPhone = document.getElementById('modal-c-phone2').value.trim();
   renderOrder();
   closeModal('customer-modal');
+  saveOrderChanges(true); // Silent save
 };
 
 window.openShippingModal = function() {
@@ -204,6 +209,7 @@ window.applyShippingChanges = function() {
   currentOrder.customer.notes = document.getElementById('modal-c-notes').value.trim();
   renderOrder();
   closeModal('shipping-modal');
+  saveOrderChanges(true); // Silent save
 };
 
 window.openPaymentModal = function() {
@@ -217,6 +223,7 @@ window.applyPaymentChanges = function() {
   currentOrder.paidAmount = parseFloat(document.getElementById('modal-paid-amount').value) || 0;
   renderOrder();
   closeModal('payment-modal');
+  saveOrderChanges(true); // Silent save
 };
 
 // ── Actions ────────────────────────────────────────────
@@ -321,10 +328,12 @@ window.markFullyPaid = function() {
 
 // ── Save ───────────────────────────────────────────────
 
-window.saveOrderChanges = async function() {
+window.saveOrderChanges = async function(silent = false) {
   const btn = document.getElementById('save-all-btn');
-  btn.disabled = true;
-  btn.textContent = 'جارٍ الحفظ...';
+  if (!silent) {
+    btn.disabled = true;
+    btn.textContent = 'جارٍ الحفظ...';
+  }
   
   try {
     const updates = {
@@ -337,13 +346,17 @@ window.saveOrderChanges = async function() {
     };
 
     await api.updateOrder(currentOrder.orderId, updates);
-    showToast('تم حفظ التغييرات ✓');
-    
-    // Refresh
-    setTimeout(() => window.location.reload(), 1000);
+    if (!silent) {
+      showToast('تم حفظ التغييرات ✓');
+      setTimeout(() => window.location.reload(), 1000);
+    } else {
+      showToast('تم تحديث البيانات بنجاح', 'success');
+    }
   } catch (err) {
-    btn.disabled = false;
-    btn.textContent = 'احفظ التغييرات';
+    if (!silent) {
+      btn.disabled = false;
+      btn.textContent = 'احفظ التغييرات';
+    }
     showToast(err.message || 'فشل الحفظ', 'error');
   }
 };

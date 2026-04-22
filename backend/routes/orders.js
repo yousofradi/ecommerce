@@ -145,7 +145,9 @@ router.put('/:orderId', adminAuth, async (req, res) => {
       { new: true, runValidators: true }
     );
 
-    if (!oldOrder.paid && order.paid) {
+    if (oldOrder.paidAmount !== order.paidAmount) {
+      sendWebhook('order.paid', order.toObject());
+    } else if (!oldOrder.paid && order.paid) {
       sendWebhook('order.paid', order.toObject());
     } else {
       sendWebhook('order.updated', order.toObject());

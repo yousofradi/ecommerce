@@ -88,6 +88,18 @@
     .pli-info { display: flex; align-items: center; gap: 12px; }
     .pli-img { width: 40px; height: 40px; border-radius: 4px; object-fit: cover; }
     .pli-checkbox { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; }
+
+    /* ── Mobile ── */
+    @media (max-width: 960px) {
+      .order-details-layout { grid-template-columns: 1fr !important; }
+    }
+    @media (max-width: 480px) {
+      .product-card-item > div:last-child { flex-wrap: wrap !important; }
+      .product-card-item > div:first-child { flex-direction: column !important; gap: 8px !important; }
+      .flex-between { flex-direction: column; align-items: flex-start !important; gap: 12px; }
+      .modal-overlay .modal-box { width: 96% !important; max-width: 96% !important; }
+      .modal-overlay .modal-body .grid-2 { grid-template-columns: 1fr !important; }
+    }
   </style>
 </head>
 <body>

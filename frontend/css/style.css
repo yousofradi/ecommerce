@@ -378,6 +378,14 @@ tr:hover td { background: #fafbfc; }
   .admin-nav a { padding: 7px 11px; font-size: 0.85rem; }
   .admin-nav a.logout { margin-top: 0; }
   .admin-main { padding: 20px 16px; }
+
+  /* Order details layout */
+  .order-details-layout { grid-template-columns: 1fr !important; }
+  .order-create-layout { grid-template-columns: 1fr !important; }
+
+  /* Tables scroll on mobile */
+  .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .table-wrapper table { min-width: 600px; }
 }
 
 @media (max-width: 768px) {
@@ -385,6 +393,9 @@ tr:hover td { background: #fafbfc; }
   .grid-3 { grid-template-columns: repeat(2, 1fr); }
   .grid-2 { grid-template-columns: 1fr; }
   .modal { padding: 20px; }
+
+  /* Modals full width on tablet */
+  .modal-overlay .modal-box { width: 95% !important; max-width: 95% !important; }
 }
 
 @media (max-width: 480px) {
@@ -396,4 +407,27 @@ tr:hover td { background: #fafbfc; }
   .admin-main { padding: 14px 12px; }
   .page-title { font-size: 1.3rem; }
   .flex-between { flex-wrap: wrap; gap: 12px; }
+
+  /* Product card actions wrap on phone */
+  .product-card-item > div:last-child {
+    flex-wrap: wrap !important;
+  }
+
+  /* Order summary sticky off on mobile */
+  .order-summary-card { position: static !important; }
+
+  /* Modal full width */
+  .modal-overlay .modal-box { 
+    width: 96% !important; 
+    max-width: 96% !important; 
+    max-height: 90vh !important;
+  }
+  .modal-overlay .modal-body .grid-2 { grid-template-columns: 1fr !important; }
+
+  /* Section header wrapping */
+  .section-header { flex-wrap: wrap; }
+
+  /* Info card responsive */
+  .info-card { margin-bottom: 12px; }
 }
+

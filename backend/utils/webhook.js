@@ -14,11 +14,11 @@ async function sendWebhook(event, data) {
     const subamount = data.totalPrice - data.shippingFee;
     
     // Map product items
-    const productItems = (data.items || []).map(item => ({
+    const products = (data.items || []).map(item => ({
       "name": item.name,
       "count": item.quantity,
-      "price of one": item.finalPrice / item.quantity,
-      "total price": item.finalPrice
+      "price": item.finalPrice / item.quantity,
+      "value option": (item.selectedOptions || []).map(o => o.label).join(' / ') || ""
     }));
 
     const rawPayload = {
@@ -33,7 +33,7 @@ async function sendWebhook(event, data) {
       "total amount": data.totalPrice,
       "paid amount": data.paidAmount || 0,
       "remaining amount": data.totalPrice - (data.paidAmount || 0),
-      "product items": productItems
+      "products": products
     };
 
     const payload = JSON.stringify({
