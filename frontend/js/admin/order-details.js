@@ -243,19 +243,36 @@ window.promptItemQty = function(idx) {
   }
 };
 
-window.promptItemDiscount = function(idx) {
+window.openItemDiscountModal = function(idx) {
   const item = currentOrder.items[idx];
-  const val = prompt('أدخل قيمة الخصم لهذا المنتج (ج.م):', item.discount || 0);
-  if (val !== null) {
-    item.discount = Math.max(0, parseFloat(val) || 0);
-    updateTotals();
-    renderItems();
-  }
+  document.getElementById('modal-item-idx').value = idx;
+  document.getElementById('modal-item-discount').value = item.discount || 0;
+  openModal('item-discount-modal');
 };
 
 window.removeItem = function(idx) {
-  if (confirm('هل أنت متأكد من إزالة هذا المنتج؟')) {
+  const item = currentOrder.items[idx];
+  if (!item) return;
+  
+  document.getElementById('modal-delete-idx').value = idx;
+  const previewEl = document.getElementById('delete-item-preview');
+  const imgHtml = item.imageUrl 
+    ? `<div style="position:relative"><img src="${item.imageUrl}" style="width:80px;height:80px;border-radius:8px;object-fit:cover;"><span style="position:absolute;bottom:-5px;left:-5px;background:#64748b;color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;border:2px solid #fff;">${item.quantity}</span></div>`
+    : `<div style="width:80px;height:80px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.5rem">📦</div>`;
+    
+  previewEl.innerHTML = `
+    <div style="font-weight:600; color:#1e293b; font-size:1rem; text-align:right; flex:1; margin-right:16px;">${item.name}</div>
+    ${imgHtml}
+  `;
+  
+  openModal('delete-confirm-modal');
+};
+
+window.confirmRemoveItem = function() {
+  const idx = parseInt(document.getElementById('modal-delete-idx').value);
+  if (!isNaN(idx)) {
     currentOrder.items.splice(idx, 1);
+    closeModal('delete-confirm-modal');
     updateTotals();
     renderItems();
   }

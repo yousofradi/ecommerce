@@ -173,7 +173,7 @@
             <div class="info-card">
               <div class="info-card-header" style="background:#fff">
                 <div class="flex gap-8">
-                  <button class="btn btn-secondary btn-sm" onclick="openModal('order-discount-modal')" style="background:#fff;border-color:var(--border-color)">تطبيق خصم</button>
+                  <button class="btn btn-secondary btn-sm" onclick="openOrderDiscountModal()" style="background:#fff;border-color:var(--border-color)">تطبيق خصم</button>
                 </div>
                 <h3 style="color:#000;font-weight:600;display:flex;align-items:center;gap:8px;">
                   <span id="view-payment-status" style="font-size:0.75rem;padding:4px 8px;border-radius:12px;"></span>
@@ -253,7 +253,7 @@
 
   <!-- Customer Edit Modal -->
   <div class="modal-overlay" id="customer-modal" style="display: none;">
-    <div class="modal-box" style="max-width: 400px;">
+    <div class="modal-box" style="max-width: 600px;">
       <div class="modal-header">
         <button type="button" class="modal-close" onclick="closeModal('customer-modal')">×</button>
         <h3>تعديل بيانات العميل</h3>
@@ -262,32 +262,22 @@
       <div class="modal-body">
         <div class="form-group mb-16">
           <label class="form-label">الاسم</label>
-          <input type="text" id="modal-c-name" class="form-control">
+          <input type="text" id="modal-c-name" class="form-control" placeholder="اسم العميل">
         </div>
-        <div class="grid-2-always" style="gap:16px; margin-bottom:16px;">
+        <div class="grid-2" style="gap:16px; margin-bottom:16px;">
           <div class="form-group" style="margin-bottom:0">
             <label class="form-label">رقم الهاتف</label>
-            <div class="phone-input-wrapper">
-              <div class="phone-input-flag">
-                <img src="https://flagcdn.com/w20/eg.png" alt="EG"> +20
-              </div>
-              <input type="tel" id="modal-c-phone" placeholder="1xxxxxxxxx">
-            </div>
+            <input type="tel" id="modal-c-phone" class="form-control" placeholder="01xxxxxxxxx">
           </div>
           <div class="form-group" style="margin-bottom:0">
             <label class="form-label">هاتف آخر</label>
-            <div class="phone-input-wrapper">
-              <div class="phone-input-flag">
-                <img src="https://flagcdn.com/w20/eg.png" alt="EG"> +20
-              </div>
-              <input type="tel" id="modal-c-phone2" placeholder="اختياري (Optional)">
-            </div>
+            <input type="tel" id="modal-c-phone2" class="form-control" placeholder="اختياري">
           </div>
         </div>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" onclick="applyCustomerChanges()">تطبيق</button>
-        <button type="button" class="btn btn-secondary" onclick="closeModal('customer-modal')">إلغاء</button>
+      <div class="modal-footer" style="justify-content: flex-start; gap: 12px; flex-direction: row-reverse;">
+        <button type="button" class="btn" style="background:#10b981; color:#fff; border-radius:24px; padding:8px 32px; font-weight:600;" onclick="applyCustomerChanges()">تطبيق</button>
+        <button type="button" class="btn" style="background:#fff; border:1px solid #e2e8f0; color:#1e293b; border-radius:24px; padding:8px 32px; font-weight:600;" onclick="closeModal('customer-modal')">إلغاء</button>
       </div>
     </div>
   </div>
@@ -311,12 +301,12 @@
         </div>
         <div class="form-group mb-16">
           <label class="form-label">ملاحظات</label>
-          <textarea id="modal-c-notes" class="form-control" rows="3"></textarea>
+          <textarea id="modal-c-notes" class="form-control" rows="6"></textarea>
         </div>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" onclick="applyShippingChanges()">تطبيق</button>
-        <button type="button" class="btn btn-secondary" onclick="closeModal('shipping-modal')">إلغاء</button>
+      <div class="modal-footer" style="justify-content: flex-start; gap: 12px; flex-direction: row-reverse;">
+        <button type="button" class="btn" style="background:#10b981; color:#fff; border-radius:24px; padding:8px 32px; font-weight:600;" onclick="applyShippingChanges()">تطبيق</button>
+        <button type="button" class="btn" style="background:#fff; border:1px solid #e2e8f0; color:#1e293b; border-radius:24px; padding:8px 32px; font-weight:600;" onclick="closeModal('shipping-modal')">إلغاء</button>
       </div>
     </div>
   </div>
@@ -352,43 +342,62 @@
 
   <!-- Item Discount Modal -->
   <div class="modal-overlay" id="item-discount-modal" style="display: none;">
-    <div class="modal-box" style="max-width: 400px;">
-      <div class="modal-header">
-        <button type="button" class="modal-close" onclick="closeModal('item-discount-modal')">×</button>
-        <h3>تطبيق خصم للمنتج</h3>
-        <div style="width:24px"></div>
+    <div class="modal-box" style="max-width: 400px; border-radius: 16px;">
+      <div class="modal-header" style="border:none; padding-bottom:0;">
+        <h3 style="width:100%; text-align:right; font-size:1.1rem; color:#1e293b; font-weight:600;">خصم خاص</h3>
       </div>
-      <div class="modal-body">
+      <div class="modal-body" style="padding-top:12px;">
         <input type="hidden" id="modal-item-idx">
-        <div class="form-group mb-16">
-          <label class="form-label">قيمة الخصم (ج.م)</label>
-          <input type="number" id="modal-item-discount" class="form-control" min="0">
+        <div class="form-group">
+          <div style="position:relative; display:flex; align-items:center;">
+            <input type="number" id="modal-item-discount" class="form-control" style="border-radius:12px; padding:12px 16px; padding-left:45px; text-align:right;" placeholder="أضف قيمة الخصم">
+            <span style="position:absolute; left:16px; color:#64748b; font-size:0.9rem;">ج.م.</span>
+          </div>
         </div>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" onclick="applyItemDiscount()">تطبيق</button>
-        <button type="button" class="btn btn-secondary" onclick="closeModal('item-discount-modal')">إلغاء</button>
+      <div class="modal-footer" style="border:none; justify-content: flex-start; gap: 12px; flex-direction: row-reverse;">
+        <button type="button" class="btn" style="background:#10b981; color:#fff; border-radius:24px; padding:8px 48px; font-weight:600;" onclick="applyItemDiscount()">تطبيق</button>
+        <button type="button" class="btn" style="background:#fff; border:1px solid #e2e8f0; color:#1e293b; border-radius:24px; padding:8px 48px; font-weight:600;" onclick="closeModal('item-discount-modal')">إلغاء</button>
       </div>
     </div>
   </div>
 
   <!-- Order Discount Modal -->
   <div class="modal-overlay" id="order-discount-modal" style="display: none;">
-    <div class="modal-box" style="max-width: 400px;">
-      <div class="modal-header">
-        <button type="button" class="modal-close" onclick="closeModal('order-discount-modal')">×</button>
-        <h3>تطبيق خصم للطلب</h3>
-        <div style="width:24px"></div>
+    <div class="modal-box" style="max-width: 400px; border-radius: 16px;">
+      <div class="modal-header" style="border:none; padding-bottom:0;">
+        <h3 style="width:100%; text-align:right; font-size:1.1rem; color:#1e293b; font-weight:600;">خصم خاص للطلب</h3>
       </div>
-      <div class="modal-body">
-        <div class="form-group mb-16">
-          <label class="form-label">قيمة الخصم الكلي (ج.م)</label>
-          <input type="number" id="modal-order-discount" class="form-control" min="0">
+      <div class="modal-body" style="padding-top:12px;">
+        <div class="form-group">
+          <div style="position:relative; display:flex; align-items:center;">
+            <input type="number" id="modal-order-discount" class="form-control" style="border-radius:12px; padding:12px 16px; padding-left:45px; text-align:right;" placeholder="أضف قيمة الخصم">
+            <span style="position:absolute; left:16px; color:#64748b; font-size:0.9rem;">ج.م.</span>
+          </div>
         </div>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" onclick="applyOrderDiscount()">تطبيق</button>
-        <button type="button" class="btn btn-secondary" onclick="closeModal('order-discount-modal')">إلغاء</button>
+      <div class="modal-footer" style="border:none; justify-content: flex-start; gap: 12px; flex-direction: row-reverse;">
+        <button type="button" class="btn" style="background:#10b981; color:#fff; border-radius:24px; padding:8px 48px; font-weight:600;" onclick="applyOrderDiscount()">تطبيق</button>
+        <button type="button" class="btn" style="background:#fff; border:1px solid #e2e8f0; color:#1e293b; border-radius:24px; padding:8px 48px; font-weight:600;" onclick="closeModal('order-discount-modal')">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal-overlay" id="delete-confirm-modal" style="display: none;">
+    <div class="modal-box" style="max-width: 450px; border-radius: 16px;">
+      <div class="modal-header" style="border:none; padding-bottom:8px;">
+        <h3 style="width:100%; text-align:right; font-size:1.1rem; color:#1e293b; font-weight:600;">هل أنت متأكد أنك تريد إزالة هذا العنصر؟</h3>
+      </div>
+      <div class="modal-body" style="padding: 16px;">
+        <input type="hidden" id="modal-delete-idx">
+        <div id="delete-item-preview" style="border:1px solid #f1f5f9; border-radius:12px; padding:12px; display:flex; align-items:center; justify-content:space-between; flex-direction:row-reverse; background:#fff;">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+      <div class="modal-footer" style="border:none; justify-content: flex-start; gap: 12px; flex-direction: row-reverse; border-top: 1px solid #f1f5f9; padding-top:20px;">
+        <button type="button" class="btn" style="background:#10b981; color:#fff; border-radius:24px; padding:8px 40px; font-weight:600;" onclick="confirmRemoveItem()">إزالة</button>
+        <button type="button" class="btn" style="background:#fff; border:1px solid #e2e8f0; color:#1e293b; border-radius:24px; padding:8px 40px; font-weight:600;" onclick="closeModal('delete-confirm-modal')">إلغاء</button>
       </div>
     </div>
   </div>
