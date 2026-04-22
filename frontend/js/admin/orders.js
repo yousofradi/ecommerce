@@ -61,7 +61,8 @@ window.viewOrder = function(orderId) {
 
 // ── Delete Order ───────────────────────────────────────
 window.deleteOrder = async function(orderId) {
-  if (!confirm('هل أنت متأكد من حذف هذا الطلب؟')) return;
+  const confirmed = await window.showConfirmModal('تأكيد الحذف', 'هل أنت متأكد من حذف هذا الطلب؟');
+  if (!confirmed) return;
   try {
     await api.deleteOrder(orderId);
     showToast('تم حذف الطلب');

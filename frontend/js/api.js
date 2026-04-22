@@ -69,6 +69,44 @@ function showToast(msg, type = 'success') {
   setTimeout(() => toast.remove?.(), 4500);
 }
 
+// ── Global Confirm Modal ────────────────────────────────
+window.showConfirmModal = function(title, message) {
+  return new Promise((resolve) => {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.style.display = 'flex';
+    modal.style.zIndex = '9999';
+    modal.innerHTML = `
+      <div class="modal-box" style="max-width: 450px; border-radius: 16px;">
+        <div class="modal-header" style="border:none; padding-bottom:8px;">
+          <h3 style="width:100%; text-align:right; font-size:1.1rem; color:#1e293b; font-weight:600;">${title}</h3>
+        </div>
+        ${message ? `<div class="modal-body" style="padding: 16px; text-align:right;">${message}</div>` : ''}
+        <div class="modal-footer" style="border:none; justify-content: flex-start; gap: 12px; flex-direction: row-reverse; border-top: 1px solid #f1f5f9; padding-top:20px;">
+          <button type="button" id="confirm-yes" class="btn" style="background:#ef4444; color:#fff; border-radius:24px; padding:8px 40px; font-weight:600;">تأكيد</button>
+          <button type="button" id="confirm-no" class="btn" style="background:#fff; border:1px solid #e2e8f0; color:#1e293b; border-radius:24px; padding:8px 40px; font-weight:600;">إلغاء</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    modal.querySelector('#confirm-yes').onclick = () => {
+      modal.remove();
+      resolve(true);
+    };
+    modal.querySelector('#confirm-no').onclick = () => {
+      modal.remove();
+      resolve(false);
+    };
+    modal.onclick = (e) => {
+      if (e.target === modal) {
+        modal.remove();
+        resolve(false);
+      }
+    };
+  });
+};
+
 // ── Currency formatter ─────────────────────────────────
 function formatPrice(p) {
   return `${Number(p || 0).toLocaleString('ar-EG')} ج.م`;

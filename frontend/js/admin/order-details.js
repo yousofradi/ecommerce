@@ -3,6 +3,7 @@
 let currentOrder = null;
 let allProducts = [];
 let collectionsMap = {};
+let shippingMap = {};
 
 document.addEventListener('DOMContentLoaded', async () => {
   if (!requireAdmin()) return;
@@ -15,18 +16,36 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   try {
-    const [order, products] = await Promise.all([
+    const [order, products, shipping] = await Promise.all([
       api.getOrder(orderId),
-      api.getProducts().catch(() => [])
+      api.getProducts().catch(() => []),
+      api.getShippingFees().catch(() => ({}))
     ]);
     currentOrder = order;
     allProducts = products;
+    shippingMap = shipping;
+
+    // Fallback if DB is empty
+    if (Object.keys(shippingMap).length === 0) {
+      shippingMap = {
+        'القاهرة': 85, 'الجيزة': 85, 'الإسكندرية': 85, 'البحيرة': 85, 'القليوبية': 85, 'الغربية': 85, 'المنوفية': 85, 'دمياط': 85, 'الدقهلية': 85, 'كفر الشيخ': 85, 'الشرقية': 85, 'الاسماعيلية': 95, 'السويس': 95, 'بورسعيد': 95, 'الفيوم': 110, 'بني سويف': 110, 'المنيا': 110, 'اسيوط': 110, 'سوهاج': 130, 'قنا': 130, 'أسوان': 130, 'الأقصر': 130, 'البحر الأحمر': 130, 'مرسي مطروح': 135, 'الوادي الجديد': 135, 'شمال سيناء': 135, 'جنوب سيناء': 135
+      };
+    }
+
+    // Populate government dropdown
+    const govSelect = document.getElementById('modal-c-gov');
+    if (govSelect) {
+      Object.keys(shippingMap).forEach(gov => {
+        govSelect.add(new Option(gov, gov));
+      });
+    }
     
     renderOrder();
   } catch (err) {
     showToast('فشل تحميل بيانات الطلب', 'error');
   }
 });
+
 
 // ── Rendering ──────────────────────────────────────────
 function renderOrder() {
@@ -73,11 +92,14 @@ function renderItems() {
     const optText = (item.selectedOptions || []).map(op => op.label).join(' / ');
     
     return `
-      <div class="product-card-item" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin-bottom: 12px; background: #fff;">
+      <div class="product-card-item" draggable="true" data-idx="${idx}" ondragstart="onDragStart(event)" ondragover="onDragOver(event)" ondrop="onDrop(event)" ondragend="onDragEnd(event)" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin-bottom: 12px; background: #fff; transition: opacity 0.2s, transform 0.2s; cursor: grab;">
         <!-- Top Row: Info & Pricing -->
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
-          <!-- Right side: Name & Image (Text on far right, Image to its left) -->
+          <!-- Right side: Drag Handle + Name & Image -->
           <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="cursor:grab; color:#94a3b8; display:flex; align-items:center; padding:4px;" title="اسحب لتغيير الترتيب">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="5" r="2"/><circle cx="15" cy="5" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="9" cy="19" r="2"/><circle cx="15" cy="19" r="2"/></svg>
+            </div>
             <div style="text-align: right;">
               <div style="font-weight: 600; font-size: 1rem; color: #1e293b;">${item.name}</div>
               ${optText ? `<div style="font-size: 0.85rem; color: #64748b; margin-top: 4px;">${optText}</div>` : ''}
@@ -94,6 +116,12 @@ function renderItems() {
 
         <!-- Bottom Row: Actions -->
         <div style="display: flex; gap: 8px; justify-content: flex-start; flex-direction: row-reverse; align-items: center;">
+          <!-- Reorder arrows -->
+          <div style="display:flex; gap:2px;">
+            <button class="btn btn-sm" onclick="moveItem(${idx}, -1)" style="background:#fff; border:1px solid #e2e8f0; color:#475569; padding:4px 8px; border-radius:6px; height:32px; ${idx === 0 ? 'opacity:0.3;cursor:not-allowed;' : ''}" ${idx === 0 ? 'disabled' : ''} title="تحريك لأعلى">▲</button>
+            <button class="btn btn-sm" onclick="moveItem(${idx}, 1)" style="background:#fff; border:1px solid #e2e8f0; color:#475569; padding:4px 8px; border-radius:6px; height:32px; ${idx === currentOrder.items.length - 1 ? 'opacity:0.3;cursor:not-allowed;' : ''}" ${idx === currentOrder.items.length - 1 ? 'disabled' : ''} title="تحريك لأسفل">▼</button>
+          </div>
+
           <button class="btn btn-sm" onclick="openItemDiscountModal(${idx})" style="background: #fff; border: 1px solid #e2e8f0; color: #475569; display: flex; align-items: center; gap: 6px; font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; height: 32px;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="2"></circle><circle cx="15" cy="15" r="2"></circle><path d="M19 5L5 19"></path></svg>
             تطبيق خصم
@@ -228,6 +256,53 @@ window.applyPaymentChanges = function() {
 };
 
 // ── Actions ────────────────────────────────────────────
+
+// ── Drag-and-Drop Reorder ──────────────────────────────
+let dragIdx = null;
+
+window.onDragStart = function(e) {
+  dragIdx = parseInt(e.currentTarget.dataset.idx);
+  e.currentTarget.style.opacity = '0.4';
+  e.dataTransfer.effectAllowed = 'move';
+};
+
+window.onDragOver = function(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  const card = e.currentTarget;
+  card.style.borderTop = '3px solid var(--primary)';
+};
+
+window.onDrop = function(e) {
+  e.preventDefault();
+  const dropIdx = parseInt(e.currentTarget.dataset.idx);
+  e.currentTarget.style.borderTop = '';
+  if (dragIdx !== null && dragIdx !== dropIdx) {
+    const items = currentOrder.items;
+    const [moved] = items.splice(dragIdx, 1);
+    items.splice(dropIdx, 0, moved);
+    renderItems();
+    updateTotals();
+  }
+};
+
+window.onDragEnd = function(e) {
+  e.currentTarget.style.opacity = '1';
+  // Clean up all border highlights
+  document.querySelectorAll('.product-card-item').forEach(el => {
+    el.style.borderTop = '';
+  });
+  dragIdx = null;
+};
+
+window.moveItem = function(idx, direction) {
+  const items = currentOrder.items;
+  const newIdx = idx + direction;
+  if (newIdx < 0 || newIdx >= items.length) return;
+  [items[idx], items[newIdx]] = [items[newIdx], items[idx]];
+  renderItems();
+  updateTotals();
+};
 
 window.updateItemQty = function(idx, val) {
   const qty = parseInt(val, 10);

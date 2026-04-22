@@ -44,7 +44,8 @@ async function loadProducts() {
 }
 
 async function deleteProduct(id, name) {
-  if (!confirm(`حذف منتج "${name}"؟`)) return;
+  const confirmed = await window.showConfirmModal('تأكيد الحذف', `هل أنت متأكد من حذف المنتج "${name}"؟`);
+  if (!confirmed) return;
   try {
     await api.deleteProduct(id);
     showToast('تم حذف المنتج');
