@@ -62,6 +62,35 @@ img { max-width: 100%; display: block; }
   .grid-2 { grid-template-columns: 1fr; }
 }
 
+.grid-2-always {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* ── Phone Input UI ── */
+.phone-input-wrapper {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  overflow: hidden;
+  direction: ltr;
+}
+.phone-input-wrapper:focus-within { border-color: var(--border-focus); }
+.phone-input-flag {
+  display: flex; align-items: center; gap: 6px;
+  padding: 0 12px; background: var(--bg-hover);
+  border-right: 1px solid var(--border-color);
+  height: 40px; font-size: 0.95rem; color: var(--text-main);
+}
+.phone-input-flag img { width: 22px; height: 16px; object-fit: cover; border-radius: 2px; }
+.phone-input-wrapper input {
+  flex: 1; border: none !important; outline: none; background: transparent;
+  padding: 0 12px; height: 40px; font-size: 0.95rem; text-align: left;
+}
+
 /* ── Store Header ────────────────────────────────────── */
 .store-header {
   background: var(--bg-surface);

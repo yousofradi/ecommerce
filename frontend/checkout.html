@@ -32,14 +32,26 @@
               <label class="form-label" for="cust-name">Full Name *</label>
               <input class="form-control" id="cust-name" required placeholder="Your full name">
             </div>
-            <div class="form-group">
+          <div class="grid-2-always" style="gap:16px; margin-bottom:16px;">
+            <div class="form-group" style="margin-bottom:0">
               <label class="form-label" for="cust-phone">Phone *</label>
-              <input class="form-control" id="cust-phone" type="tel" required placeholder="01xxxxxxxxx">
+              <div class="phone-input-wrapper">
+                <div class="phone-input-flag">
+                  <img src="https://flagcdn.com/w20/eg.png" alt="EG"> +20
+                </div>
+                <input id="cust-phone" type="tel" required placeholder="1xxxxxxxxx">
+              </div>
             </div>
-            <div class="form-group">
+            <div class="form-group" style="margin-bottom:0">
               <label class="form-label" for="cust-phone2">Second Phone</label>
-              <input class="form-control" id="cust-phone2" type="tel" placeholder="Optional">
+              <div class="phone-input-wrapper">
+                <div class="phone-input-flag">
+                  <img src="https://flagcdn.com/w20/eg.png" alt="EG"> +20
+                </div>
+                <input id="cust-phone2" type="tel" placeholder="Optional">
+              </div>
             </div>
+          </div>
             <div class="form-group">
               <label class="form-label" for="government">Governorate *</label>
               <select class="form-control" id="government" required>

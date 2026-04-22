@@ -309,6 +309,35 @@ window.closeProductsModal = function() {
   document.getElementById('products-modal').style.display = 'none';
 };
 
+window.toggleProductVariants = function(pid) {
+  const el = document.getElementById(`variants-${pid}`);
+  const icon = document.getElementById(`icon-${pid}`);
+  if (!el) return;
+  if (el.style.display === 'none') {
+    el.style.display = 'block';
+    icon.style.transform = 'rotate(180deg)';
+  } else {
+    el.style.display = 'none';
+    icon.style.transform = 'rotate(0deg)';
+  }
+};
+
+function getProductCombinations(options) {
+  if (!options || options.length === 0) return [];
+  let results = [ [] ];
+  for (const group of options) {
+    const currentResults = [];
+    const values = group.required ? group.values : [{label: 'بدون ' + group.name, price: 0}, ...group.values];
+    for (const res of results) {
+      for (const val of values) {
+        currentResults.push([...res, { groupName: group.name, label: val.label, price: val.price }]);
+      }
+    }
+    results = currentResults;
+  }
+  return results;
+}
+
 window.renderModalProducts = function() {
   const q = document.getElementById('modal-search').value.toLowerCase().trim();
   const col = document.getElementById('modal-col-filter').value;
@@ -320,27 +349,67 @@ window.renderModalProducts = function() {
 
   listEl.innerHTML = filtered.map(p => {
     const imgHtml = p.imageUrl ? `<img src="${p.imageUrl}" class="pli-img">` : `<div class="pli-img">📦</div>`;
-    return `
-      <label class="product-list-item" style="cursor:pointer">
-        <div class="pli-info">
-          ${imgHtml}
-          <div>
-            <div style="font-weight:600;font-size:0.95rem">${p.name}</div>
-            <div style="font-size:0.85rem;color:var(--primary)">${formatPrice(p.basePrice)}</div>
+    const hasOptions = p.options && p.options.length > 0;
+    
+    if (!hasOptions) {
+      return `
+        <label class="product-list-item" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border-color);">
+          <div class="pli-info" style="display:flex; align-items:center; gap:12px;">
+            ${imgHtml}
+            <div>
+              <div style="font-weight:600;font-size:0.95rem">${p.name}</div>
+              <div style="font-size:0.85rem;color:var(--primary)">${formatPrice(p.basePrice)}</div>
+            </div>
           </div>
+          <input type="checkbox" class="pli-checkbox product-select-cb" value="${p._id}">
+        </label>
+      `;
+    }
+
+    const combinations = getProductCombinations(p.options);
+    const variantsHtml = combinations.map((combo, idx) => {
+      const title = combo.map(c => c.label).join(' / ');
+      const extraPrice = combo.reduce((sum, c) => sum + (c.price || 0), 0);
+      const finalPrice = p.basePrice + extraPrice;
+      // We store combo data in a data attribute
+      const comboStr = encodeURIComponent(JSON.stringify(combo));
+      return `
+        <label class="product-variant-item" style="display:flex; align-items:center; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border-color); background:#fafafa; cursor:pointer; padding-right:48px;">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div style="font-size:0.9rem;font-weight:500;">${title}</div>
+            <div style="background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:12px; font-size:0.75rem;">في المخزون</div>
+            <div style="font-size:0.85rem;color:var(--primary)">${formatPrice(finalPrice)}</div>
+          </div>
+          <input type="checkbox" class="pli-checkbox product-variant-cb" data-pid="${p._id}" data-combo="${comboStr}">
+        </label>
+      `;
+    }).join('');
+
+    return `
+      <div>
+        <div class="product-list-item" style="display:flex; align-items:center; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border-color); cursor:pointer;" onclick="toggleProductVariants('${p._id}')">
+          <div class="pli-info" style="display:flex; align-items:center; gap:12px;">
+            <div id="icon-${p._id}" style="transition:transform 0.2s; color:var(--text-muted);">▼</div>
+            ${imgHtml}
+            <div style="font-weight:600;font-size:0.95rem">${p.name}</div>
+          </div>
+          <!-- Parent does not have a checkbox if it has variants -->
         </div>
-        <input type="checkbox" class="pli-checkbox product-select-cb" value="${p._id}">
-      </label>
+        <div id="variants-${p._id}" style="display:none;">
+          ${variantsHtml}
+        </div>
+      </div>
     `;
   }).join('');
 };
 
 window.addSelectedProducts = function() {
-  const checked = document.querySelectorAll('.product-select-cb:checked');
-  checked.forEach(cb => {
+  // 1. Add simple products
+  const checkedSimple = document.querySelectorAll('.product-select-cb:checked');
+  checkedSimple.forEach(cb => {
     const p = allProducts.find(x => x._id === cb.value);
     if (p) {
-      const existing = currentOrder.items.find(i => i.productId === p._id);
+      const existing = currentOrder.items.find(i => i.productId === p._id && (!i.selectedOptions || i.selectedOptions.length === 0));
       if (existing) {
         existing.quantity++;
       } else {
@@ -349,7 +418,7 @@ window.addSelectedProducts = function() {
           name: p.name,
           imageUrl: p.imageUrl || '',
           basePrice: p.basePrice,
-          selectedOptions: [], // Default empty options, can enhance later
+          selectedOptions: [],
           quantity: 1,
           discount: 0,
           finalPrice: p.basePrice
@@ -357,6 +426,38 @@ window.addSelectedProducts = function() {
       }
     }
   });
+
+  // 2. Add variants
+  const checkedVariants = document.querySelectorAll('.product-variant-cb:checked');
+  checkedVariants.forEach(cb => {
+    const p = allProducts.find(x => x._id === cb.dataset.pid);
+    if (p) {
+      const combo = JSON.parse(decodeURIComponent(cb.dataset.combo));
+      // Check if this exact variant is already in cart
+      const existing = currentOrder.items.find(i => {
+        if (i.productId !== p._id) return false;
+        if (!i.selectedOptions || i.selectedOptions.length !== combo.length) return false;
+        return combo.every(c => i.selectedOptions.some(so => so.groupName === c.groupName && so.label === c.label));
+      });
+
+      if (existing) {
+        existing.quantity++;
+      } else {
+        const extraPrice = combo.reduce((sum, c) => sum + (c.price || 0), 0);
+        currentOrder.items.push({
+          productId: p._id,
+          name: p.name,
+          imageUrl: p.imageUrl || '',
+          basePrice: p.basePrice,
+          selectedOptions: combo,
+          quantity: 1,
+          discount: 0,
+          finalPrice: p.basePrice + extraPrice
+        });
+      }
+    }
+  });
+
   closeProductsModal();
   updateTotals();
   renderItems();

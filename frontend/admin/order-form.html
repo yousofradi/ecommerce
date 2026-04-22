@@ -382,14 +382,24 @@
                 <label class="form-label">الاسم الكامل *</label>
                 <input type="text" id="c-name" class="form-control" placeholder="اسم العميل" required>
               </div>
-              <div class="grid-2" style="gap:16px">
-                <div class="form-group">
+              <div class="grid-2-always" style="gap:16px; margin-bottom:16px;">
+                <div class="form-group" style="margin-bottom:0">
                   <label class="form-label">رقم الهاتف *</label>
-                  <input type="tel" id="c-phone" class="form-control" placeholder="01xxxxxxxxx" required>
+                  <div class="phone-input-wrapper">
+                    <div class="phone-input-flag">
+                      <img src="https://flagcdn.com/w20/eg.png" alt="EG"> +20
+                    </div>
+                    <input type="tel" id="c-phone" placeholder="1xxxxxxxxx" required>
+                  </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group" style="margin-bottom:0">
                   <label class="form-label">رقم هاتف آخر</label>
-                  <input type="tel" id="c-second-phone" class="form-control" placeholder="اختياري">
+                  <div class="phone-input-wrapper">
+                    <div class="phone-input-flag">
+                      <img src="https://flagcdn.com/w20/eg.png" alt="EG"> +20
+                    </div>
+                    <input type="tel" id="c-second-phone" placeholder="اختياري (Optional)">
+                  </div>
                 </div>
               </div>
               <div class="form-group">
