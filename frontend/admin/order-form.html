@@ -378,11 +378,11 @@
                 <h3>بيانات العميل</h3>
               </div>
 
+              <div class="form-group">
+                <label class="form-label">الاسم الكامل *</label>
+                <input type="text" id="c-name" class="form-control" placeholder="اسم العميل" required>
+              </div>
               <div class="grid-2" style="gap:16px">
-                <div class="form-group">
-                  <label class="form-label">الاسم الكامل *</label>
-                  <input type="text" id="c-name" class="form-control" placeholder="اسم العميل" required>
-                </div>
                 <div class="form-group">
                   <label class="form-label">رقم الهاتف *</label>
                   <input type="tel" id="c-phone" class="form-control" placeholder="01xxxxxxxxx" required>
@@ -391,12 +391,12 @@
                   <label class="form-label">رقم هاتف آخر</label>
                   <input type="tel" id="c-second-phone" class="form-control" placeholder="اختياري">
                 </div>
-                <div class="form-group">
-                  <label class="form-label">المحافظة *</label>
-                  <select id="c-gov" class="form-control" required onchange="recalcSummary()">
-                    <option value="">اختر المحافظة</option>
-                  </select>
-                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">المحافظة *</label>
+                <select id="c-gov" class="form-control" required onchange="recalcSummary()">
+                  <option value="">اختر المحافظة</option>
+                </select>
               </div>
               <div class="form-group">
                 <label class="form-label">العنوان التفصيلي *</label>
