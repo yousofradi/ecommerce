@@ -66,6 +66,38 @@
     }
     .editing .edit-input { display: block; }
     .editing .read-only-text { display: none; }
+
+    /* ── Products Modal ── */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5); z-index: 1000;
+      display: none; align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: #fff; border-radius: var(--radius-lg);
+      width: 90%; max-width: 600px; max-height: 85vh;
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .modal-header {
+      padding: 16px 20px; border-bottom: 1px solid var(--border-color);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .modal-header h3 { margin: 0; font-size: 1.1rem; }
+    .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted); }
+    .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+    .modal-footer {
+      padding: 16px 20px; border-top: 1px solid var(--border-color);
+      display: flex; justify-content: flex-start; gap: 12px;
+    }
+    .product-list-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 0; border-bottom: 1px solid var(--border-color);
+    }
+    .product-list-item:last-child { border-bottom: none; }
+    .pli-info { display: flex; align-items: center; gap: 12px; }
+    .pli-img { width: 40px; height: 40px; border-radius: 4px; object-fit: cover; }
+    .pli-checkbox { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; }
   </style>
 </head>
 <body>
