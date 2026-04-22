@@ -149,8 +149,6 @@ router.put('/:orderId', adminAuth, async (req, res) => {
       sendWebhook('order.paid', order.toObject());
     } else if (!oldOrder.paid && order.paid) {
       sendWebhook('order.paid', order.toObject());
-    } else {
-      sendWebhook('order.updated', order.toObject());
     }
 
     res.json(order);

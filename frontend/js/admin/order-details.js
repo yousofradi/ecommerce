@@ -398,7 +398,9 @@ window.applyItemDiscount = function() {
 
 window.markFullyPaid = function() {
   currentOrder.paidAmount = currentOrder.totalPrice;
+  currentOrder.forcePaymentWebhook = true;
   renderOrder();
+  saveOrderChanges(true);
 };
 
 // ── Save ───────────────────────────────────────────────
@@ -422,6 +424,8 @@ window.saveOrderChanges = async function(silent = false) {
     };
 
     await api.updateOrder(currentOrder.orderId, updates);
+    currentOrder.forcePaymentWebhook = false; // Reset the flag
+    
     if (!silent) {
       showToast('تم حفظ التغييرات ✓');
       setTimeout(() => window.location.reload(), 1000);
