@@ -221,6 +221,7 @@ window.openPaymentModal = function() {
 window.applyPaymentChanges = function() {
   currentOrder.paymentMethod = document.getElementById('modal-payment-method').value;
   currentOrder.paidAmount = parseFloat(document.getElementById('modal-paid-amount').value) || 0;
+  currentOrder.forcePaymentWebhook = true; // Flag to force trigger webhook
   renderOrder();
   closeModal('payment-modal');
   saveOrderChanges(true); // Silent save
@@ -342,7 +343,8 @@ window.saveOrderChanges = async function(silent = false) {
       paymentMethod: currentOrder.paymentMethod,
       paidAmount: currentOrder.paidAmount,
       paid: currentOrder.paidAmount >= currentOrder.totalPrice,
-      customer: currentOrder.customer
+      customer: currentOrder.customer,
+      forcePaymentWebhook: currentOrder.forcePaymentWebhook
     };
 
     await api.updateOrder(currentOrder.orderId, updates);

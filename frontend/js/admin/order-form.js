@@ -61,6 +61,35 @@ window.closeProductsModal = function() {
   document.getElementById('products-modal').classList.remove('open');
 };
 
+window.toggleProductVariants = function(pid) {
+  const el = document.getElementById(`variants-${pid}`);
+  const icon = document.getElementById(`icon-${pid}`);
+  if (!el) return;
+  if (el.style.display === 'none') {
+    el.style.display = 'block';
+    icon.style.transform = 'rotate(180deg)';
+  } else {
+    el.style.display = 'none';
+    icon.style.transform = 'rotate(0deg)';
+  }
+};
+
+function getProductCombinations(options) {
+  if (!options || options.length === 0) return [];
+  let results = [ [] ];
+  for (const group of options) {
+    const currentResults = [];
+    const values = group.required ? group.values : [{label: '\u0628\u062f\u0648\u0646 ' + group.name, price: 0}, ...group.values];
+    for (const res of results) {
+      for (const val of values) {
+        currentResults.push([...res, { groupName: group.name, label: val.label, price: val.price }]);
+      }
+    }
+    results = currentResults;
+  }
+  return results;
+}
+
 window.renderModalProducts = function() {
   const q = document.getElementById('modal-search').value.toLowerCase().trim();
   const col = document.getElementById('modal-col-filter').value;
@@ -71,46 +100,96 @@ window.renderModalProducts = function() {
   if (col) filtered = filtered.filter(p => p.collectionId === col);
 
   if (!filtered.length) {
-    listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">لا توجد منتجات</div>';
+    listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">\u0644\u0627 \u062a\u0648\u062c\u062f \u0645\u0646\u062a\u062c\u0627\u062a</div>';
     return;
   }
 
   listEl.innerHTML = filtered.map(p => {
-    const img = p.imageUrl || '';
-    const imgHtml = img
-      ? `<img src="${img}" class="pli-img" alt="${p.name}">`
-      : `<div class="pli-img" style="background:var(--bg-body);display:flex;align-items:center;justify-content:center;font-size:1.2rem">📦</div>`;
+    const imgHtml = p.imageUrl ? `<img src="${p.imageUrl}" class="pli-img">` : `<div class="pli-img">\ud83d\udce6</div>`;
+    const hasOptions = p.options && p.options.length > 0;
+
+    if (!hasOptions) {
+      return `
+        <label class="product-list-item" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border-color);">
+          <div class="pli-info" style="display:flex; align-items:center; gap:12px;">
+            ${imgHtml}
+            <div>
+              <div style="font-weight:600;font-size:0.95rem">${p.name}</div>
+              <div style="font-size:0.85rem;color:var(--primary)">${formatPrice(p.basePrice)}</div>
+            </div>
+          </div>
+          <input type="radio" class="pli-checkbox product-select-cb" name="product-select" value="${p._id}" style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer;">
+        </label>
+      `;
+    }
+
+    const combinations = getProductCombinations(p.options);
+    const variantsHtml = combinations.map((combo, idx) => {
+      const title = combo.map(c => c.label).join(' / ');
+      const extraPrice = combo.reduce((sum, c) => sum + (c.price || 0), 0);
+      const finalPrice = p.basePrice + extraPrice;
+      const comboStr = encodeURIComponent(JSON.stringify(combo));
+      return `
+        <label class="product-variant-item" style="display:flex; align-items:center; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border-color); background:#fafafa; cursor:pointer; padding-right:48px;">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div style="font-size:0.9rem;font-weight:500;">${title}</div>
+            <div style="font-size:0.85rem;color:var(--primary)">${formatPrice(finalPrice)}</div>
+          </div>
+          <input type="radio" class="pli-checkbox product-variant-cb" name="product-select" data-pid="${p._id}" data-combo="${comboStr}" style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer;">
+        </label>
+      `;
+    }).join('');
+
     return `
-      <label class="product-list-item" style="cursor:pointer">
-        <div class="pli-info">
-          ${imgHtml}
-          <div>
-            <div style="font-weight:600;font-size:0.95rem;color:var(--text-main)">${p.name}</div>
-            <div style="font-size:0.85rem;color:var(--primary);font-weight:600">${formatPrice(p.basePrice)}</div>
+      <div>
+        <div class="product-list-item" style="display:flex; align-items:center; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border-color); cursor:pointer;" onclick="toggleProductVariants('${p._id}')">
+          <div class="pli-info" style="display:flex; align-items:center; gap:12px;">
+            <div id="icon-${p._id}" style="transition:transform 0.2s; color:var(--text-muted);">\u25bc</div>
+            ${imgHtml}
+            <div style="font-weight:600;font-size:0.95rem">${p.name}</div>
           </div>
         </div>
-        <div style="display:flex;align-items:center;gap:12px">
-          <span style="font-size:0.75rem;background:var(--bg-body);padding:2px 8px;border-radius:12px;color:var(--text-muted)">في المخزون</span>
-          <input type="checkbox" class="pli-checkbox product-select-cb" value="${p._id}">
+        <div id="variants-${p._id}" style="display:none;">
+          ${variantsHtml}
         </div>
-      </label>
+      </div>
     `;
   }).join('');
 };
 
 window.addSelectedProducts = function() {
-  const checked = document.querySelectorAll('.product-select-cb:checked');
-  if (!checked.length) return showToast('اختر منتجاً واحداً على الأقل', 'error');
+  // 1. Check simple products
+  const checkedSimple = document.querySelector('.product-select-cb:checked');
+  // 2. Check variants
+  const checkedVariant = document.querySelector('.product-variant-cb:checked');
 
-  checked.forEach(cb => {
-    const id = cb.value;
-    const p = allProducts.find(x => x._id === id);
+  if (!checkedSimple && !checkedVariant) return showToast('\u0627\u062e\u062a\u0631 \u0645\u0646\u062a\u062c\u0627\u064b \u0648\u0627\u062d\u062f\u0627\u064b \u0639\u0644\u0649 \u0627\u0644\u0623\u0642\u0644', 'error');
+
+  if (checkedSimple && !checkedSimple.classList.contains('product-variant-cb')) {
+    const p = allProducts.find(x => x._id === checkedSimple.value);
     if (p) {
-      const existing = cartItems.find(c => c.product._id === id);
+      const existing = cartItems.find(c => c.product._id === p._id && (!c.selectedOptions || c.selectedOptions.length === 0));
       if (existing) existing.quantity++;
       else cartItems.push({ product: p, quantity: 1, selectedOptions: [], discount: 0 });
     }
-  });
+  }
+
+  if (checkedVariant) {
+    const p = allProducts.find(x => x._id === checkedVariant.dataset.pid);
+    if (p) {
+      const combo = JSON.parse(decodeURIComponent(checkedVariant.dataset.combo));
+      const existing = cartItems.find(c => {
+        if (c.product._id !== p._id) return false;
+        if (!c.selectedOptions || c.selectedOptions.length !== combo.length) return false;
+        return combo.every(cv => c.selectedOptions.some(so => so.groupName === cv.groupName && so.label === cv.label));
+      });
+      if (existing) {
+        existing.quantity++;
+      } else {
+        cartItems.push({ product: p, quantity: 1, selectedOptions: combo, discount: 0 });
+      }
+    }
+  }
 
   closeProductsModal();
   renderCart();
