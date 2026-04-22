@@ -112,8 +112,8 @@
         <div class="flex-between mb-24">
           <div>
             <h1 class="page-title" style="margin-bottom:4px;display:flex;align-items:center;gap:12px">
-              <span id="page-order-id">تعديل الطلب #...</span>
-              <a href="orders.html" style="font-size:0.9rem;color:var(--text-muted);text-decoration:none">الطلبات <</a>
+              <a href="orders.html" style="font-size:1.2rem;color:var(--text-main);text-decoration:none;font-weight:700">الطلبات ></a>
+              <span id="page-order-id" style="display:none">تعديل الطلب #...</span>
             </h1>
           </div>
           <div class="flex gap-12">
@@ -173,7 +173,7 @@
             <div class="info-card">
               <div class="info-card-header" style="background:#fff">
                 <div class="flex gap-8">
-                  <button class="btn btn-secondary btn-sm" onclick="promptOrderDiscount()" style="background:#fff;border-color:var(--border-color)">تطبيق خصم</button>
+                  <button class="btn btn-secondary btn-sm" onclick="openModal('order-discount-modal')" style="background:#fff;border-color:var(--border-color)">تطبيق خصم</button>
                 </div>
                 <h3 style="color:#000;font-weight:600;display:flex;align-items:center;gap:8px;">
                   <span id="view-payment-status" style="font-size:0.75rem;padding:4px 8px;border-radius:12px;"></span>
@@ -346,6 +346,49 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-primary" onclick="applyPaymentChanges()">تطبيق</button>
         <button type="button" class="btn btn-secondary" onclick="closeModal('payment-modal')">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Item Discount Modal -->
+  <div class="modal-overlay" id="item-discount-modal" style="display: none;">
+    <div class="modal-box" style="max-width: 400px;">
+      <div class="modal-header">
+        <button type="button" class="modal-close" onclick="closeModal('item-discount-modal')">×</button>
+        <h3>تطبيق خصم للمنتج</h3>
+        <div style="width:24px"></div>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="modal-item-idx">
+        <div class="form-group mb-16">
+          <label class="form-label">قيمة الخصم (ج.م)</label>
+          <input type="number" id="modal-item-discount" class="form-control" min="0">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" onclick="applyItemDiscount()">تطبيق</button>
+        <button type="button" class="btn btn-secondary" onclick="closeModal('item-discount-modal')">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Order Discount Modal -->
+  <div class="modal-overlay" id="order-discount-modal" style="display: none;">
+    <div class="modal-box" style="max-width: 400px;">
+      <div class="modal-header">
+        <button type="button" class="modal-close" onclick="closeModal('order-discount-modal')">×</button>
+        <h3>تطبيق خصم للطلب</h3>
+        <div style="width:24px"></div>
+      </div>
+      <div class="modal-body">
+        <div class="form-group mb-16">
+          <label class="form-label">قيمة الخصم الكلي (ج.م)</label>
+          <input type="number" id="modal-order-discount" class="form-control" min="0">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" onclick="applyOrderDiscount()">تطبيق</button>
+        <button type="button" class="btn btn-secondary" onclick="closeModal('order-discount-modal')">إلغاء</button>
       </div>
     </div>
   </div>

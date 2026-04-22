@@ -76,14 +76,14 @@ function renderItems() {
       <div class="product-card-item" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin-bottom: 12px; background: #fff;">
         <!-- Top Row: Info & Pricing -->
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
-          <!-- Right side: Image & Name -->
-          <div style="display: flex; align-items: center; gap: 12px; flex-direction: row-reverse;">
-            ${imgHtml}
+          <!-- Right side: Name & Image (Text on far right, Image to its left) -->
+          <div style="display: flex; align-items: center; gap: 12px;">
             <div style="text-align: right;">
               <div style="font-weight: 600; font-size: 1rem; color: #1e293b;">${item.name}</div>
               ${optText ? `<div style="font-size: 0.85rem; color: #64748b; margin-top: 4px;">${optText}</div>` : ''}
               ${item.discount ? `<div style="font-size:0.8rem;color:var(--danger);margin-top:4px">خصم: ${formatPrice(item.discount)}</div>` : ''}
             </div>
+            ${imgHtml}
           </div>
           <!-- Left side: Pricing -->
           <div style="display: flex; align-items: center; gap: 16px; flex-direction: row-reverse;">
@@ -93,18 +93,20 @@ function renderItems() {
         </div>
 
         <!-- Bottom Row: Actions -->
-        <div style="display: flex; gap: 8px; justify-content: flex-start; flex-direction: row-reverse;">
-          <button class="btn btn-sm" onclick="promptItemDiscount(${idx})" style="background: #fff; border: 1px solid #e2e8f0; color: #475569; display: flex; align-items: center; gap: 6px; font-size: 0.8rem; padding: 6px 12px; border-radius: 6px;">
+        <div style="display: flex; gap: 8px; justify-content: flex-start; flex-direction: row-reverse; align-items: center;">
+          <button class="btn btn-sm" onclick="openItemDiscountModal(${idx})" style="background: #fff; border: 1px solid #e2e8f0; color: #475569; display: flex; align-items: center; gap: 6px; font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; height: 32px;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="2"></circle><circle cx="15" cy="15" r="2"></circle><path d="M19 5L5 19"></path></svg>
             تطبيق خصم
           </button>
           
-          <button class="btn btn-sm" onclick="promptItemQty(${idx})" style="background: #fff; border: 1px solid #e2e8f0; color: #475569; display: flex; align-items: center; gap: 6px; font-size: 0.8rem; padding: 6px 12px; border-radius: 6px;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.92-10.28l5.58 5.58"></path></svg>
-            تغيير الكمية
-          </button>
+          <!-- Quantity Stepper restored -->
+          <div class="qty-stepper" style="display:flex; align-items:center; border:1px solid #e2e8f0; border-radius:6px; overflow:hidden; background:#fff; height: 32px;">
+            <button type="button" onclick="updateItemQty(${idx}, ${item.quantity + 1})" style="width:28px;height:32px;background:#fff;border:none;border-left:1px solid #e2e8f0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">+</button>
+            <div style="width:32px;text-align:center;font-size:0.95rem;line-height:32px;font-weight:600;">${item.quantity}</div>
+            <button type="button" onclick="${item.quantity > 1 ? `updateItemQty(${idx}, ${item.quantity - 1})` : ''}" style="width:28px;height:32px;background:${item.quantity > 1 ? '#fff' : '#f8fafc'};border:none;border-right:1px solid #e2e8f0;cursor:${item.quantity > 1 ? 'pointer' : 'not-allowed'};display:flex;align-items:center;justify-content:center;color:${item.quantity > 1 ? 'inherit' : '#cbd5e1'};font-size:1.1rem;" ${item.quantity <= 1 ? 'disabled' : ''}>-</button>
+          </div>
 
-          <button class="btn btn-sm" onclick="removeItem(${idx})" style="background: #fff; border: 1px solid #fee2e2; color: #ef4444; display: flex; align-items: center; gap: 6px; font-size: 0.8rem; padding: 6px 12px; border-radius: 6px;">
+          <button class="btn btn-sm" onclick="removeItem(${idx})" style="background: #fff; border: 1px solid #fee2e2; color: #ef4444; display: flex; align-items: center; gap: 6px; font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; height: 32px;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
             إزالة
           </button>
@@ -260,10 +262,38 @@ window.removeItem = function(idx) {
 };
 
 window.promptOrderDiscount = function() {
-  const val = prompt('أدخل قيمة الخصم الكلي للطلب (ج.م):', currentOrder.discount || 0);
-  if (val !== null) {
-    currentOrder.discount = Math.max(0, parseFloat(val) || 0);
+  openModal('order-discount-modal');
+  document.getElementById('modal-order-discount').value = currentOrder.discount || 0;
+};
+
+window.openOrderDiscountModal = function() {
+  openModal('order-discount-modal');
+  document.getElementById('modal-order-discount').value = currentOrder.discount || 0;
+};
+
+window.applyOrderDiscount = function() {
+  const val = document.getElementById('modal-order-discount').value;
+  currentOrder.discount = Math.max(0, parseFloat(val) || 0);
+  closeModal('order-discount-modal');
+  updateTotals();
+};
+
+window.openItemDiscountModal = function(idx) {
+  const item = currentOrder.items[idx];
+  document.getElementById('modal-item-idx').value = idx;
+  document.getElementById('modal-item-discount').value = item.discount || 0;
+  openModal('item-discount-modal');
+};
+
+window.applyItemDiscount = function() {
+  const idx = parseInt(document.getElementById('modal-item-idx').value);
+  const val = document.getElementById('modal-item-discount').value;
+  const item = currentOrder.items[idx];
+  if (item) {
+    item.discount = Math.max(0, parseFloat(val) || 0);
+    closeModal('item-discount-modal');
     updateTotals();
+    renderItems();
   }
 };
 
