@@ -7,32 +7,33 @@
   <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
-  <nav class="navbar">
-    <div class="container">
-      <a href="index.html" class="nav-brand">⚙️ Admin Panel</a>
-      <div class="nav-links">
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <div class="admin-brand">⚙️ Sundura Admin</div>
+      <nav class="admin-nav">
         <a href="index.html">Dashboard</a>
         <a href="products.html" class="active">Products</a>
         <a href="orders.html">Orders</a>
-        <a href="../index.html">Store →</a>
-        <a href="#" onclick="logout()" style="color:var(--danger)">Logout</a>
+        <a href="../index.html" target="_blank">View Store ↗</a>
+        <a href="#" onclick="logout()" class="logout">Logout</a>
+      </nav>
+    </aside>
+
+    <main class="admin-main">
+      <div class="container" style="max-width:1000px;margin:0">
+        <div class="flex-between mb-24">
+          <div><h1 class="page-title">Products</h1></div>
+          <a href="product-form.html" class="btn btn-primary">+ Add Product</a>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>Image</th><th>Name</th><th>Price</th><th>Options</th><th>Actions</th></tr></thead>
+            <tbody id="products-tbody"></tbody>
+          </table>
+        </div>
       </div>
-    </div>
-  </nav>
-  <main class="page-content">
-    <div class="container">
-      <div class="flex-between mb-24">
-        <div><h1 class="page-title">Products</h1></div>
-        <a href="product-form.html" class="btn btn-primary">+ Add Product</a>
-      </div>
-      <div class="table-wrapper">
-        <table>
-          <thead><tr><th>Image</th><th>Name</th><th>Price</th><th>Options</th><th>Actions</th></tr></thead>
-          <tbody id="products-tbody"></tbody>
-        </table>
-      </div>
-    </div>
-  </main>
+    </main>
+  </div>
   <script src="../js/api.js"></script>
   <script src="../js/admin/auth.js"></script>
   <script src="../js/admin/products.js"></script>

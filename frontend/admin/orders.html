@@ -7,30 +7,31 @@
   <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
-  <nav class="navbar">
-    <div class="container">
-      <a href="index.html" class="nav-brand">⚙️ Admin Panel</a>
-      <div class="nav-links">
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <div class="admin-brand">⚙️ Sundura Admin</div>
+      <nav class="admin-nav">
         <a href="index.html">Dashboard</a>
         <a href="products.html">Products</a>
         <a href="orders.html" class="active">Orders</a>
-        <a href="../index.html">Store →</a>
-        <a href="#" onclick="logout()" style="color:var(--danger)">Logout</a>
+        <a href="../index.html" target="_blank">View Store ↗</a>
+        <a href="#" onclick="logout()" class="logout">Logout</a>
+      </nav>
+    </aside>
+
+    <main class="admin-main">
+      <div class="container" style="max-width:1200px;margin:0">
+        <h1 class="page-title">Orders</h1>
+        <p class="page-subtitle">View and manage all customer orders</p>
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Paid</th><th>Actions</th></tr></thead>
+            <tbody id="orders-tbody"></tbody>
+          </table>
+        </div>
       </div>
-    </div>
-  </nav>
-  <main class="page-content">
-    <div class="container">
-      <h1 class="page-title">Orders</h1>
-      <p class="page-subtitle">View and manage all customer orders</p>
-      <div class="table-wrapper">
-        <table>
-          <thead><tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Paid</th><th>Actions</th></tr></thead>
-          <tbody id="orders-tbody"></tbody>
-        </table>
-      </div>
-    </div>
-  </main>
+    </main>
+  </div>
   <script src="../js/api.js"></script>
   <script src="../js/admin/auth.js"></script>
   <script src="../js/admin/orders.js"></script>

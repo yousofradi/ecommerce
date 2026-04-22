@@ -7,37 +7,40 @@
   <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
-  <nav class="navbar">
-    <div class="container">
-      <a href="index.html" class="nav-brand">⚙️ Admin Panel</a>
-      <div class="nav-links">
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <div class="admin-brand">⚙️ Sundura Admin</div>
+      <nav class="admin-nav">
         <a href="index.html" class="active">Dashboard</a>
         <a href="products.html">Products</a>
         <a href="orders.html">Orders</a>
-        <a href="../index.html">Store →</a>
-        <a href="#" onclick="logout()" style="color:var(--danger)">Logout</a>
+        <a href="../index.html" target="_blank">View Store ↗</a>
+        <a href="#" onclick="logout()" class="logout">Logout</a>
+      </nav>
+    </aside>
+
+    <main class="admin-main">
+      <div class="container" style="max-width:1000px;margin:0">
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-subtitle">Overview of your store performance</p>
+        
+        <div class="grid grid-3 mb-24" id="stats">
+          <div class="admin-card text-center"><div class="page-title" style="color:var(--primary)" id="stat-products">—</div><div class="text-muted">Products</div></div>
+          <div class="admin-card text-center"><div class="page-title" style="color:var(--primary)" id="stat-orders">—</div><div class="text-muted">Orders</div></div>
+          <div class="admin-card text-center"><div class="page-title" style="color:var(--primary)" id="stat-revenue">—</div><div class="text-muted">Revenue</div></div>
+        </div>
+        
+        <div class="grid grid-2">
+          <a href="products.html" class="admin-card" style="text-align:center;text-decoration:none;display:block">
+            <h3>🛍️ Manage Products</h3><p class="text-muted mt-8">Add, edit, and manage your inventory</p>
+          </a>
+          <a href="orders.html" class="admin-card" style="text-align:center;text-decoration:none;display:block">
+            <h3>📦 View Orders</h3><p class="text-muted mt-8">Process customer orders</p>
+          </a>
+        </div>
       </div>
-    </div>
-  </nav>
-  <main class="page-content">
-    <div class="container">
-      <h1 class="page-title">Dashboard</h1>
-      <p class="page-subtitle">Overview of your store</p>
-      <div class="grid grid-3 mb-24" id="stats">
-        <div class="stat-card"><div class="stat-value" id="stat-products">—</div><div class="stat-label">Products</div></div>
-        <div class="stat-card"><div class="stat-value" id="stat-orders">—</div><div class="stat-label">Orders</div></div>
-        <div class="stat-card"><div class="stat-value" id="stat-revenue">—</div><div class="stat-label">Revenue</div></div>
-      </div>
-      <div class="grid grid-2">
-        <a href="products.html" class="card" style="padding:32px;text-align:center;text-decoration:none;color:inherit">
-          <h2>🛍️ Products</h2><p class="text-muted mt-8">Add, edit, and manage your products</p>
-        </a>
-        <a href="orders.html" class="card" style="padding:32px;text-align:center;text-decoration:none;color:inherit">
-          <h2>📦 Orders</h2><p class="text-muted mt-8">View and manage customer orders</p>
-        </a>
-      </div>
-    </div>
-  </main>
+    </main>
+  </div>
   <script src="../js/api.js"></script>
   <script src="../js/admin/auth.js"></script>
   <script>
