@@ -25,11 +25,11 @@ async function loadOrders() {
         <tr onclick="viewOrder('${o.orderId}')" style="cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
           <td><code style="font-size:0.78rem;background:var(--bg-body);padding:3px 7px;border-radius:4px">${o.orderId.substring(0, 8)}…</code></td>
           <td>
-            <div style="font-weight:600">${o.customer.name}</div>
-            <div class="text-sm text-muted">${o.customer.phone}</div>
-            <div class="text-sm text-muted">${o.customer.government}</div>
+            <div style="font-weight:600">${o.customer?.name || 'بدون اسم'}</div>
+            <div class="text-sm text-muted">${o.customer?.phone || ''}</div>
+            <div class="text-sm text-muted">${o.customer?.government || ''}</div>
           </td>
-          <td>${o.items.length} منتج</td>
+          <td>${o.items?.length || 0} منتج</td>
           <td>
             <div style="font-weight:700;color:var(--primary)">${formatPrice(o.totalPrice)}</div>
             ${o.discount ? `<div class="text-sm" style="color:var(--danger)">خصم: ${formatPrice(o.discount)}</div>` : ''}
