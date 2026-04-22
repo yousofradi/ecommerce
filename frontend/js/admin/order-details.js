@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const [order, products, shipping] = await Promise.all([
       api.getOrder(orderId),
       api.getProducts().catch(() => []),
-      api.getShippingFees().catch(() => ({}))
+      api.getShipping().catch(() => ({}))
     ]);
     currentOrder = order;
     allProducts = products;

@@ -117,12 +117,28 @@ document.addEventListener('DOMContentLoaded', () => {
   const sidebar = document.querySelector('.admin-sidebar');
   const toggle  = document.querySelector('.sidebar-toggle');
   if (sidebar && toggle) {
-    toggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+    toggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      sidebar.classList.toggle('open');
+    });
+
     // Close sidebar when a nav link is clicked (mobile)
     sidebar.querySelectorAll('.admin-nav a').forEach(a => {
       a.addEventListener('click', () => {
         if (window.innerWidth < 960) sidebar.classList.remove('open');
       });
+    });
+
+    // Close sidebar when clicking outside (on the overlay area)
+    document.addEventListener('click', (e) => {
+      if (window.innerWidth < 960 && sidebar.classList.contains('open')) {
+        const nav = sidebar.querySelector('.admin-nav');
+        const header = sidebar.querySelector('.admin-sidebar-header');
+        // If click is NOT inside the nav or header, close
+        if (!nav.contains(e.target) && !header.contains(e.target)) {
+          sidebar.classList.remove('open');
+        }
+      }
     });
   }
 });
