@@ -9,10 +9,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!requireAdmin()) return;
 
   try {
-    const [products, shipping] = await Promise.all([
-      api.getProducts(),
-      api.getShipping()
-    ]);
+    let products = [];
+    try { products = await api.getProducts(); } catch (e) {}
+    
+    let shipping = {};
+    try { shipping = await api.getShipping(); } catch (e) {}
+
+    // Fallback if DB is empty
+    if (Object.keys(shipping).length === 0) {
+      shipping = {
+        'القاهرة': 85, 'الجيزة': 85, 'الإسكندرية': 85, 'البحيرة': 85, 'القليوبية': 85, 'الغربية': 85, 'المنوفية': 85, 'دمياط': 85, 'الدقهلية': 85, 'كفر الشيخ': 85, 'الشرقية': 85, 'الاسماعيلية': 95, 'السويس': 95, 'بورسعيد': 95, 'الفيوم': 110, 'بني سويف': 110, 'المنيا': 110, 'اسيوط': 110, 'سوهاج': 130, 'قنا': 130, 'أسوان': 130, 'الأقصر': 130, 'البحر الأحمر': 130, 'مرسي مطروح': 135, 'الوادي الجديد': 135, 'شمال سيناء': 135, 'جنوب سيناء': 135
+      };
+    }
+    
     allProducts = products;
     shippingMap = shipping;
 
@@ -28,68 +37,101 @@ document.addEventListener('DOMContentLoaded', async () => {
   updatePaymentUI();
 });
 
-// ── Product Search ─────────────────────────────────────
-function setupSearch() {
-  const input = document.getElementById('product-search-input');
-  const dropdown = document.getElementById('search-dropdown');
+// ── Products Modal ─────────────────────────────────────
+let collectionsMap = {};
+window.openProductsModal = async function() {
+  document.getElementById('products-modal').classList.add('open');
+  // Load collections if not loaded
+  if (Object.keys(collectionsMap).length === 0) {
+    try {
+      const cols = await api.getCollections();
+      const sel = document.getElementById('modal-col-filter');
+      cols.forEach(c => {
+        collectionsMap[c._id] = c.name;
+        sel.add(new Option(c.name, c._id));
+      });
+    } catch (e) {}
+  }
+  document.getElementById('modal-search').value = '';
+  document.getElementById('modal-col-filter').value = '';
+  renderModalProducts();
+};
 
-  input.addEventListener('input', () => {
-    const term = input.value.trim().toLowerCase();
-    if (!term) { dropdown.classList.remove('open'); return; }
+window.closeProductsModal = function() {
+  document.getElementById('products-modal').classList.remove('open');
+};
 
-    const matches = allProducts.filter(p => p.name.toLowerCase().includes(term));
-    if (!matches.length) {
-      dropdown.innerHTML = '<div style="padding:14px;color:var(--text-muted);text-align:center">لا توجد نتائج</div>';
-    } else {
-      dropdown.innerHTML = matches.map(p => {
-        const img = p.imageUrl || '';
-        const imgHtml = img
-          ? `<img class="search-result-img" src="${img}" alt="${p.name}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22><rect width=%2248%22 height=%2248%22 fill=%22%23f1f5f9%22/></svg>'">`
-          : `<div class="search-result-img" style="background:var(--bg-body);display:flex;align-items:center;justify-content:center;font-size:1.4rem">📦</div>`;
-        return `
-          <div class="search-result-item" onclick="addToCart('${p._id}')">
-            ${imgHtml}
-            <div class="search-result-info">
-              <div class="search-result-name">${p.name}</div>
-              <div class="search-result-price">${formatPrice(p.basePrice)}</div>
-            </div>
-          </div>`;
-      }).join('');
+window.renderModalProducts = function() {
+  const q = document.getElementById('modal-search').value.toLowerCase().trim();
+  const col = document.getElementById('modal-col-filter').value;
+  const listEl = document.getElementById('modal-products-list');
+
+  let filtered = allProducts;
+  if (q) filtered = filtered.filter(p => p.name.toLowerCase().includes(q));
+  if (col) filtered = filtered.filter(p => p.collectionId === col);
+
+  if (!filtered.length) {
+    listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">لا توجد منتجات</div>';
+    return;
+  }
+
+  listEl.innerHTML = filtered.map(p => {
+    const img = p.imageUrl || '';
+    const imgHtml = img
+      ? `<img src="${img}" class="pli-img" alt="${p.name}">`
+      : `<div class="pli-img" style="background:var(--bg-body);display:flex;align-items:center;justify-content:center;font-size:1.2rem">📦</div>`;
+    return `
+      <label class="product-list-item" style="cursor:pointer">
+        <div class="pli-info">
+          ${imgHtml}
+          <div>
+            <div style="font-weight:600;font-size:0.95rem;color:var(--text-main)">${p.name}</div>
+            <div style="font-size:0.85rem;color:var(--primary);font-weight:600">${formatPrice(p.basePrice)}</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="font-size:0.75rem;background:var(--bg-body);padding:2px 8px;border-radius:12px;color:var(--text-muted)">في المخزون</span>
+          <input type="checkbox" class="pli-checkbox product-select-cb" value="${p._id}">
+        </div>
+      </label>
+    `;
+  }).join('');
+};
+
+window.addSelectedProducts = function() {
+  const checked = document.querySelectorAll('.product-select-cb:checked');
+  if (!checked.length) return showToast('اختر منتجاً واحداً على الأقل', 'error');
+
+  checked.forEach(cb => {
+    const id = cb.value;
+    const p = allProducts.find(x => x._id === id);
+    if (p) {
+      const existing = cartItems.find(c => c.product._id === id);
+      if (existing) existing.quantity++;
+      else cartItems.push({ product: p, quantity: 1, selectedOptions: [], discount: 0 });
     }
-    dropdown.classList.add('open');
   });
 
-  document.addEventListener('click', e => {
-    if (!e.target.closest('.product-search-box')) {
-      dropdown.classList.remove('open');
-    }
-  });
-}
+  closeProductsModal();
+  renderCart();
+};
 
 // ── Cart Operations ────────────────────────────────────
 window.addToCart = function(id) {
   const p = allProducts.find(p => p._id === id);
   if (!p) return;
 
-  // If already in cart, increment qty
   const existing = cartItems.find(c => c.product._id === id);
   if (existing) {
     existing.quantity++;
-    renderCart();
-    document.getElementById('product-search-input').value = '';
-    document.getElementById('search-dropdown').classList.remove('open');
-    return;
+  } else {
+    cartItems.push({
+      product: p,
+      quantity: 1,
+      selectedOptions: [],
+      discount: 0
+    });
   }
-
-  cartItems.push({
-    product: p,
-    quantity: 1,
-    selectedOptions: [],
-    discount: 0
-  });
-
-  document.getElementById('product-search-input').value = '';
-  document.getElementById('search-dropdown').classList.remove('open');
   renderCart();
 };
 
@@ -153,19 +195,19 @@ function renderCart() {
       ? `<img class="order-cart-img" src="${imgSrc}" alt="${p.name}" onerror="this.style.display='none'">`
       : `<div class="order-cart-img" style="background:var(--bg-body);display:flex;align-items:center;justify-content:center;font-size:2rem">📦</div>`;
 
-    // Options HTML
+    // Options HTML (Pills)
     const optionsHtml = (p.options || []).map((group, gi) => {
       const selected = c.selectedOptions.find(o => o.groupName === group.name);
       return `
-        <div style="margin-top:8px">
+        <div class="order-item-options">
           <span class="option-group-label">${group.name}${group.required ? ' *' : ''}</span>
           <div class="radio-options">
-            ${!group.required ? `<label class="radio-option"><input type="radio" name="opt_${i}_${gi}" value="" ${!selected ? 'checked' : ''} onchange="setOption(${i},${gi},-1)"><label style="cursor:pointer">بدون</label></label>` : ''}
+            ${!group.required ? `<div class="radio-option"><input type="radio" id="opt_${i}_${gi}_none" name="opt_${i}_${gi}" value="" ${!selected ? 'checked' : ''} onchange="setOption(${i},${gi},-1)"><label for="opt_${i}_${gi}_none">بدون</label></div>` : ''}
             ${group.values.map((v, vi) => `
-              <label class="radio-option">
-                <input type="radio" name="opt_${i}_${gi}" value="${vi}" ${selected && selected.label === v.label ? 'checked' : ''} onchange="setOption(${i},${gi},${vi})">
-                <label>${v.label}${v.price ? ` (+${v.price})` : ''}</label>
-              </label>`).join('')}
+              <div class="radio-option">
+                <input type="radio" id="opt_${i}_${gi}_${vi}" name="opt_${i}_${gi}" value="${vi}" ${selected && selected.label === v.label ? 'checked' : ''} onchange="setOption(${i},${gi},${vi})">
+                <label for="opt_${i}_${gi}_${vi}">${v.label}${v.price ? ` (+${v.price})` : ''}</label>
+              </div>`).join('')}
           </div>
         </div>`;
     }).join('');

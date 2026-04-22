@@ -79,24 +79,31 @@
     .order-cart-item:hover { box-shadow: var(--shadow); }
     .order-cart-item-top {
       display: flex;
-      gap: 14px;
+      flex-direction: row-reverse;
+      justify-content: space-between;
       align-items: flex-start;
       margin-bottom: 12px;
     }
     .order-cart-img {
-      width: 72px; height: 72px;
-      border-radius: var(--radius-sm);
+      width: 64px; height: 64px;
+      border-radius: 8px;
       object-fit: cover;
       border: 1px solid var(--border-color);
+      margin-right: 14px;
+      margin-left: 0;
       flex-shrink: 0;
     }
-    .order-cart-meta { flex: 1; min-width: 0; }
-    .order-cart-name { font-weight: 600; font-size: 1rem; margin-bottom: 4px; }
+    .order-cart-meta { flex: 1; min-width: 0; text-align: right; }
+    .order-cart-name { font-weight: 700; font-size: 1rem; margin-bottom: 4px; color: var(--text-main); }
     .order-cart-base-price { color: var(--text-muted); font-size: 0.85rem; }
     .order-cart-controls {
       display: flex;
       align-items: center;
-      gap: 12px;
+      justify-content: flex-end;
+      gap: 16px;
+      margin-top: 16px;
+      border-top: 1px dashed var(--border-color);
+      padding-top: 12px;
       flex-wrap: wrap;
     }
 
@@ -146,11 +153,27 @@
       font-size: 1rem;
     }
 
-    /* ── Options inside cart item ── */
-    .order-item-options { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-    .order-item-options .option-group-label { font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px; font-weight: 500; }
-    .order-item-options .radio-options { display: flex; flex-wrap: wrap; gap: 6px; }
-    .order-item-options .radio-option label { font-size: 0.8rem; padding: 4px 10px; }
+    /* ── Options inside cart item (Pills) ── */
+    .order-item-options { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+    .order-item-options .option-group-label { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
+    .radio-options { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+    .radio-option { display: inline-block; }
+    .radio-option input[type="radio"] { display: none; }
+    .radio-option label {
+      padding: 6px 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.2s;
+      display: inline-block;
+    }
+    .radio-option input[type="radio"]:checked + label {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
 
     /* ── Empty state ── */
     .empty-cart {
@@ -248,6 +271,38 @@
       flex-shrink: 0;
     }
 
+    /* ── Products Modal ── */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5); z-index: 1000;
+      display: none; align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: #fff; border-radius: var(--radius-lg);
+      width: 90%; max-width: 600px; max-height: 85vh;
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .modal-header {
+      padding: 16px 20px; border-bottom: 1px solid var(--border-color);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .modal-header h3 { margin: 0; font-size: 1.1rem; }
+    .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted); }
+    .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+    .modal-footer {
+      padding: 16px 20px; border-top: 1px solid var(--border-color);
+      display: flex; justify-content: flex-start; gap: 12px;
+    }
+    .product-list-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 0; border-bottom: 1px solid var(--border-color);
+    }
+    .product-list-item:last-child { border-bottom: none; }
+    .pli-info { display: flex; align-items: center; gap: 12px; }
+    .pli-img { width: 40px; height: 40px; border-radius: 4px; object-fit: cover; }
+    .pli-checkbox { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; }
+
     /* ── Mobile ── */
     @media (max-width: 900px) {
       .order-create-layout {
@@ -303,17 +358,9 @@
                 <h3>المنتجات</h3>
               </div>
 
-              <div class="product-search-box">
-                <span class="search-icon">🔍</span>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="product-search-input"
-                  placeholder="ابحث عن منتج بالاسم..."
-                  autocomplete="off"
-                >
-                <div class="search-dropdown" id="search-dropdown"></div>
-              </div>
+              <button type="button" class="btn btn-secondary" onclick="openProductsModal()" style="margin-bottom:16px;background:#fff;color:var(--primary);border:1px solid var(--primary);display:flex;align-items:center;gap:8px;padding:8px 16px;border-radius:8px">
+                <span style="font-size:1.2rem">+</span> إضافة منتجات
+              </button>
 
               <div id="cart-items-container">
                 <div class="empty-cart" id="empty-cart-msg">
@@ -432,6 +479,29 @@
         </div><!-- .order-create-layout -->
       </div>
     </main>
+  </div>
+
+  <div class="modal-overlay" id="products-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <button type="button" class="modal-close" onclick="closeProductsModal()">×</button>
+        <h3>إضافة منتجات</h3>
+        <div style="width:24px"></div>
+      </div>
+      <div class="modal-body">
+        <div class="flex gap-8 mb-16" style="flex-wrap:wrap">
+          <select class="form-control" id="modal-col-filter" style="flex:1;min-width:140px" onchange="renderModalProducts()">
+            <option value="">اختر مجموعة</option>
+          </select>
+          <input type="text" class="form-control" id="modal-search" placeholder="ابحث عن منتجات" style="flex:2;min-width:200px" oninput="renderModalProducts()">
+        </div>
+        <div id="modal-products-list"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" onclick="addSelectedProducts()">أضف منتج</button>
+        <button type="button" class="btn btn-secondary" onclick="closeProductsModal()" style="background:#fff;color:#333;border:1px solid #ccc">إلغاء</button>
+      </div>
+    </div>
   </div>
 
   <script src="../js/api.js"></script>
