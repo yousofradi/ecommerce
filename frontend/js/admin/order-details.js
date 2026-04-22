@@ -73,24 +73,42 @@ function renderItems() {
     const optText = (item.selectedOptions || []).map(op => `${op.groupName}: ${op.label}`).join(' • ');
     
     return `
-      <div class="item-row" style="position:relative; align-items:center; flex-direction:row-reverse;">
-        <button class="btn btn-sm" style="position:absolute; left:0; top:0; background:none; border:none; color:var(--text-muted); font-size:1.4rem; cursor:pointer; padding:0; line-height:1;" onclick="removeItem(${idx})">×</button>
+      <div class="item-row" style="display:flex; align-items:center; justify-content:space-between; gap:16px;">
         
-        <div class="item-details" style="display:flex; align-items:center; gap:16px;">
+        <!-- Right side: Image and Info -->
+        <div class="item-details" style="display:flex; align-items:center; gap:16px; flex:1;">
           ${imgHtml}
-          <div style="text-align:right">
+          <div>
             <div style="font-weight:600;font-size:0.95rem;color:var(--text-main)">${item.name}</div>
             ${optText ? `<div style="font-size:0.85rem;color:var(--text-muted);margin-top:4px">${optText}</div>` : ''}
             ${item.discount ? `<div style="font-size:0.8rem;color:var(--danger);margin-top:4px">خصم: ${formatPrice(item.discount)}</div>` : ''}
           </div>
         </div>
 
-        <div class="item-actions" style="display:flex; align-items:center; gap:24px; flex-direction:row;">
-          <div style="font-weight:700;font-size:1.1rem;color:var(--primary)">${formatPrice(item.finalPrice)}</div>
-          <div style="font-size:0.9rem;color:var(--text-muted);display:flex;align-items:center;gap:8px;">
-            <input type="number" value="${item.quantity}" min="1" onchange="updateItemQty(${idx}, this.value)" style="width:50px;text-align:center;border:1px solid #ddd;border-radius:4px;padding:4px"> × ${formatPrice(item.basePrice)}
-          </div>
+        <!-- Left side: Actions & Pricing -->
+        <div class="item-actions" style="display:flex; align-items:center; gap:16px; flex-wrap:wrap; justify-content:flex-end;">
+          
+          <!-- Action Buttons -->
           <button class="btn btn-sm" style="background:#fff;border:1px solid var(--border-color);color:#333;font-size:0.75rem;padding:4px 8px" onclick="promptItemDiscount(${idx})">تطبيق خصم</button>
+          
+          <!-- Price & Math -->
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div style="font-size:0.9rem;color:var(--text-muted)">
+              ${formatPrice(item.basePrice)} ×
+            </div>
+            
+            <!-- Quantity Stepper -->
+            <div class="qty-stepper" style="display:flex; align-items:center; border:1px solid var(--border-color); border-radius:6px; overflow:hidden;">
+              <button type="button" onclick="updateItemQty(${idx}, ${item.quantity + 1})" style="width:28px;height:28px;background:#f9f9f9;border:none;border-left:1px solid var(--border-color);cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
+              <div style="width:32px;text-align:center;font-size:0.95rem;line-height:28px;font-weight:600;">${item.quantity}</div>
+              <button type="button" onclick="${item.quantity > 1 ? `updateItemQty(${idx}, ${item.quantity - 1})` : ''}" style="width:28px;height:28px;background:${item.quantity > 1 ? '#f9f9f9' : '#eee'};border:none;border-right:1px solid var(--border-color);cursor:${item.quantity > 1 ? 'pointer' : 'not-allowed'};display:flex;align-items:center;justify-content:center;color:${item.quantity > 1 ? 'inherit' : '#aaa'};" ${item.quantity <= 1 ? 'disabled' : ''}>-</button>
+            </div>
+          </div>
+          
+          <!-- Final Price -->
+          <div style="font-weight:700;font-size:1.1rem;color:var(--primary);min-width:70px;text-align:left;">${formatPrice(item.finalPrice)}</div>
+          
+          <button class="btn btn-sm" style="background:none;border:none;color:var(--danger);font-size:1.4rem;cursor:pointer;padding:0;line-height:1;margin-right:8px;" onclick="removeItem(${idx})">×</button>
         </div>
       </div>
     `;

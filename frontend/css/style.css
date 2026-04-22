@@ -53,6 +53,15 @@ img { max-width: 100%; display: block; }
 .page-wrapper { min-height: 100vh; display: flex; flex-direction: column; }
 .page-content { flex: 1; padding: 40px 0; }
 
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 600px) {
+  .grid-2 { grid-template-columns: 1fr; }
+}
+
 /* ── Store Header ────────────────────────────────────── */
 .store-header {
   background: var(--bg-surface);
