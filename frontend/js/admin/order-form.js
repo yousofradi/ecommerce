@@ -315,6 +315,7 @@ window.submitOrder = async function() {
 
   const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
   const orderDiscount = Math.max(0, parseFloat(document.getElementById('order-discount').value) || 0);
+  const paidAmount = Math.max(0, parseFloat(document.getElementById('paid-amount').value) || 0);
 
   const finalItems = cartItems.map(c => ({
     productId: c.product._id,
@@ -338,7 +339,8 @@ window.submitOrder = async function() {
     },
     items: finalItems,
     discount: orderDiscount,
-    paymentMethod
+    paymentMethod,
+    paidAmount
   };
 
   const btns = document.querySelectorAll('#submit-btn, #submit-btn-bottom');

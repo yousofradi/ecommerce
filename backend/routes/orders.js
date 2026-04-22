@@ -22,7 +22,7 @@ function calcTotals(items, shippingFee, orderDiscount = 0) {
 // POST /api/orders — create order (public from storefront OR admin)
 router.post('/', async (req, res) => {
   try {
-    const { customer, items, paymentMethod, discount = 0 } = req.body;
+    const { customer, items, paymentMethod, discount = 0, paidAmount = 0 } = req.body;
 
     if (!customer || !items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'Customer info and at least one item are required' });
@@ -62,7 +62,9 @@ router.post('/', async (req, res) => {
       discount,
       totalPrice,
       shippingFee,
-      paymentMethod
+      paymentMethod,
+      paidAmount: Number(paidAmount) || 0,
+      paid: (Number(paidAmount) || 0) >= totalPrice
     });
 
     await order.save();

@@ -470,6 +470,15 @@
                 </div>
               </div>
 
+              <!-- Paid Amount -->
+              <div style="margin-top:20px;margin-bottom:16px;padding-top:16px;border-top:1px solid var(--border-color)">
+                <label for="paid-amount" style="font-size:0.9rem;font-weight:600;display:block;margin-bottom:8px">تم دفعه مسبقاً (اختياري)</label>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <input type="number" id="paid-amount" class="form-control" min="0" placeholder="0" style="flex:1">
+                  <span style="font-size:0.85rem;color:var(--text-muted)">ج.م</span>
+                </div>
+                <p style="font-size:0.8rem;color:var(--text-muted);margin-top:6px;margin-bottom:0">أدخل المبلغ إذا تم تحويله مسبقاً (مثل الدفع عبر واتساب).</p>
+              </div>
               <button type="button" class="btn btn-primary btn-block" id="submit-btn-bottom" onclick="submitOrder()" style="padding:14px;font-size:1rem;margin-top:8px">
                 ✓ إنشاء الطلب
               </button>
