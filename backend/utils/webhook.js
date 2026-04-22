@@ -28,6 +28,7 @@ async function sendWebhook(event, data) {
       "Address": data.customer.address,
       "Gov-ar": data.customer.government,
       "Gov-en": cityMap[data.customer.government] || data.customer.government,
+      "notes": data.customer.notes || "",
       "subamount": subamount,
       "shipment-amount": data.shippingFee,
       "total amount": data.totalPrice,

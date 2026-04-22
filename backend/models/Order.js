@@ -41,7 +41,7 @@ const orderSchema = new mongoose.Schema({
   paymentMethod: {
     type: String,
     required: true,
-    enum: ['instapay', 'vodafone_cash', 'cash_on_delivery']
+    enum: ['instapay', 'vodafone_cash']
   },
   paid: { type: Boolean, default: false },
   paidAmount: { type: Number, default: 0, min: 0 }

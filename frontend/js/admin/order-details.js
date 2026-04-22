@@ -66,7 +66,6 @@ function renderOrder() {
   
   // Payment
   const paymentLabels = {
-    'cash_on_delivery': 'الدفع عند الاستلام',
     'vodafone_cash': 'فودافون كاش',
     'instapay': 'إنستاباي'
   };
@@ -241,7 +240,7 @@ window.applyShippingChanges = function() {
 };
 
 window.openPaymentModal = function() {
-  document.getElementById('modal-payment-method').value = currentOrder.paymentMethod || 'cash_on_delivery';
+  document.getElementById('modal-payment-method').value = currentOrder.paymentMethod || 'vodafone_cash';
   document.getElementById('modal-paid-amount').value = currentOrder.paidAmount || 0;
   document.getElementById('payment-modal').style.display = 'flex';
 };

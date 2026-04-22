@@ -16,7 +16,6 @@ async function loadOrders() {
     tbody.innerHTML = orders.map(o => {
       const date = new Date(o.createdAt).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' });
       const payBadge = {
-        cash_on_delivery: '<span class="badge badge-info">كاش</span>',
         vodafone_cash: '<span class="badge" style="background:#fce7f3;color:#9d174d">ف.كاش</span>',
         instapay: '<span class="badge badge-success">إنستاباي</span>'
       }[o.paymentMethod] || o.paymentMethod;
