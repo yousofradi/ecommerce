@@ -148,13 +148,15 @@
                 </div>
                 
                 <h4 style="font-size:0.85rem;color:var(--text-muted);margin-bottom:8px">بيانات التواصل</h4>
-                <div style="font-size:0.95rem;margin-bottom:8px">
-                  <span class="read-only-text" id="view-c-phone"></span>
-                  <input type="text" id="edit-c-phone" class="edit-input" placeholder="رقم الهاتف">
-                </div>
-                <div style="font-size:0.95rem;margin-bottom:8px">
-                  <span class="read-only-text" id="view-c-phone2"></span>
-                  <input type="text" id="edit-c-phone2" class="edit-input" placeholder="هاتف آخر">
+                <div class="grid-2" style="gap:12px">
+                  <div style="font-size:0.95rem;margin-bottom:8px">
+                    <span class="read-only-text" id="view-c-phone"></span>
+                    <input type="text" id="edit-c-phone" class="edit-input" placeholder="رقم الهاتف">
+                  </div>
+                  <div style="font-size:0.95rem;margin-bottom:8px">
+                    <span class="read-only-text" id="view-c-phone2"></span>
+                    <input type="text" id="edit-c-phone2" class="edit-input" placeholder="هاتف آخر">
+                  </div>
                 </div>
               </div>
             </div>
@@ -260,7 +262,7 @@
   </div>
 
   <!-- Include Products Modal from order-form -->
-  <div class="modal-overlay" id="products-modal">
+  <div class="modal-overlay" id="products-modal" style="display: none;">
     <div class="modal-box">
       <div class="modal-header">
         <button type="button" class="modal-close" onclick="closeProductsModal()">×</button>

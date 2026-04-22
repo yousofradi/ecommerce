@@ -236,7 +236,7 @@ window.saveOrderChanges = async function() {
 
 // ── Modal Products ─────────────────────────────────────
 window.openProductsModal = async function() {
-  document.getElementById('products-modal').classList.add('open');
+  document.getElementById('products-modal').style.display = 'flex';
   if (Object.keys(collectionsMap).length === 0) {
     try {
       const cols = await api.getCollections();
@@ -251,7 +251,7 @@ window.openProductsModal = async function() {
 };
 
 window.closeProductsModal = function() {
-  document.getElementById('products-modal').classList.remove('open');
+  document.getElementById('products-modal').style.display = 'none';
 };
 
 window.renderModalProducts = function() {
