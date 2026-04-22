@@ -175,7 +175,10 @@
                 <div class="flex gap-8">
                   <button class="btn btn-secondary btn-sm" onclick="promptOrderDiscount()" style="background:#fff;border-color:var(--border-color)">تطبيق خصم</button>
                 </div>
-                <h3 style="color:#000;font-weight:600">الدفع</h3>
+                <h3 style="color:#000;font-weight:600;display:flex;align-items:center;gap:8px;">
+                  <span id="view-payment-status" style="font-size:0.75rem;padding:4px 8px;border-radius:12px;"></span>
+                  الدفع
+                </h3>
               </div>
               <div class="info-card-body">
                 <div class="summary-row">
@@ -261,13 +264,15 @@
           <label class="form-label">الاسم</label>
           <input type="text" id="modal-c-name" class="form-control">
         </div>
-        <div class="form-group mb-16">
-          <label class="form-label">رقم الهاتف</label>
-          <input type="text" id="modal-c-phone" class="form-control">
-        </div>
-        <div class="form-group mb-16">
-          <label class="form-label">هاتف آخر</label>
-          <input type="text" id="modal-c-phone2" class="form-control">
+        <div class="grid-2" style="gap:16px;">
+          <div class="form-group mb-16">
+            <label class="form-label">رقم الهاتف</label>
+            <input type="text" id="modal-c-phone" class="form-control">
+          </div>
+          <div class="form-group mb-16">
+            <label class="form-label">هاتف آخر</label>
+            <input type="text" id="modal-c-phone2" class="form-control">
+          </div>
         </div>
       </div>
       <div class="modal-footer">

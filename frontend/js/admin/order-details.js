@@ -131,10 +131,23 @@ function updatePaymentStatusUI() {
   document.getElementById('sum-remaining').textContent = formatPrice(remaining);
   
   const btn = document.getElementById('btn-mark-paid');
+  const badge = document.getElementById('view-payment-status');
+  
   if (remaining === 0 && o.totalPrice > 0) {
     btn.style.display = 'none';
+    badge.textContent = 'مدفوع';
+    badge.style.background = '#dcfce7';
+    badge.style.color = '#166534';
+  } else if (o.paidAmount > 0) {
+    btn.style.display = 'inline-block';
+    badge.textContent = 'مدفوع جزئياً';
+    badge.style.background = '#fef3c7';
+    badge.style.color = '#92400e';
   } else {
     btn.style.display = 'inline-block';
+    badge.textContent = 'غير مدفوع';
+    badge.style.background = '#fee2e2';
+    badge.style.color = '#991b1b';
   }
 }
 
