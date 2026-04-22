@@ -56,7 +56,16 @@ router.post('/', async (req, res) => {
 
     const { totalPrice } = calcTotals(items, shippingFee, discount);
 
+    const Counter = require('../models/Counter');
+    const counter = await Counter.findByIdAndUpdate(
+      'orderSeq',
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true }
+    );
+    const generatedOrderId = `Scoop-${counter.seq}`;
+
     const order = new Order({
+      orderId: generatedOrderId,
       customer,
       items,
       discount,

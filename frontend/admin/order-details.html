@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تفاصيل الطلب — لوحة التحكم</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .order-details-layout {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 24px;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .order-details-layout { grid-template-columns: 1fr; }
+    }
+    
+    .info-card {
+      background: #fff;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-color);
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+    .info-card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fafafa;
+    }
+    .info-card-header h3 { margin: 0; font-size: 0.95rem; color: var(--text-muted); }
+    .info-card-body { padding: 20px; }
+    
+    .item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .item-row:last-child { border-bottom: none; }
+    .item-details { display: flex; gap: 16px; flex: 1; }
+    .item-img { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border-color); }
+    .item-actions { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+    .item-actions-row { display: flex; gap: 8px; }
+    
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      font-size: 0.95rem;
+    }
+    
+    /* Edit input styles */
+    .edit-input {
+      border: 1px solid var(--border-color);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      width: 100%;
+      margin-bottom: 8px;
+      display: none;
+    }
+    .editing .edit-input { display: block; }
+    .editing .read-only-text { display: none; }
+  </style>
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <div class="admin-brand">⚙️ Sundura Admin</div>
+      <nav class="admin-nav">
+        <a href="index.html">لوحة التحكم</a>
+        <a href="products.html">المنتجات</a>
+        <a href="collections.html">التصنيفات</a>
+        <a href="orders.html" class="active">الطلبات</a>
+        <a href="shipment.html">الشحن</a>
+        <a href="webhooks.html">Webhooks</a>
+        <a href="../index.html" target="_blank">عرض المتجر ↗</a>
+        <a href="#" onclick="logout()" class="logout">تسجيل الخروج</a>
+      </nav>
+    </aside>
+
+    <main class="admin-main">
+      <div style="max-width:1300px">
+        
+        <div class="flex-between mb-24">
+          <div>
+            <h1 class="page-title" style="margin-bottom:4px;display:flex;align-items:center;gap:12px">
+              <span id="page-order-id">تعديل الطلب #...</span>
+              <a href="orders.html" style="font-size:0.9rem;color:var(--text-muted);text-decoration:none">الطلبات <</a>
+            </h1>
+          </div>
+          <div class="flex gap-12">
+            <button class="btn btn-secondary" onclick="window.location.reload()">تجاهل</button>
+            <button class="btn btn-primary" id="save-all-btn" onclick="saveOrderChanges()">احفظ التغييرات</button>
+          </div>
+        </div>
+
+        <div class="order-details-layout">
+          <!-- LEFT COLUMN -->
+          <div>
+            <!-- Customer -->
+            <div class="info-card" id="card-customer">
+              <div class="info-card-header">
+                <h3>بيانات العميل</h3>
+                <button class="btn btn-sm" onclick="toggleEdit('customer')" style="background:none;border:none;cursor:pointer">✏️</button>
+              </div>
+              <div class="info-card-body">
+                <div style="font-weight:700;color:var(--primary);margin-bottom:16px;font-size:1.1rem">
+                  <span class="read-only-text" id="view-c-name"></span>
+                  <input type="text" id="edit-c-name" class="edit-input" placeholder="الاسم">
+                </div>
+                
+                <h4 style="font-size:0.85rem;color:var(--text-muted);margin-bottom:8px">بيانات التواصل</h4>
+                <div style="font-size:0.95rem;margin-bottom:8px">
+                  <span class="read-only-text" id="view-c-phone"></span>
+                  <input type="text" id="edit-c-phone" class="edit-input" placeholder="رقم الهاتف">
+                </div>
+                <div style="font-size:0.95rem;margin-bottom:8px">
+                  <span class="read-only-text" id="view-c-phone2"></span>
+                  <input type="text" id="edit-c-phone2" class="edit-input" placeholder="هاتف آخر">
+                </div>
+              </div>
+            </div>
+
+            <!-- Shipping -->
+            <div class="info-card" id="card-shipping">
+              <div class="info-card-header">
+                <h3>عنوان الشحن</h3>
+                <button class="btn btn-sm" onclick="toggleEdit('shipping')" style="background:none;border:none;cursor:pointer">✏️</button>
+              </div>
+              <div class="info-card-body">
+                <div style="font-size:0.95rem;margin-bottom:8px">
+                  <span class="read-only-text" id="view-c-address"></span>
+                  <input type="text" id="edit-c-address" class="edit-input" placeholder="العنوان">
+                </div>
+                <div style="font-size:0.95rem;margin-bottom:8px;color:var(--text-muted)">
+                  <span class="read-only-text" id="view-c-gov"></span>
+                  <input type="text" id="edit-c-gov" class="edit-input" placeholder="المحافظة">
+                </div>
+                
+                <h4 style="font-size:0.85rem;color:var(--text-muted);margin-top:16px;margin-bottom:8px">ملاحظات</h4>
+                <div style="font-size:0.95rem">
+                  <span class="read-only-text" id="view-c-notes"></span>
+                  <textarea id="edit-c-notes" class="edit-input" rows="2" placeholder="ملاحظات"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT COLUMN -->
+          <div>
+            <!-- Products -->
+            <div class="info-card">
+              <div class="info-card-header" style="background:#fff">
+                <button class="btn btn-secondary btn-sm" onclick="openProductsModal()" style="background:#fff;border-color:var(--border-color)">+ أضف منتج</button>
+                <h3 style="color:#000;font-weight:600">منتجات الطلب</h3>
+              </div>
+              <div class="info-card-body" id="order-items-container" style="padding-top:0">
+                <!-- Items injected here -->
+              </div>
+            </div>
+
+            <!-- Payment Summary -->
+            <div class="info-card">
+              <div class="info-card-header" style="background:#fff">
+                <div class="flex gap-8">
+                  <button class="btn btn-secondary btn-sm" onclick="promptOrderDiscount()" style="background:#fff;border-color:var(--border-color)">تطبيق خصم</button>
+                </div>
+                <h3 style="color:#000;font-weight:600">الدفع</h3>
+              </div>
+              <div class="info-card-body">
+                <div class="summary-row">
+                  <span id="sum-subtotal">0 ج.م</span>
+                  <span style="color:var(--text-muted)"><span id="sum-items-count">0</span> عناصر المجموع الجزئي</span>
+                </div>
+                <div class="summary-row">
+                  <span id="sum-shipping">0 ج.م</span>
+                  <span style="color:var(--text-muted)">الشحن</span>
+                </div>
+                <div class="summary-row" id="sum-discount-row" style="display:none;color:var(--danger)">
+                  <span id="sum-discount">0 ج.م</span>
+                  <span style="color:var(--danger)">خصم الطلب</span>
+                </div>
+                <div class="summary-row" style="font-weight:700;margin-top:12px;border-top:1px solid var(--border-color);padding-top:12px">
+                  <span id="sum-total">0 ج.م</span>
+                  <span>المجموع</span>
+                </div>
+                
+                <div style="margin-top:24px;border-top:1px solid var(--border-color);padding-top:16px">
+                  <div class="summary-row">
+                    <span>
+                      <select id="edit-payment-method" class="form-control" style="padding:4px;font-size:0.9rem;width:auto">
+                        <option value="cash_on_delivery">الدفع عند الاستلام</option>
+                        <option value="vodafone_cash">فودافون كاش</option>
+                        <option value="instapay">إنستاباي</option>
+                      </select>
+                    </span>
+                    <span style="color:var(--text-muted)">وسيلة الدفع</span>
+                  </div>
+                  <div class="summary-row">
+                    <span>
+                      <input type="number" id="edit-paid-amount" class="form-control" style="width:100px;padding:4px;text-align:left" oninput="updatePaymentStatusUI()"> ج.م
+                    </span>
+                    <span style="color:var(--text-muted)">المدفوع</span>
+                  </div>
+                  <div class="summary-row" style="font-weight:700">
+                    <span id="sum-remaining">0 ج.م</span>
+                    <span>المتبقي</span>
+                  </div>
+                  
+                  <div class="flex gap-8 mt-16" style="justify-content:flex-start">
+                    <button class="btn btn-primary btn-sm" id="btn-mark-paid" onclick="markFullyPaid()">مدفوع بالكامل</button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Include Products Modal from order-form -->
+  <div class="modal-overlay" id="products-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <button type="button" class="modal-close" onclick="closeProductsModal()">×</button>
+        <h3>إضافة منتجات</h3>
+        <div style="width:24px"></div>
+      </div>
+      <div class="modal-body">
+        <div class="flex gap-8 mb-16" style="flex-wrap:wrap">
+          <select class="form-control" id="modal-col-filter" style="flex:1;min-width:140px" onchange="renderModalProducts()">
+            <option value="">اختر مجموعة</option>
+          </select>
+          <input type="text" class="form-control" id="modal-search" placeholder="ابحث عن منتجات" style="flex:2;min-width:200px" oninput="renderModalProducts()">
+        </div>
+        <div id="modal-products-list"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" onclick="addSelectedProducts()">أضف منتج</button>
+        <button type="button" class="btn btn-secondary" onclick="closeProductsModal()" style="background:#fff;color:#333;border:1px solid #ccc">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/admin/auth.js"></script>
+  <script src="../js/admin/order-details.js"></script>
+</body>
+</html>

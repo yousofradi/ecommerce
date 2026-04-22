@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { v4: uuidv4 } = require('uuid');
+
 
 const selectedOptionSchema = new mongoose.Schema({
   groupName: { type: String, required: true },
@@ -28,7 +28,7 @@ const customerSchema = new mongoose.Schema({
 }, { _id: false });
 
 const orderSchema = new mongoose.Schema({
-  orderId: { type: String, default: () => uuidv4(), unique: true, index: true },
+  orderId: { type: String, unique: true, index: true },
   customer: { type: customerSchema, required: true },
   items: {
     type: [orderItemSchema],
