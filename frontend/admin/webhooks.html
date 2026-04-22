@@ -33,6 +33,13 @@
               <input type="url" id="w-url" class="form-control" required placeholder="https://your-webhook.url">
               <input type="text" id="w-desc" class="form-control" placeholder="Description (e.g., Zapier Integration)">
             </div>
+            <div class="mb-16">
+              <label class="form-label">Triggers</label>
+              <div class="flex gap-16">
+                <label><input type="checkbox" name="w-events" value="order.created" checked> Order Created</label>
+                <label><input type="checkbox" name="w-events" value="order.paid"> Order Paid</label>
+              </div>
+            </div>
             <button type="submit" class="btn btn-primary">Add Webhook</button>
           </form>
         </div>
@@ -55,9 +62,13 @@
       document.getElementById('add-webhook-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         try {
+          const events = Array.from(document.querySelectorAll('input[name="w-events"]:checked')).map(cb => cb.value);
+          if (events.length === 0) return showToast('Please select at least one trigger', 'error');
+
           await api.createWebhook({
             url: document.getElementById('w-url').value.trim(),
-            description: document.getElementById('w-desc').value.trim()
+            description: document.getElementById('w-desc').value.trim(),
+            events
           });
           document.getElementById('w-url').value = '';
           document.getElementById('w-desc').value = '';
@@ -78,7 +89,7 @@
         tbody.innerHTML = list.map(w => `
           <tr>
             <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">${w.url}</td>
-            <td class="text-muted">${w.description || '—'}</td>
+            <td class="text-muted">${w.description || '—'}<br><small>${(w.events || []).join(', ')}</small></td>
             <td><span class="badge ${w.active ? 'badge-success' : 'badge-warning'}">${w.active ? 'Active' : 'Inactive'}</span></td>
             <td>
               <button class="btn btn-sm btn-secondary" onclick="deleteWebhook('${w._id}')">Delete</button>

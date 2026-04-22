@@ -109,16 +109,21 @@ router.put('/:orderId', adminAuth, async (req, res) => {
       updates.totalPrice = subtotal + (updates.shippingFee || 0);
     }
 
+    const oldOrder = await Order.findOne({ orderId: req.params.orderId });
+    if (!oldOrder) return res.status(404).json({ error: 'Order not found' });
+
     const order = await Order.findOneAndUpdate(
       { orderId: req.params.orderId },
       { $set: updates },
       { new: true, runValidators: true }
     );
 
-    if (!order) return res.status(404).json({ error: 'Order not found' });
-
     // Fire webhook (non-blocking)
-    sendWebhook('order.updated', order.toObject());
+    if (!oldOrder.paid && order.paid) {
+      sendWebhook('order.paid', order.toObject());
+    } else {
+      sendWebhook('order.updated', order.toObject());
+    }
 
     res.json(order);
   } catch (err) {

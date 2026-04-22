@@ -3,16 +3,43 @@
  * Fire-and-forget: logs errors but never blocks the response.
  */
 const Webhook = require('../models/Webhook');
+const cityMap = require('./cityMap');
 
 async function sendWebhook(event, data) {
   try {
-    const webhooks = await Webhook.find({ active: true });
+    const webhooks = await Webhook.find({ active: true, events: event });
     if (webhooks.length === 0) return;
+
+    // Calculate subamount if needed
+    const subamount = data.totalPrice - data.shippingFee;
+    
+    // Map product items
+    const productItems = (data.items || []).map(item => ({
+      "name": item.name,
+      "count": item.quantity,
+      "price of one": item.finalPrice / item.quantity,
+      "total price": item.finalPrice
+    }));
+
+    const rawPayload = {
+      "Name": data.customer.name,
+      "Phone": data.customer.phone,
+      "Second Phone": data.customer.secondPhone || "",
+      "Address": data.customer.address,
+      "Gov-ar": data.customer.government,
+      "Gov-en": cityMap[data.customer.government] || data.customer.government,
+      "subamount": subamount,
+      "shipment-amount": data.shippingFee,
+      "total amount": data.totalPrice,
+      "paid amount": data.paidAmount || 0,
+      "remaining amount": data.totalPrice - (data.paidAmount || 0),
+      "product items": productItems
+    };
 
     const payload = JSON.stringify({
       event,
       timestamp: new Date().toISOString(),
-      data
+      data: rawPayload
     });
 
     const promises = webhooks.map(wh => 

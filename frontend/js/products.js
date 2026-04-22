@@ -159,6 +159,6 @@ function addToCart(productId) {
       }
     });
     Cart.addItem(product, finalOptions);
-    showToast(`${product.name} added to cart!`);
+    Cart.openCart();
   }).catch(() => showToast('Error adding to cart', 'error'));
 }

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Order — eStore Admin</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .order-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+    .product-search { position: relative; margin-bottom: 16px; }
+    .search-results { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid var(--border); border-radius: var(--radius); max-height: 200px; overflow-y: auto; z-index: 10; display: none; }
+    .search-item { padding: 8px 12px; cursor: pointer; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); }
+    .search-item:hover { background: var(--bg); }
+    .selected-items { display: flex; flex-direction: column; gap: 12px; }
+    .selected-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); }
+    @media (max-width: 768px) { .order-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <div class="admin-brand">⚙️ Sundura Admin</div>
+      <nav class="admin-nav">
+        <a href="index.html">Dashboard</a>
+        <a href="products.html">Products</a>
+        <a href="collections.html">Collections</a>
+        <a href="orders.html" class="active">Orders</a>
+        <a href="shipment.html">Shipment</a>
+        <a href="webhooks.html">Webhooks</a>
+        <a href="../index.html" target="_blank">View Store ↗</a>
+        <a href="#" onclick="logout()" class="logout">Logout</a>
+      </nav>
+    </aside>
+
+    <main class="admin-main">
+      <div class="container" style="max-width:1000px;margin:0">
+        <h1 class="page-title">Create Order</h1>
+        <p class="page-subtitle"><a href="orders.html">← Back to Orders</a></p>
+
+        <form id="create-order-form">
+          <div class="order-grid">
+            
+            <!-- Left Column: Items -->
+            <div>
+              <div class="admin-card mb-24">
+                <h3 class="mb-16">Select Products</h3>
+                <div class="product-search">
+                  <input type="text" class="form-control" id="product-search-input" placeholder="Search products by name...">
+                  <div class="search-results" id="search-results"></div>
+                </div>
+                <div class="selected-items" id="selected-items">
+                  <!-- Selected items appear here -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Column: Customer Details -->
+            <div>
+              <div class="admin-card mb-24">
+                <h3 class="mb-16">Customer Details</h3>
+                <div class="form-group">
+                  <label class="form-label">Full Name *</label>
+                  <input type="text" id="c-name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Phone *</label>
+                  <input type="tel" id="c-phone" class="form-control" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Second Phone</label>
+                  <input type="tel" id="c-second-phone" class="form-control">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Governorate *</label>
+                  <select id="c-gov" class="form-control" required onchange="calculateTotal()">
+                    <option value="">Select Governorate</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Address *</label>
+                  <textarea id="c-address" class="form-control" required rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Notes</label>
+                  <textarea id="c-notes" class="form-control" rows="2"></textarea>
+                </div>
+              </div>
+
+              <div class="admin-card mb-24">
+                <h3 class="mb-16">Summary</h3>
+                <div class="flex-between mb-8"><span class="text-muted">Subtotal</span><span id="summ-sub">0 EGP</span></div>
+                <div class="flex-between mb-8"><span class="text-muted">Shipping</span><span id="summ-ship">0 EGP</span></div>
+                <hr style="margin:12px 0; border:none; border-top:1px solid var(--border)">
+                <div class="flex-between" style="font-weight:700;font-size:1.2rem"><span>Total</span><span id="summ-total" style="color:var(--primary)">0 EGP</span></div>
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-block" style="padding:16px;font-size:1.05rem" id="submit-btn">Create Order</button>
+            </div>
+
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+  <script src="../js/api.js"></script>
+  <script src="../js/admin/auth.js"></script>
+  <script src="../js/admin/order-form.js"></script>
+</body>
+</html>
