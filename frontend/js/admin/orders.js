@@ -36,9 +36,12 @@ async function loadOrders() {
           </td>
           <td>${payBadge}</td>
           <td>
-            <span class="badge ${o.paid ? 'badge-success' : 'badge-warning'}">
-              ${o.paid ? 'مدفوع' : 'غير مدفوع'}
-            </span>
+            ${o.paid 
+              ? '<span class="badge badge-success">مدفوع ✓</span>'
+              : o.paidAmount > 0 
+                ? `<span class="badge" style="background:#fef3c7;color:#92400e">مدفوع جزئياً<br><small>${formatPrice(o.paidAmount)} / ${formatPrice(o.totalPrice)}</small></span>`
+                : '<span class="badge badge-warning">غير مدفوع</span>'
+            }
           </td>
           <td class="text-sm text-muted">${date}</td>
           <td>

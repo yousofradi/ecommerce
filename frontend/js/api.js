@@ -18,6 +18,7 @@ const api = {
   createProduct(d) { return this._request('/products', { method: 'POST', body: JSON.stringify(d), admin: true }); },
   updateProduct(id, d) { return this._request(`/products/${id}`, { method: 'PUT', body: JSON.stringify(d), admin: true }); },
   deleteProduct(id) { return this._request(`/products/${id}`, { method: 'DELETE', admin: true }); },
+  reorderProducts(order) { return this._request('/products/reorder/batch', { method: 'PUT', body: JSON.stringify({ order }), admin: true }); },
 
   // Collections
   getCollections() { return this._request('/collections'); },
@@ -73,18 +74,19 @@ function showToast(msg, type = 'success') {
 window.showConfirmModal = function(title, message) {
   return new Promise((resolve) => {
     const modal = document.createElement('div');
-    modal.className = 'modal-overlay';
-    modal.style.display = 'flex';
-    modal.style.zIndex = '9999';
+    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
     modal.innerHTML = `
-      <div class="modal-box" style="max-width: 450px; border-radius: 16px;">
-        <div class="modal-header" style="border:none; padding-bottom:8px;">
-          <h3 style="width:100%; text-align:right; font-size:1.1rem; color:#1e293b; font-weight:600;">${title}</h3>
+      <div style="background:#fff; border-radius:16px; max-width:450px; width:90%; padding:0; box-shadow:0 20px 60px rgba(0,0,0,0.15); overflow:hidden;">
+        <div style="padding:24px 24px 8px; text-align:center;">
+          <div style="width:48px;height:48px;background:#fef2f2;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+          </div>
+          <h3 style="margin:0 0 8px; font-size:1.15rem; color:#1e293b; font-weight:700;">${title}</h3>
+          ${message ? `<p style="margin:0; color:#64748b; font-size:0.95rem; line-height:1.5;">${message}</p>` : ''}
         </div>
-        ${message ? `<div class="modal-body" style="padding: 16px; text-align:right;">${message}</div>` : ''}
-        <div class="modal-footer" style="border:none; justify-content: flex-start; gap: 12px; flex-direction: row-reverse; border-top: 1px solid #f1f5f9; padding-top:20px;">
-          <button type="button" id="confirm-yes" class="btn" style="background:#ef4444; color:#fff; border-radius:24px; padding:8px 40px; font-weight:600;">تأكيد</button>
-          <button type="button" id="confirm-no" class="btn" style="background:#fff; border:1px solid #e2e8f0; color:#1e293b; border-radius:24px; padding:8px 40px; font-weight:600;">إلغاء</button>
+        <div style="padding:16px 24px 24px; display:flex; gap:12px; justify-content:center;">
+          <button type="button" id="confirm-yes" style="background:#ef4444; color:#fff; border:none; border-radius:12px; padding:10px 36px; font-weight:600; font-size:0.95rem; cursor:pointer; transition:background 0.2s;">تأكيد</button>
+          <button type="button" id="confirm-no" style="background:#f8fafc; color:#1e293b; border:1px solid #e2e8f0; border-radius:12px; padding:10px 36px; font-weight:600; font-size:0.95rem; cursor:pointer; transition:background 0.2s;">إلغاء</button>
         </div>
       </div>
     `;

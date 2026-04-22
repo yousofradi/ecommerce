@@ -8,7 +8,7 @@ const adminAuth = require('../middleware/adminAuth');
 // GET /api/products — list all
 router.get('/', async (req, res) => {
   try {
-    const products = await Product.find().sort({ createdAt: -1 });
+    const products = await Product.find().sort({ sortOrder: 1, createdAt: -1 });
     res.json(products);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch products' });
@@ -37,7 +37,8 @@ router.post('/', adminAuth, async (req, res) => {
       return res.status(400).json({ error: 'Name and basePrice are required' });
     }
 
-    const product = new Product({ name, basePrice, imageUrl, description, options });
+    const count = await Product.countDocuments();
+    const product = new Product({ name, basePrice, imageUrl, description, options, sortOrder: count });
     await product.save();
     res.status(201).json(product);
   } catch (err) {
@@ -77,6 +78,26 @@ router.delete('/:id', adminAuth, async (req, res) => {
     res.json({ message: 'Product deleted' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete product' });
+  }
+});
+
+// PUT /api/products/reorder — reorder products
+router.put('/reorder/batch', adminAuth, async (req, res) => {
+  try {
+    const { order } = req.body; // array of { id, sortOrder }
+    if (!order || !Array.isArray(order)) {
+      return res.status(400).json({ error: 'order array is required' });
+    }
+    const ops = order.map(item => ({
+      updateOne: {
+        filter: { _id: item.id },
+        update: { $set: { sortOrder: item.sortOrder } }
+      }
+    }));
+    await Product.bulkWrite(ops);
+    res.json({ message: 'Products reordered' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to reorder products' });
   }
 });
 

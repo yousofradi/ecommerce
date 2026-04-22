@@ -17,7 +17,8 @@ const productSchema = new mongoose.Schema({
   imageUrl: { type: String, default: '' },
   description: { type: String, default: '' },
   collectionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Collection', default: null },
-  options: { type: [optionGroupSchema], default: [] }
+  options: { type: [optionGroupSchema], default: [] },
+  sortOrder: { type: Number, default: 0 }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Product', productSchema);

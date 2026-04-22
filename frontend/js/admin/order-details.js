@@ -95,8 +95,8 @@ function renderItems() {
       <div class="product-card-item" draggable="true" data-idx="${idx}" ondragstart="onDragStart(event)" ondragover="onDragOver(event)" ondrop="onDrop(event)" ondragend="onDragEnd(event)" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin-bottom: 12px; background: #fff; transition: opacity 0.2s, transform 0.2s; cursor: grab;">
         <!-- Top Row: Info & Pricing -->
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
-          <!-- Right side: Drag Handle + Name & Image -->
-          <div style="display: flex; align-items: center; gap: 12px;">
+          <!-- Right side: Name + Drag Handle, then Image -->
+          <div style="display: flex; align-items: center; gap: 12px; flex-direction: row-reverse;">
             <div style="cursor:grab; color:#94a3b8; display:flex; align-items:center; padding:4px;" title="اسحب لتغيير الترتيب">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="5" r="2"/><circle cx="15" cy="5" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="9" cy="19" r="2"/><circle cx="15" cy="19" r="2"/></svg>
             </div>
@@ -108,9 +108,9 @@ function renderItems() {
             ${imgHtml}
           </div>
           <!-- Left side: Pricing -->
-          <div style="display: flex; align-items: center; gap: 16px; flex-direction: row-reverse;">
-            <div style="font-size: 0.9rem; color: #64748b;" dir="ltr">${item.quantity} x ${formatPrice(item.basePrice)}</div>
+          <div style="display: flex; align-items: center; gap: 16px;">
             <div style="font-weight: 700; font-size: 1.1rem; color: #1e293b;">${formatPrice(item.finalPrice)}</div>
+            <div style="font-size: 0.9rem; color: #64748b;" dir="ltr">${item.quantity} x ${formatPrice(item.basePrice)}</div>
           </div>
         </div>
 
