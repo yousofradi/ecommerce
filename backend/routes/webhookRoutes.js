@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const webhookController = require('../controllers/webhookController');
-const { requireAdmin } = require('../middleware/auth');
+const adminAuth = require('../middleware/adminAuth');
 
 // All webhook routes are admin-only
-router.get('/', requireAdmin, webhookController.getWebhooks);
-router.post('/', requireAdmin, webhookController.createWebhook);
-router.put('/:id', requireAdmin, webhookController.updateWebhook);
-router.delete('/:id', requireAdmin, webhookController.deleteWebhook);
+router.get('/', adminAuth, webhookController.getWebhooks);
+router.post('/', adminAuth, webhookController.createWebhook);
+router.put('/:id', adminAuth, webhookController.updateWebhook);
+router.delete('/:id', adminAuth, webhookController.deleteWebhook);
 
 module.exports = router;

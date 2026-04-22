@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Shipping = require('../models/Shipping');
-const { requireAdmin } = require('../middleware/auth');
+const adminAuth = require('../middleware/adminAuth');
 const defaultShippingFees = require('../config/shipping');
 
 // GET /api/shipping — return all shipping fees (or seed if empty)
@@ -25,7 +25,7 @@ router.get('/', async (req, res) => {
 });
 
 // Admin: Get raw DB objects
-router.get('/list', requireAdmin, async (req, res) => {
+router.get('/list', adminAuth, async (req, res) => {
   try {
     const fees = await Shipping.find().sort({ governorate: 1 });
     res.json(fees);
@@ -35,7 +35,7 @@ router.get('/list', requireAdmin, async (req, res) => {
 });
 
 // Admin: Update fee
-router.put('/:id', requireAdmin, async (req, res) => {
+router.put('/:id', adminAuth, async (req, res) => {
   try {
     const shipping = await Shipping.findByIdAndUpdate(req.params.id, { fee: req.body.fee }, { new: true });
     res.json(shipping);
@@ -45,7 +45,7 @@ router.put('/:id', requireAdmin, async (req, res) => {
 });
 
 // Admin: Add new governorate
-router.post('/', requireAdmin, async (req, res) => {
+router.post('/', adminAuth, async (req, res) => {
   try {
     const shipping = new Shipping(req.body);
     await shipping.save();
@@ -56,7 +56,7 @@ router.post('/', requireAdmin, async (req, res) => {
 });
 
 // Admin: Delete governorate
-router.delete('/:id', requireAdmin, async (req, res) => {
+router.delete('/:id', adminAuth, async (req, res) => {
   try {
     await Shipping.findByIdAndDelete(req.params.id);
     res.json({ success: true });
