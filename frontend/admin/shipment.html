@@ -31,7 +31,10 @@
             <h1 class="page-title" style="margin-bottom:4px">رسوم الشحن</h1>
             <p class="page-subtitle" style="margin-bottom:0">تحديد تكلفة الشحن لكل محافظة</p>
           </div>
-          <button class="btn btn-primary" onclick="showAddForm()">+ إضافة محافظة</button>
+          <div class="flex gap-12">
+            <button class="btn btn-secondary" onclick="bulkUpdateShipping()">تحديث كافة المحافظات دفعة واحدة</button>
+            <button class="btn btn-primary" onclick="showAddForm()">+ إضافة محافظة</button>
+          </div>
         </div>
 
         <!-- Add/Edit Form -->
@@ -155,6 +158,43 @@
       if (!confirm('حذف هذه المحافظة؟')) return;
       try { await api.deleteShipping(id); showToast('تم الحذف'); loadShipping(); }
       catch (e) { showToast(e.message, 'error'); }
+    }
+
+    async function bulkUpdateShipping() {
+      if (!confirm('هل أنت متأكد من تحديث أسعار الشحن لجميع المحافظات وحذف الأسعار القديمة؟')) return;
+      
+      const newFees = [
+        { governorate: 'القاهرة', fee: 85 }, { governorate: 'الجيزة', fee: 85 },
+        { governorate: 'الإسكندرية', fee: 85 }, { governorate: 'البحيرة', fee: 85 },
+        { governorate: 'القليوبية', fee: 85 }, { governorate: 'الغربية', fee: 85 },
+        { governorate: 'المنوفية', fee: 85 }, { governorate: 'دمياط', fee: 85 },
+        { governorate: 'الدقهلية', fee: 85 }, { governorate: 'كفر الشيخ', fee: 85 },
+        { governorate: 'الشرقية', fee: 85 }, { governorate: 'الاسماعيلية', fee: 95 },
+        { governorate: 'السويس', fee: 95 }, { governorate: 'بورسعيد', fee: 95 },
+        { governorate: 'الفيوم', fee: 110 }, { governorate: 'بني سويف', fee: 110 },
+        { governorate: 'المنيا', fee: 110 }, { governorate: 'اسيوط', fee: 110 },
+        { governorate: 'سوهاج', fee: 130 }, { governorate: 'قنا', fee: 130 },
+        { governorate: 'أسوان', fee: 130 }, { governorate: 'الأقصر', fee: 130 },
+        { governorate: 'البحر الأحمر', fee: 130 }, { governorate: 'مرسي مطروح', fee: 135 },
+        { governorate: 'الوادي الجديد', fee: 135 }, { governorate: 'شمال سيناء', fee: 135 },
+        { governorate: 'جنوب سيناء', fee: 135 }
+      ];
+
+      try {
+        showToast('جاري التحديث... قد يستغرق بضع ثوانٍ', 'info');
+        // Delete all existing
+        for (const s of shippingList) {
+          if (s._id) await api.deleteShipping(s._id);
+        }
+        // Insert new
+        for (const s of newFees) {
+          await api.createShipping(s);
+        }
+        showToast('تم تحديث المحافظات بنجاح ✓');
+        loadShipping();
+      } catch (err) {
+        showToast(err.message || 'فشل التحديث الشامل', 'error');
+      }
     }
   </script>
 </body>
