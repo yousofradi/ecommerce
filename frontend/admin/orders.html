@@ -44,7 +44,10 @@
             <h1 class="page-title" style="margin-bottom:4px">الطلبات</h1>
             <p class="page-subtitle" style="margin-bottom:0">عرض وإدارة جميع الطلبات</p>
           </div>
-          <a href="order-form.html" class="btn btn-primary" style="gap:6px">+ إنشاء طلب</a>
+          <div style="display: flex; gap: 10px;">
+            <button onclick="printInvoices()" class="btn btn-secondary" style="gap:6px" id="print-invoices-btn">🖨️ طباعة الفواتير</button>
+            <a href="order-form.html" class="btn btn-primary" style="gap:6px">+ إنشاء طلب</a>
+          </div>
         </div>
 
         <div class="table-wrapper orders-table-wrap">

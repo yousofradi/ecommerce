@@ -73,3 +73,41 @@ window.deleteOrder = async function(orderId) {
     showToast(err.message || 'فشل الحذف', 'error');
   }
 };
+
+// ── Print Invoices (Webhook) ───────────────────────────
+window.printInvoices = async function() {
+  const btn = document.getElementById('print-invoices-btn');
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;border-color:#fff;border-top-color:transparent"></div> جاري التجهيز...';
+  btn.disabled = true;
+
+  try {
+    // You can send specific orders or just a trigger based on your n8n setup.
+    const response = await fetch('https://usefradi-n8n.hf.space/webhook/inovince', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      // If you need to send specific data to n8n, add it to the body here
+      body: JSON.stringify({ action: "print_invoices", timestamp: new Date().toISOString() })
+    });
+
+    if (!response.ok) throw new Error('فشل الاتصال بالويب هوك');
+
+    // We assume the webhook returns a PDF file (Binary data)
+    // If it returns HTML instead, use response.text() and write to a new window.
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    
+    // Open the PDF in a new tab to view/print
+    window.open(url, '_blank');
+    
+    showToast('تم تجهيز الفواتير بنجاح');
+  } catch (err) {
+    console.error(err);
+    showToast('حدث خطأ أثناء طباعة الفواتير', 'error');
+  } finally {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
+};
