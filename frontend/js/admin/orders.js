@@ -95,12 +95,19 @@ window.printInvoices = async function() {
     if (!response.ok) throw new Error('فشل الاتصال بالويب هوك');
 
     // We assume the webhook returns a PDF file (Binary data)
-    // If it returns HTML instead, use response.text() and write to a new window.
     const blob = await response.blob();
     const url = URL.createObjectURL(blob);
     
-    // Open the PDF in a new tab to view/print
-    window.open(url, '_blank');
+    // Download the PDF directly
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `invoices-${new Date().toISOString().split('T')[0]}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    
+    // Cleanup
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
     
     showToast('تم تجهيز الفواتير بنجاح');
   } catch (err) {
