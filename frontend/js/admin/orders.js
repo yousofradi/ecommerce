@@ -78,36 +78,41 @@ window.deleteOrder = async function(orderId) {
 window.printInvoices = async function() {
   const btn = document.getElementById('print-invoices-btn');
   const originalText = btn.innerHTML;
-  btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;border-color:#fff;border-top-color:transparent"></div> جاري التجهيز...';
+  btn.innerHTML = '<div style="display:flex;align-items:center;gap:8px"><div class="spinner" style="width:16px;height:16px;border-width:2px;border-color:#fff;border-top-color:transparent;margin:0"></div> جاري التجهيز...</div>';
   btn.disabled = true;
 
   try {
-    // You can send specific orders or just a trigger based on your n8n setup.
     const response = await fetch('https://usefradi-n8n.hf.space/webhook/inovince', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      // If you need to send specific data to n8n, add it to the body here
       body: JSON.stringify({ action: "print_invoices", timestamp: new Date().toISOString() })
     });
 
     if (!response.ok) throw new Error('فشل الاتصال بالويب هوك');
 
-    // We assume the webhook returns a PDF file (Binary data)
     const blob = await response.blob();
     const url = URL.createObjectURL(blob);
     
-    // Download the PDF directly
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `invoices-${new Date().toISOString().split('T')[0]}.pdf`;
-    document.body.appendChild(a);
-    a.click();
+    // Check if device is mobile
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     
-    // Cleanup
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
+    if (isMobile) {
+      // Mobile browsers (especially iOS) struggle with blob downloads, so we open it
+      window.open(url, '_blank');
+    } else {
+      // Download the PDF directly on desktop
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `invoices-${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+    
+    // Cleanup URL object after a short delay to ensure download/open started
+    setTimeout(() => window.URL.revokeObjectURL(url), 1000);
     
     showToast('تم تجهيز الفواتير بنجاح');
   } catch (err) {
