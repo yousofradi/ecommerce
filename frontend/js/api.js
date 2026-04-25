@@ -1,7 +1,7 @@
 const API_BASE = window.API_BASE || 'https://sundurashop-manage.onrender.com/api';
 
 const api = {
-  _adminKey() { return sessionStorage.getItem('adminKey') || ''; },
+  _adminKey() { return localStorage.getItem('adminKey') || ''; },
 
   async _request(path, opts = {}) {
     const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };

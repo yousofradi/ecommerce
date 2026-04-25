@@ -1,12 +1,12 @@
 /** Admin auth helpers */
 function requireAdmin() {
-  if (!sessionStorage.getItem('adminKey')) {
+  if (!localStorage.getItem('adminKey')) {
     window.location.href = 'login.html';
     return false;
   }
   return true;
 }
 function logout() {
-  sessionStorage.removeItem('adminKey');
+  localStorage.removeItem('adminKey');
   window.location.href = 'login.html';
 }

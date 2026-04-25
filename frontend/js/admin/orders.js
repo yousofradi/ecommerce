@@ -93,26 +93,34 @@ window.printInvoices = async function() {
     if (!response.ok) throw new Error('فشل الاتصال بالويب هوك');
 
     const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
+    const fileName = `invoices-${new Date().toISOString().split('T')[0]}.pdf`;
     
     // Check if device is mobile
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     
     if (isMobile) {
-      // Mobile browsers (especially iOS) struggle with blob downloads, so we open it
-      window.open(url, '_blank');
+      // Mobile browsers handle base64 Data URIs better for forced downloads
+      const reader = new FileReader();
+      reader.onloadend = function() {
+        const a = document.createElement('a');
+        a.href = reader.result;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      };
+      reader.readAsDataURL(blob);
     } else {
-      // Download the PDF directly on desktop
+      // Download the PDF directly on desktop using Object URL
+      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `invoices-${new Date().toISOString().split('T')[0]}.pdf`;
+      a.download = fileName;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
     }
-    
-    // Cleanup URL object after a short delay to ensure download/open started
-    setTimeout(() => window.URL.revokeObjectURL(url), 1000);
     
     showToast('تم تجهيز الفواتير بنجاح');
   } catch (err) {

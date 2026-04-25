@@ -31,7 +31,7 @@
   <script src="../js/api.js"></script>
   <script>
     // If already logged in, redirect
-    if (sessionStorage.getItem('adminKey')) window.location.href = 'index.html';
+    if (localStorage.getItem('adminKey')) window.location.href = 'index.html';
 
     async function doLogin() {
       const key = document.getElementById('api-key').value.trim();
@@ -43,13 +43,13 @@
       btn.textContent = 'جارٍ التحقق...';
       err.style.display = 'none';
 
-      sessionStorage.setItem('adminKey', key);
+      localStorage.setItem('adminKey', key);
       const ok = await api.checkAdmin();
 
       if (ok) {
         window.location.href = 'index.html';
       } else {
-        sessionStorage.removeItem('adminKey');
+        localStorage.removeItem('adminKey');
         err.style.display = 'block';
         btn.disabled = false;
         btn.textContent = 'دخول';
