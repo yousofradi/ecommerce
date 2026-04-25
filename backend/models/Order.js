@@ -44,7 +44,8 @@ const orderSchema = new mongoose.Schema({
     enum: ['instapay', 'vodafone_cash']
   },
   paid: { type: Boolean, default: false },
-  paidAmount: { type: Number, default: 0, min: 0 }
+  paidAmount: { type: Number, default: 0, min: 0 },
+  archived: { type: Boolean, default: false }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Order', orderSchema);

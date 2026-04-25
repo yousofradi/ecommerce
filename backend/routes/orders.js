@@ -91,10 +91,33 @@ router.post('/', async (req, res) => {
 // GET /api/orders — list all
 router.get('/', adminAuth, async (req, res) => {
   try {
-    const orders = await Order.find().sort({ createdAt: -1 });
+    const { archived } = req.query;
+    const query = {};
+    if (archived === 'true') {
+      query.archived = true;
+    } else {
+      query.archived = { $ne: true };
+    }
+    const orders = await Order.find(query).sort({ createdAt: -1 });
     res.json(orders);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch orders' });
+  }
+});
+
+// POST /api/orders/archive/batch — archive multiple orders
+router.post('/archive/batch', adminAuth, async (req, res) => {
+  try {
+    const { orderIds } = req.body;
+    if (!Array.isArray(orderIds)) return res.status(400).json({ error: 'orderIds must be an array' });
+    
+    await Order.updateMany(
+      { orderId: { $in: orderIds } },
+      { $set: { archived: true } }
+    );
+    res.json({ message: 'Orders archived successfully' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to archive orders' });
   }
 });
 

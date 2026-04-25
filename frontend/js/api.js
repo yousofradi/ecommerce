@@ -28,10 +28,11 @@ const api = {
 
   // Orders
   createOrder(d) { return this._request('/orders', { method: 'POST', body: JSON.stringify(d) }); },
-  getOrders() { return this._request('/orders', { admin: true }); },
+  getOrders(archived = false) { return this._request(`/orders?archived=${archived}`, { admin: true }); },
   getOrder(id) { return this._request(`/orders/${id}`, { admin: true }); },
   updateOrder(id, d) { return this._request(`/orders/${id}`, { method: 'PUT', body: JSON.stringify(d), admin: true }); },
   deleteOrder(id) { return this._request(`/orders/${id}`, { method: 'DELETE', admin: true }); },
+  archiveOrders(orderIds) { return this._request('/orders/archive/batch', { method: 'POST', body: JSON.stringify({ orderIds }), admin: true }); },
 
   // Shipping
   getShipping() { return this._request('/shipping'); },

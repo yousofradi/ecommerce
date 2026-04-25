@@ -1,4 +1,6 @@
 /** Admin orders management */
+let showingArchived = false;
+
 document.addEventListener('DOMContentLoaded', () => {
   if (!requireAdmin()) return;
   loadOrders();
@@ -6,11 +8,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function loadOrders() {
   const tbody = document.getElementById('orders-tbody');
-  tbody.innerHTML = '<tr><td colspan="8" class="text-center"><div class="spinner"></div></td></tr>';
+  const selectAllCb = document.getElementById('select-all-orders');
+  if (selectAllCb) selectAllCb.checked = false;
+  updateArchiveButton();
+  
+  tbody.innerHTML = '<tr><td colspan="9" class="text-center"><div class="spinner"></div></td></tr>';
   try {
-    const orders = await api.getOrders();
+    const orders = await api.getOrders(showingArchived);
     if (!orders.length) {
-      tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted" style="padding:40px">لا توجد طلبات بعد</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted" style="padding:40px">لا توجد طلبات بعد</td></tr>';
       return;
     }
     tbody.innerHTML = orders.map(o => {
@@ -22,6 +28,9 @@ async function loadOrders() {
 
       return `
         <tr onclick="viewOrder('${o.orderId}')" style="cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+          <td style="text-align: center;" onclick="event.stopPropagation();">
+            <input type="checkbox" class="order-checkbox" value="${o.orderId}" onchange="updateArchiveButton()">
+          </td>
           <td><code style="font-size:0.78rem;background:var(--bg-body);padding:3px 7px;border-radius:4px">${o.orderId.substring(0, 8)}…</code></td>
           <td>
             <div style="font-weight:600">${o.customer?.name || 'بدون اسم'}</div>
@@ -52,9 +61,58 @@ async function loadOrders() {
         </tr>`;
     }).join('');
   } catch (err) {
-    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">فشل تحميل الطلبات</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">فشل تحميل الطلبات</td></tr>';
   }
 }
+
+// ── Selection & Archiving ────────────────────────────────
+window.toggleSelectAll = function() {
+  const selectAll = document.getElementById('select-all-orders');
+  const checkboxes = document.querySelectorAll('.order-checkbox');
+  checkboxes.forEach(cb => cb.checked = selectAll.checked);
+  updateArchiveButton();
+};
+
+window.updateArchiveButton = function() {
+  const checkboxes = document.querySelectorAll('.order-checkbox:checked');
+  const btn = document.getElementById('archive-selected-btn');
+  if (btn) {
+    btn.style.display = checkboxes.length > 0 && !showingArchived ? 'inline-flex' : 'none';
+    btn.innerHTML = `📦 أرشفة المحدد (${checkboxes.length})`;
+  }
+};
+
+window.archiveSelected = async function() {
+  const checkboxes = document.querySelectorAll('.order-checkbox:checked');
+  const orderIds = Array.from(checkboxes).map(cb => cb.value);
+  if (!orderIds.length) return;
+
+  const confirmed = await window.showConfirmModal('تأكيد الأرشفة', `هل أنت متأكد من أرشفة ${orderIds.length} طلبات؟`);
+  if (!confirmed) return;
+
+  try {
+    await api.archiveOrders(orderIds);
+    showToast('تم أرشفة الطلبات بنجاح');
+    loadOrders();
+  } catch (err) {
+    showToast(err.message || 'فشل أرشفة الطلبات', 'error');
+  }
+};
+
+window.toggleArchivedView = function() {
+  showingArchived = !showingArchived;
+  const btn = document.getElementById('view-archived-btn');
+  if (showingArchived) {
+    btn.innerHTML = '🔙 العودة للطلبات النشطة';
+    btn.classList.remove('btn-secondary');
+    btn.classList.add('btn-primary');
+  } else {
+    btn.innerHTML = '📂 عرض المؤرشفة';
+    btn.classList.remove('btn-primary');
+    btn.classList.add('btn-secondary');
+  }
+  loadOrders();
+};
 
 // ── View Order ───────────────────────────────────────────
 window.viewOrder = function(orderId) {

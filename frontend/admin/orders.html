@@ -7,14 +7,14 @@
   <link rel="stylesheet" href="../css/style.css">
   <style>
     @media (max-width: 768px) {
-      .orders-table-wrap th:nth-child(3),
-      .orders-table-wrap td:nth-child(3),
-      .orders-table-wrap th:nth-child(7),
-      .orders-table-wrap td:nth-child(7) { display: none; }
+      .orders-table-wrap th:nth-child(4),
+      .orders-table-wrap td:nth-child(4),
+      .orders-table-wrap th:nth-child(8),
+      .orders-table-wrap td:nth-child(8) { display: none; }
     }
     @media (max-width: 540px) {
-      .orders-table-wrap th:nth-child(5),
-      .orders-table-wrap td:nth-child(5) { display: none; }
+      .orders-table-wrap th:nth-child(6),
+      .orders-table-wrap td:nth-child(6) { display: none; }
     }
   </style>
 </head>
@@ -44,7 +44,9 @@
             <h1 class="page-title" style="margin-bottom:4px">الطلبات</h1>
             <p class="page-subtitle" style="margin-bottom:0">عرض وإدارة جميع الطلبات</p>
           </div>
-          <div style="display: flex; gap: 10px;">
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <button onclick="toggleArchivedView()" class="btn btn-secondary" style="gap:6px" id="view-archived-btn">📂 عرض المؤرشفة</button>
+            <button onclick="archiveSelected()" class="btn btn-warning" style="gap:6px; display:none;" id="archive-selected-btn">📦 أرشفة المحدد</button>
             <button onclick="printInvoices()" class="btn btn-secondary" style="gap:6px" id="print-invoices-btn">🖨️ طباعة الفواتير</button>
             <a href="order-form.html" class="btn btn-primary" style="gap:6px">+ إنشاء طلب</a>
           </div>
@@ -54,6 +56,9 @@
           <table>
             <thead>
               <tr>
+                <th style="width: 40px; text-align: center;">
+                  <input type="checkbox" id="select-all-orders" onchange="toggleSelectAll()">
+                </th>
                 <th>رقم الطلب</th>
                 <th>العميل</th>
                 <th>المنتجات</th>
