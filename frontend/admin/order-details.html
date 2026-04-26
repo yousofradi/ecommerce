@@ -205,9 +205,9 @@
                   <span id="sum-shipping">0 ج.م</span>
                   <span style="color:var(--text-muted)">الشحن</span>
                 </div>
-                <div class="summary-row" id="sum-discount-row" style="display:none;color:var(--danger)">
+                <div class="summary-row" id="sum-discount-row" style="display:none;">
                   <span id="sum-discount">0 ج.م</span>
-                  <span style="color:var(--danger)">خصم الطلب</span>
+                  <span id="sum-discount-label" style="color:var(--danger)">خصم الطلب</span>
                 </div>
                 <div class="summary-row" style="font-weight:700;margin-top:12px;border-top:1px solid var(--border-color);padding-top:12px">
                   <span id="sum-total">0 ج.م</span>
@@ -361,13 +361,14 @@
   <div class="modal-overlay" id="item-discount-modal" style="display: none;">
     <div class="modal-box" style="max-width: 400px; border-radius: 16px;">
       <div class="modal-header" style="border:none; padding-bottom:0;">
-        <h3 style="width:100%; text-align:right; font-size:1.1rem; color:#1e293b; font-weight:600;">خصم خاص</h3>
+        <h3 style="width:100%; text-align:right; font-size:1.1rem; color:#1e293b; font-weight:600;">تعديل السعر (خصم / زيادة)</h3>
       </div>
       <div class="modal-body" style="padding-top:12px;">
         <input type="hidden" id="modal-item-idx">
         <div class="form-group">
+          <label style="display:block;margin-bottom:8px;font-size:0.85rem;color:var(--text-muted);">لإضافة رسوم إضافية، أدخل قيمة سالبة (مثل -50)</label>
           <div style="position:relative; display:flex; align-items:center;">
-            <input type="number" id="modal-item-discount" class="form-control" style="border-radius:12px; padding:12px 16px; padding-left:45px; text-align:right;" placeholder="أضف قيمة الخصم">
+            <input type="number" id="modal-item-discount" class="form-control" style="border-radius:12px; padding:12px 16px; padding-left:45px; text-align:right;" placeholder="أدخل القيمة">
             <span style="position:absolute; left:16px; color:#64748b; font-size:0.9rem;">ج.م.</span>
           </div>
         </div>
@@ -383,12 +384,13 @@
   <div class="modal-overlay" id="order-discount-modal" style="display: none;">
     <div class="modal-box" style="max-width: 400px; border-radius: 16px;">
       <div class="modal-header" style="border:none; padding-bottom:0;">
-        <h3 style="width:100%; text-align:right; font-size:1.1rem; color:#1e293b; font-weight:600;">خصم خاص للطلب</h3>
+        <h3 style="width:100%; text-align:right; font-size:1.1rem; color:#1e293b; font-weight:600;">تعديل إجمالي الطلب (خصم / زيادة)</h3>
       </div>
       <div class="modal-body" style="padding-top:12px;">
         <div class="form-group">
+          <label style="display:block;margin-bottom:8px;font-size:0.85rem;color:var(--text-muted);">لإضافة رسوم إضافية، أدخل قيمة سالبة (مثل -50)</label>
           <div style="position:relative; display:flex; align-items:center;">
-            <input type="number" id="modal-order-discount" class="form-control" style="border-radius:12px; padding:12px 16px; padding-left:45px; text-align:right;" placeholder="أضف قيمة الخصم">
+            <input type="number" id="modal-order-discount" class="form-control" style="border-radius:12px; padding:12px 16px; padding-left:45px; text-align:right;" placeholder="أدخل القيمة">
             <span style="position:absolute; left:16px; color:#64748b; font-size:0.9rem;">ج.م.</span>
           </div>
         </div>

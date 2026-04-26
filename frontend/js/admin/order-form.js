@@ -246,7 +246,7 @@ window.setQty = function(index, delta) {
 window.setItemDiscount = function(index, val) {
   const item = cartItems[index];
   if (!item) return;
-  item.discount = Math.max(0, parseFloat(val) || 0);
+  item.discount = parseFloat(val) || 0;
   recalcSummary();
 };
 
@@ -298,7 +298,7 @@ function renderCart() {
             <div style="text-align: right;">
               <div style="font-weight: 600; font-size: 1rem; color: #1e293b;">${p.name}</div>
               ${optText ? `<div style="font-size: 0.85rem; color: #64748b; margin-top: 4px;">${optText}</div>` : ''}
-              ${c.discount ? `<div style="font-size:0.8rem;color:var(--danger);margin-top:4px">خصم: ${formatPrice(c.discount)}</div>` : ''}
+              ${c.discount ? `<div style="font-size:0.8rem;color:${c.discount > 0 ? 'var(--danger)' : 'var(--primary)'};margin-top:4px">${c.discount > 0 ? 'خصم:' : 'إضافة:'} ${formatPrice(Math.abs(c.discount))}</div>` : ''}
             </div>
             ${imgHtml}
           </div>
@@ -313,7 +313,7 @@ function renderCart() {
         <div style="display: flex; gap: 8px; justify-content: flex-start; flex-direction: row-reverse; align-items: center;">
           <button type="button" class="btn btn-sm" onclick="openItemDiscountModal(${i})" style="background: #fff; border: 1px solid #e2e8f0; color: #475569; display: flex; align-items: center; gap: 6px; font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; height: 32px;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="2"></circle><circle cx="15" cy="15" r="2"></circle><path d="M19 5L5 19"></path></svg>
-            تطبيق خصم
+            خصم / زيادة
           </button>
           
           <!-- Quantity Stepper -->
@@ -351,7 +351,7 @@ window.recalcSummary = function() {
 
   const gov = document.getElementById('c-gov').value;
   const shipping = shippingMap[gov] || 0;
-  const orderDiscount = Math.max(0, parseFloat(document.getElementById('order-discount').value) || 0);
+  const orderDiscount = parseFloat(document.getElementById('order-discount').value) || 0;
   const total = Math.max(0, subtotal + shipping - orderDiscount);
 
   document.getElementById('sum-subtotal').textContent = formatPrice(subtotal);
@@ -404,7 +404,7 @@ window.submitOrder = async function() {
   }
 
   const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
-  const orderDiscount = Math.max(0, parseFloat(document.getElementById('order-discount').value) || 0);
+  const orderDiscount = parseFloat(document.getElementById('order-discount').value) || 0;
   const paidAmount = Math.max(0, parseFloat(document.getElementById('paid-amount').value) || 0);
 
   const finalItems = cartItems.map(c => ({
@@ -466,7 +466,7 @@ window.applyItemDiscount = function() {
   const val = document.getElementById('modal-item-discount').value;
   const item = cartItems[idx];
   if (item) {
-    item.discount = Math.max(0, parseFloat(val) || 0);
+    item.discount = parseFloat(val) || 0;
     closeModal('item-discount-modal');
     recalcSummary();
     renderCart();

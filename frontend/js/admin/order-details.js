@@ -107,7 +107,7 @@ function renderItems() {
             <div style="text-align: right;">
               <div style="font-weight: 600; font-size: 1rem; color: #1e293b;">${item.name}</div>
               ${optText ? `<div style="font-size: 0.85rem; color: #64748b; margin-top: 4px;">${optText}</div>` : ''}
-              ${item.discount ? `<div style="font-size:0.8rem;color:var(--danger);margin-top:4px">خصم: ${formatPrice(item.discount)}</div>` : ''}
+              ${item.discount ? `<div style="font-size:0.8rem;color:${item.discount > 0 ? 'var(--danger)' : 'var(--primary)'};margin-top:4px">${item.discount > 0 ? 'خصم:' : 'إضافة:'} ${formatPrice(Math.abs(item.discount))}</div>` : ''}
             </div>
             ${imgHtml}
           </div>
@@ -128,7 +128,7 @@ function renderItems() {
 
           <button class="btn btn-sm" onclick="openItemDiscountModal(${idx})" style="background: #fff; border: 1px solid #e2e8f0; color: #475569; display: flex; align-items: center; gap: 6px; font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; height: 32px;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="2"></circle><circle cx="15" cy="15" r="2"></circle><path d="M19 5L5 19"></path></svg>
-            تطبيق خصم
+            خصم / زيادة
           </button>
           
           <!-- Quantity Stepper restored -->
@@ -165,9 +165,14 @@ function updateTotals() {
   document.getElementById('sum-shipping').textContent = formatPrice(o.shippingFee);
   
   const discRow = document.getElementById('sum-discount-row');
-  if (o.discount > 0) {
+  if (o.discount !== 0 && o.discount !== undefined && o.discount !== null) {
     discRow.style.display = 'flex';
-    document.getElementById('sum-discount').textContent = formatPrice(o.discount);
+    document.getElementById('sum-discount').textContent = formatPrice(Math.abs(o.discount));
+    const label = document.getElementById('sum-discount-label');
+    if (label) {
+      label.textContent = o.discount > 0 ? 'خصم الطلب' : 'إضافة للطلب';
+      label.style.color = o.discount > 0 ? 'var(--danger)' : 'var(--primary)';
+    }
   } else {
     discRow.style.display = 'none';
   }
@@ -377,7 +382,7 @@ window.openOrderDiscountModal = function() {
 
 window.applyOrderDiscount = function() {
   const val = document.getElementById('modal-order-discount').value;
-  currentOrder.discount = Math.max(0, parseFloat(val) || 0);
+  currentOrder.discount = parseFloat(val) || 0;
   closeModal('order-discount-modal');
   updateTotals();
 };
@@ -394,7 +399,7 @@ window.applyItemDiscount = function() {
   const val = document.getElementById('modal-item-discount').value;
   const item = currentOrder.items[idx];
   if (item) {
-    item.discount = Math.max(0, parseFloat(val) || 0);
+    item.discount = parseFloat(val) || 0;
     closeModal('item-discount-modal');
     updateTotals();
     renderItems();
