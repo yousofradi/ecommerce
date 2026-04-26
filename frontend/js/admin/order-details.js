@@ -529,16 +529,18 @@ window.renderModalProducts = function() {
     
     if (!hasOptions) {
       return `
-        <label class="product-list-item" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border-color);">
-          <div class="pli-info" style="display:flex; align-items:center; gap:12px;">
-            ${imgHtml}
-            <div>
-              <div style="font-weight:600;font-size:0.95rem">${p.name}</div>
-              <div style="font-size:0.85rem;color:var(--primary)">${formatPrice(p.basePrice)}</div>
+        <div style="width: 100%; display: block;">
+          <label class="product-list-item" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border-color); width: 100%; box-sizing: border-box;">
+            <div class="pli-info" style="display:flex; align-items:center; gap:12px;">
+              ${imgHtml}
+              <div>
+                <div style="font-weight:600;font-size:0.95rem">${p.name}</div>
+                <div style="font-size:0.85rem;color:var(--primary)">${formatPrice(p.basePrice)}</div>
+              </div>
             </div>
-          </div>
-          <input type="checkbox" class="pli-checkbox product-select-cb" value="${p._id}">
-        </label>
+            <input type="checkbox" class="pli-checkbox product-select-cb" value="${p._id}" style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer;">
+          </label>
+        </div>
       `;
     }
 
