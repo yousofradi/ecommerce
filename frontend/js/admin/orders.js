@@ -125,10 +125,16 @@ function renderOrders(orders) {
         </td>
         <td style="color:#0ea5e9; font-weight:600; font-size:0.95rem;" dir="ltr">#${displayId}</td>
         <td style="color:#64748b; font-size:0.85rem;">${dateStr}</td>
-        <td>
-          <div style="display:flex; align-items:center; gap:8px;">
+        <td style="position:relative;" onmouseleave="this.querySelector('.customer-dropdown').style.display='none'">
+          <div style="display:flex; align-items:center; gap:8px;" onmouseenter="this.nextElementSibling.style.display='block'">
             <span style="font-weight:600; color:#1e293b;">${o.customer?.name || 'بدون اسم'}</span>
             <span style="color:#94a3b8; font-size:0.8rem;">▼</span>
+          </div>
+          <div class="customer-dropdown" onclick="event.stopPropagation()" style="display:none; position:absolute; top:80%; right:0; background:#fff; border:1px solid #e2e8f0; border-radius:8px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); width:250px; z-index:50; padding:12px; text-align:right;">
+            <div style="font-size:0.85rem; color:#64748b; margin-bottom:4px;">الهاتف: <span style="color:#1e293b;font-weight:600;">${o.customer?.phone || 'لا يوجد'}</span></div>
+            ${o.customer?.secondPhone ? `<div style="font-size:0.85rem; color:#64748b; margin-bottom:4px;">هاتف بديل: <span style="color:#1e293b;font-weight:600;">${o.customer.secondPhone}</span></div>` : ''}
+            <div style="font-size:0.85rem; color:#64748b; margin-bottom:4px;">المحافظة: <span style="color:#1e293b;font-weight:600;">${o.customer?.government || 'لا يوجد'}</span></div>
+            <div style="font-size:0.85rem; color:#64748b;">العنوان: <span style="color:#1e293b;font-weight:600;">${o.customer?.address || 'لا يوجد'}</span></div>
           </div>
         </td>
         <td>
@@ -137,10 +143,21 @@ function renderOrders(orders) {
         <td>${payBadge}</td>
         <td>${prepStatus}</td>
         <td>${shipStatus}</td>
-        <td>
-          <div style="display:flex; align-items:center; gap:8px;">
+        <td style="position:relative;" onmouseleave="this.querySelector('.items-dropdown').style.display='none'">
+          <div style="display:flex; align-items:center; gap:8px;" onmouseenter="this.nextElementSibling.style.display='block'">
             <span style="font-weight:600; color:#1e293b;">${o.items?.length || 0} عنصر</span>
             <span style="color:#94a3b8; font-size:0.8rem;">▼</span>
+          </div>
+          <div class="items-dropdown" onclick="event.stopPropagation()" style="display:none; position:absolute; top:80%; right:0; background:#fff; border:1px solid #e2e8f0; border-radius:8px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); width:280px; z-index:50; padding:8px; max-height:300px; overflow-y:auto;">
+            ${o.items ? o.items.map(i => `
+              <div style="display:flex; align-items:center; gap:12px; padding:8px; border-bottom:1px solid #f1f5f9;">
+                <div style="position:relative; width:40px; height:40px; border-radius:6px; background:#f8fafc; border:1px solid #e2e8f0; overflow:visible;">
+                  ${i.imageUrl ? `<img src="${i.imageUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">` : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#cbd5e1;font-size:0.7rem;">صورة</div>'}
+                  <span style="position:absolute; top:-6px; right:-6px; background:#64748b; color:#fff; border-radius:50%; width:18px; height:18px; font-size:0.65rem; display:flex; align-items:center; justify-content:center; font-weight:bold; border:2px solid #fff;">${i.quantity}</span>
+                </div>
+                <div style="flex:1; font-size:0.85rem; font-weight:600; color:#1e293b; line-height:1.4; text-align:right;">${i.name}</div>
+              </div>
+            `).join('') : '<div style="padding:8px; text-align:center; color:#94a3b8; font-size:0.8rem;">لا توجد عناصر</div>'}
           </div>
         </td>
         <td style="color:#94a3b8;">-</td>

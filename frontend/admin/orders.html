@@ -124,14 +124,13 @@
 
     <main class="admin-main">
       <div style="max-width:1300px">
-        <div class="flex-between mb-24 align-center" style="flex-direction: row-reverse;">
+        <div class="flex-between mb-24 align-center">
           <div>
             <h1 class="page-title" style="margin-bottom:0; font-size: 1.5rem; color:#1e293b; font-weight:700;">الطلبات</h1>
           </div>
-          <div class="page-actions-container" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; flex-direction: row-reverse;">
+          <div class="page-actions-container" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
             <a href="order-form.html" class="btn btn-primary" style="gap:6px; background:#0f766e; border:none; border-radius:20px; padding:8px 20px; font-weight:600;">+ أنشئ طلب</a>
             <button onclick="printInvoices()" class="btn btn-secondary" style="gap:6px; border-radius:20px; padding:8px 20px; background:#fff; border:1px solid #e2e8f0; color:#475569; font-weight:600;" id="print-invoices-btn">استخراج 📥</button>
-            <button onclick="toggleArchivedView()" class="btn btn-secondary" style="gap:6px; border-radius:20px; padding:8px 20px; background:#fff; border:1px solid #e2e8f0; color:#475569; font-weight:600; display:none;" id="view-archived-btn">الارشيف</button>
             <button onclick="archiveSelected()" class="btn btn-warning" style="gap:6px; display:none; border-radius:20px; padding:8px 20px; font-weight:600;" id="archive-selected-btn">أرشفة المحدد</button>
             <button onclick="unarchiveSelected()" class="btn btn-success" style="gap:6px; display:none; border-radius:20px; padding:8px 20px; font-weight:600;" id="unarchive-selected-btn">استرجاع المحدد</button>
           </div>
@@ -139,20 +138,20 @@
 
         <div style="background:#fff; border:1px solid #e2e8f0; border-radius:12px; overflow:hidden;">
           <!-- Filter / Search bar -->
-          <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid #f1f5f9; flex-wrap:wrap; gap:16px; flex-direction:row-reverse;">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid #f1f5f9; flex-wrap:wrap; gap:16px;">
             
-            <!-- Tabs -->
-            <div style="display:flex; gap:24px; align-items:center; flex-direction:row-reverse;" class="order-tabs">
-              <span class="order-tab active" data-filter="all" onclick="setFilter('all')">الجميع <span class="tab-badge" id="count-all">0</span></span>
-              <span class="order-tab" data-filter="pending" onclick="setFilter('pending')">بانتظار التجهيز <span class="tab-badge" id="count-pending">0</span></span>
-              <span class="order-tab" data-filter="unpaid" onclick="setFilter('unpaid')">غير مدفوع <span class="tab-badge" id="count-unpaid">0</span></span>
-              <span class="order-tab" data-filter="archived" onclick="setFilter('archived')">الأرشيف</span>
-            </div>
-
             <!-- Search -->
             <div style="position:relative; width:300px; max-width:100%;">
               <input type="text" id="order-search" placeholder="البحث والتصنيفات" style="width:100%; padding:8px 16px; padding-right:40px; border:1px solid #e2e8f0; border-radius:8px; font-size:0.9rem;" oninput="filterOrdersClient()">
               <span style="position:absolute; right:12px; top:50%; transform:translateY(-50%); color:#94a3b8; pointer-events:none;">🔍</span>
+            </div>
+
+            <!-- Tabs -->
+            <div style="display:flex; gap:24px; align-items:center;" class="order-tabs">
+              <span class="order-tab active" data-filter="all" onclick="setFilter('all')">الجميع <span class="tab-badge" id="count-all">0</span></span>
+              <span class="order-tab" data-filter="pending" onclick="setFilter('pending')">بانتظار التجهيز <span class="tab-badge" id="count-pending">0</span></span>
+              <span class="order-tab" data-filter="unpaid" onclick="setFilter('unpaid')">غير مدفوع <span class="tab-badge" id="count-unpaid">0</span></span>
+              <span class="order-tab" data-filter="archived" onclick="setFilter('archived')">الأرشيف</span>
             </div>
           </div>
           
@@ -181,20 +180,20 @@
           </div>
           
           <!-- Footer Pagination -->
-          <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-top:1px solid #f1f5f9; background:#fff; flex-direction:row-reverse;">
-            <div style="display:flex; align-items:center; gap:8px; flex-direction:row-reverse;">
-              <button class="btn btn-sm" style="background:#fff; border:1px solid #e2e8f0; color:#94a3b8; border-radius:6px; padding:4px 8px;">&gt;</button>
-              <select style="border:1px solid #e2e8f0; border-radius:6px; padding:4px 8px; font-size:0.9rem; background:#fff;">
-                <option>1</option>
-              </select>
-              <button class="btn btn-sm" style="background:#fff; border:1px solid #e2e8f0; color:#94a3b8; border-radius:6px; padding:4px 8px;">&lt;</button>
-            </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-top:1px solid #f1f5f9; background:#fff;">
             <div style="font-size:0.85rem; color:#64748b; display:flex; align-items:center; gap:8px;">
               عدد الطلبات في الصفحة 
               <select style="border:1px solid #e2e8f0; border-radius:6px; padding:4px 8px; font-size:0.9rem; background:#fff; color:#1e293b;">
                 <option>20</option>
                 <option>50</option>
               </select>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button class="btn btn-sm" style="background:#fff; border:1px solid #e2e8f0; color:#94a3b8; border-radius:6px; padding:4px 8px;">&gt;</button>
+              <select style="border:1px solid #e2e8f0; border-radius:6px; padding:4px 8px; font-size:0.9rem; background:#fff;">
+                <option>1</option>
+              </select>
+              <button class="btn btn-sm" style="background:#fff; border:1px solid #e2e8f0; color:#94a3b8; border-radius:6px; padding:4px 8px;">&lt;</button>
             </div>
           </div>
         </div>
