@@ -22,7 +22,7 @@ async function sendWebhook(event, data) {
     }));
 
     const rawPayload = {
-      "Order ID": data.orderId,
+      "Order-number": data.orderId,
       "Name": data.customer.name,
       "Phone": data.customer.phone,
       "Second Phone": data.customer.secondPhone || "",
