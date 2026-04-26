@@ -117,8 +117,7 @@ window.renderModalProducts = function() {
               <div style="font-weight:600;font-size:0.95rem">${p.name}</div>
               <div style="font-size:0.85rem;color:var(--primary)">${formatPrice(p.basePrice)}</div>
             </div>
-          </div>
-          <input type="radio" class="pli-checkbox product-select-cb" name="product-select" value="${p._id}" style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer;">
+          <input type="checkbox" class="pli-checkbox product-select-cb" value="${p._id}" style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer;">
         </label>
       `;
     }
@@ -135,7 +134,7 @@ window.renderModalProducts = function() {
             <div style="font-size:0.9rem;font-weight:500;">${title}</div>
             <div style="font-size:0.85rem;color:var(--primary)">${formatPrice(finalPrice)}</div>
           </div>
-          <input type="radio" class="pli-checkbox product-variant-cb" name="product-select" data-pid="${p._id}" data-combo="${comboStr}" style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer;">
+          <input type="checkbox" class="pli-checkbox product-variant-cb" data-pid="${p._id}" data-combo="${comboStr}" style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer;">
         </label>
       `;
     }).join('');
@@ -159,25 +158,30 @@ window.renderModalProducts = function() {
 
 window.addSelectedProducts = function() {
   // 1. Check simple products
-  const checkedSimple = document.querySelector('.product-select-cb:checked');
+  const checkedSimple = document.querySelectorAll('.product-select-cb:checked');
   // 2. Check variants
-  const checkedVariant = document.querySelector('.product-variant-cb:checked');
+  const checkedVariants = document.querySelectorAll('.product-variant-cb:checked');
 
-  if (!checkedSimple && !checkedVariant) return showToast('\u0627\u062e\u062a\u0631 \u0645\u0646\u062a\u062c\u0627\u064b \u0648\u0627\u062d\u062f\u0627\u064b \u0639\u0644\u0649 \u0627\u0644\u0623\u0642\u0644', 'error');
-
-  if (checkedSimple && !checkedSimple.classList.contains('product-variant-cb')) {
-    const p = allProducts.find(x => x._id === checkedSimple.value);
-    if (p) {
-      const existing = cartItems.find(c => c.product._id === p._id && (!c.selectedOptions || c.selectedOptions.length === 0));
-      if (existing) existing.quantity++;
-      else cartItems.push({ product: p, quantity: 1, selectedOptions: [], discount: 0 });
-    }
+  if (checkedSimple.length === 0 && checkedVariants.length === 0) {
+    return showToast('اختر منتجاً واحداً على الأقل', 'error');
   }
 
-  if (checkedVariant) {
-    const p = allProducts.find(x => x._id === checkedVariant.dataset.pid);
+  checkedSimple.forEach(cb => {
+    const p = allProducts.find(x => x._id === cb.value);
     if (p) {
-      const combo = JSON.parse(decodeURIComponent(checkedVariant.dataset.combo));
+      const existing = cartItems.find(c => c.product._id === p._id && (!c.selectedOptions || c.selectedOptions.length === 0));
+      if (existing) {
+        existing.quantity++;
+      } else {
+        cartItems.push({ product: p, quantity: 1, selectedOptions: [], discount: 0 });
+      }
+    }
+  });
+
+  checkedVariants.forEach(cb => {
+    const p = allProducts.find(x => x._id === cb.dataset.pid);
+    if (p) {
+      const combo = JSON.parse(decodeURIComponent(cb.dataset.combo));
       const existing = cartItems.find(c => {
         if (c.product._id !== p._id) return false;
         if (!c.selectedOptions || c.selectedOptions.length !== combo.length) return false;
@@ -189,7 +193,7 @@ window.addSelectedProducts = function() {
         cartItems.push({ product: p, quantity: 1, selectedOptions: combo, discount: 0 });
       }
     }
-  }
+  });
 
   closeProductsModal();
   renderCart();
