@@ -62,7 +62,7 @@ router.post('/', async (req, res) => {
       { $inc: { seq: 1 } },
       { new: true, upsert: true }
     );
-    const generatedOrderId = `Scoop-${counter.seq}`;
+    const generatedOrderId = `Order-${counter.seq}`;
 
     const order = new Order({
       orderId: generatedOrderId,
