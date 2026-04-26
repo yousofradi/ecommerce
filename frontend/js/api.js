@@ -13,7 +13,12 @@ const api = {
   },
 
   // Products
-  getProducts(page = 1, limit = 20) { return this._request(`/products?admin=true&page=${page}&limit=${limit}`); },
+  getProducts(page, limit, admin = true) {
+    let url = `/products?admin=${admin}`;
+    if (page) url += `&page=${page}`;
+    if (limit) url += `&limit=${limit}`;
+    return this._request(url);
+  },
   getProduct(id) { return this._request(`/products/${id}`); },
   createProduct(d) { return this._request('/products', { method: 'POST', body: JSON.stringify(d), admin: true }); },
   updateProduct(id, d) { return this._request(`/products/${id}`, { method: 'PUT', body: JSON.stringify(d), admin: true }); },

@@ -14,7 +14,7 @@ async function loadProducts() {
   tbody.innerHTML = '<tr><td colspan="8" class="text-center"><div class="spinner"></div></td></tr>';
   try {
     const [res, collections] = await Promise.all([
-      api.getProducts(currentPage, 20),
+      api.getProducts(currentPage, 20, true),
       api.getCollections().catch(() => [])
     ]);
     const colMap = {};
