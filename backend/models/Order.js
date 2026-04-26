@@ -15,7 +15,7 @@ const orderItemSchema = new mongoose.Schema({
   selectedOptions: { type: [selectedOptionSchema], default: [] },
   finalPrice: { type: Number, required: true },
   quantity: { type: Number, required: true, min: 1 },
-  discount: { type: Number, default: 0, min: 0 }  // per-item discount in EGP
+  discount: { type: Number, default: 0 }  // per-item discount in EGP
 }, { _id: false });
 
 const customerSchema = new mongoose.Schema({
@@ -35,7 +35,7 @@ const orderSchema = new mongoose.Schema({
     required: true,
     validate: v => v.length > 0
   },
-  discount: { type: Number, default: 0, min: 0 },    // total order discount in EGP
+  discount: { type: Number, default: 0 },    // total order discount in EGP
   totalPrice: { type: Number, required: true, min: 0 },
   shippingFee: { type: Number, required: true, min: 0 },
   paymentMethod: {
