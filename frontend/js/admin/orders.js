@@ -6,63 +6,147 @@ document.addEventListener('DOMContentLoaded', () => {
   loadOrders();
 });
 
+let allOrdersData = [];
+let currentFilter = 'all';
+
 async function loadOrders() {
   const tbody = document.getElementById('orders-tbody');
   const selectAllCb = document.getElementById('select-all-orders');
   if (selectAllCb) selectAllCb.checked = false;
   updateArchiveButton();
   
-  tbody.innerHTML = '<tr><td colspan="9" class="text-center"><div class="spinner"></div></td></tr>';
+  tbody.innerHTML = '<tr><td colspan="10" class="text-center" style="padding:32px;"><div class="spinner"></div></td></tr>';
   try {
-    const orders = await api.getOrders(showingArchived);
-    if (!orders.length) {
-      tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted" style="padding:40px">لا توجد طلبات بعد</td></tr>';
+    allOrdersData = await api.getOrders(showingArchived);
+    updateFilterCounts();
+    filterOrdersClient();
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">فشل تحميل الطلبات</td></tr>';
+  }
+}
+
+window.setFilter = function(filter) {
+  currentFilter = filter;
+  document.querySelectorAll('.order-tab').forEach(el => el.classList.remove('active'));
+  document.querySelector(`.order-tab[data-filter="${filter}"]`)?.classList.add('active');
+
+  if (filter === 'archived') {
+    if (!showingArchived) {
+      showingArchived = true;
+      loadOrders();
       return;
     }
-    tbody.innerHTML = orders.map(o => {
-      const date = new Date(o.createdAt).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' });
-      const payBadge = {
-        vodafone_cash: '<span class="badge" style="background:#fce7f3;color:#9d174d">ف.كاش</span>',
-        instapay: '<span class="badge badge-success">إنستاباي</span>'
-      }[o.paymentMethod] || o.paymentMethod;
-
-      return `
-        <tr onclick="viewOrder('${o.orderId}')" style="cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
-          <td style="text-align: center;" onclick="event.stopPropagation();">
-            <input type="checkbox" class="order-checkbox" value="${o.orderId}" onchange="updateArchiveButton()">
-          </td>
-          <td><code style="font-size:0.78rem;background:var(--bg-body);padding:3px 7px;border-radius:4px">${o.orderId.substring(0, 8)}…</code></td>
-          <td>
-            <div style="font-weight:600">${o.customer?.name || 'بدون اسم'}</div>
-            <div class="text-sm text-muted">${o.customer?.phone || ''}</div>
-            <div class="text-sm text-muted">${o.customer?.government || ''}</div>
-          </td>
-          <td>${o.items?.length || 0} منتج</td>
-          <td>
-            <div style="font-weight:700;color:var(--primary)">${formatPrice(o.totalPrice)}</div>
-            ${o.discount ? `<div class="text-sm" style="color:var(--danger)">خصم: ${formatPrice(o.discount)}</div>` : ''}
-          </td>
-          <td>${payBadge}</td>
-          <td>
-            ${o.status === 'cancelled' ? '<span class="badge badge-danger">ملغي</span>' : o.paid 
-              ? '<span class="badge badge-success">مدفوع ✓</span>'
-              : o.paidAmount > 0 
-                ? `<span class="badge" style="background:#fef3c7;color:#92400e">مدفوع جزئياً<br><small>${formatPrice(o.paidAmount)} / ${formatPrice(o.totalPrice)}</small></span>`
-                : '<span class="badge badge-warning">غير مدفوع</span>'
-            }
-          </td>
-          <td class="text-sm text-muted">${date}</td>
-          <td>
-            <div class="flex gap-8">
-              <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); viewOrder('${o.orderId}')">عرض</button>
-              <button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); deleteOrder('${o.orderId}')">حذف</button>
-            </div>
-          </td>
-        </tr>`;
-    }).join('');
-  } catch (err) {
-    tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">فشل تحميل الطلبات</td></tr>';
+  } else {
+    if (showingArchived) {
+      showingArchived = false;
+      loadOrders();
+      return;
+    }
   }
+  filterOrdersClient();
+};
+
+window.filterOrdersClient = function() {
+  const searchInput = document.getElementById('order-search');
+  const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+  let filtered = allOrdersData;
+  
+  if (currentFilter === 'pending') {
+    filtered = filtered.filter(o => o.status !== 'cancelled'); 
+  } else if (currentFilter === 'unpaid') {
+    filtered = filtered.filter(o => !o.paid && (o.totalPrice > (o.paidAmount || 0)));
+  }
+  
+  if (query) {
+    filtered = filtered.filter(o => 
+      o.orderId.toLowerCase().includes(query) || 
+      (o.customer && o.customer.name && o.customer.name.toLowerCase().includes(query)) ||
+      (o.customer && o.customer.phone && o.customer.phone.includes(query))
+    );
+  }
+  
+  renderOrders(filtered);
+};
+
+window.updateFilterCounts = function() {
+  if (!showingArchived) {
+    const elAll = document.getElementById('count-all');
+    const elPending = document.getElementById('count-pending');
+    const elUnpaid = document.getElementById('count-unpaid');
+    
+    if (elAll) elAll.textContent = allOrdersData.length;
+    if (elPending) elPending.textContent = allOrdersData.filter(o => o.status !== 'cancelled').length;
+    if (elUnpaid) elUnpaid.textContent = allOrdersData.filter(o => !o.paid && (o.totalPrice > (o.paidAmount || 0))).length;
+  }
+};
+
+function renderOrders(orders) {
+  const tbody = document.getElementById('orders-tbody');
+  
+  if (!orders.length) {
+    tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted" style="padding:40px">لا توجد طلبات هنا</td></tr>';
+    return;
+  }
+  
+  tbody.innerHTML = orders.map(o => {
+    // Relative date
+    const dateObj = new Date(o.createdAt);
+    const timeStr = dateObj.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+    const isToday = new Date().toDateString() === dateObj.toDateString();
+    const dateStr = isToday ? `اليوم في ${timeStr}` : dateObj.toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' }) + ` ${timeStr}`;
+    
+    // Payment badge
+    let payBadge = '';
+    if (o.paid) {
+      payBadge = `<div class="status-badge-pill badge-paid"><div class="dot"></div> مدفوع</div>`;
+    } else if (o.paidAmount > 0) {
+      payBadge = `<div class="status-badge-pill badge-partial"><div class="dot"></div> مدفوع جزئيا</div>`;
+    } else {
+      payBadge = `<div class="status-badge-pill badge-unpaid"><div class="dot"></div> غير مدفوع</div>`;
+    }
+
+    // Prep status
+    let prepStatus = '';
+    if (o.status === 'cancelled') {
+      prepStatus = `<div class="status-badge-pill badge-unpaid"><div class="dot"></div> ملغي</div>`;
+    } else {
+      prepStatus = `<div class="status-badge-pill badge-neutral"><div class="dot"></div> بانتظار التجهيز</div>`;
+    }
+    
+    // Shipping status
+    const shipStatus = `<div class="status-badge-pill badge-neutral" style="background:#f8fafc;border:1px solid #f1f5f9;">تم شحنه ذاتيا</div>`;
+    
+    const displayId = o.orderId.replace('Order-', '').replace('Scoop-', '');
+
+    return `
+      <tr onclick="viewOrder('${o.orderId}')" style="cursor:pointer; transition:background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+        <td style="text-align: center;" onclick="event.stopPropagation();">
+          <input type="checkbox" class="order-checkbox" value="${o.orderId}" onchange="updateArchiveButton()" style="width:16px; height:16px; border-radius:4px; accent-color:#0f766e;">
+        </td>
+        <td style="color:#0ea5e9; font-weight:600; font-size:0.95rem;" dir="ltr">#${displayId}</td>
+        <td style="color:#64748b; font-size:0.85rem;">${dateStr}</td>
+        <td>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-weight:600; color:#1e293b;">${o.customer?.name || 'بدون اسم'}</span>
+            <span style="color:#94a3b8; font-size:0.8rem;">▼</span>
+          </div>
+        </td>
+        <td>
+          <div style="font-weight:600; color:#1e293b;">${formatPrice(o.totalPrice)}</div>
+        </td>
+        <td>${payBadge}</td>
+        <td>${prepStatus}</td>
+        <td>${shipStatus}</td>
+        <td>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-weight:600; color:#1e293b;">${o.items?.length || 0} عنصر</span>
+            <span style="color:#94a3b8; font-size:0.8rem;">▼</span>
+          </div>
+        </td>
+        <td style="color:#94a3b8;">-</td>
+      </tr>
+    `;
+  }).join('');
 }
 
 // ── Selection & Archiving ────────────────────────────────
@@ -122,20 +206,7 @@ window.unarchiveSelected = async function() {
   }
 };
 
-window.toggleArchivedView = function() {
-  showingArchived = !showingArchived;
-  const btn = document.getElementById('view-archived-btn');
-  if (showingArchived) {
-    btn.innerHTML = '🔙 العودة للطلبات النشطة';
-    btn.classList.remove('btn-secondary');
-    btn.classList.add('btn-primary');
-  } else {
-    btn.innerHTML = '📂 عرض المؤرشفة';
-    btn.classList.remove('btn-primary');
-    btn.classList.add('btn-secondary');
-  }
-  loadOrders();
-};
+// Removed toggleArchivedView as it's replaced by setFilter('archived')
 
 // ── View Order ───────────────────────────────────────────
 window.viewOrder = function(orderId) {
