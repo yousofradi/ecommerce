@@ -13,11 +13,13 @@ const api = {
   },
 
   // Products
-  getProducts() { return this._request('/products'); },
+  getProducts(page = 1, limit = 20) { return this._request(`/products?admin=true&page=${page}&limit=${limit}`); },
   getProduct(id) { return this._request(`/products/${id}`); },
   createProduct(d) { return this._request('/products', { method: 'POST', body: JSON.stringify(d), admin: true }); },
   updateProduct(id, d) { return this._request(`/products/${id}`, { method: 'PUT', body: JSON.stringify(d), admin: true }); },
   deleteProduct(id) { return this._request(`/products/${id}`, { method: 'DELETE', admin: true }); },
+  deleteProductsBatch(productIds) { return this._request('/products/delete/batch', { method: 'POST', body: JSON.stringify({ productIds }), admin: true }); },
+  deactivateProductsBatch(productIds) { return this._request('/products/deactivate/batch', { method: 'POST', body: JSON.stringify({ productIds }), admin: true }); },
   reorderProducts(order) { return this._request('/products/reorder/batch', { method: 'PUT', body: JSON.stringify({ order }), admin: true }); },
 
   // Collections
@@ -33,6 +35,8 @@ const api = {
   updateOrder(id, d) { return this._request(`/orders/${id}`, { method: 'PUT', body: JSON.stringify(d), admin: true }); },
   deleteOrder(id) { return this._request(`/orders/${id}`, { method: 'DELETE', admin: true }); },
   archiveOrders(orderIds) { return this._request('/orders/archive/batch', { method: 'POST', body: JSON.stringify({ orderIds }), admin: true }); },
+  unarchiveOrders(orderIds) { return this._request('/orders/unarchive/batch', { method: 'POST', body: JSON.stringify({ orderIds }), admin: true }); },
+  cancelOrder(id) { return this._request(`/orders/${id}/cancel`, { method: 'POST', admin: true }); },
 
   // Shipping
   getShipping() { return this._request('/shipping'); },

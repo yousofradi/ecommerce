@@ -15,6 +15,20 @@
     @media (max-width: 540px) {
       .orders-table-wrap th:nth-child(6),
       .orders-table-wrap td:nth-child(6) { display: none; }
+      
+      /* Make buttons smaller on phone screen */
+      .page-actions-container {
+        flex-direction: row;
+        justify-content: flex-start;
+      }
+      .page-actions-container button {
+        padding: 4px 8px;
+        font-size: 0.8rem;
+      }
+      .page-actions-container a {
+        padding: 4px 8px;
+        font-size: 0.8rem;
+      }
     }
   </style>
 </head>
@@ -44,9 +58,10 @@
             <h1 class="page-title" style="margin-bottom:4px">الطلبات</h1>
             <p class="page-subtitle" style="margin-bottom:0">عرض وإدارة جميع الطلبات</p>
           </div>
-          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <div class="page-actions-container" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
             <button onclick="toggleArchivedView()" class="btn btn-secondary" style="gap:6px" id="view-archived-btn">📂 عرض المؤرشفة</button>
             <button onclick="archiveSelected()" class="btn btn-warning" style="gap:6px; display:none;" id="archive-selected-btn">📦 أرشفة المحدد</button>
+            <button onclick="unarchiveSelected()" class="btn btn-success" style="gap:6px; display:none;" id="unarchive-selected-btn">🔙 إلغاء أرشفة المحدد</button>
             <button onclick="printInvoices()" class="btn btn-secondary" style="gap:6px" id="print-invoices-btn">🖨️ طباعة الفواتير</button>
             <a href="order-form.html" class="btn btn-primary" style="gap:6px">+ إنشاء طلب</a>
           </div>

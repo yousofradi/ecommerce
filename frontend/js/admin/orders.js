@@ -44,7 +44,7 @@ async function loadOrders() {
           </td>
           <td>${payBadge}</td>
           <td>
-            ${o.paid 
+            ${o.status === 'cancelled' ? '<span class="badge badge-danger">ملغي</span>' : o.paid 
               ? '<span class="badge badge-success">مدفوع ✓</span>'
               : o.paidAmount > 0 
                 ? `<span class="badge" style="background:#fef3c7;color:#92400e">مدفوع جزئياً<br><small>${formatPrice(o.paidAmount)} / ${formatPrice(o.totalPrice)}</small></span>`
@@ -75,10 +75,16 @@ window.toggleSelectAll = function() {
 
 window.updateArchiveButton = function() {
   const checkboxes = document.querySelectorAll('.order-checkbox:checked');
-  const btn = document.getElementById('archive-selected-btn');
-  if (btn) {
-    btn.style.display = checkboxes.length > 0 && !showingArchived ? 'inline-flex' : 'none';
-    btn.innerHTML = `📦 أرشفة المحدد (${checkboxes.length})`;
+  const archiveBtn = document.getElementById('archive-selected-btn');
+  const unarchiveBtn = document.getElementById('unarchive-selected-btn');
+  
+  if (archiveBtn) {
+    archiveBtn.style.display = checkboxes.length > 0 && !showingArchived ? 'inline-flex' : 'none';
+    archiveBtn.innerHTML = `📦 أرشفة المحدد (${checkboxes.length})`;
+  }
+  if (unarchiveBtn) {
+    unarchiveBtn.style.display = checkboxes.length > 0 && showingArchived ? 'inline-flex' : 'none';
+    unarchiveBtn.innerHTML = `🔙 إلغاء أرشفة المحدد (${checkboxes.length})`;
   }
 };
 
@@ -96,6 +102,23 @@ window.archiveSelected = async function() {
     loadOrders();
   } catch (err) {
     showToast(err.message || 'فشل أرشفة الطلبات', 'error');
+  }
+};
+
+window.unarchiveSelected = async function() {
+  const checkboxes = document.querySelectorAll('.order-checkbox:checked');
+  const orderIds = Array.from(checkboxes).map(cb => cb.value);
+  if (!orderIds.length) return;
+
+  const confirmed = await window.showConfirmModal('تأكيد إلغاء الأرشفة', `هل أنت متأكد من إلغاء أرشفة ${orderIds.length} طلبات؟`);
+  if (!confirmed) return;
+
+  try {
+    await api.unarchiveOrders(orderIds);
+    showToast('تم إلغاء أرشفة الطلبات بنجاح');
+    loadOrders();
+  } catch (err) {
+    showToast(err.message || 'فشل إلغاء أرشفة الطلبات', 'error');
   }
 };
 

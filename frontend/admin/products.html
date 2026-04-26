@@ -31,25 +31,40 @@
             <h1 class="page-title" style="margin-bottom:4px">المنتجات</h1>
             <p class="page-subtitle" style="margin-bottom:0">إدارة منتجات متجرك</p>
           </div>
-          <a href="product-form.html" class="btn btn-primary">+ إضافة منتج</a>
+          <div class="flex gap-12">
+            <div id="bulk-actions" style="display:none;" class="flex gap-8">
+              <button class="btn btn-secondary btn-sm" onclick="deactivateSelected()">تعطيل المحدد</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteSelected()">حذف المحدد</button>
+            </div>
+            <a href="product-form.html" class="btn btn-primary">+ إضافة منتج</a>
+          </div>
         </div>
         <div class="table-wrapper">
           <table>
             <thead>
               <tr>
+                <th style="width: 40px;"><input type="checkbox" id="select-all" onclick="toggleSelectAll()"></th>
                 <th style="width: 40px;"></th>
                 <th>الصورة</th>
                 <th>الاسم</th>
                 <th>السعر</th>
+                <th>الحالة</th>
                 <th>التصنيف</th>
                 <th>الخيارات</th>
                 <th>إجراءات</th>
               </tr>
             </thead>
             <tbody id="products-tbody">
-              <tr><td colspan="6" class="text-center"><div class="spinner"></div></td></tr>
+              <tr><td colspan="8" class="text-center"><div class="spinner"></div></td></tr>
             </tbody>
           </table>
+        </div>
+        <div class="flex-between mt-24">
+          <div class="text-sm text-muted" id="pagination-info"></div>
+          <div class="flex gap-8" id="pagination-controls">
+            <button class="btn btn-secondary btn-sm" id="prev-page" onclick="changePage(-1)">السابق</button>
+            <button class="btn btn-secondary btn-sm" id="next-page" onclick="changePage(1)">التالي</button>
+          </div>
         </div>
       </div>
     </main>

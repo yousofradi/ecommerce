@@ -121,6 +121,56 @@ router.post('/archive/batch', adminAuth, async (req, res) => {
   }
 });
 
+// POST /api/orders/unarchive/batch — unarchive multiple orders
+router.post('/unarchive/batch', adminAuth, async (req, res) => {
+  try {
+    const { orderIds } = req.body;
+    if (!Array.isArray(orderIds)) return res.status(400).json({ error: 'orderIds must be an array' });
+    
+    await Order.updateMany(
+      { orderId: { $in: orderIds } },
+      { $set: { archived: false } }
+    );
+    res.json({ message: 'Orders unarchived successfully' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to unarchive orders' });
+  }
+});
+
+// POST /api/orders/:orderId/cancel — cancel order
+router.post('/:orderId/cancel', adminAuth, async (req, res) => {
+  try {
+    const order = await Order.findOneAndUpdate(
+      { orderId: req.params.orderId },
+      { $set: { status: 'cancelled' } },
+      { new: true }
+    );
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+
+    // Prepare payload with 0 amounts for webhook
+    const payload = order.toObject();
+    payload.cancelled = true;
+    payload.totalPrice = 0;
+    payload.shippingFee = 0;
+    payload.discount = 0;
+    payload.paidAmount = 0;
+    payload.items = payload.items.map(item => ({
+      ...item,
+      basePrice: 0,
+      finalPrice: 0,
+      quantity: 0,
+      discount: 0,
+      selectedOptions: (item.selectedOptions || []).map(opt => ({ ...opt, price: 0 }))
+    }));
+
+    sendWebhook('order.cancelled', payload);
+    
+    res.json({ message: 'Order cancelled successfully', order });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to cancel order' });
+  }
+});
+
 // GET /api/orders/:orderId — single order
 router.get('/:orderId', adminAuth, async (req, res) => {
   try {

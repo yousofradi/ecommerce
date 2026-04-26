@@ -54,6 +54,11 @@ function renderOrder() {
   const o = currentOrder;
   document.getElementById('page-order-id').textContent = `تعديل الطلب #${o.orderId}`;
   
+  if (o.status === 'cancelled') {
+    document.getElementById('cancel-order-btn').style.display = 'none';
+    document.getElementById('page-order-id').innerHTML += ' <span class="badge badge-danger">ملغي</span>';
+  }
+  
   // Customer Info
   document.getElementById('view-c-name').textContent = o.customer.name || '—';
   document.getElementById('view-c-phone').textContent = o.customer.phone || '—';
@@ -438,6 +443,25 @@ window.saveOrderChanges = async function(silent = false) {
       btn.textContent = 'احفظ التغييرات';
     }
     showToast(err.message || 'فشل الحفظ', 'error');
+  }
+};
+
+window.cancelOrder = async function() {
+  const confirmed = await window.showConfirmModal('تأكيد الإلغاء', 'هل أنت متأكد من إلغاء هذا الطلب؟ سيتم إرسال إشعار بذلك وتصفير القيم.');
+  if (!confirmed) return;
+  
+  try {
+    const btn = document.getElementById('cancel-order-btn');
+    btn.disabled = true;
+    btn.textContent = 'جارٍ الإلغاء...';
+    
+    await api.cancelOrder(currentOrder.orderId);
+    showToast('تم إلغاء الطلب بنجاح');
+    setTimeout(() => window.location.reload(), 1000);
+  } catch (err) {
+    showToast(err.message || 'فشل الإلغاء', 'error');
+    document.getElementById('cancel-order-btn').disabled = false;
+    document.getElementById('cancel-order-btn').textContent = 'إلغاء الطلب';
   }
 };
 
