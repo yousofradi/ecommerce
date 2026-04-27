@@ -137,21 +137,20 @@
         </div>
 
         <div style="background:#fff; border:1px solid #e2e8f0; border-radius:12px; overflow:hidden;">
-          <!-- Filter / Search bar -->
           <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid #f1f5f9; flex-wrap:wrap; gap:16px;">
             
-            <!-- Search -->
-            <div style="position:relative; width:300px; max-width:100%;">
-              <input type="text" id="order-search" placeholder="البحث والتصنيفات" style="width:100%; padding:8px 16px; padding-right:40px; border:1px solid #e2e8f0; border-radius:8px; font-size:0.9rem;" oninput="filterOrdersClient()">
-              <span style="position:absolute; right:12px; top:50%; transform:translateY(-50%); color:#94a3b8; pointer-events:none;">🔍</span>
-            </div>
-
-            <!-- Tabs -->
+            <!-- Tabs (On Right in RTL) -->
             <div style="display:flex; gap:24px; align-items:center;" class="order-tabs">
               <span class="order-tab active" data-filter="all" onclick="setFilter('all')">الجميع <span class="tab-badge" id="count-all">0</span></span>
               <span class="order-tab" data-filter="pending" onclick="setFilter('pending')">بانتظار التجهيز <span class="tab-badge" id="count-pending">0</span></span>
               <span class="order-tab" data-filter="unpaid" onclick="setFilter('unpaid')">غير مدفوع <span class="tab-badge" id="count-unpaid">0</span></span>
               <span class="order-tab" data-filter="archived" onclick="setFilter('archived')">الأرشيف</span>
+            </div>
+
+            <!-- Search (On Left in RTL) -->
+            <div style="position:relative; width:300px; max-width:100%;">
+              <input type="text" id="order-search" placeholder="البحث والتصنيفات" style="width:100%; padding:8px 16px; padding-left:40px; border:1px solid #e2e8f0; border-radius:8px; font-size:0.9rem;" oninput="filterOrdersClient()">
+              <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#94a3b8; pointer-events:none;">🔍</span>
             </div>
           </div>
           
@@ -163,18 +162,16 @@
                     <input type="checkbox" id="select-all-orders" onchange="toggleSelectAll()" style="width:16px; height:16px; border-radius:4px; accent-color:#0f766e;">
                   </th>
                   <th>رقم الطلب</th>
-                  <th>التاريخ</th>
-                  <th>بيانات العميل</th>
-                  <th>المجموع</th>
+                  <th>العميل</th>
+                  <th>المنتجات</th>
+                  <th>الإجمالي</th>
                   <th>الدفع</th>
-                  <th>تجهيز الطلب</th>
-                  <th>الشحن</th>
-                  <th>عدد العناصر</th>
-                  <th>تصنيفاتي</th>
+                  <th>الحالة</th>
+                  <th>التاريخ</th>
                 </tr>
               </thead>
               <tbody id="orders-tbody">
-                <tr><td colspan="10" class="text-center" style="padding:32px;"><div class="spinner"></div></td></tr>
+                <tr><td colspan="8" class="text-center" style="padding:32px;"><div class="spinner"></div></td></tr>
               </tbody>
             </table>
           </div>
