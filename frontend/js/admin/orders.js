@@ -227,6 +227,13 @@ window.bulkAction = async function(action) {
   }
 };
 
+window.unselectAll = function() {
+  document.querySelectorAll('.order-checkbox').forEach(cb => cb.checked = false);
+  const selectAllCb = document.getElementById('select-all-orders');
+  if (selectAllCb) selectAllCb.checked = false;
+  updateArchiveButton();
+};
+
 window.archiveSelected = async function() {
   const checkboxes = document.querySelectorAll('.order-checkbox:checked');
   const orderIds = Array.from(checkboxes).map(cb => cb.value);
