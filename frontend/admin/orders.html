@@ -131,13 +131,11 @@
           <div class="page-actions-container" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
             <a href="order-form.html" class="btn btn-primary" style="gap:6px; background:#0f766e; border:none; border-radius:20px; padding:8px 20px; font-weight:600;">+ أنشئ طلب</a>
             <button onclick="printInvoices()" class="btn btn-secondary" style="gap:6px; border-radius:20px; padding:8px 20px; background:#fff; border:1px solid #e2e8f0; color:#475569; font-weight:600;" id="print-invoices-btn">استخراج 📥</button>
-            <button onclick="archiveSelected()" class="btn btn-warning" style="gap:6px; display:none; border-radius:20px; padding:8px 20px; font-weight:600;" id="archive-selected-btn">أرشفة المحدد</button>
-            <button onclick="unarchiveSelected()" class="btn btn-success" style="gap:6px; display:none; border-radius:20px; padding:8px 20px; font-weight:600;" id="unarchive-selected-btn">استرجاع المحدد</button>
           </div>
         </div>
 
         <div style="background:#fff; border:1px solid #e2e8f0; border-radius:12px; overflow:hidden;">
-          <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid #f1f5f9; flex-wrap:wrap; gap:16px;">
+          <div id="filter-bar" style="display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid #f1f5f9; flex-wrap:wrap; gap:16px;">
             
             <!-- Tabs (On Right in RTL) -->
             <div style="display:flex; gap:24px; align-items:center;" class="order-tabs">
@@ -154,6 +152,37 @@
             </div>
           </div>
           
+          <!-- Bulk Actions Bar (Hidden by default) -->
+          <div id="bulk-actions-bar" style="display:none; justify-content:flex-end; align-items:center; padding:16px 20px; border-bottom:1px solid #f1f5f9; background:#fff; gap:12px;">
+            <div style="position:relative;">
+              <button class="btn btn-secondary" onclick="toggleBulkMenu(event)" style="border-radius:20px; padding:8px 16px; border:1px solid #e2e8f0; background:#fff; color:#475569; font-weight:600; display:flex; align-items:center; gap:8px;">
+                المزيد
+                <span style="font-size:0.8rem; margin-top:2px;">▼</span>
+              </button>
+              <div id="bulk-menu" style="display:none; position:absolute; top:100%; right:0; margin-top:8px; background:#fff; border:1px solid #e2e8f0; border-radius:8px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); width:200px; z-index:100; overflow:hidden;">
+                <button onclick="bulkAction('archive')" style="width:100%; text-align:right; padding:12px 16px; background:none; border:none; border-bottom:1px solid #f1f5f9; cursor:pointer; display:flex; align-items:center; gap:12px; color:#475569; font-size:0.95rem; font-family:inherit;">
+                  <span style="font-size:1.1rem; filter:grayscale(1); opacity:0.7;">📦</span> أرشفة
+                </button>
+                <button onclick="bulkAction('add_tags')" style="width:100%; text-align:right; padding:12px 16px; background:none; border:none; border-bottom:1px solid #f1f5f9; cursor:pointer; display:flex; align-items:center; gap:12px; color:#475569; font-size:0.95rem; font-family:inherit;">
+                  <span style="font-size:1.1rem; filter:grayscale(1); opacity:0.7;">🏷️</span> أضف تصنيفات
+                </button>
+                <button onclick="bulkAction('remove_tags')" style="width:100%; text-align:right; padding:12px 16px; background:none; border:none; border-bottom:1px solid #f1f5f9; cursor:pointer; display:flex; align-items:center; gap:12px; color:#475569; font-size:0.95rem; font-family:inherit;">
+                  <span style="font-size:1.1rem; filter:grayscale(1); opacity:0.7;">🏷️</span> إزالة التصنيفات
+                </button>
+                <button onclick="printInvoices()" style="width:100%; text-align:right; padding:12px 16px; background:none; border:none; border-bottom:1px solid #f1f5f9; cursor:pointer; display:flex; align-items:center; gap:12px; color:#475569; font-size:0.95rem; font-family:inherit;">
+                  <span style="font-size:1.1rem; filter:grayscale(1); opacity:0.7;">📥</span> استخراج
+                </button>
+                <button onclick="bulkAction('delete')" style="width:100%; text-align:right; padding:12px 16px; background:none; border:none; cursor:pointer; display:flex; align-items:center; gap:12px; color:#ef4444; font-size:0.95rem; font-family:inherit;">
+                  <span style="font-size:1.1rem; filter:grayscale(1); opacity:0.7;">🗑️</span> إلغاء
+                </button>
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="toggleSelectAll()" style="border-radius:20px; padding:8px 16px; border:none; background:#0f766e; color:#fff; font-weight:600; display:flex; align-items:center; gap:8px;">
+              تم تحديد <span id="selected-count-badge">1</span>
+              <span style="background:rgba(255,255,255,0.2); border-radius:4px; width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; font-weight:bold;">-</span>
+            </button>
+          </div>
+
           <div class="table-wrapper orders-table-wrap" style="box-shadow:none; border-radius:0; margin:0; border:none;">
             <table style="width:100%; border-collapse:collapse; text-align:right;">
               <thead>

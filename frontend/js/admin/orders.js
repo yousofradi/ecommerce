@@ -118,7 +118,7 @@ function renderOrders(orders) {
     const displayId = o.orderId.replace('Order-', '').replace('Scoop-', '');
 
     return `
-      <tr onclick="viewOrder('${o.orderId}')" style="cursor:pointer; transition:background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+      <tr onclick="viewOrder('${o.orderId}')" style="cursor:pointer; transition:background 0.2s;" onmouseover="if(!this.querySelector('.order-checkbox').checked) this.style.backgroundColor='#f8fafc'" onmouseout="if(!this.querySelector('.order-checkbox').checked) this.style.backgroundColor='transparent'">
         <td style="text-align: center;" onclick="event.stopPropagation();">
           <input type="checkbox" class="order-checkbox" value="${o.orderId}" onchange="updateArchiveButton()" style="width:16px; height:16px; border-radius:4px; accent-color:#0f766e;">
         </td>
@@ -151,16 +151,79 @@ window.toggleSelectAll = function() {
 
 window.updateArchiveButton = function() {
   const checkboxes = document.querySelectorAll('.order-checkbox:checked');
-  const archiveBtn = document.getElementById('archive-selected-btn');
-  const unarchiveBtn = document.getElementById('unarchive-selected-btn');
+  const filterBar = document.getElementById('filter-bar');
+  const bulkBar = document.getElementById('bulk-actions-bar');
+  const countBadge = document.getElementById('selected-count-badge');
   
-  if (archiveBtn) {
-    archiveBtn.style.display = checkboxes.length > 0 && !showingArchived ? 'inline-flex' : 'none';
-    archiveBtn.innerHTML = `📦 أرشفة المحدد (${checkboxes.length})`;
+  // Style rows
+  document.querySelectorAll('.order-checkbox').forEach(cb => {
+    const tr = cb.closest('tr');
+    if (cb.checked) {
+      tr.style.backgroundColor = '#f0fdf4';
+    } else {
+      tr.style.backgroundColor = 'transparent';
+    }
+  });
+
+  if (checkboxes.length > 0) {
+    if (filterBar) filterBar.style.display = 'none';
+    if (bulkBar) {
+      bulkBar.style.display = 'flex';
+      if (countBadge) countBadge.textContent = checkboxes.length;
+    }
+  } else {
+    if (filterBar) filterBar.style.display = 'flex';
+    if (bulkBar) bulkBar.style.display = 'none';
   }
-  if (unarchiveBtn) {
-    unarchiveBtn.style.display = checkboxes.length > 0 && showingArchived ? 'inline-flex' : 'none';
-    unarchiveBtn.innerHTML = `🔙 إلغاء أرشفة المحدد (${checkboxes.length})`;
+};
+
+window.toggleBulkMenu = function(event) {
+  event.stopPropagation();
+  const menu = document.getElementById('bulk-menu');
+  if (menu.style.display === 'block') {
+    menu.style.display = 'none';
+  } else {
+    menu.style.display = 'block';
+  }
+};
+
+// Close bulk menu when clicking outside
+document.addEventListener('click', function(e) {
+  const menu = document.getElementById('bulk-menu');
+  if (menu && menu.style.display === 'block' && !e.target.closest('#bulk-actions-bar')) {
+    menu.style.display = 'none';
+  }
+});
+
+window.bulkAction = async function(action) {
+  const menu = document.getElementById('bulk-menu');
+  if (menu) menu.style.display = 'none';
+  
+  const checkboxes = document.querySelectorAll('.order-checkbox:checked');
+  const orderIds = Array.from(checkboxes).map(cb => cb.value);
+  if (!orderIds.length) return;
+  
+  if (action === 'archive') {
+    if (showingArchived) {
+      await unarchiveSelected();
+    } else {
+      await archiveSelected();
+    }
+  } else if (action === 'delete') {
+    const confirmed = await window.showConfirmModal('تأكيد الحذف', `هل أنت متأكد من حذف ${orderIds.length} طلبات نهائياً؟`);
+    if (!confirmed) return;
+    
+    try {
+      for (const id of orderIds) {
+        await api.deleteOrder(id);
+      }
+      showToast('تم حذف الطلبات بنجاح');
+      loadOrders();
+    } catch (err) {
+      showToast(err.message || 'فشل حذف الطلبات', 'error');
+    }
+  } else if (action === 'add_tags' || action === 'remove_tags') {
+    alert('سيتم إضافة خاصية التصنيفات قريباً.'); // Placeholder
   }
 };
 
