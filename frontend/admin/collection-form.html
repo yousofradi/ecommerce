@@ -1,75 +1,229 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Add Collection — eStore Admin</title>
+  <title>التصنيفات — Sundura Admin</title>
   <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .form-layout {
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+    .image-upload-area {
+      border: 1px dashed #ccc;
+      border-radius: 8px;
+      height: 400px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #f9f9f9;
+      position: relative;
+    }
+    .image-upload-area img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+    .image-actions {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 12px;
+    }
+    .btn-text {
+      background: none;
+      border: none;
+      color: var(--primary);
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .btn-text.danger { color: red; }
+    
+    .editor-toolbar {
+      border: 1px solid #ccc;
+      border-bottom: none;
+      padding: 8px;
+      background: #f5f5f5;
+      display: flex;
+      gap: 8px;
+      border-radius: 4px 4px 0 0;
+    }
+    .editor-content {
+      border: 1px solid #ccc;
+      min-height: 200px;
+      padding: 12px;
+      border-radius: 0 0 4px 4px;
+      outline: none;
+    }
+    
+    .collection-products-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 32px;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #eee;
+    }
+    .product-row {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      border-bottom: 1px solid #eee;
+      gap: 16px;
+    }
+    .product-row img {
+      width: 40px; height: 40px; border-radius: 4px; object-fit: cover;
+    }
+    .btn-reorder { color: #666; cursor: pointer; }
+    .btn-remove { color: red; cursor: pointer; background: none; border: none; font-size: 1.2rem; }
+    
+    /* Modals */
+    .modal-overlay {
+      position: fixed; top:0; left:0; right:0; bottom:0;
+      background: rgba(0,0,0,0.5); z-index: 1000;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .modal {
+      background: #fff; width: 800px; max-width: 90%;
+      border-radius: 8px; padding: 24px; max-height: 90vh;
+      display: flex; flex-direction: column;
+    }
+    .modal-header { display: flex; justify-content: space-between; margin-bottom: 16px; font-weight: bold; }
+    .modal-body { overflow-y: auto; flex: 1; margin-bottom: 16px; }
+    .modal-footer { display: flex; justify-content: space-between; }
+    .hidden { display: none !important; }
+    
+    .select-products-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+    }
+    .product-list-box {
+      border: 1px solid #eee; border-radius: 4px;
+      height: 400px; overflow-y: auto;
+    }
+    .product-item {
+      display: flex; align-items: center; gap: 12px; padding: 8px;
+      border-bottom: 1px solid #eee; cursor: pointer;
+    }
+    .product-item:hover { background: #f9f9f9; }
+  </style>
 </head>
 <body>
   <div class="admin-layout">
     <aside class="admin-sidebar">
       <div class="admin-sidebar-header">
-        <div class="admin-brand">⚙️ Sundura Admin</div>
-        <button class="sidebar-toggle">☰</button>
+        <div class="admin-brand">⚙️ Sundura</div>
+        <button class="sidebar-toggle" title="القائمة">☰</button>
       </div>
       <nav class="admin-nav">
-        <a href="index.html">Dashboard</a>
-        <a href="products.html">Products</a>
-        <a href="collections.html" class="active">Collections</a>
-        <a href="orders.html">Orders</a>
-        <a href="shipment.html">Shipment</a>
-        <a href="webhooks.html">Webhooks</a>
-        <a href="../index.html" target="_blank">View Store ↗</a>
-        <a href="#" onclick="logout()" class="logout">Logout</a>
+        <a href="index">🏠 لوحة التحكم</a>
+        <a href="products">📦 المنتجات</a>
+        <a href="collections" class="active">🗂️ التصنيفات</a>
+        <a href="orders">🛒 الطلبات</a>
+        <a href="shipment">🚚 الشحن</a>
+        <a href="webhooks">🔗 Webhooks</a>
+        <a href="../" target="_blank">🏪 المتجر ↗</a>
+        <a href="#" onclick="logout()" class="logout">🚪 خروج</a>
       </nav>
     </aside>
 
     <main class="admin-main">
-      <div class="container" style="max-width:600px;margin:0">
-        <h1 class="page-title" style="margin-bottom:4px;display:flex;align-items:center;gap:12px">
-          <a href="collections.html" style="font-size:1.2rem;color:var(--text-main);text-decoration:none;font-weight:700">التصنيفات ></a>
-        </h1>
-        
-        <form id="collection-form">
-          <div class="admin-card" style="margin-bottom:24px">
-            <div class="form-group">
-              <label class="form-label" for="c-name">Collection Name *</label>
-              <input class="form-control" id="c-name" required placeholder="e.g., Summer Sale">
+      <form id="collection-form">
+        <div class="form-layout">
+          <!-- Left: Image -->
+          <div class="admin-card">
+            <h3 style="margin-bottom:16px;font-size:0.9rem;text-align:left">صورة</h3>
+            <div class="image-upload-area" id="image-preview-container">
+              <span style="color:#aaa">لا توجد صورة</span>
             </div>
-            <div class="form-group">
-              <label class="form-label" for="c-image">Image URL</label>
-              <input class="form-control" id="c-image" type="url" placeholder="https://...">
+            <div class="image-actions">
+              <button type="button" class="btn-text danger" onclick="removeImage()">إزالة</button>
+              <button type="button" class="btn-text" onclick="promptImage()">تغيير</button>
             </div>
-            <div class="form-group">
-              <label class="form-label" for="c-desc">Description</label>
-              <textarea class="form-control" id="c-desc" placeholder="A short description..."></textarea>
+            <input type="hidden" id="c-image">
+          </div>
+
+          <!-- Right: Details -->
+          <div>
+            <div class="admin-card">
+              <h3 style="margin-bottom:16px;font-size:0.9rem;text-align:right">معلومات</h3>
+              
+              <div style="display:flex; align-items:center; margin-bottom:16px;">
+                <label style="width: 60px; font-weight:500;">الاسم</label>
+                <input class="form-control" id="c-name" required placeholder="اسم المجموعة..." style="flex:1">
+              </div>
+
+              <div style="margin-bottom:8px; font-weight:500;">الوصف</div>
+              <div class="editor-toolbar">
+                <button type="button" class="btn-text" style="font-weight:bold">B</button>
+                <button type="button" class="btn-text" style="font-style:italic">I</button>
+                <button type="button" class="btn-text" style="text-decoration:underline">U</button>
+              </div>
+              <div class="editor-content" id="c-desc" contenteditable="true"></div>
+            </div>
+
+            <!-- Products Section -->
+            <div class="collection-products-header">
+              <div style="font-weight:bold; font-size:1.1rem">منتجات المجموعة (<span id="products-count">0</span>)</div>
+              <div style="display:flex; gap:16px">
+                <button type="button" class="btn-text" onclick="openReorderModal()">ترتيب المنتجات</button>
+                <button type="button" class="btn-text" onclick="openSelectModal()">أضف منتجات</button>
+              </div>
+            </div>
+
+            <div class="admin-card" style="padding:0">
+              <div style="padding:12px; border-bottom:1px solid #eee">
+                <input type="text" class="form-control" placeholder="🔍 بحث عن المنتجات..." id="products-search">
+              </div>
+              <div id="collection-products-list">
+                <!-- Products will load here -->
+              </div>
+            </div>
+            
+            <div style="margin-top:24px;text-align:left">
+              <button type="submit" class="btn btn-primary" style="padding:10px 32px">حفظ</button>
             </div>
           </div>
-          <button type="submit" class="btn btn-primary btn-block" style="padding:16px;font-size:1.05rem">Save Collection</button>
-        </form>
-      </div>
+        </div>
+      </form>
     </main>
   </div>
+
+  <!-- Select Products Modal -->
+  <div id="select-modal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <span>حدد المنتجات</span>
+        <button type="button" class="btn-remove" onclick="closeSelectModal()">×</button>
+      </div>
+      <div class="modal-body select-products-grid">
+        <div>
+          <div style="font-weight:bold;margin-bottom:8px;text-align:center">المنتجات المختارة</div>
+          <div class="product-list-box" id="selected-products-box"></div>
+        </div>
+        <div>
+          <div style="font-weight:bold;margin-bottom:8px;text-align:center">المنتجات المتبقية</div>
+          <input type="text" id="available-search" class="form-control" placeholder="🔍 بحث..." style="margin-bottom:8px;border:none;border-bottom:1px solid #eee;border-radius:0">
+          <div class="product-list-box" style="border-top:none" id="available-products-box"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-text" onclick="closeSelectModal()">إلغاء</button>
+        <button type="button" class="btn btn-primary" onclick="saveSelectedProducts()">حفظ</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
   <script src="../js/api.js"></script>
   <script src="../js/admin/auth.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      if (!requireAdmin()) return;
-      document.getElementById('collection-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const data = {
-          name: document.getElementById('c-name').value.trim(),
-          imageUrl: document.getElementById('c-image').value.trim(),
-          description: document.getElementById('c-desc').value.trim()
-        };
-        try {
-          await api.createCollection(data);
-          showToast('Collection created!');
-          setTimeout(() => window.location.href = 'collections.html', 1000);
-        } catch (err) { showToast('Error creating collection', 'error'); }
-      });
-    });
-  </script>
+  <!-- SortableJS for drag-and-drop -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+  <script src="../js/admin/collection-form.js"></script>
 </body>
 </html>

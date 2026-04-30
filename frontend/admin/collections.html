@@ -5,70 +5,107 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>التصنيفات — Sundura Admin</title>
   <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .collection-row {
+      display: grid;
+      grid-template-columns: 80px 1fr 150px 100px;
+      align-items: center;
+      padding: 16px;
+      border-bottom: 1px solid #eee;
+      gap: 16px;
+    }
+    .collection-row.header {
+      font-weight: 600;
+      color: var(--text-muted);
+      background: #f9fafb;
+      border-radius: 8px 8px 0 0;
+    }
+    .collection-img {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 8px;
+      background: #eee;
+    }
+    .btn-create-collection {
+      background: #009688;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .header-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .search-bar {
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      width: 100%;
+      margin-bottom: 16px;
+    }
+    .action-menu {
+      color: #999;
+      cursor: pointer;
+      font-size: 1.5rem;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
   <div class="admin-layout">
     <aside class="admin-sidebar">
       <div class="admin-sidebar-header">
         <div class="admin-brand">⚙️ Sundura</div>
-        <button class="sidebar-toggle">☰</button>
+        <button class="sidebar-toggle" title="القائمة">☰</button>
       </div>
       <nav class="admin-nav">
-        <a href="index.html">🏠 لوحة التحكم</a>
-        <a href="products.html">📦 المنتجات</a>
-        <a href="collections.html" class="active">🗂️ التصنيفات</a>
-        <a href="orders.html">🛒 الطلبات</a>
-        <a href="shipment.html">🚚 الشحن</a>
-        <a href="webhooks.html">🔗 Webhooks</a>
-        <a href="../index.html" target="_blank">🏪 المتجر ↗</a>
+        <a href="index">🏠 لوحة التحكم</a>
+        <a href="products">📦 المنتجات</a>
+        <a href="collections" class="active">🗂️ التصنيفات</a>
+        <a href="orders">🛒 الطلبات</a>
+        <a href="shipment">🚚 الشحن</a>
+        <a href="webhooks">🔗 Webhooks</a>
+        <a href="../" target="_blank">🏪 المتجر ↗</a>
         <a href="#" onclick="logout()" class="logout">🚪 خروج</a>
       </nav>
     </aside>
+
     <main class="admin-main">
-      <div style="max-width:1000px">
-        <div class="flex-between mb-24">
-          <div>
-            <h1 class="page-title" style="margin-bottom:4px">التصنيفات</h1>
-            <p class="page-subtitle" style="margin-bottom:0">تنظيم منتجاتك في فئات</p>
-          </div>
-          <a href="collection-form.html" class="btn btn-primary">+ إضافة تصنيف</a>
+      <div class="header-actions">
+        <a href="collection-form" class="btn-create-collection">+ إنشاء مجموعة</a>
+        <h1 class="page-title" style="margin:0">المجموعات</h1>
+      </div>
+
+      <div class="admin-card" style="padding:0; overflow:hidden;">
+        <div style="padding:16px;">
+          <input type="text" id="search-input" class="search-bar" placeholder="🔍 أبحث عن مجموعة...">
         </div>
-        <div id="collections-grid" class="grid grid-3">
-          <div class="admin-card text-center"><div class="spinner"></div></div>
+        
+        <div class="collection-list-container">
+          <div class="collection-row header">
+            <div>الصورة</div>
+            <div>المجموعات</div>
+            <div style="text-align:center">المنتجات</div>
+            <div style="text-align:center">إجراءات</div>
+          </div>
+          <div id="collections-list">
+            <div style="padding:40px;text-align:center;color:#666"><div class="spinner"></div></div>
+          </div>
         </div>
       </div>
     </main>
   </div>
+
+  <div id="toast-container" class="toast-container"></div>
   <script src="../js/api.js"></script>
   <script src="../js/admin/auth.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      if (!requireAdmin()) return;
-      const grid = document.getElementById('collections-grid');
-      try {
-        const cols = await api.getCollections();
-        if (!cols.length) {
-          grid.innerHTML = '<div class="admin-card text-center text-muted" style="grid-column:1/-1;padding:40px">لا توجد تصنيفات بعد</div>';
-          return;
-        }
-        grid.innerHTML = cols.map(c => `
-          <div class="admin-card">
-            ${c.imageUrl ? `<img src="${c.imageUrl}" alt="${c.name}" style="width:100%;height:140px;object-fit:cover;border-radius:8px;margin-bottom:12px">` : ''}
-            <h3 style="margin-bottom:6px">${c.name}</h3>
-            <p class="text-muted text-sm">${c.description || ''}</p>
-            <div class="flex gap-8 mt-16">
-              <a href="collection-form.html?id=${c._id}" class="btn btn-secondary btn-sm">تعديل</a>
-              <button class="btn btn-danger btn-sm" onclick="deleteCol('${c._id}')">حذف</button>
-            </div>
-          </div>`).join('');
-      } catch (e) { grid.innerHTML = '<p class="text-muted text-center" style="grid-column:1/-1">فشل التحميل</p>'; }
-    });
-
-    async function deleteCol(id) {
-      if (!confirm('حذف هذا التصنيف؟')) return;
-      try { await api.deleteCollection(id); location.reload(); }
-      catch (e) { showToast(e.message, 'error'); }
-    }
-  </script>
+  <script src="../js/admin/collections.js"></script>
 </body>
 </html>

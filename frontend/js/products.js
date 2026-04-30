@@ -33,7 +33,7 @@ function renderCollections(collections) {
   grid.innerHTML = collections.map(c => {
     const img = c.imageUrl || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2Y1ZWZlOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuGYjuGZiDwvdGV4dD48L3N2Zz4=';
     return `
-      <a href="collection.html?id=${c._id}" class="collection-card">
+      <a href="collection?id=${c._id}" class="collection-card">
         <img src="${img}" alt="${c.name}" class="collection-card-img" onerror="this.style.background='#f5efe9'">
         <div class="collection-card-title">${c.name}</div>
       </a>`;
@@ -94,8 +94,10 @@ function renderStoreCard(p) {
   const salePrice = p.salePrice || p.basePrice;
   const hasDiscount = p.salePrice && p.salePrice < p.basePrice;
 
+  const productLink = p.handle ? `/product/all/${encodeURIComponent(p.handle)}` : `product?id=${p._id}`;
+
   return `
-    <a href="product.html?id=${p._id}" class="store-product-card">
+    <a href="${productLink}" class="store-product-card">
       <div class="store-product-img" style="position:relative">
         ${img ? `<img src="${img}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">` : ''}
         ${hasDiscount ? '<span class="discount-badge">خصم</span>' : ''}

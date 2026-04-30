@@ -46,8 +46,10 @@ function renderProductCard(p) {
   const salePrice = p.salePrice || p.basePrice;
   const hasDiscount = p.salePrice && p.salePrice < p.basePrice;
 
+  const productLink = p.handle ? `/product/all/${encodeURIComponent(p.handle)}` : `product?id=${p._id}`;
+
   return `
-    <a href="product.html?id=${p._id}" class="store-product-card">
+    <a href="${productLink}" class="store-product-card">
       <div class="store-product-img" style="position:relative">
         <img src="${img}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">
         ${hasDiscount ? '<span class="discount-badge">خصم</span>' : ''}

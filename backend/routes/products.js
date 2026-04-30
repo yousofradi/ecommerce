@@ -63,6 +63,17 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// GET /api/products/handle/:handle — single product by handle
+router.get('/handle/:handle', async (req, res) => {
+  try {
+    const product = await Product.findOne({ handle: req.params.handle });
+    if (!product) return res.status(404).json({ error: 'Product not found' });
+    res.json(product);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch product by handle' });
+  }
+});
+
 // ── Admin ───────────────────────────────────────────────
 
 // POST /api/products — create
@@ -174,6 +185,45 @@ router.put('/reorder/batch', adminAuth, async (req, res) => {
     res.json({ message: 'Products reordered' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to reorder products' });
+  }
+});
+
+// PUT /api/products/collection/batch — bulk update collection
+router.put('/collection/batch', adminAuth, async (req, res) => {
+  try {
+    const { productIds, collectionId, action } = req.body;
+    if (!Array.isArray(productIds)) return res.status(400).json({ error: 'productIds must be an array' });
+    
+    if (action === 'add') {
+      await Product.updateMany(
+        { _id: { $in: productIds } },
+        { $addToSet: { collectionIds: collectionId } }
+      );
+    } else if (action === 'remove') {
+      await Product.updateMany(
+        { _id: { $in: productIds } },
+        { $pull: { collectionIds: collectionId } }
+      );
+    } else if (action === 'set') {
+       // First remove this collection from all products that have it
+       await Product.updateMany(
+        { collectionIds: collectionId },
+        { $pull: { collectionIds: collectionId } }
+       );
+       // Then add it only to the specified products
+       if (productIds.length > 0) {
+         await Product.updateMany(
+           { _id: { $in: productIds } },
+           { $addToSet: { collectionIds: collectionId } }
+         );
+       }
+    } else {
+      return res.status(400).json({ error: 'invalid action' });
+    }
+    
+    res.json({ message: 'Product collections updated successfully' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update product collections' });
   }
 });
 

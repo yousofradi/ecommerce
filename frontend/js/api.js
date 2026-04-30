@@ -23,6 +23,7 @@ const api = {
     return this._request(`/products?collectionId=${collectionId}`);
   },
   getProduct(id) { return this._request(`/products/${id}`); },
+  getProductByHandle(handle) { return this._request(`/products/handle/${handle}`); },
   createProduct(d) { return this._request('/products', { method: 'POST', body: JSON.stringify(d), admin: true }); },
   updateProduct(id, d) { return this._request(`/products/${id}`, { method: 'PUT', body: JSON.stringify(d), admin: true }); },
   deleteProduct(id) { return this._request(`/products/${id}`, { method: 'DELETE', admin: true }); },
