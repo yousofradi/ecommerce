@@ -170,50 +170,74 @@ async function deleteProduct(id, name) {
   } catch (err) { showToast(err.message, 'error'); }
 }
 
-// ── Bulk Import Modal ──────────────────────────────────
+// ── CSV Import Modal ───────────────────────────────────
 window.openBulkImportModal = function() {
   document.getElementById('bulk-import-modal').style.display = 'flex';
+  document.getElementById('csv-progress').classList.add('hidden');
+  document.getElementById('csv-import-btn').disabled = false;
+  const fileInput = document.getElementById('csv-file-input');
+  if (fileInput) fileInput.value = '';
 };
 
 window.closeBulkImportModal = function() {
   document.getElementById('bulk-import-modal').style.display = 'none';
 };
 
-window.addBulkUrlField = function() {
-  const container = document.getElementById('bulk-urls-container');
-  const div = document.createElement('div');
-  div.className = 'form-group flex gap-8';
-  div.style.alignItems = 'center';
-  div.innerHTML = `
-    <input type="url" class="form-control bulk-url-input" placeholder="رابط المنتج">
-    <button class="btn btn-danger btn-sm" onclick="this.parentElement.remove()" style="flex-shrink:0">×</button>`;
-  container.appendChild(div);
-};
+window.submitCSVImport = async function() {
+  const fileInput = document.getElementById('csv-file-input');
+  const cleanCheckbox = document.getElementById('csv-clean-checkbox');
+  const progressEl = document.getElementById('csv-progress');
+  const progressBar = document.getElementById('csv-progress-bar');
+  const progressText = document.getElementById('csv-progress-text');
+  const importBtn = document.getElementById('csv-import-btn');
 
-window.submitBulkImport = async function() {
-  const inputs = document.querySelectorAll('.bulk-url-input');
-  const urls = Array.from(inputs).map(i => i.value.trim()).filter(Boolean);
-  if (!urls.length) {
-    showToast('أدخل رابط واحد على الأقل', 'error');
+  if (!fileInput.files || !fileInput.files[0]) {
+    showToast('اختر ملف CSV أولاً', 'error');
     return;
   }
 
-  // For now, create products with the URLs as image URLs
-  let created = 0;
-  for (const url of urls) {
-    try {
-      await api.createProduct({
-        name: 'منتج جديد',
-        basePrice: 0,
-        images: [url],
-        imageUrl: url,
-        status: 'draft'
-      });
-      created++;
-    } catch (err) { /* skip */ }
+  const file = fileInput.files[0];
+  if (!file.name.endsWith('.csv')) {
+    showToast('يجب أن يكون الملف بصيغة CSV', 'error');
+    return;
   }
-  
-  showToast(`تم إنشاء ${created} منتج (مسودة)`);
-  closeBulkImportModal();
-  loadProducts();
+
+  // Read file content
+  importBtn.disabled = true;
+  progressEl.classList.remove('hidden');
+  progressBar.style.width = '10%';
+  progressText.textContent = 'جاري قراءة الملف...';
+
+  try {
+    const csvData = await file.text();
+    progressBar.style.width = '30%';
+    progressText.textContent = `جاري إرسال البيانات (${(csvData.length / 1024).toFixed(0)} KB)...`;
+
+    // Send to server seed endpoint
+    const res = await api._request('/seed', {
+      method: 'POST',
+      body: JSON.stringify({
+        csvData: csvData,
+        clean: cleanCheckbox.checked
+      }),
+      admin: true
+    });
+
+    progressBar.style.width = '100%';
+    progressText.textContent = '✅ ' + (res.message || 'تم الاستيراد بنجاح!');
+    showToast(res.message || 'تم استيراد المنتجات بنجاح ✓');
+    
+    // Reload products after short delay
+    setTimeout(() => {
+      closeBulkImportModal();
+      loadProducts();
+    }, 1500);
+
+  } catch (err) {
+    progressBar.style.width = '0%';
+    progressText.textContent = '❌ فشل الاستيراد: ' + (err.message || 'خطأ غير معروف');
+    showToast('فشل استيراد الملف: ' + err.message, 'error');
+    importBtn.disabled = false;
+  }
 };
+

@@ -115,6 +115,14 @@
                 <span>إضافة صورة</span>
               </button>
             </div>
+            <!-- URL input for adding images -->
+            <div id="image-url-input-wrapper" class="hidden" style="margin-top:12px">
+              <div class="flex gap-8" style="align-items:center">
+                <input type="url" id="new-image-url" class="form-control" placeholder="الصق رابط الصورة هنا..." style="flex:1">
+                <button type="button" class="btn btn-primary btn-sm" onclick="addImageFromInput()" style="flex-shrink:0">+ أضف</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="hideImageInput()" style="flex-shrink:0">إلغاء</button>
+              </div>
+            </div>
           </div>
 
           <!-- Option Groups -->

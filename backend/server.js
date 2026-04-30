@@ -7,7 +7,7 @@ const app = express();
 
 // ── Middleware ───────────────────────────────────────────
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '5mb' }));
 
 // ── Routes ──────────────────────────────────────────────
 app.use('/api/products', require('./routes/products'));
@@ -15,6 +15,7 @@ app.use('/api/orders', require('./routes/orders'));
 app.use('/api/shipping', require('./routes/shipping'));
 app.use('/api/collections', require('./routes/collectionRoutes'));
 app.use('/api/webhooks', require('./routes/webhookRoutes'));
+app.use('/api/seed', require('./routes/seed'));
 
 // ── Root route ──────────────────────────────────────────
 app.get('/', (req, res) => {

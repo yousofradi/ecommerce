@@ -41,18 +41,42 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('product-form').addEventListener('submit', saveProduct);
   document.getElementById('add-option-group').addEventListener('click', addOptionGroup);
-  document.getElementById('add-image-btn').addEventListener('click', promptAddImage);
+  document.getElementById('add-image-btn').addEventListener('click', showImageInput);
+
+  // Enter key adds image from URL input
+  const urlInput = document.getElementById('new-image-url');
+  if (urlInput) {
+    urlInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); addImageFromInput(); }
+    });
+  }
 });
 
 // ── Image Management ────────────────────────────────────
 
-function promptAddImage() {
-  const url = prompt('أدخل رابط الصورة (URL):');
-  if (url && url.trim()) {
-    productImages.push(url.trim());
-    renderImages();
-  }
+function showImageInput() {
+  const wrapper = document.getElementById('image-url-input-wrapper');
+  wrapper.classList.remove('hidden');
+  document.getElementById('new-image-url').focus();
 }
+
+window.hideImageInput = function() {
+  document.getElementById('image-url-input-wrapper').classList.add('hidden');
+  document.getElementById('new-image-url').value = '';
+};
+
+window.addImageFromInput = function() {
+  const input = document.getElementById('new-image-url');
+  const url = input.value.trim();
+  if (url) {
+    productImages.push(url);
+    renderImages();
+    input.value = '';
+    input.focus();
+  } else {
+    showToast('أدخل رابط صورة صالح', 'error');
+  }
+};
 
 function removeImage(index) {
   productImages.splice(index, 1);

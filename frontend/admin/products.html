@@ -62,22 +62,35 @@
 
         <!-- Bulk Import Modal -->
         <div id="bulk-import-modal" class="modal-overlay" style="display:none">
-          <div class="modal" style="max-width:500px">
+          <div class="modal" style="max-width:520px">
             <div class="modal-header">
-              <h3 class="modal-title">إضافة عدة منتجات</h3>
+              <h3 class="modal-title">استيراد منتجات من ملف CSV</h3>
               <button class="modal-close" onclick="closeBulkImportModal()">×</button>
             </div>
-            <p class="text-muted text-sm mb-16">أدخل روابط المنتجات (رابط لكل حقل)</p>
-            <div id="bulk-urls-container">
-              <div class="form-group flex gap-8" style="align-items:center">
-                <input type="url" class="form-control bulk-url-input" placeholder="رابط المنتج">
-                <button class="btn btn-danger btn-sm" onclick="this.parentElement.remove()" style="flex-shrink:0">×</button>
-              </div>
+            <p class="text-muted text-sm mb-16">ارفع ملف CSV (تصدير Wuilt) لاستيراد جميع المنتجات والتصنيفات تلقائياً.</p>
+            
+            <div class="form-group">
+              <label class="form-label">ملف CSV</label>
+              <input type="file" id="csv-file-input" accept=".csv" class="form-control" style="padding:8px">
             </div>
-            <button class="btn btn-secondary btn-sm mb-16" onclick="addBulkUrlField()">+ إضافة رابط آخر</button>
+            
+            <div class="form-group">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+                <input type="checkbox" id="csv-clean-checkbox">
+                <span class="text-sm">حذف جميع المنتجات والتصنيفات الحالية قبل الاستيراد</span>
+              </label>
+            </div>
+
+            <div id="csv-progress" class="hidden" style="margin-bottom:16px">
+              <div style="background:#f1f5f9;border-radius:8px;overflow:hidden;height:8px;margin-bottom:8px">
+                <div id="csv-progress-bar" style="width:0%;height:100%;background:var(--primary);transition:width 0.3s"></div>
+              </div>
+              <p class="text-sm text-muted" id="csv-progress-text">جاري الاستيراد...</p>
+            </div>
+
             <div class="flex gap-12" style="justify-content:flex-end">
               <button class="btn btn-secondary" onclick="closeBulkImportModal()">إلغاء</button>
-              <button class="btn btn-primary" onclick="submitBulkImport()">استيراد</button>
+              <button class="btn btn-primary" id="csv-import-btn" onclick="submitCSVImport()">📤 استيراد</button>
             </div>
           </div>
         </div>
