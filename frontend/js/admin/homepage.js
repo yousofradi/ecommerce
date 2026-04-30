@@ -16,15 +16,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     ]);
   } catch(e) {}
   
-  loadSections();
+  await loadSections();
   renderSections();
 });
 
-function loadSections() {
+async function loadSections() {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) sections = JSON.parse(saved);
-  } catch(e) { sections = []; }
+    const saved = await api.getSetting(STORAGE_KEY);
+    if (saved) sections = saved;
+    else throw new Error('No saved settings');
+  } catch(e) {
+    try {
+      const savedLocal = localStorage.getItem(STORAGE_KEY);
+      if (savedLocal) sections = JSON.parse(savedLocal);
+    } catch(err) { sections = []; }
+  }
   
   // Default sections if none
   if (!sections.length) {
@@ -37,8 +43,13 @@ function loadSections() {
   }
 }
 
-function saveSections() {
+async function saveSections() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(sections));
+  try {
+    await api.updateSetting(STORAGE_KEY, sections);
+  } catch (err) {
+    console.error('Failed to save to API', err);
+  }
 }
 
 function genId() { return '_' + Math.random().toString(36).substr(2, 9); }

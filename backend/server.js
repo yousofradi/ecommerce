@@ -15,6 +15,7 @@ app.use('/api/orders', require('./routes/orders'));
 app.use('/api/shipping', require('./routes/shipping'));
 app.use('/api/collections', require('./routes/collectionRoutes'));
 app.use('/api/webhooks', require('./routes/webhookRoutes'));
+app.use('/api/settings', require('./routes/settings'));
 app.use('/api/seed', require('./routes/seed'));
 
 // ── Root route ──────────────────────────────────────────

@@ -17,11 +17,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Try to load homepage config
     let sections = [];
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) sections = JSON.parse(saved);
-    } catch(e) {}
+      const saved = await api.getSetting(STORAGE_KEY);
+      if (saved) sections = saved;
+    } catch(e) {
+      console.error('Failed to load homepage sections from API', e);
+      // Fallback to localStorage for smooth transition
+      const savedLocal = localStorage.getItem(STORAGE_KEY);
+      if (savedLocal) sections = JSON.parse(savedLocal);
+    }
 
-    if (sections.length > 0) {
+    if (sections && sections.length > 0) {
       renderFromConfig(sections, products, collections);
     } else {
       // Fallback: default rendering

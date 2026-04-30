@@ -61,6 +61,10 @@ const api = {
   updateWebhook(id, d) { return this._request(`/webhooks/${id}`, { method: 'PUT', body: JSON.stringify(d), admin: true }); },
   deleteWebhook(id) { return this._request(`/webhooks/${id}`, { method: 'DELETE', admin: true }); },
 
+  // Settings
+  getSetting(key) { return this._request(`/settings/${key}`); },
+  updateSetting(key, value) { return this._request(`/settings/${key}`, { method: 'POST', body: JSON.stringify({ value }), admin: true }); },
+
   // Auth check
   async checkAdmin() {
     try { await this._request('/orders', { admin: true }); return true; }
