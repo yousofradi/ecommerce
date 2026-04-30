@@ -150,9 +150,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', (e) => {
       if (window.innerWidth < 960 && sidebar.classList.contains('open')) {
         const nav = sidebar.querySelector('.admin-nav');
-        const header = sidebar.querySelector('.admin-sidebar-header');
-        // If click is NOT inside the nav or header, close
-        if (!nav.contains(e.target) && !header.contains(e.target)) {
+        // If click is NOT inside the nav, close it
+        if (nav && !nav.contains(e.target) && !toggle.contains(e.target)) {
           sidebar.classList.remove('open');
         }
       }
