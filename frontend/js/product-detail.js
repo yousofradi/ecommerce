@@ -28,6 +28,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     loading.classList.add('hidden');
     detail.classList.remove('hidden');
     renderProduct(currentProduct);
+    
+    if (currentProduct.collectionId) {
+      loadRelatedProducts(currentProduct.collectionId, currentProduct._id);
+    } else if (currentProduct.collectionIds && currentProduct.collectionIds.length > 0) {
+      loadRelatedProducts(currentProduct.collectionIds[0], currentProduct._id);
+    }
   } catch (err) {
     loading.innerHTML = '<p style="text-align:center;color:#ef4444">فشل تحميل المنتج</p>';
   }
@@ -161,3 +167,73 @@ window.addProductToCart = function() {
   }
   Cart.openCart();
 };
+
+async function loadRelatedProducts(colId, currentId) {
+  try {
+    const products = await api.getProductsByCollection(colId);
+    // Filter out current product and limit to 5
+    const related = products.filter(p => p._id !== currentId).slice(0, 5);
+    
+    if (related.length > 0) {
+      const container = document.getElementById('related-products-container');
+      const grid = document.getElementById('related-products-grid');
+      container.classList.remove('hidden');
+      grid.innerHTML = related.map(p => renderRelatedProductCard(p)).join('');
+    }
+  } catch (e) {
+    console.error('Failed to load related products', e);
+  }
+}
+
+function renderRelatedProductCard(p) {
+  const images = p.images && p.images.length > 0 ? p.images : (p.imageUrl ? [p.imageUrl] : []);
+  const img = images[0] || '';
+  const salePrice = p.salePrice || p.basePrice;
+  const hasDiscount = p.salePrice && p.salePrice < p.basePrice;
+  const productLink = p.handle ? `product?name=${encodeURIComponent(p.handle)}` : `product?id=${p._id}`;
+  const hasOptions = p.options && p.options.length > 0;
+  
+  const pJson = JSON.stringify({
+    _id: p._id, name: p.name, basePrice: p.basePrice, salePrice: p.salePrice,
+    images: p.images, imageUrl: p.imageUrl, options: p.options, quantity: p.quantity
+  }).replace(/"/g, '&quot;');
+
+  const btnHtml = hasOptions 
+    ? `<a href="${productLink}" class="btn btn-secondary btn-block" style="margin-top:8px;text-align:center;padding:6px;font-size:0.9rem">حدد اختيارك</a>`
+    : `<button class="btn btn-primary btn-block" style="margin-top:8px;padding:6px;font-size:0.9rem" onclick="quickAddToCart(event, ${pJson})">أضف للسلة</button>`;
+
+  return `
+    <div class="store-product-card" style="display:flex;flex-direction:column;">
+      <a href="${productLink}" style="display:block; text-decoration:none; color:inherit; flex:1;">
+        <div class="store-product-img" style="position:relative">
+          ${img ? `<img src="${img}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">` : ''}
+          ${hasDiscount ? '<span class="discount-badge">خصم</span>' : ''}
+        </div>
+        <div class="store-product-info">
+          <div class="store-product-name">${p.name}</div>
+          <div class="store-product-prices">
+            <span class="store-price-sale">${formatPrice(salePrice)}</span>
+            ${hasDiscount ? `<span class="store-price-original">${formatPrice(p.basePrice)}</span>` : ''}
+          </div>
+        </div>
+      </a>
+      <div style="padding: 0 12px 12px; margin-top:auto;">
+        ${btnHtml}
+      </div>
+    </div>`;
+}
+
+window.quickAddToCart = function(event, p) {
+  event.preventDefault();
+  event.stopPropagation();
+  const isUnlimited = p.quantity === null || p.quantity === undefined;
+  if (!isUnlimited && p.quantity <= 0) {
+    if(window.showToast) window.showToast('عذراً، المنتج غير متوفر حالياً', 'error');
+    else alert('عذراً، المنتج غير متوفر حالياً');
+    return;
+  }
+  if(window.Cart) {
+    window.Cart.addItem(p);
+    window.Cart.openCart();
+  }
+}

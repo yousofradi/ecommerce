@@ -197,21 +197,50 @@ function renderStoreCard(p) {
   const img = getImg(p);
   const salePrice = p.salePrice || p.basePrice;
   const hasDiscount = p.salePrice && p.salePrice < p.basePrice;
-
   const productLink = p.handle ? `product?name=${encodeURIComponent(p.handle)}` : `product?id=${p._id}`;
+  const hasOptions = p.options && p.options.length > 0;
+  
+  const pJson = JSON.stringify({
+    _id: p._id, name: p.name, basePrice: p.basePrice, salePrice: p.salePrice,
+    images: p.images, imageUrl: p.imageUrl, options: p.options, quantity: p.quantity
+  }).replace(/"/g, '&quot;');
+
+  const btnHtml = hasOptions 
+    ? `<a href="${productLink}" class="btn btn-secondary btn-block" style="margin-top:8px;text-align:center;padding:6px;font-size:0.9rem">حدد اختيارك</a>`
+    : `<button class="btn btn-primary btn-block" style="margin-top:8px;padding:6px;font-size:0.9rem" onclick="quickAddToCart(event, ${pJson})">أضف للسلة</button>`;
 
   return `
-    <a href="${productLink}" class="store-product-card">
-      <div class="store-product-img" style="position:relative">
-        ${img ? `<img src="${img}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">` : ''}
-        ${hasDiscount ? '<span class="discount-badge">خصم</span>' : ''}
-      </div>
-      <div class="store-product-info">
-        <div class="store-product-name">${p.name}</div>
-        <div class="store-product-prices">
-          <span class="store-price-sale">${formatPrice(salePrice)}</span>
-          ${hasDiscount ? `<span class="store-price-original">${formatPrice(p.basePrice)}</span>` : ''}
+    <div class="store-product-card" style="display:flex;flex-direction:column;">
+      <a href="${productLink}" style="display:block; text-decoration:none; color:inherit; flex:1;">
+        <div class="store-product-img" style="position:relative">
+          ${img ? `<img src="${img}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">` : ''}
+          ${hasDiscount ? '<span class="discount-badge">خصم</span>' : ''}
         </div>
+        <div class="store-product-info">
+          <div class="store-product-name">${p.name}</div>
+          <div class="store-product-prices">
+            <span class="store-price-sale">${formatPrice(salePrice)}</span>
+            ${hasDiscount ? `<span class="store-price-original">${formatPrice(p.basePrice)}</span>` : ''}
+          </div>
+        </div>
+      </a>
+      <div style="padding: 0 12px 12px; margin-top:auto;">
+        ${btnHtml}
       </div>
-    </a>`;
+    </div>`;
+}
+
+window.quickAddToCart = function(event, p) {
+  event.preventDefault();
+  event.stopPropagation();
+  const isUnlimited = p.quantity === null || p.quantity === undefined;
+  if (!isUnlimited && p.quantity <= 0) {
+    if(window.showToast) window.showToast('عذراً، المنتج غير متوفر حالياً', 'error');
+    else alert('عذراً، المنتج غير متوفر حالياً');
+    return;
+  }
+  if(window.Cart) {
+    window.Cart.addItem(p);
+    window.Cart.openCart();
+  }
 }
