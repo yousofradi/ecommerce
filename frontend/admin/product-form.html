@@ -5,6 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>نموذج المنتج — Sundura Admin</title>
   <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .images-list { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
+    .image-item {
+      position: relative; width: 110px; height: 110px; border-radius: 10px;
+      border: 1px solid var(--border-color); overflow: hidden; background: var(--bg-body);
+    }
+    .image-item img { width: 100%; height: 100%; object-fit: cover; }
+    .image-item .remove-img {
+      position: absolute; top: 4px; left: 4px; width: 24px; height: 24px; border-radius: 50%;
+      background: rgba(239,68,68,0.9); color: #fff; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-size: 14px; line-height: 1;
+    }
+    .image-item .remove-img:hover { background: #dc2626; }
+    .add-image-btn {
+      width: 110px; height: 110px; border-radius: 10px; border: 2px dashed var(--border-color);
+      background: var(--bg-body); cursor: pointer; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 4px; color: var(--text-muted);
+      font-size: 0.82rem; transition: all 0.2s;
+    }
+    .add-image-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .add-image-btn .plus { font-size: 1.6rem; line-height: 1; }
+  </style>
 </head>
 <body>
   <div class="admin-layout">
@@ -51,22 +73,41 @@
                 <input class="form-control" id="p-price" type="number" min="0" required placeholder="0">
               </div>
             </div>
-            <div class="form-group">
-              <label class="form-label" for="p-collection">التصنيف</label>
-              <select class="form-control" id="p-collection">
-                <option value="">بدون تصنيف</option>
-              </select>
+            <div class="grid-2" style="gap:16px">
+              <div class="form-group">
+                <label class="form-label" for="p-collection">التصنيف</label>
+                <select class="form-control" id="p-collection">
+                  <option value="">بدون تصنيف</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="p-status">الحالة</label>
+                <select class="form-control" id="p-status">
+                  <option value="active">نشط (Active)</option>
+                  <option value="draft">مسودة (Draft)</option>
+                </select>
+              </div>
             </div>
             <div class="form-group">
-              <label class="form-label" for="p-image">رابط الصورة (URL)</label>
-              <input class="form-control" id="p-image" type="url" placeholder="https://...">
-              <div id="img-preview" style="margin-top:10px;display:none">
-                <img id="img-preview-el" src="" alt="معاينة" style="max-height:140px;border-radius:8px;border:1px solid var(--border-color)">
-              </div>
+              <label class="form-label" for="p-quantity">الكمية</label>
+              <input class="form-control" id="p-quantity" type="number" min="0" value="0" placeholder="0">
             </div>
             <div class="form-group" style="margin-bottom:0">
               <label class="form-label" for="p-desc">الوصف</label>
               <textarea class="form-control" id="p-desc" rows="3" placeholder="وصف المنتج..."></textarea>
+            </div>
+          </div>
+
+          <!-- Images -->
+          <div class="admin-card mb-24">
+            <h3 class="mb-16">صور المنتج</h3>
+            <p class="text-sm text-muted mb-16">أضف روابط صور المنتج. الصورة الأولى هي الصورة الرئيسية.</p>
+            <div class="images-list" id="images-list">
+              <!-- Images will be rendered here -->
+              <button type="button" class="add-image-btn" id="add-image-btn">
+                <span class="plus">+</span>
+                <span>إضافة صورة</span>
+              </button>
             </div>
           </div>
 
@@ -91,19 +132,5 @@
   <script src="../js/api.js"></script>
   <script src="../js/admin/auth.js"></script>
   <script src="../js/admin/product-form.js"></script>
-  <script>
-    // Image preview
-    document.getElementById('p-image').addEventListener('input', function() {
-      const preview = document.getElementById('img-preview');
-      const el = document.getElementById('img-preview-el');
-      if (this.value) {
-        el.src = this.value;
-        preview.style.display = 'block';
-        el.onerror = () => preview.style.display = 'none';
-      } else {
-        preview.style.display = 'none';
-      }
-    });
-  </script>
 </body>
 </html>

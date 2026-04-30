@@ -11,9 +11,10 @@ router.get('/', async (req, res) => {
     const { page, limit, admin } = req.query;
     const query = {};
     
-    // If not admin request or explicitly requesting active only, filter inactive
+    // If not admin request, only show active products
     if (admin !== 'true') {
       query.active = { $ne: false };
+      query.status = { $ne: 'draft' };
     }
 
     const sortObj = { sortOrder: 1, createdAt: -1 };
@@ -59,14 +60,14 @@ router.get('/:id', async (req, res) => {
 // POST /api/products — create
 router.post('/', adminAuth, async (req, res) => {
   try {
-    const { name, basePrice, imageUrl, description, options } = req.body;
+    const { name, basePrice, imageUrl, images, description, options, status, quantity } = req.body;
 
     if (!name || basePrice == null) {
       return res.status(400).json({ error: 'Name and basePrice are required' });
     }
 
     const count = await Product.countDocuments();
-    const product = new Product({ name, basePrice, imageUrl, description, options, sortOrder: count });
+    const product = new Product({ name, basePrice, imageUrl, images, description, options, sortOrder: count, status, quantity });
     await product.save();
     res.status(201).json(product);
   } catch (err) {
@@ -80,10 +81,12 @@ router.post('/', adminAuth, async (req, res) => {
 // PUT /api/products/:id — update
 router.put('/:id', adminAuth, async (req, res) => {
   try {
-    const { name, basePrice, imageUrl, description, options, active } = req.body;
+    const { name, basePrice, imageUrl, images, description, options, active, status, quantity } = req.body;
 
-    const updateData = { name, basePrice, imageUrl, description, options };
+    const updateData = { name, basePrice, imageUrl, images, description, options };
     if (active !== undefined) updateData.active = active;
+    if (status !== undefined) updateData.status = status;
+    if (quantity !== undefined) updateData.quantity = quantity;
 
     const product = await Product.findByIdAndUpdate(
       req.params.id,

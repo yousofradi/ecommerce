@@ -15,11 +15,14 @@ const productSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   basePrice: { type: Number, required: true, min: 0 },
   imageUrl: { type: String, default: '' },
+  images: { type: [String], default: [] },
   description: { type: String, default: '' },
   collectionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Collection', default: null },
   options: { type: [optionGroupSchema], default: [] },
   sortOrder: { type: Number, default: 0 },
-  active: { type: Boolean, default: true }
+  active: { type: Boolean, default: true },
+  status: { type: String, enum: ['active', 'draft'], default: 'active' },
+  quantity: { type: Number, default: 0, min: 0 }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Product', productSchema);

@@ -22,7 +22,7 @@ const Cart = {
         key,
         productId: product._id,
         name: product.name,
-        imageUrl: product.imageUrl,
+        imageUrl: (product.images && product.images.length > 0) ? product.images[0] : (product.imageUrl || ''),
         basePrice: product.basePrice,
         selectedOptions,
         unitPrice: product.basePrice + optionsPrice,
@@ -85,16 +85,16 @@ document.addEventListener('DOMContentLoaded', () => {
     
     cartEl.innerHTML = `
       <div class="slide-cart-header">
-        <h3 style="margin:0; font-size:1.2rem">Your Cart (<span id="slide-cart-count">0</span>)</h3>
+        <h3 style="margin:0; font-size:1.2rem">سلة التسوق (<span id="slide-cart-count">0</span>)</h3>
         <button class="modal-close" onclick="Cart.closeCart()">×</button>
       </div>
       <div class="slide-cart-body" id="slide-cart-body"></div>
       <div class="slide-cart-footer">
         <div class="flex-between mb-16" style="font-weight:700; font-size:1.1rem">
-          <span>Subtotal:</span>
+          <span>المجموع:</span>
           <span id="slide-cart-total">0 EGP</span>
         </div>
-        <a href="checkout.html" class="btn btn-primary btn-block">Checkout</a>
+        <a href="checkout.html" class="btn btn-primary btn-block">إتمام الشراء</a>
       </div>
     `;
 
@@ -146,7 +146,7 @@ Cart.renderSlideCart = function() {
   document.getElementById('slide-cart-total').textContent = formatPrice(this.getTotal());
 
   if (items.length === 0) {
-    body.innerHTML = '<div style="text-align:center; color:var(--text-muted); margin-top:40px;">Your cart is empty.</div>';
+    body.innerHTML = '<div style="text-align:center; color:var(--text-muted); margin-top:40px;">سلة التسوق فارغة</div>';
     return;
   }
 

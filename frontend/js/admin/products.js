@@ -11,7 +11,7 @@ let totalPages = 1;
 
 async function loadProducts() {
   const tbody = document.getElementById('products-tbody');
-  tbody.innerHTML = '<tr><td colspan="8" class="text-center"><div class="spinner"></div></td></tr>';
+  tbody.innerHTML = '<tr><td colspan="10" class="text-center"><div class="spinner"></div></td></tr>';
   try {
     const [res, collections] = await Promise.all([
       api.getProducts(currentPage, 20, true),
@@ -25,7 +25,7 @@ async function loadProducts() {
     totalPages = res.totalPages || 1;
     
     if (!products.length) {
-      tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted" style="padding:40px">لا توجد منتجات بعد</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted" style="padding:40px">لا توجد منتجات بعد</td></tr>';
       updatePaginationInfo(0);
       return;
     }
@@ -36,7 +36,7 @@ async function loadProducts() {
     updateBulkActions();
     
   } catch (err) {
-    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">فشل تحميل المنتجات</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">فشل تحميل المنتجات</td></tr>';
   }
 }
 
@@ -58,25 +58,31 @@ function renderProducts(collections) {
   const colMap = {};
   if (collections) collections.forEach(c => colMap[c._id] = c.name);
 
-  tbody.innerHTML = allProducts.map((p, idx) => `
+  const getMainImage = (p) => {
+    if (p.images && p.images.length > 0) return p.images[0];
+    return p.imageUrl || '';
+  };
+
+  tbody.innerHTML = allProducts.map((p, idx) => {
+    const mainImg = getMainImage(p);
+    const statusLabel = p.status === 'draft' ? 'مسودة' : 'نشط';
+    const statusClass = p.status === 'draft' ? 'badge-warning' : 'badge-success';
+    const qty = p.quantity != null ? p.quantity : '—';
+    return `
       <tr draggable="true" data-idx="${idx}" ondragstart="onProductDragStart(event)" ondragover="onProductDragOver(event)" ondrop="onProductDrop(event)" ondragend="onProductDragEnd(event)" style="cursor: grab; transition: background 0.2s;">
         <td style="width: 40px; text-align: center;"><input type="checkbox" class="product-checkbox" value="${p._id}" onchange="updateBulkActions()"></td>
         <td style="width: 40px; text-align: center; color: #94a3b8; cursor: grab;" title="اسحب لتغيير الترتيب">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="5" r="2"/><circle cx="15" cy="5" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="9" cy="19" r="2"/><circle cx="15" cy="19" r="2"/></svg>
         </td>
         <td>
-          ${p.imageUrl
-            ? `<img src="${p.imageUrl}" alt="${p.name}" style="width:54px;height:54px;border-radius:8px;object-fit:cover;border:1px solid var(--border-color)">`
+          ${mainImg
+            ? `<img src="${mainImg}" alt="${p.name}" style="width:54px;height:54px;border-radius:8px;object-fit:cover;border:1px solid var(--border-color)">`
             : `<div style="width:54px;height:54px;border-radius:8px;background:var(--bg-body);display:flex;align-items:center;justify-content:center;font-size:1.4rem">📦</div>`}
         </td>
         <td><strong>${p.name}</strong>${p.description ? `<div class="text-sm text-muted" style="margin-top:2px">${p.description.substring(0,50)}${p.description.length>50?'…':''}</div>` : ''}</td>
         <td style="font-weight:700;color:var(--primary)">${formatPrice(p.basePrice)}</td>
-        <td>
-          <label class="switch">
-            <input type="checkbox" ${p.active !== false ? 'checked' : ''} onchange="toggleProductActive('${p._id}', this.checked)">
-            <span class="slider round"></span>
-          </label>
-        </td>
+        <td><span class="badge ${statusClass}">${statusLabel}</span></td>
+        <td style="text-align:center;font-weight:600">${qty}</td>
         <td>${colMap[p.collectionId] ? `<span class="badge badge-info">${colMap[p.collectionId]}</span>` : '<span class="text-muted text-sm">—</span>'}</td>
         <td>${(p.options||[]).length > 0 ? `<span class="badge badge-success">${(p.options||[]).length} خيار</span>` : '<span class="text-muted text-sm">—</span>'}</td>
         <td>
@@ -86,7 +92,7 @@ function renderProducts(collections) {
           </div>
         </td>
       </tr>
-    `).join('');
+    `}).join('');
     
   // Reset select all checkbox
   const selectAll = document.getElementById('select-all');
@@ -95,7 +101,8 @@ function renderProducts(collections) {
 
 window.toggleProductActive = async function(id, active) {
   try {
-    await api.updateProduct(id, { active });
+    const status = active ? 'active' : 'draft';
+    await api.updateProduct(id, { active, status });
     showToast('تم تحديث حالة المنتج');
   } catch (err) {
     showToast(err.message, 'error');
