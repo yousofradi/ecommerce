@@ -1,6 +1,9 @@
-/** Cart — localStorage-backed cart system */
 const Cart = {
   KEY: 'ecommerce_cart',
+};
+window.Cart = Cart;
+
+Object.assign(Cart, {
 
   _load() {
     try { return JSON.parse(localStorage.getItem(this.KEY)) || []; }
@@ -70,7 +73,7 @@ const Cart = {
   },
 
   init() { this._updateBadge(); }
-};
+});
 
 document.addEventListener('DOMContentLoaded', () => {
   Cart.init();

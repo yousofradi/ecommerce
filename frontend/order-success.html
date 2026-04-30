@@ -26,9 +26,47 @@
         <div class="success-icon">✅</div>
         <h1 class="page-title">Order Placed!</h1>
         <p class="page-subtitle">Thank you for your order. We'll get it to you soon.</p>
-        <div class="success-order-id" id="order-id-display">Loading...</div>
-        <div class="mt-32">
-          <a href="index" class="btn btn-primary">Continue Shopping</a>
+        <div class="success-order-id" id="order-id-display" style="font-size: 1.25rem; font-weight: 700; color: var(--primary); margin-bottom: 24px;">Loading...</div>
+        
+        <div id="order-details-container" style="display:none; text-align: right; width: 100%; max-width: 500px; margin: 0 auto 32px; background: #f8fafc; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+          <h3 style="margin: 0 0 16px; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">ملخص الطلب</h3>
+          
+          <div style="margin-bottom: 16px;">
+            <h4 style="margin: 0 0 8px; color: #475569; font-size: 0.95rem;">بيانات العميل</h4>
+            <div style="font-size: 0.9rem; color: #1e293b; line-height: 1.6;">
+              <div><strong>الاسم:</strong> <span id="summ-name"></span></div>
+              <div><strong>رقم الهاتف:</strong> <span id="summ-phone"></span></div>
+              <div><strong>العنوان:</strong> <span id="summ-address"></span>, <span id="summ-gov"></span></div>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 16px;">
+            <h4 style="margin: 0 0 8px; color: #475569; font-size: 0.95rem;">المنتجات</h4>
+            <div id="summ-items" style="font-size: 0.9rem; color: #1e293b; line-height: 1.6;"></div>
+          </div>
+
+          <div style="border-top: 1px dashed #cbd5e1; padding-top: 12px; margin-top: 12px; font-size: 0.95rem; line-height: 1.6;">
+            <div style="display: flex; justify-content: space-between;">
+              <span>المجموع الفرعي:</span>
+              <span id="summ-subtotal" style="font-weight: 600;"></span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span>مصاريف الشحن:</span>
+              <span id="summ-shipping" style="font-weight: 600;"></span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 1.1rem; color: var(--primary);">
+              <span>الإجمالي:</span>
+              <span id="summ-total" style="font-weight: 700;"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-32" style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+          <a href="index" class="btn btn-secondary">العودة للمتجر</a>
+          <a href="#" id="whatsapp-btn" target="_blank" class="btn" style="background: #25D366; color: #fff; border: none; display: none; align-items: center; gap: 8px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+            تواصل معنا على واتساب
+          </a>
         </div>
       </div>
     </div>
@@ -39,12 +77,52 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const orderId = sessionStorage.getItem('lastOrderId');
+      const orderDataStr = sessionStorage.getItem('lastOrderData');
       const el = document.getElementById('order-id-display');
+      const whatsappBtn = document.getElementById('whatsapp-btn');
+      
       if (orderId) {
-        el.textContent = 'Order ID: ' + orderId;
+        el.textContent = 'رقم الطلب: ' + orderId;
+        
+        if (orderDataStr) {
+          try {
+            const order = JSON.parse(orderDataStr);
+            document.getElementById('order-details-container').style.display = 'block';
+            
+            document.getElementById('summ-name').textContent = order.customer.name;
+            document.getElementById('summ-phone').textContent = order.customer.phone;
+            document.getElementById('summ-address').textContent = order.customer.address;
+            document.getElementById('summ-gov').textContent = order.customer.government;
+            
+            document.getElementById('summ-items').innerHTML = order.items.map(item => 
+              `<div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span>${item.name} × ${item.quantity}</span>
+                <span style="font-weight: 500;">${formatPrice(item.finalPrice)}</span>
+              </div>`
+            ).join('');
+            
+            // Calculate subtotal from items if not provided at root level
+            const subtotal = order.items.reduce((s, i) => s + i.finalPrice, 0);
+            document.getElementById('summ-subtotal').textContent = formatPrice(subtotal);
+            document.getElementById('summ-shipping').textContent = formatPrice(order.shippingFee);
+            document.getElementById('summ-total').textContent = formatPrice(order.totalPrice);
+            
+            const waMessage = encodeURIComponent(`مرحباً، قمت بطلب من متجر سندورة.\nرقم الطلب الخاص بي هو: ${orderId}`);
+            whatsappBtn.href = `https://wa.me/201016612519?text=${waMessage}`;
+            whatsappBtn.style.display = 'flex';
+          } catch (e) {
+            console.error('Failed to parse order data', e);
+          }
+        } else {
+          const waMessage = encodeURIComponent(`مرحباً، قمت بطلب من متجر سندورة.\nرقم الطلب الخاص بي هو: ${orderId}`);
+          whatsappBtn.href = `https://wa.me/201016612519?text=${waMessage}`;
+          whatsappBtn.style.display = 'flex';
+        }
+        
         sessionStorage.removeItem('lastOrderId');
+        sessionStorage.removeItem('lastOrderData');
       } else {
-        el.textContent = 'No recent order found';
+        el.textContent = 'لا يوجد طلب حديث';
       }
       Cart.clear();
     });

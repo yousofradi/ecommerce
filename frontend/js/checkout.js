@@ -62,14 +62,17 @@ function setupForm() {
     const payment = document.querySelector('input[name="payment"]:checked');
     if (!payment) { showToast('Please select a payment method', 'error'); btn.disabled = false; btn.textContent = 'Place Order'; return; }
 
-    const items = Cart.getItems().map(item => ({
-      productId: item.productId,
-      name: item.name,
-      basePrice: item.basePrice,
-      selectedOptions: item.selectedOptions,
-      finalPrice: item.unitPrice * item.quantity,
-      quantity: item.quantity
-    }));
+    const items = Cart.getItems().map(item => {
+      const effectiveBase = (item.salePrice && item.salePrice < item.basePrice) ? item.salePrice : item.basePrice;
+      return {
+        productId: item.productId,
+        name: item.name,
+        basePrice: effectiveBase,
+        selectedOptions: item.selectedOptions,
+        finalPrice: item.unitPrice * item.quantity,
+        quantity: item.quantity
+      };
+    });
 
     const orderData = {
       customer: {
@@ -88,6 +91,7 @@ function setupForm() {
       const order = await api.createOrder(orderData);
       Cart.clear();
       sessionStorage.setItem('lastOrderId', order.orderId);
+      sessionStorage.setItem('lastOrderData', JSON.stringify(order));
       window.location.href = 'order-success';
     } catch (err) {
       showToast(err.message || 'Failed to place order', 'error');

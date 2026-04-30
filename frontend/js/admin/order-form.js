@@ -337,7 +337,8 @@ function renderCart() {
 // ── Price helpers ──────────────────────────────────────
 function itemTotal(c) {
   const optExtra = c.selectedOptions.reduce((s, o) => s + (o.price || 0), 0);
-  return Math.max(0, (c.product.basePrice + optExtra) * c.quantity - c.discount);
+  const effectiveBase = (c.product.salePrice && c.product.salePrice < c.product.basePrice) ? c.product.salePrice : c.product.basePrice;
+  return Math.max(0, (effectiveBase + optExtra) * c.quantity - c.discount);
 }
 
 window.recalcSummary = function() {
@@ -407,16 +408,19 @@ window.submitOrder = async function() {
   const orderDiscount = parseFloat(document.getElementById('order-discount').value) || 0;
   const paidAmount = Math.max(0, parseFloat(document.getElementById('paid-amount').value) || 0);
 
-  const finalItems = cartItems.map(c => ({
-    productId: c.product._id,
-    name: c.product.name,
-    imageUrl: c.product.imageUrl || '',
-    basePrice: c.product.basePrice,
-    selectedOptions: c.selectedOptions,
-    quantity: c.quantity,
-    discount: c.discount,
-    finalPrice: itemTotal(c)
-  }));
+  const finalItems = cartItems.map(c => {
+    const effectiveBase = (c.product.salePrice && c.product.salePrice < c.product.basePrice) ? c.product.salePrice : c.product.basePrice;
+    return {
+      productId: c.product._id,
+      name: c.product.name,
+      imageUrl: c.product.imageUrl || '',
+      basePrice: effectiveBase,
+      selectedOptions: c.selectedOptions,
+      quantity: c.quantity,
+      discount: c.discount,
+      finalPrice: itemTotal(c)
+    };
+  });
 
   const payload = {
     customer: {

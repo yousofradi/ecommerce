@@ -55,13 +55,13 @@ function renderProductCard(p) {
 
   const btnHtml = hasOptions 
     ? `<a href="${productLink}" class="btn btn-secondary btn-block" style="margin-top:8px;text-align:center;padding:6px;font-size:0.9rem">حدد اختيارك</a>`
-    : `<button class="btn btn-primary btn-block" style="margin-top:8px;padding:6px;font-size:0.9rem" onclick="quickAddToCart(event, ${pJson})">أضف للسلة</button>`;
+    : `<button class="btn btn-primary btn-block" style="margin-top:8px;padding:6px;font-size:0.9rem" data-product="${pJson}" onclick="quickAddToCart(event, this)">أضف للسلة</button>`;
 
   return `
     <div class="store-product-card" style="display:flex;flex-direction:column;">
       <a href="${productLink}" style="display:block; text-decoration:none; color:inherit; flex:1;">
         <div class="store-product-img" style="position:relative">
-          <img src="${img}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">
+          ${img ? `<img src="${img}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">` : ''}
           ${hasDiscount ? '<span class="discount-badge">خصم</span>' : ''}
         </div>
         <div class="store-product-info">
@@ -78,9 +78,16 @@ function renderProductCard(p) {
     </div>`;
 }
 
-window.quickAddToCart = function(event, p) {
+window.quickAddToCart = function(event, btn) {
   event.preventDefault();
   event.stopPropagation();
+  let p;
+  try {
+    p = JSON.parse(btn.dataset.product);
+  } catch (e) {
+    console.error('Failed to parse product data', e);
+    return;
+  }
   const isUnlimited = p.quantity === null || p.quantity === undefined;
   if (!isUnlimited && p.quantity <= 0) {
     if(window.showToast) window.showToast('عذراً، المنتج غير متوفر حالياً', 'error');
@@ -88,7 +95,7 @@ window.quickAddToCart = function(event, p) {
     return;
   }
   if(window.Cart) {
-    window.Cart.addItem(p);
+    window.Cart.addItem(p, []);
     window.Cart.openCart();
   }
 }
