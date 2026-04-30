@@ -107,6 +107,7 @@ window.renderModalProducts = function() {
   listEl.innerHTML = filtered.map(p => {
     const imgHtml = p.imageUrl ? `<img src="${p.imageUrl}" class="pli-img">` : `<div class="pli-img">\ud83d\udce6</div>`;
     const hasOptions = p.options && p.options.length > 0;
+    const effectiveBase = (p.salePrice && p.salePrice < p.basePrice) ? p.salePrice : p.basePrice;
 
     if (!hasOptions) {
       return `
@@ -116,7 +117,7 @@ window.renderModalProducts = function() {
               ${imgHtml}
               <div>
                 <div style="font-weight:600;font-size:0.95rem">${p.name}</div>
-                <div style="font-size:0.85rem;color:var(--primary)">${formatPrice(p.basePrice)}</div>
+                <div style="font-size:0.85rem;color:var(--primary)">${formatPrice(effectiveBase)}</div>
               </div>
             </div>
             <input type="checkbox" class="pli-checkbox product-select-cb" value="${p._id}" style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer;">
@@ -129,7 +130,7 @@ window.renderModalProducts = function() {
     const variantsHtml = combinations.map((combo, idx) => {
       const title = combo.map(c => c.label).join(' / ');
       const extraPrice = combo.reduce((sum, c) => sum + (c.price || 0), 0);
-      const finalPrice = p.basePrice + extraPrice;
+      const finalPrice = effectiveBase + extraPrice;
       const comboStr = encodeURIComponent(JSON.stringify(combo));
       return `
         <label class="product-variant-item" style="display:flex; align-items:center; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border-color); background:#fafafa; cursor:pointer; padding-right:48px;">
@@ -304,7 +305,7 @@ function renderCart() {
           </div>
           <!-- Left side: Pricing -->
           <div style="display: flex; align-items: center; gap: 16px; flex-direction: row-reverse;">
-            <div style="font-size: 0.9rem; color: #64748b;" dir="ltr">${c.quantity} x ${formatPrice(p.basePrice)}</div>
+            <div style="font-size: 0.9rem; color: #64748b;" dir="ltr">${c.quantity} x ${formatPrice((p.salePrice && p.salePrice < p.basePrice) ? p.salePrice : p.basePrice)}</div>
             <div style="font-weight: 700; font-size: 1.1rem; color: #1e293b;">${formatPrice(itemTotal(c))}</div>
           </div>
         </div>

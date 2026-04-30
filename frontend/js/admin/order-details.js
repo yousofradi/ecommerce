@@ -536,6 +536,7 @@ window.renderModalProducts = function() {
   listEl.innerHTML = filtered.map(p => {
     const imgHtml = p.imageUrl ? `<img src="${p.imageUrl}" class="pli-img">` : `<div class="pli-img">📦</div>`;
     const hasOptions = p.options && p.options.length > 0;
+    const effectiveBase = (p.salePrice && p.salePrice < p.basePrice) ? p.salePrice : p.basePrice;
     
     if (!hasOptions) {
       return `
@@ -545,7 +546,7 @@ window.renderModalProducts = function() {
               ${imgHtml}
               <div>
                 <div style="font-weight:600;font-size:0.95rem">${p.name}</div>
-                <div style="font-size:0.85rem;color:var(--primary)">${formatPrice(p.basePrice)}</div>
+                <div style="font-size:0.85rem;color:var(--primary)">${formatPrice(effectiveBase)}</div>
               </div>
             </div>
             <input type="checkbox" class="pli-checkbox product-select-cb" value="${p._id}" style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer;">
@@ -558,7 +559,7 @@ window.renderModalProducts = function() {
     const variantsHtml = combinations.map((combo, idx) => {
       const title = combo.map(c => c.label).join(' / ');
       const extraPrice = combo.reduce((sum, c) => sum + (c.price || 0), 0);
-      const finalPrice = p.basePrice + extraPrice;
+      const finalPrice = effectiveBase + extraPrice;
       // We store combo data in a data attribute
       const comboStr = encodeURIComponent(JSON.stringify(combo));
       return `
@@ -597,6 +598,7 @@ window.addSelectedProducts = function() {
   checkedSimple.forEach(cb => {
     const p = allProducts.find(x => x._id === cb.value);
     if (p) {
+      const effectiveBase = (p.salePrice && p.salePrice < p.basePrice) ? p.salePrice : p.basePrice;
       const existing = currentOrder.items.find(i => i.productId === p._id && (!i.selectedOptions || i.selectedOptions.length === 0));
       if (existing) {
         existing.quantity++;
@@ -605,11 +607,11 @@ window.addSelectedProducts = function() {
           productId: p._id,
           name: p.name,
           imageUrl: p.imageUrl || '',
-          basePrice: p.basePrice,
+          basePrice: effectiveBase,
           selectedOptions: [],
           quantity: 1,
           discount: 0,
-          finalPrice: p.basePrice
+          finalPrice: effectiveBase
         });
       }
     }
@@ -620,6 +622,7 @@ window.addSelectedProducts = function() {
   checkedVariants.forEach(cb => {
     const p = allProducts.find(x => x._id === cb.dataset.pid);
     if (p) {
+      const effectiveBase = (p.salePrice && p.salePrice < p.basePrice) ? p.salePrice : p.basePrice;
       const combo = JSON.parse(decodeURIComponent(cb.dataset.combo));
       // Check if this exact variant is already in cart
       const existing = currentOrder.items.find(i => {
@@ -636,11 +639,11 @@ window.addSelectedProducts = function() {
           productId: p._id,
           name: p.name,
           imageUrl: p.imageUrl || '',
-          basePrice: p.basePrice,
+          basePrice: effectiveBase,
           selectedOptions: combo,
           quantity: 1,
           discount: 0,
-          finalPrice: p.basePrice + extraPrice
+          finalPrice: effectiveBase + extraPrice
         });
       }
     }
