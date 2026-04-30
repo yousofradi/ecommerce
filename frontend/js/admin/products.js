@@ -7,13 +7,14 @@ document.addEventListener('DOMContentLoaded', () => {
 let allProducts = [];
 let currentPage = 1;
 let totalPages = 1;
+let currentLimit = 30;
 
 async function loadProducts() {
   const tbody = document.getElementById('products-tbody');
   tbody.innerHTML = '<tr><td colspan="8" class="text-center"><div class="spinner"></div></td></tr>';
   try {
     const [res, collections] = await Promise.all([
-      api.getProducts(currentPage, 20, true),
+      api.getProducts(currentPage, currentLimit, true),
       api.getCollections().catch(() => [])
     ]);
     const colMap = {};
@@ -48,17 +49,44 @@ function updatePaginationInfo(total) {
   const prevBtn = document.getElementById('prev-page');
   const nextBtn = document.getElementById('next-page');
   const countAll = document.getElementById('count-all');
+  const pageDropdown = document.getElementById('page-dropdown');
+  const limitDropdown = document.getElementById('items-per-page');
   
   if (infoEl) infoEl.textContent = `إجمالي: ${total} - صفحة ${currentPage} من ${totalPages}`;
   if (prevBtn) prevBtn.disabled = currentPage <= 1;
   if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
   if (countAll) countAll.textContent = total;
+  
+  if (pageDropdown) {
+    let optionsHtml = '';
+    for (let i = 1; i <= totalPages; i++) {
+      optionsHtml += `<option value="${i}" ${i === currentPage ? 'selected' : ''}>${i}</option>`;
+    }
+    pageDropdown.innerHTML = optionsHtml;
+  }
+  
+  if (limitDropdown) {
+    limitDropdown.value = currentLimit.toString();
+  }
 }
 
 window.changePage = function(delta) {
   const newPage = currentPage + delta;
   if (newPage < 1 || newPage > totalPages) return;
   currentPage = newPage;
+  loadProducts();
+};
+
+window.goToPage = function(page) {
+  const newPage = parseInt(page);
+  if (newPage < 1 || newPage > totalPages || newPage === currentPage) return;
+  currentPage = newPage;
+  loadProducts();
+};
+
+window.changeLimit = function(limit) {
+  currentLimit = parseInt(limit) || 30;
+  currentPage = 1;
   loadProducts();
 };
 
