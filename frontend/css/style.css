@@ -380,22 +380,28 @@ tr:hover td { background: #fafbfc; }
   
   /* Mobile Top Bar */
   .admin-sidebar {
-    width: 100%; height: 60px; border-left: none; border-bottom: 1px solid var(--border-color);
-    padding: 0 16px; position: relative; flex-direction: column;
+    width: 100%; height: 70px; border-left: none; border-bottom: 1px solid var(--border-color);
+    padding: 0 16px; position: relative; 
+    flex-direction: row; justify-content: space-between; align-items: center;
     overflow: visible; z-index: 1000;
-    display: flex; justify-content: center;
+    display: flex;
     background: #fff;
     max-height: none !important;
   }
   
-  .admin-sidebar-header {
-    display: flex; width: 100%; justify-content: space-between; align-items: center;
+  .admin-brand-header {
+    width: 80%; display: flex; justify-content: center; margin-bottom: 0; padding: 0;
   }
   
-  .admin-brand { margin-bottom: 0; font-size: 1.1rem; }
+  .admin-store-preview {
+    width: 100%; padding: 10px; justify-content: center; margin: 0;
+  }
+  
+  .admin-brand-title { display: none; }
+  .admin-brand-sub { display: none; }
   
   .sidebar-toggle {
-    display: block; background: none; border: none; font-size: 1.6rem; cursor: pointer; color: var(--text-main);
+    display: block; background: none; border: none; font-size: 1.8rem; cursor: pointer; color: var(--text-main); margin: 0; padding: 0;
   }
   
   /* Slide-in Drawer Menu */
