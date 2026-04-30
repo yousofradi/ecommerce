@@ -8,7 +8,7 @@
   <style>
     .form-layout {
       display: grid;
-      grid-template-columns: 350px 1fr;
+      grid-template-columns: 1fr 350px;
       gap: 24px;
       align-items: start;
     }
@@ -139,20 +139,7 @@
       </div>
       <form id="collection-form">
         <div class="form-layout">
-          <!-- Left: Image -->
-          <div class="admin-card">
-            <h3 style="margin-bottom:16px;font-size:0.9rem;text-align:left">صورة</h3>
-            <div class="image-upload-area" id="image-preview-container">
-              <span style="color:#aaa">لا توجد صورة</span>
-            </div>
-            <div class="image-actions">
-              <button type="button" class="btn-text danger" onclick="removeImage()">إزالة</button>
-              <button type="button" class="btn-text" onclick="promptImage()">تغيير</button>
-            </div>
-            <input type="hidden" id="c-image">
-          </div>
-
-          <!-- Right: Details -->
+          <!-- Details (Main Content) -->
           <div>
             <div class="admin-card">
               <h3 style="margin-bottom:16px;font-size:0.9rem;text-align:right">معلومات</h3>
@@ -192,6 +179,19 @@
             <div style="margin-top:24px;text-align:left">
               <button type="submit" class="btn btn-primary" style="padding:10px 32px">حفظ</button>
             </div>
+          </div>
+
+          <!-- Image (Sidebar) -->
+          <div class="admin-card">
+            <h3 style="margin-bottom:16px;font-size:0.9rem;text-align:right">صورة</h3>
+            <div class="image-upload-area" id="image-preview-container">
+              <span style="color:#aaa">لا توجد صورة</span>
+            </div>
+            <div class="image-actions">
+              <button type="button" class="btn-text danger" onclick="removeImage()">إزالة</button>
+              <button type="button" class="btn-text" onclick="promptImage()">تغيير</button>
+            </div>
+            <input type="hidden" id="c-image">
           </div>
         </div>
       </form>

@@ -33,6 +33,7 @@ const api = {
 
   // Collections
   getCollections() { return this._request('/collections'); },
+  getCollection(id) { return this._request(`/collections/${id}`); },
   createCollection(d) { return this._request('/collections', { method: 'POST', body: JSON.stringify(d), admin: true }); },
   updateCollection(id, d) { return this._request(`/collections/${id}`, { method: 'PUT', body: JSON.stringify(d), admin: true }); },
   deleteCollection(id) { return this._request(`/collections/${id}`, { method: 'DELETE', admin: true }); },
