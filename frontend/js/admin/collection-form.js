@@ -27,9 +27,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function loadAllProducts() {
   try {
-    allProducts = await api.getProducts({ admin: true, limit: 1000 });
-    // Normalize if pagination is used
-    if (allProducts.products) allProducts = allProducts.products;
+    const res = await api.getProducts(1, 1000, true);
+    allProducts = res.products ? res.products : res;
   } catch (e) {
     showToast('فشل تحميل المنتجات', 'error');
   }
@@ -209,10 +208,14 @@ async function saveCollection(e) {
 
     // Now update products collection bulk
     const productIds = collectionProducts.map(p => p._id);
-    await api.request(`/api/products/collection/batch`, 'PUT', {
-      productIds: productIds,
-      collectionId: collectionId,
-      action: 'set'
+    await api._request(`/products/collection/batch`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        productIds: productIds,
+        collectionId: collectionId,
+        action: 'set'
+      }),
+      admin: true
     });
 
     setTimeout(() => window.location.href = 'collections', 1000);

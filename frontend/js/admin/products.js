@@ -22,22 +22,22 @@ async function loadProducts() {
 
     let products = res.products || res;
     totalPages = res.totalPages || 1;
-    
+
     if (!products.length) {
       tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted" style="padding:40px">لا توجد منتجات بعد</td></tr>';
       updatePaginationInfo(0);
       return;
     }
-    
+
     allProducts = products;
     renderProducts(collections);
     updatePaginationInfo(res.total || products.length);
     updateBulkActions();
-    
+
     // Initial filter state
     window.currentFilter = 'all';
     window.searchQuery = '';
-    
+
   } catch (err) {
     console.error('Failed to load products:', err);
     tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">فشل تحميل المنتجات</td></tr>';
@@ -51,12 +51,12 @@ function updatePaginationInfo(total) {
   const countAll = document.getElementById('count-all');
   const pageDropdown = document.getElementById('page-dropdown');
   const limitDropdown = document.getElementById('items-per-page');
-  
+
   if (infoEl) infoEl.textContent = `إجمالي: ${total} - صفحة ${currentPage} من ${totalPages}`;
   if (prevBtn) prevBtn.disabled = currentPage <= 1;
   if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
   if (countAll) countAll.textContent = total;
-  
+
   if (pageDropdown) {
     let optionsHtml = '';
     for (let i = 1; i <= totalPages; i++) {
@@ -64,27 +64,27 @@ function updatePaginationInfo(total) {
     }
     pageDropdown.innerHTML = optionsHtml;
   }
-  
+
   if (limitDropdown) {
     limitDropdown.value = currentLimit.toString();
   }
 }
 
-window.changePage = function(delta) {
+window.changePage = function (delta) {
   const newPage = currentPage + delta;
   if (newPage < 1 || newPage > totalPages) return;
   currentPage = newPage;
   loadProducts();
 };
 
-window.goToPage = function(page) {
+window.goToPage = function (page) {
   const newPage = parseInt(page);
   if (newPage < 1 || newPage > totalPages || newPage === currentPage) return;
   currentPage = newPage;
   loadProducts();
 };
 
-window.changeLimit = function(limit) {
+window.changeLimit = function (limit) {
   currentLimit = parseInt(limit) || 30;
   currentPage = 1;
   loadProducts();
@@ -102,7 +102,7 @@ function renderProducts(collections) {
 
   const query = (window.searchQuery || '').toLowerCase();
   const filter = window.currentFilter || 'all';
-  
+
   let filteredProducts = allProducts.filter(p => {
     // text search
     const pName = p.name || '';
@@ -124,7 +124,7 @@ function renderProducts(collections) {
     const colNames = [];
     if (p.collectionId && colMap[p.collectionId]) colNames.push(colMap[p.collectionId]);
     if (p.collectionIds) p.collectionIds.forEach(id => { if (colMap[id] && !colNames.includes(colMap[id])) colNames.push(colMap[id]); });
-    const colDisplay = colNames.length > 0 
+    const colDisplay = colNames.length > 0
       ? colNames.map(n => `<span class="badge badge-info" style="margin:1px">${n}</span>`).join(' ')
       : '<span class="text-muted text-sm">—</span>';
 
@@ -133,8 +133,8 @@ function renderProducts(collections) {
         <td style="width:40px;text-align:center" onclick="event.stopPropagation()"><input type="checkbox" class="product-checkbox" value="${p._id}" onchange="updateBulkActions()"></td>
         <td>
           ${mainImg
-            ? `<img src="${mainImg}" alt="${p.name}" style="width:54px;height:54px;border-radius:8px;object-fit:cover;border:1px solid var(--border-color)">`
-            : `<div style="width:54px;height:54px;border-radius:8px;background:var(--bg-body);display:flex;align-items:center;justify-content:center;font-size:1.4rem">📦</div>`}
+        ? `<img src="${mainImg}" alt="${p.name}" style="width:54px;height:54px;border-radius:8px;object-fit:cover;border:1px solid var(--border-color)">`
+        : `<div style="width:54px;height:54px;border-radius:8px;background:var(--bg-body);display:flex;align-items:center;justify-content:center;font-size:1.4rem">📦</div>`}
         </td>
         <td><strong>${p.name || 'بدون اسم'}</strong></td>
         <td>${priceDisplay}</td>
@@ -149,17 +149,17 @@ function renderProducts(collections) {
         </td>
       </tr>
     `}).join('');
-    
+
   const selectAll = document.getElementById('select-all');
-  if(selectAll) selectAll.checked = false;
+  if (selectAll) selectAll.checked = false;
 }
 
 // Click row to edit
-window.onRowClick = function(event, productId) {
+window.onRowClick = function (event, productId) {
   window.location.href = `product-form?id=${productId}`;
 };
 
-window.toggleProductActive = async function(id, active) {
+window.toggleProductActive = async function (id, active) {
   try {
     const status = active ? 'active' : 'draft';
     await api.updateProduct(id, { active, status });
@@ -170,22 +170,22 @@ window.toggleProductActive = async function(id, active) {
   }
 };
 
-window.toggleSelectAll = function() {
+window.toggleSelectAll = function () {
   const selectAll = document.getElementById('select-all');
   const checkboxes = document.querySelectorAll('.product-checkbox');
   checkboxes.forEach(cb => cb.checked = selectAll.checked);
   updateBulkActions();
 };
 
-window.unselectAll = function() {
+window.unselectAll = function () {
   const selectAll = document.getElementById('select-all');
-  if(selectAll) selectAll.checked = false;
+  if (selectAll) selectAll.checked = false;
   const checkboxes = document.querySelectorAll('.product-checkbox');
   checkboxes.forEach(cb => cb.checked = false);
   updateBulkActions();
 };
 
-window.updateBulkActions = function() {
+window.updateBulkActions = function () {
   const checkboxes = document.querySelectorAll('.product-checkbox:checked');
   const bulkBar = document.getElementById('bulk-actions-bar');
   const badge = document.getElementById('selected-count-badge');
@@ -196,12 +196,12 @@ window.updateBulkActions = function() {
     } else {
       bulkBar.style.display = 'none';
       const menu = document.getElementById('bulk-menu');
-      if(menu) menu.style.display = 'none';
+      if (menu) menu.style.display = 'none';
     }
   }
 };
 
-window.toggleBulkMenu = function(e) {
+window.toggleBulkMenu = function (e) {
   e.stopPropagation();
   const menu = document.getElementById('bulk-menu');
   if (menu) menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
@@ -214,7 +214,7 @@ document.addEventListener('click', (e) => {
   }
 });
 
-window.bulkAction = async function(action) {
+window.bulkAction = async function (action) {
   const checkboxes = document.querySelectorAll('.product-checkbox:checked');
   const ids = Array.from(checkboxes).map(cb => cb.value);
   if (!ids.length) return;
@@ -236,7 +236,7 @@ window.bulkAction = async function(action) {
     const statusText = action === 'draft' ? 'مسودة' : 'نشط';
     const confirmed = await window.showConfirmModal('تأكيد التحديث', `هل أنت متأكد من تغيير حالة ${ids.length} منتج إلى ${statusText}؟`);
     if (!confirmed) return;
-    
+
     showToast('جاري التحديث...', 'info');
     let hasError = false;
     for (const id of ids) {
@@ -248,22 +248,22 @@ window.bulkAction = async function(action) {
     }
     if (hasError) showToast('حدث خطأ أثناء تحديث بعض المنتجات', 'warning');
     else showToast('تم التحديث بنجاح');
-    
+
     loadProducts();
   }
 };
 
-window.filterProductsClient = function() {
+window.filterProductsClient = function () {
   window.searchQuery = document.getElementById('product-search').value;
   // Use cached collections if available, or just empty array
   api.getCollections().then(cols => renderProducts(cols)).catch(() => renderProducts([]));
 };
 
-window.setFilter = function(f) {
+window.setFilter = function (f) {
   window.currentFilter = f;
   document.querySelectorAll('.order-tab').forEach(t => t.classList.remove('active'));
   const activeTab = document.querySelector(`.order-tab[data-filter="${f}"]`);
-  if(activeTab) activeTab.classList.add('active');
+  if (activeTab) activeTab.classList.add('active');
   api.getCollections().then(cols => renderProducts(cols)).catch(() => renderProducts([]));
 };
 
@@ -278,7 +278,7 @@ async function deleteProduct(id, name) {
 }
 
 // ── CSV Import Modal ───────────────────────────────────
-window.openBulkImportModal = function() {
+window.openBulkImportModal = function () {
   document.getElementById('bulk-import-modal').style.display = 'flex';
   document.getElementById('csv-progress').classList.add('hidden');
   document.getElementById('csv-import-btn').disabled = false;
@@ -286,11 +286,11 @@ window.openBulkImportModal = function() {
   if (fileInput) fileInput.value = '';
 };
 
-window.closeBulkImportModal = function() {
+window.closeBulkImportModal = function () {
   document.getElementById('bulk-import-modal').style.display = 'none';
 };
 
-window.submitCSVImport = async function() {
+window.submitCSVImport = async function () {
   const fileInput = document.getElementById('csv-file-input');
   const cleanCheckbox = document.getElementById('csv-clean-checkbox');
   const progressEl = document.getElementById('csv-progress');
@@ -333,7 +333,7 @@ window.submitCSVImport = async function() {
     progressBar.style.width = '100%';
     progressText.textContent = '✅ ' + (res.message || 'تم الاستيراد بنجاح!');
     showToast(res.message || 'تم استيراد المنتجات بنجاح ✓');
-    
+
     // Reload products after short delay
     setTimeout(() => {
       closeBulkImportModal();

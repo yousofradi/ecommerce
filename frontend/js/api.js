@@ -19,6 +19,9 @@ const api = {
     if (limit) url += `&limit=${limit}`;
     return this._request(url);
   },
+  searchProducts(query) {
+    return this._request(`/products?admin=false&search=${encodeURIComponent(query)}`);
+  },
   getProductsByCollection(collectionId) {
     return this._request(`/products?collectionId=${collectionId}`);
   },

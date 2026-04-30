@@ -10,8 +10,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   try {
     const collections = await api.getCollections();
-    const select = document.getElementById('p-collection');
-    collections.forEach(c => select.add(new Option(c.name, c._id)));
+    const container = document.getElementById('p-collections-container');
+    container.innerHTML = collections.map(c => `
+      <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.9rem;">
+        <input type="checkbox" name="collection_ids" value="${c._id}">
+        ${c.name}
+      </label>
+    `).join('');
   } catch(e) {}
 
   if (editId) {
@@ -24,7 +29,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('p-desc').value = p.description || '';
       document.getElementById('p-status').value = p.status || 'active';
       document.getElementById('p-quantity').value = (p.quantity != null) ? p.quantity : '';
-      if(p.collectionId) document.getElementById('p-collection').value = p.collectionId;
+      
+      const colIds = p.collectionIds || [];
+      if (p.collectionId && !colIds.includes(p.collectionId)) colIds.push(p.collectionId);
+      document.querySelectorAll('input[name="collection_ids"]').forEach(cb => {
+        if (colIds.includes(cb.value)) cb.checked = true;
+      });
       
       // Load images - support both new images array and legacy imageUrl
       if (p.images && p.images.length > 0) {
@@ -159,6 +169,8 @@ async function saveProduct(e) {
 
   const salePriceVal = document.getElementById('p-sale-price').value;
   const qtyVal = document.getElementById('p-quantity').value;
+  const selectedCollections = Array.from(document.querySelectorAll('input[name="collection_ids"]:checked')).map(cb => cb.value);
+  
   const data = {
     name: document.getElementById('p-name').value.trim(),
     basePrice: Number(document.getElementById('p-price').value),
@@ -166,7 +178,8 @@ async function saveProduct(e) {
     images: productImages,
     imageUrl: productImages.length > 0 ? productImages[0] : '',
     description: document.getElementById('p-desc').value.trim(),
-    collectionId: document.getElementById('p-collection').value || null,
+    collectionIds: selectedCollections,
+    collectionId: selectedCollections.length > 0 ? selectedCollections[0] : null,
     status: document.getElementById('p-status').value,
     quantity: qtyVal !== '' ? Number(qtyVal) : null,
     options: optionGroups.filter(g => g.name && g.values.length && g.values[0].label)

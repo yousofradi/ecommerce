@@ -120,10 +120,10 @@
             </div>
             <div class="grid-2" style="gap:16px">
               <div class="form-group">
-                <label class="form-label" for="p-collection">التصنيف</label>
-                <select class="form-control" id="p-collection">
-                  <option value="">بدون تصنيف</option>
-                </select>
+                <label class="form-label">التصنيفات</label>
+                <div id="p-collections-container" style="max-height: 120px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 8px 12px; background: var(--bg-surface); display: flex; flex-direction: column; gap: 6px;">
+                  <!-- Checkboxes will be injected here -->
+                </div>
               </div>
               <div class="form-group">
                 <label class="form-label" for="p-quantity">الكمية <span class="text-sm text-muted">(اتركه فارغاً = غير محدود)</span></label>

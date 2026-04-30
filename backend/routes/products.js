@@ -8,21 +8,39 @@ const adminAuth = require('../middleware/adminAuth');
 // GET /api/products — list all (with pagination & collection filter)
 router.get('/', async (req, res) => {
   try {
-    const { page, limit, admin, collectionId } = req.query;
+    const { page, limit, admin, collectionId, search } = req.query;
     const query = {};
     
     // If not admin request, only show active products
     if (admin !== 'true') {
       query.active = { $ne: false };
       query.status = { $ne: 'draft' };
+      // Hide out-of-stock products (quantity === 0) from storefront
+      // quantity: null or undefined means unlimited
+      query.$and = [
+        { $or: [{ quantity: null }, { quantity: { $gt: 0 } }] }
+      ];
+    }
+
+    // Server-side search by name
+    if (search) {
+      query.name = { $regex: search, $options: 'i' };
     }
 
     // Filter by collection
     if (collectionId) {
-      query.$or = [
-        { collectionId: collectionId },
-        { collectionIds: collectionId }
-      ];
+      const colFilter = {
+        $or: [
+          { collectionId: collectionId },
+          { collectionIds: collectionId }
+        ]
+      };
+      // Merge with existing $and if present
+      if (query.$and) {
+        query.$and.push(colFilter);
+      } else {
+        query.$and = [colFilter];
+      }
     }
 
     const sortObj = { sortOrder: 1, createdAt: -1 };
