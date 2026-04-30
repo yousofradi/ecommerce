@@ -202,11 +202,10 @@
 /* ── Store Footer ─────────────────────────────────────── */
 .store-footer {
   background: linear-gradient(180deg, #f5efe9 0%, #ede4d9 100%);
-  padding: 40px 0 20px; margin-top: 40px;
+  padding: 16px 0 16px; margin-top: 40px;
   text-align: center;
 }
-.footer-logo { height: 70px; margin: 0 auto 16px; }
-.footer-nav { display: flex; gap: 20px; justify-content: center; margin-bottom: 16px; }
+.footer-nav { display: flex; gap: 20px; justify-content: center; margin-bottom: 8px; }
 .footer-nav a { color: var(--text-main); font-size: 0.9rem; font-weight: 500; }
 .footer-nav a:hover { color: var(--sundura-brown); }
 .footer-bottom-bar {

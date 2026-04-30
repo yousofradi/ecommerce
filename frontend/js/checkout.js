@@ -1,7 +1,7 @@
 /** Checkout page logic */
 document.addEventListener('DOMContentLoaded', async () => {
   const items = Cart.getItems();
-  if (!items.length) { window.location.href = 'cart.html'; return; }
+  if (!items.length) { window.location.href = 'cart'; return; }
 
   renderOrderSummary(items);
   await loadGovernorates();
@@ -88,7 +88,7 @@ function setupForm() {
       const order = await api.createOrder(orderData);
       Cart.clear();
       sessionStorage.setItem('lastOrderId', order.orderId);
-      window.location.href = 'order-success.html';
+      window.location.href = 'order-success';
     } catch (err) {
       showToast(err.message || 'Failed to place order', 'error');
       btn.disabled = false; btn.textContent = 'Place Order';

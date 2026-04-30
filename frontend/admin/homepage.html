@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>الصفحة الرئيسية — Sundura Admin</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  <style>
+    .hp-section {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: box-shadow 0.2s;
+    }
+    .hp-section:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+    .hp-drag { cursor: grab; color: #94a3b8; font-size: 1.2rem; padding: 4px; }
+    .hp-icon {
+      width: 40px; height: 40px;
+      border-radius: 10px; background: #f0fdf4;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; flex-shrink: 0;
+    }
+    .hp-info { flex: 1; min-width: 0; }
+    .hp-info h4 { margin: 0; font-size: 0.95rem; font-weight: 600; color: #1e293b; }
+    .hp-info p { margin: 2px 0 0; font-size: 0.8rem; color: #64748b; }
+    .hp-actions { display: flex; gap: 8px; flex-shrink: 0; }
+    .hp-actions button {
+      border: 1px solid #e2e8f0; background: #fff; border-radius: 8px;
+      padding: 6px 14px; cursor: pointer; font-family: inherit;
+      font-size: 0.85rem; color: #475569; transition: all 0.15s;
+    }
+    .hp-actions button:hover { background: #f8fafc; }
+    .hp-actions .btn-del { color: #ef4444; border-color: #fecaca; }
+    .hp-actions .btn-del:hover { background: #fef2f2; }
+
+    .add-section-bar {
+      display: flex; align-items: center; gap: 16px;
+      margin: 24px 0; position: relative;
+    }
+    .add-section-bar::before {
+      content: ''; position: absolute; top: 50%; left: 0; right: 0;
+      height: 1px; background: #0f766e; z-index: 0;
+    }
+    .add-section-btn {
+      position: relative; z-index: 1;
+      background: #fff; border: 2px solid #0f766e; color: #0f766e;
+      border-radius: 20px; padding: 8px 20px; cursor: pointer;
+      font-weight: 600; font-family: inherit; font-size: 0.9rem;
+      margin: 0 auto; transition: all 0.2s;
+    }
+    .add-section-btn:hover { background: #0f766e; color: #fff; }
+
+    .type-picker {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px; margin-top: 16px;
+    }
+    .type-card {
+      border: 2px solid #e2e8f0; border-radius: 12px; padding: 16px;
+      text-align: center; cursor: pointer; transition: all 0.2s;
+      background: #fff;
+    }
+    .type-card:hover { border-color: #0f766e; background: #f0fdf4; }
+    .type-card .icon { font-size: 1.5rem; margin-bottom: 6px; }
+    .type-card .label { font-size: 0.85rem; font-weight: 600; color: #1e293b; }
+
+    /* Modal */
+    .hp-modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5); z-index: 9999;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .hp-modal {
+      background: #fff; border-radius: 16px; max-width: 600px;
+      width: 100%; max-height: 90vh; overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2); padding: 0;
+    }
+    .hp-modal-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 20px 24px; border-bottom: 1px solid #f1f5f9;
+    }
+    .hp-modal-header h3 { margin: 0; font-size: 1.1rem; }
+    .hp-modal-close {
+      background: none; border: none; font-size: 1.5rem;
+      cursor: pointer; color: #94a3b8; padding: 4px;
+    }
+    .hp-modal-body { padding: 24px; }
+    .hp-modal-footer {
+      display: flex; gap: 12px; justify-content: flex-start;
+      padding: 16px 24px; border-top: 1px solid #f1f5f9;
+    }
+
+    .form-row { margin-bottom: 16px; }
+    .form-row label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9rem; color: #374151; }
+    .form-row input, .form-row select {
+      width: 100%; padding: 10px 14px; border: 1px solid #e2e8f0;
+      border-radius: 8px; font-family: inherit; font-size: 0.9rem;
+    }
+    .form-row input:focus, .form-row select:focus {
+      outline: none; border-color: #0f766e; box-shadow: 0 0 0 3px rgba(15,118,110,0.1);
+    }
+
+    .toggle-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 0;
+    }
+    .toggle-switch {
+      position: relative; width: 44px; height: 24px; cursor: pointer;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; inset: 0; background: #cbd5e1; border-radius: 24px;
+      transition: 0.2s;
+    }
+    .toggle-slider::before {
+      content: ''; position: absolute; width: 18px; height: 18px;
+      border-radius: 50%; background: #fff; top: 3px; left: 3px;
+      transition: 0.2s;
+    }
+    .toggle-switch input:checked + .toggle-slider { background: #0f766e; }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+    /* Collection picker inside modal */
+    .col-picker-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;
+      margin-bottom: 6px; cursor: pointer; transition: background 0.15s;
+    }
+    .col-picker-item:hover { background: #f8fafc; }
+    .col-picker-item.selected { border-color: #0f766e; background: #f0fdf4; }
+    .col-picker-item img {
+      width: 36px; height: 36px; border-radius: 6px; object-fit: cover;
+    }
+
+    @media (max-width: 600px) {
+      .hp-section { flex-wrap: wrap; }
+      .hp-actions { width: 100%; justify-content: flex-end; }
+      .type-picker { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-header">
+        <div class="admin-brand">⚙️ Sundura</div>
+        <button class="sidebar-toggle">☰</button>
+      </div>
+      <nav class="admin-nav">
+        <a href="index">🏠 لوحة التحكم</a>
+        <a href="homepage" class="active">🏪 الصفحة الرئيسية</a>
+        <a href="products">📦 المنتجات</a>
+        <a href="collections">🗂️ التصنيفات</a>
+        <a href="orders">🛒 الطلبات</a>
+        <a href="shipment">🚚 الشحن</a>
+        <a href="webhooks">🔗 Webhooks</a>
+        <a href="../" target="_blank">🌐 المتجر ↗</a>
+        <a href="#" onclick="logout()" class="logout">🚪 خروج</a>
+      </nav>
+    </aside>
+
+    <main class="admin-main">
+      <div style="max-width:900px">
+        <div class="flex-between mb-24" style="flex-wrap:wrap; gap:12px;">
+          <div>
+            <h1 class="page-title" style="margin-bottom:4px">ميّز الصفحة الرئيسية لمتجرك</h1>
+            <p class="page-subtitle" style="margin-bottom:0">ميّز صفحة متجرك الرئيسية بالأقسام المختلفة</p>
+          </div>
+        </div>
+
+        <div id="sections-list"></div>
+
+        <div class="add-section-bar">
+          <button class="add-section-btn" onclick="showTypePicker()">+ أضف قسم</button>
+        </div>
+
+        <div id="type-picker-area" class="hidden">
+          <div class="admin-card">
+            <div class="type-picker">
+              <div class="type-card" onclick="addSection('products')">
+                <div class="icon">◈</div>
+                <div class="label">قسم للمنتجات</div>
+              </div>
+              <div class="type-card" onclick="addSection('collections')">
+                <div class="icon">🗂</div>
+                <div class="label">قسم للمجموعات</div>
+              </div>
+              <div class="type-card" onclick="addSection('banner')">
+                <div class="icon">🖼</div>
+                <div class="label">قسم للافتات</div>
+              </div>
+              <div class="type-card" onclick="addSection('text')">
+                <div class="icon">T</div>
+                <div class="label">قسم للنص</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="section-modal"></div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/admin/auth.js"></script>
+  <script src="../js/admin/homepage.js"></script>
+</body>
+</html>

@@ -1,0 +1,506 @@
+/** Homepage Builder — manages storefront sections */
+const STORAGE_KEY = 'sundura_homepage_sections';
+let sections = [];
+let allCollections = [];
+let allProducts = [];
+let sortableInstance = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!requireAdmin()) return;
+  
+  // Load data
+  try {
+    [allCollections, allProducts] = await Promise.all([
+      api.getCollections().catch(() => []),
+      api.getProducts(null, null, true).then(r => r.products || r).catch(() => [])
+    ]);
+  } catch(e) {}
+  
+  loadSections();
+  renderSections();
+});
+
+function loadSections() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) sections = JSON.parse(saved);
+  } catch(e) { sections = []; }
+  
+  // Default sections if none
+  if (!sections.length) {
+    sections = [
+      { id: genId(), type: 'products', title: 'عروض لفترة محدودة', showTitle: true, collectionId: '', itemsPerRow: 4, maxItems: 4, style: 'grid' },
+      { id: genId(), type: 'products', title: 'الأكثر طلباً', showTitle: true, collectionId: '', itemsPerRow: 4, maxItems: 6, style: 'grid' },
+      { id: genId(), type: 'collections', title: 'التصنيفات', showTitle: true, selectedCollections: [], itemsPerRow: 2, showNames: true }
+    ];
+    saveSections();
+  }
+}
+
+function saveSections() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(sections));
+}
+
+function genId() { return '_' + Math.random().toString(36).substr(2, 9); }
+
+function getTypeIcon(type) {
+  const icons = { products: '◈', collections: '🗂', banner: '🖼', text: 'T' };
+  return icons[type] || '📄';
+}
+
+function getTypeLabel(type) {
+  const labels = { products: 'قسم للمنتجات', collections: 'قسم للمجموعات', banner: 'قسم للافتات', text: 'قسم للنص' };
+  return labels[type] || 'قسم';
+}
+
+function getSectionDescription(s) {
+  if (s.type === 'products') {
+    const col = allCollections.find(c => c._id === s.collectionId);
+    const colName = col ? col.name : 'الكل';
+    return `${s.maxItems || '?'} منتجات من ${colName} ● يظهر كشبكة`;
+  }
+  if (s.type === 'collections') {
+    return `${(s.selectedCollections || []).length || 'كل'} مجموعات`;
+  }
+  if (s.type === 'banner') return s.imageUrl ? 'صورة مخصصة' : 'بدون صورة';
+  if (s.type === 'text') return s.content ? s.content.substring(0, 40) + '...' : 'نص فارغ';
+  return '';
+}
+
+function renderSections() {
+  const list = document.getElementById('sections-list');
+  
+  if (!sections.length) {
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8">لا توجد أقسام بعد. أضف قسم جديد من الأسفل.</div>';
+    return;
+  }
+  
+  list.innerHTML = sections.map((s, i) => `
+    <div class="hp-section" data-id="${s.id}">
+      <div class="hp-drag" title="اسحب لإعادة الترتيب">⠿</div>
+      <div class="hp-icon">${getTypeIcon(s.type)}</div>
+      <div class="hp-info">
+        <h4>${s.title || getTypeLabel(s.type)}</h4>
+        <p>${getSectionDescription(s)}</p>
+      </div>
+      <div class="hp-actions">
+        <button onclick="editSection('${s.id}')">تعديل</button>
+        <button class="btn-del" onclick="deleteSection('${s.id}')">🗑</button>
+      </div>
+    </div>
+  `).join('');
+  
+  // Init drag
+  if (sortableInstance) sortableInstance.destroy();
+  sortableInstance = new Sortable(list, {
+    handle: '.hp-drag',
+    animation: 150,
+    onEnd: () => {
+      const newOrder = Array.from(list.children).map(el => el.getAttribute('data-id'));
+      sections = newOrder.map(id => sections.find(s => s.id === id)).filter(Boolean);
+      saveSections();
+    }
+  });
+}
+
+function showTypePicker() {
+  document.getElementById('type-picker-area').classList.toggle('hidden');
+}
+
+function addSection(type) {
+  const s = { id: genId(), type, title: '', showTitle: true };
+  
+  if (type === 'products') {
+    s.title = 'منتجات مميزة';
+    s.collectionId = '';
+    s.itemsPerRow = 4;
+    s.maxItems = 4;
+    s.style = 'grid';
+  } else if (type === 'collections') {
+    s.title = 'التصنيفات';
+    s.selectedCollections = [];
+    s.itemsPerRow = 2;
+    s.showNames = true;
+  } else if (type === 'banner') {
+    s.imageUrl = '';
+    s.linkUrl = '';
+  } else if (type === 'text') {
+    s.content = '';
+  }
+  
+  sections.push(s);
+  saveSections();
+  renderSections();
+  document.getElementById('type-picker-area').classList.add('hidden');
+  
+  // Open edit immediately
+  editSection(s.id);
+}
+
+window.deleteSection = async function(id) {
+  const ok = await window.showConfirmModal('حذف القسم', 'هل تريد حذف هذا القسم؟');
+  if (!ok) return;
+  sections = sections.filter(s => s.id !== id);
+  saveSections();
+  renderSections();
+  showToast('تم حذف القسم');
+};
+
+window.editSection = function(id) {
+  const s = sections.find(s => s.id === id);
+  if (!s) return;
+  
+  const modal = document.getElementById('section-modal');
+  
+  if (s.type === 'products') {
+    renderProductsEditor(s);
+  } else if (s.type === 'collections') {
+    renderCollectionsEditor(s);
+  } else if (s.type === 'banner') {
+    renderBannerEditor(s);
+  } else if (s.type === 'text') {
+    renderTextEditor(s);
+  }
+};
+
+function renderProductsEditor(s) {
+  const modal = document.getElementById('section-modal');
+  const colOptions = allCollections.map(c => 
+    `<option value="${c._id}" ${s.collectionId === c._id ? 'selected' : ''}>${c.name}</option>`
+  ).join('');
+  
+  modal.innerHTML = `
+    <div class="hp-modal-overlay" onclick="if(event.target===this) closeModal()">
+      <div class="hp-modal">
+        <div class="hp-modal-header">
+          <h3>◈ تعديل قسم المنتجات</h3>
+          <button class="hp-modal-close" onclick="closeModal()">×</button>
+        </div>
+        <div class="hp-modal-body">
+          <div class="form-row">
+            <label>العنوان الرئيسي</label>
+            <input type="text" id="ed-title" value="${s.title || ''}" placeholder="عروض لفترة محدودة" maxlength="160">
+            <small style="color:#94a3b8;font-size:0.75rem">بحد أقصى 160 حرف</small>
+          </div>
+          
+          <div class="toggle-row">
+            <span style="font-weight:600;font-size:0.9rem">أظهر العنوان الرئيسي</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="ed-showTitle" ${s.showTitle ? 'checked' : ''}>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          
+          <div class="form-row" style="margin-top:16px">
+            <label>عدد المنتجات في الصف</label>
+            <input type="number" id="ed-itemsPerRow" value="${s.itemsPerRow || 4}" min="1" max="6">
+          </div>
+          
+          <hr style="border:none;border-top:1px solid #f1f5f9;margin:16px 0">
+          
+          <div class="form-row">
+            <label>عرض المنتجات من</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div>
+                <label style="font-weight:400;font-size:0.85rem">اختر مجموعة</label>
+                <select id="ed-collectionId" class="form-control" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;">
+                  <option value="">كل المنتجات</option>
+                  ${colOptions}
+                </select>
+              </div>
+              <div>
+                <label style="font-weight:400;font-size:0.85rem">عدد المنتجات المعروضة</label>
+                <input type="number" id="ed-maxItems" value="${s.maxItems || 4}" min="1" max="50">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="hp-modal-footer">
+          <button class="btn btn-primary" style="background:#0f766e;border:none;padding:10px 24px;border-radius:8px;color:#fff;font-weight:600;cursor:pointer" onclick="saveProductsSection('${s.id}')">احفظ</button>
+          <button class="btn btn-secondary" style="padding:10px 24px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;cursor:pointer" onclick="closeModal()">إلغاء</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderCollectionsEditor(s) {
+  const modal = document.getElementById('section-modal');
+  const selectedIds = s.selectedCollections || [];
+  
+  modal.innerHTML = `
+    <div class="hp-modal-overlay" onclick="if(event.target===this) closeModal()">
+      <div class="hp-modal">
+        <div class="hp-modal-header">
+          <h3>🗂 أضف قسم للمجموعات</h3>
+          <button class="hp-modal-close" onclick="closeModal()">×</button>
+        </div>
+        <div class="hp-modal-body">
+          <div class="form-row">
+            <label>العنوان الرئيسي</label>
+            <input type="text" id="ed-title" value="${s.title || ''}" placeholder="التصنيفات" maxlength="160">
+          </div>
+          
+          <div class="toggle-row">
+            <span style="font-weight:600;font-size:0.9rem">أظهر العنوان الرئيسي</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="ed-showTitle" ${s.showTitle ? 'checked' : ''}>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          
+          <div class="form-row" style="margin-top:16px">
+            <label>عدد المجموعات في كل صف</label>
+            <input type="number" id="ed-itemsPerRow" value="${s.itemsPerRow || 2}" min="1" max="6">
+          </div>
+          
+          <div class="toggle-row">
+            <span style="font-weight:600;font-size:0.9rem">أظهر أسماء المجموعات</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="ed-showNames" ${s.showNames !== false ? 'checked' : ''}>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          
+          <hr style="border:none;border-top:1px solid #f1f5f9;margin:16px 0">
+          
+          <div class="form-row">
+            <label>المجموعات التي سيتم عرضها</label>
+            <p style="font-size:0.8rem;color:#94a3b8;margin-bottom:8px">اختر المجموعات أو اتركها فارغة لعرض الكل</p>
+            <button class="btn btn-secondary" style="margin-bottom:12px;border-radius:8px;border:1px solid #0f766e;color:#0f766e;padding:8px 16px;cursor:pointer;background:#fff;" onclick="openCollectionPicker('${s.id}')">+ أضف مجموعة</button>
+            <div id="selected-cols-list">
+              ${selectedIds.length ? selectedIds.map(cid => {
+                const c = allCollections.find(x => x._id === cid);
+                return c ? `<div class="col-picker-item selected" style="justify-content:space-between">
+                  <div style="display:flex;align-items:center;gap:10px">
+                    ${c.imageUrl ? `<img src="${c.imageUrl}" alt="">` : ''}
+                    <span>${c.name}</span>
+                  </div>
+                  <button onclick="removeSelectedCol('${s.id}','${cid}')" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:1.2rem">×</button>
+                </div>` : '';
+              }).join('') : '<div style="text-align:center;padding:16px;color:#94a3b8;background:#f9fafb;border-radius:8px">لم يتم اختيار أي مجموعة بعد</div>'}
+            </div>
+          </div>
+        </div>
+        <div class="hp-modal-footer">
+          <button class="btn btn-primary" style="background:#0f766e;border:none;padding:10px 24px;border-radius:8px;color:#fff;font-weight:600;cursor:pointer" onclick="saveCollectionsSection('${s.id}')">احفظ</button>
+          <button class="btn btn-secondary" style="padding:10px 24px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;cursor:pointer" onclick="closeModal()">إلغاء</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderBannerEditor(s) {
+  const modal = document.getElementById('section-modal');
+  modal.innerHTML = `
+    <div class="hp-modal-overlay" onclick="if(event.target===this) closeModal()">
+      <div class="hp-modal">
+        <div class="hp-modal-header">
+          <h3>🖼 تعديل قسم اللافتات</h3>
+          <button class="hp-modal-close" onclick="closeModal()">×</button>
+        </div>
+        <div class="hp-modal-body">
+          <div class="form-row">
+            <label>العنوان</label>
+            <input type="text" id="ed-title" value="${s.title || ''}" placeholder="عنوان اللافتة">
+          </div>
+          <div class="toggle-row">
+            <span style="font-weight:600;font-size:0.9rem">أظهر العنوان</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="ed-showTitle" ${s.showTitle ? 'checked' : ''}>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="form-row" style="margin-top:16px">
+            <label>رابط الصورة</label>
+            <input type="url" id="ed-imageUrl" value="${s.imageUrl || ''}" placeholder="https://..." dir="ltr">
+            ${s.imageUrl ? `<img src="${s.imageUrl}" style="margin-top:8px;max-width:100%;border-radius:8px;max-height:200px" onerror="this.style.display='none'">` : ''}
+          </div>
+          <div class="form-row">
+            <label>رابط عند الضغط (اختياري)</label>
+            <input type="url" id="ed-linkUrl" value="${s.linkUrl || ''}" placeholder="https://..." dir="ltr">
+          </div>
+        </div>
+        <div class="hp-modal-footer">
+          <button class="btn btn-primary" style="background:#0f766e;border:none;padding:10px 24px;border-radius:8px;color:#fff;font-weight:600;cursor:pointer" onclick="saveBannerSection('${s.id}')">احفظ</button>
+          <button class="btn btn-secondary" style="padding:10px 24px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;cursor:pointer" onclick="closeModal()">إلغاء</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderTextEditor(s) {
+  const modal = document.getElementById('section-modal');
+  modal.innerHTML = `
+    <div class="hp-modal-overlay" onclick="if(event.target===this) closeModal()">
+      <div class="hp-modal">
+        <div class="hp-modal-header">
+          <h3>T تعديل قسم النص</h3>
+          <button class="hp-modal-close" onclick="closeModal()">×</button>
+        </div>
+        <div class="hp-modal-body">
+          <div class="form-row">
+            <label>العنوان</label>
+            <input type="text" id="ed-title" value="${s.title || ''}" placeholder="عنوان القسم">
+          </div>
+          <div class="toggle-row">
+            <span style="font-weight:600;font-size:0.9rem">أظهر العنوان</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="ed-showTitle" ${s.showTitle ? 'checked' : ''}>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="form-row" style="margin-top:16px">
+            <label>المحتوى</label>
+            <textarea id="ed-content" rows="5" style="width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:0.9rem;resize:vertical">${s.content || ''}</textarea>
+          </div>
+        </div>
+        <div class="hp-modal-footer">
+          <button class="btn btn-primary" style="background:#0f766e;border:none;padding:10px 24px;border-radius:8px;color:#fff;font-weight:600;cursor:pointer" onclick="saveTextSection('${s.id}')">احفظ</button>
+          <button class="btn btn-secondary" style="padding:10px 24px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;cursor:pointer" onclick="closeModal()">إلغاء</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+// Save handlers
+window.saveProductsSection = function(id) {
+  const s = sections.find(s => s.id === id);
+  if (!s) return;
+  s.title = document.getElementById('ed-title').value.trim();
+  s.showTitle = document.getElementById('ed-showTitle').checked;
+  s.itemsPerRow = parseInt(document.getElementById('ed-itemsPerRow').value) || 4;
+  s.collectionId = document.getElementById('ed-collectionId').value;
+  s.maxItems = parseInt(document.getElementById('ed-maxItems').value) || 4;
+  saveSections();
+  renderSections();
+  closeModal();
+  showToast('تم الحفظ');
+};
+
+window.saveCollectionsSection = function(id) {
+  const s = sections.find(s => s.id === id);
+  if (!s) return;
+  s.title = document.getElementById('ed-title').value.trim();
+  s.showTitle = document.getElementById('ed-showTitle').checked;
+  s.itemsPerRow = parseInt(document.getElementById('ed-itemsPerRow').value) || 2;
+  s.showNames = document.getElementById('ed-showNames').checked;
+  saveSections();
+  renderSections();
+  closeModal();
+  showToast('تم الحفظ');
+};
+
+window.saveBannerSection = function(id) {
+  const s = sections.find(s => s.id === id);
+  if (!s) return;
+  s.title = document.getElementById('ed-title').value.trim();
+  s.showTitle = document.getElementById('ed-showTitle').checked;
+  s.imageUrl = document.getElementById('ed-imageUrl').value.trim();
+  s.linkUrl = document.getElementById('ed-linkUrl').value.trim();
+  saveSections();
+  renderSections();
+  closeModal();
+  showToast('تم الحفظ');
+};
+
+window.saveTextSection = function(id) {
+  const s = sections.find(s => s.id === id);
+  if (!s) return;
+  s.title = document.getElementById('ed-title').value.trim();
+  s.showTitle = document.getElementById('ed-showTitle').checked;
+  s.content = document.getElementById('ed-content').value.trim();
+  saveSections();
+  renderSections();
+  closeModal();
+  showToast('تم الحفظ');
+};
+
+window.closeModal = function() {
+  document.getElementById('section-modal').innerHTML = '';
+};
+
+// Collection picker modal
+window.openCollectionPicker = function(sectionId) {
+  const s = sections.find(s => s.id === sectionId);
+  if (!s) return;
+  const selectedIds = s.selectedCollections || [];
+  
+  const pickerHTML = `
+    <div class="hp-modal-overlay" id="col-picker-overlay" onclick="if(event.target===this) closeColPicker()">
+      <div class="hp-modal" style="max-width:500px">
+        <div class="hp-modal-header">
+          <h3>اختر مجموعة</h3>
+          <button class="hp-modal-close" onclick="closeColPicker()">×</button>
+        </div>
+        <div class="hp-modal-body">
+          <div class="form-row" style="margin-bottom:12px">
+            <input type="text" id="col-picker-search" placeholder="🔍 بحث في المجموعات" oninput="filterColPicker()">
+          </div>
+          <div id="col-picker-list">
+            ${allCollections.map(c => `
+              <div class="col-picker-item ${selectedIds.includes(c._id) ? 'selected' : ''}" onclick="toggleColSelection('${sectionId}','${c._id}', this)">
+                <input type="checkbox" ${selectedIds.includes(c._id) ? 'checked' : ''} style="pointer-events:none">
+                <span>${c.name}</span>
+                ${c.imageUrl ? `<img src="${c.imageUrl}" alt="" style="margin-right:auto">` : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        <div class="hp-modal-footer">
+          <button class="btn btn-primary" style="background:#0f766e;border:none;padding:10px 24px;border-radius:8px;color:#fff;font-weight:600;cursor:pointer" onclick="closeColPicker()">احفظ</button>
+          <button class="btn btn-secondary" style="padding:10px 24px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;cursor:pointer" onclick="closeColPicker()">إلغاء</button>
+        </div>
+      </div>
+    </div>`;
+  
+  // Insert picker as sibling
+  const div = document.createElement('div');
+  div.id = 'col-picker-container';
+  div.innerHTML = pickerHTML;
+  document.body.appendChild(div);
+};
+
+window.toggleColSelection = function(sectionId, colId, el) {
+  const s = sections.find(s => s.id === sectionId);
+  if (!s) return;
+  if (!s.selectedCollections) s.selectedCollections = [];
+  
+  const idx = s.selectedCollections.indexOf(colId);
+  if (idx >= 0) {
+    s.selectedCollections.splice(idx, 1);
+    el.classList.remove('selected');
+    el.querySelector('input').checked = false;
+  } else {
+    s.selectedCollections.push(colId);
+    el.classList.add('selected');
+    el.querySelector('input').checked = true;
+  }
+  saveSections();
+};
+
+window.closeColPicker = function() {
+  const el = document.getElementById('col-picker-container');
+  if (el) el.remove();
+  // Re-render the collections editor to update selected list
+  const openModal = document.querySelector('.hp-modal');
+  if (openModal) {
+    // Find the section being edited
+    const sId = sections.find(s => s.type === 'collections' && document.getElementById('section-modal').innerHTML.includes(s.id));
+    if (sId) editSection(sId.id);
+  }
+};
+
+window.filterColPicker = function() {
+  const q = document.getElementById('col-picker-search').value.toLowerCase();
+  document.querySelectorAll('#col-picker-list .col-picker-item').forEach(el => {
+    el.style.display = el.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+};
+
+window.removeSelectedCol = function(sectionId, colId) {
+  const s = sections.find(s => s.id === sectionId);
+  if (!s || !s.selectedCollections) return;
+  s.selectedCollections = s.selectedCollections.filter(id => id !== colId);
+  saveSections();
+  editSection(sectionId); // Re-render modal
+};

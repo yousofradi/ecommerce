@@ -22,7 +22,6 @@ async function loadCollections() {
       api.getProducts({ admin: true })
     ]);
     
-    // Calculate product counts for each collection
     const products = Array.isArray(productsRes) ? productsRes : productsRes.products || [];
     const counts = {};
     products.forEach(p => {
@@ -37,29 +36,29 @@ async function loadCollections() {
     });
 
     if (!cols.length) {
-      list.innerHTML = '<div style="padding:40px;text-align:center;color:#666">لا توجد مجموعات بعد</div>';
+      list.innerHTML = '<div style="padding:40px;text-align:center;color:#666">لا توجد تصنيفات بعد</div>';
       return;
     }
 
     list.innerHTML = cols.map(c => `
-      <div class="collection-row" data-name="${c.name.toLowerCase()}">
+      <div class="collection-row" data-name="${c.name.toLowerCase()}" onclick="if(!event.target.closest('.action-menu') && !event.target.closest('.action-dropdown')) window.location.href='collection-form?id=${c._id}'">
         ${c.imageUrl 
           ? `<img src="${c.imageUrl}" class="collection-img" alt="${c.name}">`
           : `<div class="collection-img-placeholder">بدون صورة</div>`
         }
         <div style="font-weight:500">${c.name}</div>
-        <div style="text-align:center;color:#666">${counts[c._id] || 0}</div>
+        <div style="text-align:center;color:#666" class="col-products">${counts[c._id] || 0}</div>
         <div style="text-align:center;position:relative">
-          <div class="action-menu" onclick="toggleMenu('${c._id}')">...</div>
-          <div id="menu-${c._id}" class="action-dropdown hidden" style="position:absolute;left:50%;transform:translateX(-50%);background:#fff;border:1px solid #ddd;border-radius:4px;box-shadow:0 2px 5px rgba(0,0,0,0.1);z-index:100;padding:8px;min-width:100px;">
-            <a href="collection-form?id=${c._id}" style="display:block;padding:8px;color:#333;text-decoration:none">تعديل</a>
-            <div style="cursor:pointer;padding:8px;color:red" onclick="deleteCol('${c._id}')">حذف</div>
+          <div class="action-menu" onclick="event.stopPropagation(); toggleMenu('${c._id}')">⋮</div>
+          <div id="menu-${c._id}" class="action-dropdown hidden" style="position:absolute;left:50%;transform:translateX(-50%);background:#fff;border:1px solid #ddd;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.12);z-index:100;padding:4px;min-width:120px;">
+            <a href="collection-form?id=${c._id}" style="display:block;padding:10px 14px;color:#333;text-decoration:none;border-radius:6px;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background=''">✏️ تعديل</a>
+            <div style="cursor:pointer;padding:10px 14px;color:#ef4444;border-radius:6px;" onclick="deleteCol('${c._id}')" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background=''">🗑️ حذف</div>
           </div>
         </div>
       </div>
     `).join('');
   } catch (e) {
-    list.innerHTML = '<div style="padding:40px;text-align:center;color:red">فشل تحميل المجموعات</div>';
+    list.innerHTML = '<div style="padding:40px;text-align:center;color:red">فشل تحميل التصنيفات</div>';
   }
 }
 
@@ -76,7 +75,8 @@ document.addEventListener('click', (e) => {
 });
 
 async function deleteCol(id) {
-  if (!confirm('هل أنت متأكد من حذف هذه المجموعة؟')) return;
+  const confirmed = await window.showConfirmModal('تأكيد الحذف', 'هل أنت متأكد من حذف هذا التصنيف؟');
+  if (!confirmed) return;
   try {
     await api.deleteCollection(id);
     showToast('تم الحذف بنجاح');

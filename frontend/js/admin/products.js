@@ -33,6 +33,10 @@ async function loadProducts() {
     updatePaginationInfo(res.total || products.length);
     updateBulkActions();
     
+    // Initial filter state
+    window.currentFilter = 'all';
+    window.searchQuery = '';
+    
   } catch (err) {
     tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">فشل تحميل المنتجات</td></tr>';
   }
@@ -61,7 +65,17 @@ function renderProducts(collections) {
     return p.imageUrl || '';
   };
 
-  tbody.innerHTML = allProducts.map((p, idx) => {
+  const query = (window.searchQuery || '').toLowerCase();
+  const filter = window.currentFilter || 'all';
+  
+  let filteredProducts = allProducts.filter(p => {
+    // text search
+    if (query && !p.name.toLowerCase().includes(query)) return false;
+    // nothing more to filter currently for products, maybe add active/draft later
+    return true;
+  });
+
+  tbody.innerHTML = filteredProducts.map((p, idx) => {
     const mainImg = getMainImage(p);
     const statusLabel = p.status === 'draft' ? 'مسودة' : 'نشط';
     const statusClass = p.status === 'draft' ? 'badge-warning' : 'badge-success';
@@ -94,7 +108,7 @@ function renderProducts(collections) {
         <td>${colDisplay}</td>
         <td onclick="event.stopPropagation()">
           <div class="flex gap-8">
-            <a href="product-form.html?id=${p._id}" class="btn btn-secondary btn-sm">تعديل</a>
+            <a href="product-form?id=${p._id}" class="btn btn-secondary btn-sm">تعديل</a>
             <button class="btn btn-danger btn-sm" onclick="deleteProduct('${p._id}','${p.name}')">حذف</button>
           </div>
         </td>
@@ -107,7 +121,7 @@ function renderProducts(collections) {
 
 // Click row to edit
 window.onRowClick = function(event, productId) {
-  window.location.href = `product-form.html?id=${productId}`;
+  window.location.href = `product-form?id=${productId}`;
 };
 
 window.toggleProductActive = async function(id, active) {
@@ -128,36 +142,94 @@ window.toggleSelectAll = function() {
   updateBulkActions();
 };
 
+window.unselectAll = function() {
+  const selectAll = document.getElementById('select-all');
+  if(selectAll) selectAll.checked = false;
+  const checkboxes = document.querySelectorAll('.product-checkbox');
+  checkboxes.forEach(cb => cb.checked = false);
+  updateBulkActions();
+};
+
 window.updateBulkActions = function() {
   const checkboxes = document.querySelectorAll('.product-checkbox:checked');
-  const bulkActions = document.getElementById('bulk-actions');
-  if (bulkActions) bulkActions.style.display = checkboxes.length > 0 ? 'flex' : 'none';
+  const bulkBar = document.getElementById('bulk-actions-bar');
+  const badge = document.getElementById('selected-count-badge');
+  if (bulkBar) {
+    if (checkboxes.length > 0) {
+      bulkBar.style.display = 'flex';
+      if (badge) badge.textContent = checkboxes.length;
+    } else {
+      bulkBar.style.display = 'none';
+      const menu = document.getElementById('bulk-menu');
+      if(menu) menu.style.display = 'none';
+    }
+  }
 };
 
-window.deleteSelected = async function() {
+window.toggleBulkMenu = function(e) {
+  e.stopPropagation();
+  const menu = document.getElementById('bulk-menu');
+  if (menu) menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+};
+
+document.addEventListener('click', (e) => {
+  const menu = document.getElementById('bulk-menu');
+  if (menu && menu.style.display === 'block' && !e.target.closest('#bulk-menu') && !e.target.closest('.btn-secondary')) {
+    menu.style.display = 'none';
+  }
+});
+
+window.bulkAction = async function(action) {
   const checkboxes = document.querySelectorAll('.product-checkbox:checked');
   const ids = Array.from(checkboxes).map(cb => cb.value);
   if (!ids.length) return;
-  const confirmed = await window.showConfirmModal('تأكيد الحذف', `هل أنت متأكد من حذف ${ids.length} منتج؟`);
-  if (!confirmed) return;
-  try {
-    await api.deleteProductsBatch(ids);
-    showToast('تم حذف المنتجات المحددة');
+
+  const menu = document.getElementById('bulk-menu');
+  if (menu) menu.style.display = 'none';
+
+  if (action === 'delete') {
+    const confirmed = await window.showConfirmModal('تأكيد الحذف', `هل أنت متأكد من حذف ${ids.length} منتج نهائياً؟`);
+    if (!confirmed) return;
+    try {
+      await api.deleteProductsBatch(ids);
+      showToast('تم حذف المنتجات بنجاح');
+      loadProducts();
+    } catch (err) {
+      showToast(err.message || 'فشل حذف المنتجات', 'error');
+    }
+  } else if (action === 'draft' || action === 'active') {
+    const statusText = action === 'draft' ? 'مسودة' : 'نشط';
+    const confirmed = await window.showConfirmModal('تأكيد التحديث', `هل أنت متأكد من تغيير حالة ${ids.length} منتج إلى ${statusText}؟`);
+    if (!confirmed) return;
+    
+    showToast('جاري التحديث...', 'info');
+    let hasError = false;
+    for (const id of ids) {
+      try {
+        await api.updateProduct(id, { active: action === 'active', status: action });
+      } catch (e) {
+        hasError = true;
+      }
+    }
+    if (hasError) showToast('حدث خطأ أثناء تحديث بعض المنتجات', 'warning');
+    else showToast('تم التحديث بنجاح');
+    
     loadProducts();
-  } catch (err) { showToast(err.message, 'error'); }
+  }
 };
 
-window.deactivateSelected = async function() {
-  const checkboxes = document.querySelectorAll('.product-checkbox:checked');
-  const ids = Array.from(checkboxes).map(cb => cb.value);
-  if (!ids.length) return;
-  const confirmed = await window.showConfirmModal('تأكيد التعطيل', `هل أنت متأكد من تعطيل ${ids.length} منتج؟`);
-  if (!confirmed) return;
-  try {
-    await api.deactivateProductsBatch(ids);
-    showToast('تم تعطيل المنتجات المحددة');
-    loadProducts();
-  } catch (err) { showToast(err.message, 'error'); }
+window.filterProductsClient = function() {
+  window.searchQuery = document.getElementById('product-search').value;
+  // Use cached collections if available, or just empty array
+  api.getCollections().then(cols => renderProducts(cols)).catch(() => renderProducts([]));
+};
+
+window.setFilter = function(f) {
+  window.currentFilter = f;
+  document.querySelectorAll('.order-tab').forEach(t => t.classList.remove('active'));
+  const activeTab = document.querySelector(`.order-tab[data-filter="${f}"]`);
+  if(activeTab) activeTab.classList.add('active');
+  api.getCollections().then(cols => renderProducts(cols)).catch(() => renderProducts([]));
 };
 
 async function deleteProduct(id, name) {

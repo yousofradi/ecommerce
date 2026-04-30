@@ -31,7 +31,7 @@
   <script src="../js/api.js"></script>
   <script>
     // If already logged in, redirect
-    if (localStorage.getItem('adminKey')) window.location.href = 'index.html';
+    if (localStorage.getItem('adminKey')) window.location.href = 'index';
 
     async function doLogin() {
       const key = document.getElementById('api-key').value.trim();
@@ -47,7 +47,7 @@
       const ok = await api.checkAdmin();
 
       if (ok) {
-        window.location.href = 'index.html';
+        window.location.href = 'index';
       } else {
         localStorage.removeItem('adminKey');
         err.style.display = 'block';

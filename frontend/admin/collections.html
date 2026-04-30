@@ -13,19 +13,30 @@
       padding: 16px;
       border-bottom: 1px solid #eee;
       gap: 16px;
+      cursor: pointer;
+      transition: background 0.2s;
     }
+    .collection-row:hover { background: #f8fafc; }
     .collection-row.header {
       font-weight: 600;
       color: var(--text-muted);
       background: #f9fafb;
       border-radius: 8px 8px 0 0;
+      cursor: default;
     }
+    .collection-row.header:hover { background: #f9fafb; }
     .collection-img {
       width: 60px;
       height: 60px;
       object-fit: cover;
       border-radius: 8px;
       background: #eee;
+    }
+    .collection-img-placeholder {
+      width: 60px; height: 60px;
+      border-radius: 8px; background: #f1f5f9;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; color: #94a3b8;
     }
     .btn-create-collection {
       background: #009688;
@@ -36,12 +47,15 @@
       cursor: pointer;
       font-weight: 600;
       text-decoration: none;
+      white-space: nowrap;
     }
     .header-actions {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 12px;
     }
     .search-bar {
       padding: 12px;
@@ -56,6 +70,23 @@
       font-size: 1.5rem;
       text-align: center;
     }
+
+    @media (max-width: 768px) {
+      .collection-row {
+        grid-template-columns: 50px 1fr 60px;
+        gap: 10px;
+        padding: 12px;
+      }
+      .collection-row .col-products { display: none; }
+      .collection-row.header .col-products { display: none; }
+      .collection-img, .collection-img-placeholder {
+        width: 46px; height: 46px;
+      }
+    }
+    @media (max-width: 480px) {
+      .header-actions { flex-direction: column; align-items: stretch; }
+      .header-actions h1 { font-size: 1.2rem; }
+    }
   </style>
 </head>
 <body>
@@ -67,32 +98,33 @@
       </div>
       <nav class="admin-nav">
         <a href="index">🏠 لوحة التحكم</a>
+        <a href="homepage">🏪 الصفحة الرئيسية</a>
         <a href="products">📦 المنتجات</a>
         <a href="collections" class="active">🗂️ التصنيفات</a>
         <a href="orders">🛒 الطلبات</a>
         <a href="shipment">🚚 الشحن</a>
         <a href="webhooks">🔗 Webhooks</a>
-        <a href="../" target="_blank">🏪 المتجر ↗</a>
+        <a href="../" target="_blank">🌐 المتجر ↗</a>
         <a href="#" onclick="logout()" class="logout">🚪 خروج</a>
       </nav>
     </aside>
 
     <main class="admin-main">
       <div class="header-actions">
-        <a href="collection-form" class="btn-create-collection">+ إنشاء مجموعة</a>
-        <h1 class="page-title" style="margin:0">المجموعات</h1>
+        <h1 class="page-title" style="margin:0">التصنيفات</h1>
+        <a href="collection-form" class="btn-create-collection">+ إنشاء تصنيف</a>
       </div>
 
       <div class="admin-card" style="padding:0; overflow:hidden;">
         <div style="padding:16px;">
-          <input type="text" id="search-input" class="search-bar" placeholder="🔍 أبحث عن مجموعة...">
+          <input type="text" id="search-input" class="search-bar" placeholder="🔍 أبحث عن تصنيف...">
         </div>
         
         <div class="collection-list-container">
           <div class="collection-row header">
             <div>الصورة</div>
-            <div>المجموعات</div>
-            <div style="text-align:center">المنتجات</div>
+            <div>الاسم</div>
+            <div style="text-align:center" class="col-products">المنتجات</div>
             <div style="text-align:center">إجراءات</div>
           </div>
           <div id="collections-list">

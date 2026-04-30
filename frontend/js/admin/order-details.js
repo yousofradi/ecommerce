@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const urlParams = new URLSearchParams(window.location.search);
   const orderId = urlParams.get('id');
   if (!orderId) {
-    window.location.href = 'orders.html';
+    window.location.href = 'orders';
     return;
   }
 

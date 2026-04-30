@@ -175,7 +175,7 @@ async function saveProduct(e) {
   try {
     if (editId) { await api.updateProduct(editId, data); showToast('تم تحديث المنتج ✓'); }
     else { await api.createProduct(data); showToast('تم إضافة المنتج ✓'); }
-    setTimeout(() => window.location.href = 'products.html', 800);
+    setTimeout(() => window.location.href = 'products', 800);
   } catch (err) {
     showToast(err.message || 'حدث خطأ', 'error');
     btn.disabled = false;

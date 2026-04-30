@@ -439,7 +439,7 @@ window.submitOrder = async function() {
   try {
     await api.createOrder(payload);
     showToast('تم إنشاء الطلب بنجاح! ✓');
-    setTimeout(() => window.location.href = 'orders.html', 900);
+    setTimeout(() => window.location.href = 'orders', 900);
   } catch (err) {
     btns.forEach(b => { b.disabled = false; b.textContent = '✓ إنشاء الطلب'; });
     showToast(err.message || 'حدث خطأ أثناء إنشاء الطلب', 'error');

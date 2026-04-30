@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <span>المجموع:</span>
           <span id="slide-cart-total">0 EGP</span>
         </div>
-        <a href="checkout.html" class="btn btn-primary btn-block">إتمام الشراء</a>
+        <a href="checkout" class="btn btn-primary btn-block">إتمام الشراء</a>
       </div>
     `;
 
@@ -126,7 +126,7 @@ Cart.openCart = function() {
     document.body.style.overflow = 'hidden'; // Prevent background scrolling
   } else {
     // Fallback if not injected
-    window.location.href = 'cart.html';
+    window.location.href = 'cart';
   }
 };
 

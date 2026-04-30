@@ -487,5 +487,19 @@ tr:hover td { background: #fafbfc; }
   
   /* Product Form image preview */
   #img-preview-el { width: 100%; object-fit: contain; }
+
+  /* Admin header actions */
+  .header-actions { flex-direction: column; align-items: stretch !important; }
+  
+  /* Bulk actions bar wrap */
+  #bulk-actions-bar { flex-wrap: wrap; }
+
+  /* Admin card overflow */
+  .admin-card { overflow-x: auto; }
 }
 
+/* Tablet adjustments */
+@media (max-width: 768px) and (min-width: 601px) {
+  .admin-main { padding: 20px; }
+  .table-wrapper table { min-width: 500px; }
+}

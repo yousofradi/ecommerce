@@ -223,7 +223,7 @@ window.bulkAction = async function(action) {
       showToast(err.message || 'فشل حذف الطلبات', 'error');
     }
   } else if (action === 'add_tags' || action === 'remove_tags') {
-    alert('سيتم إضافة خاصية التصنيفات قريباً.'); // Placeholder
+    window.showToast('سيتم إضافة خاصية التصنيفات قريباً.', 'info'); // Placeholder
   }
 };
 
@@ -272,7 +272,7 @@ window.unarchiveSelected = async function() {
 
 // ── View Order ───────────────────────────────────────────
 window.viewOrder = function(orderId) {
-  window.location.href = `order-details.html?id=${orderId}`;
+  window.location.href = `order-details?id=${orderId}`;
 };
 
 // ── Delete Order ───────────────────────────────────────

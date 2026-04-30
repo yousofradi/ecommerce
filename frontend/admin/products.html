@@ -5,6 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>المنتجات — Sundura Admin</title>
   <link rel="stylesheet" href="../css/style.css">
+  <style>
+    @media (max-width: 768px) {
+      .products-table th:nth-child(4), .products-table td:nth-child(4),
+      .products-table th:nth-child(6), .products-table td:nth-child(6),
+      .products-table th:nth-child(7), .products-table td:nth-child(7) { display: none; }
+    }
+    @media (max-width: 540px) {
+      .products-table th:nth-child(5), .products-table td:nth-child(5) { display: none; }
+      .flex-between { flex-direction: column; align-items: stretch; gap: 12px; }
+    }
+  </style>
 </head>
 <body>
   <div class="admin-layout">
@@ -15,12 +26,13 @@
       </div>
       <nav class="admin-nav">
         <a href="index">🏠 لوحة التحكم</a>
+        <a href="homepage">🏪 الصفحة الرئيسية</a>
         <a href="products" class="active">📦 المنتجات</a>
         <a href="collections">🗂️ التصنيفات</a>
         <a href="orders">🛒 الطلبات</a>
         <a href="shipment">🚚 الشحن</a>
         <a href="webhooks">🔗 Webhooks</a>
-        <a href="../" target="_blank">🏪 المتجر ↗</a>
+        <a href="../" target="_blank">🌐 المتجر ↗</a>
         <a href="#" onclick="logout()" class="logout">🚪 خروج</a>
       </nav>
     </aside>
@@ -32,16 +44,50 @@
             <p class="page-subtitle" style="margin-bottom:0">إدارة منتجات متجرك</p>
           </div>
           <div class="flex gap-12">
-            <div id="bulk-actions" style="display:none;" class="flex gap-8">
-              <button class="btn btn-secondary btn-sm" onclick="deactivateSelected()">تعطيل المحدد</button>
-              <button class="btn btn-danger btn-sm" onclick="deleteSelected()">حذف المحدد</button>
-            </div>
             <button class="btn btn-secondary" onclick="openBulkImportModal()">+ إضافة عدة منتجات</button>
             <a href="product-form" class="btn btn-primary">+ إضافة منتج</a>
           </div>
         </div>
-        <div class="table-wrapper">
-          <table>
+
+        <div style="background:#fff; border:1px solid #e2e8f0; border-radius:12px; overflow:hidden;">
+          <div id="filter-bar" style="display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid #f1f5f9; flex-wrap:wrap; gap:16px;">
+            <div style="display:flex; gap:24px; align-items:center;" class="order-tabs">
+              <span class="order-tab active" data-filter="all" onclick="setFilter('all')">الجميع <span class="tab-badge" id="count-all">0</span></span>
+            </div>
+            
+            <div style="position:relative; width:300px; max-width:100%;">
+              <input type="text" id="product-search" placeholder="البحث في المنتجات" style="width:100%; padding:8px 16px; padding-left:40px; border:1px solid #e2e8f0; border-radius:8px; font-size:0.9rem;" oninput="filterProductsClient()">
+              <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#94a3b8; pointer-events:none;">🔍</span>
+            </div>
+          </div>
+          
+          <div id="bulk-actions-bar" style="display:none; justify-content:flex-start; align-items:center; padding:16px 20px; border-bottom:1px solid #f1f5f9; background:#fff; gap:12px;">
+            <button class="btn btn-primary" onclick="unselectAll()" style="border-radius:20px; padding:8px 16px; border:none; background:#0f766e; color:#fff; font-weight:600; display:flex; align-items:center; gap:8px;">
+              تم تحديد <span id="selected-count-badge">1</span>
+              <span style="background:rgba(255,255,255,0.2); border-radius:4px; width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; font-weight:bold;">-</span>
+            </button>
+            <div style="position:relative;">
+              <button class="btn btn-secondary" onclick="toggleBulkMenu(event)" style="border-radius:20px; padding:8px 16px; border:1px solid #e2e8f0; background:#fff; color:#475569; font-weight:600; display:flex; align-items:center; gap:8px;">
+                إجراءات
+                <span style="font-size:0.8rem; margin-top:2px;">▼</span>
+              </button>
+              <div id="bulk-menu" style="display:none; position:absolute; top:100%; right:0; margin-top:8px; background:#fff; border:1px solid #e2e8f0; border-radius:12px; box-shadow:0 10px 25px -3px rgba(0,0,0,0.15); width:220px; z-index:100; overflow:hidden; padding:6px;">
+                <button onclick="bulkAction('active')" style="width:100%; text-align:right; padding:12px 14px; background:none; border:none; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; color:#475569; font-size:0.95rem; font-family:inherit;"  onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background=''">
+                  اجعله <span style="width:10px;height:10px;border-radius:50%;background:#10b981;display:inline-block;"></span> نشط
+                </button>
+                <button onclick="bulkAction('draft')" style="width:100%; text-align:right; padding:12px 14px; background:none; border:none; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; color:#475569; font-size:0.95rem; font-family:inherit;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background=''">
+                  اجعله <span style="width:10px;height:10px;border-radius:50%;border:2px solid #94a3b8;display:inline-block;"></span> غير نشط
+                </button>
+                <div style="height:1px;background:#e2e8f0;margin:4px 0;"></div>
+                <button onclick="bulkAction('delete')" style="width:100%; text-align:right; padding:12px 14px; background:none; border:none; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; color:#ef4444; font-size:0.95rem; font-family:inherit; font-weight:600;" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background=''">
+                  حذف المنتجات
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="table-wrapper" style="box-shadow:none; border-radius:0; margin:0; border:none;">
+            <table class="products-table" style="width:100%; border-collapse:collapse; text-align:right;">
             <thead>
               <tr>
                 <th style="width: 40px;"><input type="checkbox" id="select-all" onclick="toggleSelectAll()"></th>
@@ -95,11 +141,6 @@
           </div>
         </div>
 
-        <div class="flex-between mt-24">
-          <div class="text-sm text-muted" id="pagination-info"></div>
-          <div class="flex gap-8" id="pagination-controls">
-            <button class="btn btn-secondary btn-sm" id="prev-page" onclick="changePage(-1)">السابق</button>
-            <button class="btn btn-secondary btn-sm" id="next-page" onclick="changePage(1)">التالي</button>
           </div>
         </div>
       </div>
