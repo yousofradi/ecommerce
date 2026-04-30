@@ -19,6 +19,9 @@ const api = {
     if (limit) url += `&limit=${limit}`;
     return this._request(url);
   },
+  getProductsByCollection(collectionId) {
+    return this._request(`/products?collectionId=${collectionId}`);
+  },
   getProduct(id) { return this._request(`/products/${id}`); },
   createProduct(d) { return this._request('/products', { method: 'POST', body: JSON.stringify(d), admin: true }); },
   updateProduct(id, d) { return this._request(`/products/${id}`, { method: 'PUT', body: JSON.stringify(d), admin: true }); },

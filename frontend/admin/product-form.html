@@ -75,10 +75,8 @@
             </div>
             <div class="grid-2" style="gap:16px">
               <div class="form-group">
-                <label class="form-label" for="p-collection">التصنيف</label>
-                <select class="form-control" id="p-collection">
-                  <option value="">بدون تصنيف</option>
-                </select>
+                <label class="form-label" for="p-sale-price">سعر البيع / التخفيض (ج.م)</label>
+                <input class="form-control" id="p-sale-price" type="number" min="0" placeholder="اتركه فارغاً إذا لا يوجد تخفيض">
               </div>
               <div class="form-group">
                 <label class="form-label" for="p-status">الحالة</label>
@@ -88,9 +86,17 @@
                 </select>
               </div>
             </div>
-            <div class="form-group">
-              <label class="form-label" for="p-quantity">الكمية</label>
-              <input class="form-control" id="p-quantity" type="number" min="0" value="0" placeholder="0">
+            <div class="grid-2" style="gap:16px">
+              <div class="form-group">
+                <label class="form-label" for="p-collection">التصنيف</label>
+                <select class="form-control" id="p-collection">
+                  <option value="">بدون تصنيف</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="p-quantity">الكمية <span class="text-sm text-muted">(اتركه فارغاً = غير محدود)</span></label>
+                <input class="form-control" id="p-quantity" type="number" min="0" placeholder="غير محدود">
+              </div>
             </div>
             <div class="form-group" style="margin-bottom:0">
               <label class="form-label" for="p-desc">الوصف</label>

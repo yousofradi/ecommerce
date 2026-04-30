@@ -5,13 +5,12 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 let allProducts = [];
-let dragIdx = null;
 let currentPage = 1;
 let totalPages = 1;
 
 async function loadProducts() {
   const tbody = document.getElementById('products-tbody');
-  tbody.innerHTML = '<tr><td colspan="10" class="text-center"><div class="spinner"></div></td></tr>';
+  tbody.innerHTML = '<tr><td colspan="8" class="text-center"><div class="spinner"></div></td></tr>';
   try {
     const [res, collections] = await Promise.all([
       api.getProducts(currentPage, 20, true),
@@ -20,12 +19,11 @@ async function loadProducts() {
     const colMap = {};
     collections.forEach(c => colMap[c._id] = c.name);
 
-    // handle either new paginated object or old array
     let products = res.products || res;
     totalPages = res.totalPages || 1;
     
     if (!products.length) {
-      tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted" style="padding:40px">لا توجد منتجات بعد</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted" style="padding:40px">لا توجد منتجات بعد</td></tr>';
       updatePaginationInfo(0);
       return;
     }
@@ -36,7 +34,7 @@ async function loadProducts() {
     updateBulkActions();
     
   } catch (err) {
-    tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">فشل تحميل المنتجات</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">فشل تحميل المنتجات</td></tr>';
   }
 }
 
@@ -67,25 +65,34 @@ function renderProducts(collections) {
     const mainImg = getMainImage(p);
     const statusLabel = p.status === 'draft' ? 'مسودة' : 'نشط';
     const statusClass = p.status === 'draft' ? 'badge-warning' : 'badge-success';
-    const qty = p.quantity != null ? p.quantity : '—';
+    const qty = (p.quantity != null && p.quantity !== 0) ? p.quantity : '∞';
+    const hasDiscount = p.salePrice && p.salePrice < p.basePrice;
+    const priceDisplay = hasDiscount
+      ? `<span style="font-weight:700">${formatPrice(p.salePrice)}</span> <span style="text-decoration:line-through;color:#999;font-size:0.8rem">${formatPrice(p.basePrice)}</span>`
+      : `<span style="font-weight:700">${formatPrice(p.basePrice)}</span>`;
+
+    // Find collection names
+    const colNames = [];
+    if (p.collectionId && colMap[p.collectionId]) colNames.push(colMap[p.collectionId]);
+    if (p.collectionIds) p.collectionIds.forEach(id => { if (colMap[id] && !colNames.includes(colMap[id])) colNames.push(colMap[id]); });
+    const colDisplay = colNames.length > 0 
+      ? colNames.map(n => `<span class="badge badge-info" style="margin:1px">${n}</span>`).join(' ')
+      : '<span class="text-muted text-sm">—</span>';
+
     return `
-      <tr draggable="true" data-idx="${idx}" ondragstart="onProductDragStart(event)" ondragover="onProductDragOver(event)" ondrop="onProductDrop(event)" ondragend="onProductDragEnd(event)" style="cursor: grab; transition: background 0.2s;">
-        <td style="width: 40px; text-align: center;"><input type="checkbox" class="product-checkbox" value="${p._id}" onchange="updateBulkActions()"></td>
-        <td style="width: 40px; text-align: center; color: #94a3b8; cursor: grab;" title="اسحب لتغيير الترتيب">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="5" r="2"/><circle cx="15" cy="5" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="9" cy="19" r="2"/><circle cx="15" cy="19" r="2"/></svg>
-        </td>
+      <tr style="cursor:pointer" onclick="onRowClick(event, '${p._id}')">
+        <td style="width:40px;text-align:center" onclick="event.stopPropagation()"><input type="checkbox" class="product-checkbox" value="${p._id}" onchange="updateBulkActions()"></td>
         <td>
           ${mainImg
             ? `<img src="${mainImg}" alt="${p.name}" style="width:54px;height:54px;border-radius:8px;object-fit:cover;border:1px solid var(--border-color)">`
             : `<div style="width:54px;height:54px;border-radius:8px;background:var(--bg-body);display:flex;align-items:center;justify-content:center;font-size:1.4rem">📦</div>`}
         </td>
-        <td><strong>${p.name}</strong>${p.description ? `<div class="text-sm text-muted" style="margin-top:2px">${p.description.substring(0,50)}${p.description.length>50?'…':''}</div>` : ''}</td>
-        <td style="font-weight:700;color:var(--primary)">${formatPrice(p.basePrice)}</td>
+        <td><strong>${p.name}</strong></td>
+        <td>${priceDisplay}</td>
         <td><span class="badge ${statusClass}">${statusLabel}</span></td>
         <td style="text-align:center;font-weight:600">${qty}</td>
-        <td>${colMap[p.collectionId] ? `<span class="badge badge-info">${colMap[p.collectionId]}</span>` : '<span class="text-muted text-sm">—</span>'}</td>
-        <td>${(p.options||[]).length > 0 ? `<span class="badge badge-success">${(p.options||[]).length} خيار</span>` : '<span class="text-muted text-sm">—</span>'}</td>
-        <td>
+        <td>${colDisplay}</td>
+        <td onclick="event.stopPropagation()">
           <div class="flex gap-8">
             <a href="product-form.html?id=${p._id}" class="btn btn-secondary btn-sm">تعديل</a>
             <button class="btn btn-danger btn-sm" onclick="deleteProduct('${p._id}','${p.name}')">حذف</button>
@@ -94,10 +101,14 @@ function renderProducts(collections) {
       </tr>
     `}).join('');
     
-  // Reset select all checkbox
   const selectAll = document.getElementById('select-all');
   if(selectAll) selectAll.checked = false;
 }
+
+// Click row to edit
+window.onRowClick = function(event, productId) {
+  window.location.href = `product-form.html?id=${productId}`;
+};
 
 window.toggleProductActive = async function(id, active) {
   try {
@@ -106,7 +117,7 @@ window.toggleProductActive = async function(id, active) {
     showToast('تم تحديث حالة المنتج');
   } catch (err) {
     showToast(err.message, 'error');
-    loadProducts(); // revert
+    loadProducts();
   }
 };
 
@@ -120,95 +131,34 @@ window.toggleSelectAll = function() {
 window.updateBulkActions = function() {
   const checkboxes = document.querySelectorAll('.product-checkbox:checked');
   const bulkActions = document.getElementById('bulk-actions');
-  if (bulkActions) {
-    bulkActions.style.display = checkboxes.length > 0 ? 'flex' : 'none';
-  }
+  if (bulkActions) bulkActions.style.display = checkboxes.length > 0 ? 'flex' : 'none';
 };
 
 window.deleteSelected = async function() {
   const checkboxes = document.querySelectorAll('.product-checkbox:checked');
   const ids = Array.from(checkboxes).map(cb => cb.value);
   if (!ids.length) return;
-  
   const confirmed = await window.showConfirmModal('تأكيد الحذف', `هل أنت متأكد من حذف ${ids.length} منتج؟`);
   if (!confirmed) return;
-  
   try {
     await api.deleteProductsBatch(ids);
     showToast('تم حذف المنتجات المحددة');
     loadProducts();
-  } catch (err) {
-    showToast(err.message, 'error');
-  }
+  } catch (err) { showToast(err.message, 'error'); }
 };
 
 window.deactivateSelected = async function() {
   const checkboxes = document.querySelectorAll('.product-checkbox:checked');
   const ids = Array.from(checkboxes).map(cb => cb.value);
   if (!ids.length) return;
-  
   const confirmed = await window.showConfirmModal('تأكيد التعطيل', `هل أنت متأكد من تعطيل ${ids.length} منتج؟`);
   if (!confirmed) return;
-  
   try {
     await api.deactivateProductsBatch(ids);
     showToast('تم تعطيل المنتجات المحددة');
     loadProducts();
-  } catch (err) {
-    showToast(err.message, 'error');
-  }
+  } catch (err) { showToast(err.message, 'error'); }
 };
-
-// ── Drag and Drop Reorder ──────────────────────────────
-
-window.onProductDragStart = function(e) {
-  dragIdx = parseInt(e.currentTarget.dataset.idx);
-  e.currentTarget.style.opacity = '0.4';
-  e.dataTransfer.effectAllowed = 'move';
-};
-
-window.onProductDragOver = function(e) {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'move';
-  const tr = e.currentTarget;
-  tr.style.borderTop = '3px solid var(--primary)';
-};
-
-window.onProductDrop = function(e) {
-  e.preventDefault();
-  const dropIdx = parseInt(e.currentTarget.dataset.idx);
-  e.currentTarget.style.borderTop = '';
-  
-  if (dragIdx !== null && dragIdx !== dropIdx) {
-    // Reorder the array
-    const [moved] = allProducts.splice(dragIdx, 1);
-    allProducts.splice(dropIdx, 0, moved);
-    
-    // Re-render
-    renderProducts();
-    
-    // Save to backend
-    saveReorder();
-  }
-};
-
-window.onProductDragEnd = function(e) {
-  e.currentTarget.style.opacity = '1';
-  document.querySelectorAll('#products-tbody tr').forEach(el => {
-    el.style.borderTop = '';
-  });
-  dragIdx = null;
-};
-
-async function saveReorder() {
-  try {
-    const order = allProducts.map((p, idx) => ({ id: p._id, sortOrder: idx }));
-    await api.reorderProducts(order);
-    showToast('تم حفظ ترتيب المنتجات');
-  } catch (err) {
-    showToast('حدث خطأ أثناء حفظ الترتيب', 'error');
-  }
-}
 
 async function deleteProduct(id, name) {
   const confirmed = await window.showConfirmModal('تأكيد الحذف', `هل أنت متأكد من حذف المنتج "${name}"؟`);
@@ -219,3 +169,51 @@ async function deleteProduct(id, name) {
     loadProducts();
   } catch (err) { showToast(err.message, 'error'); }
 }
+
+// ── Bulk Import Modal ──────────────────────────────────
+window.openBulkImportModal = function() {
+  document.getElementById('bulk-import-modal').style.display = 'flex';
+};
+
+window.closeBulkImportModal = function() {
+  document.getElementById('bulk-import-modal').style.display = 'none';
+};
+
+window.addBulkUrlField = function() {
+  const container = document.getElementById('bulk-urls-container');
+  const div = document.createElement('div');
+  div.className = 'form-group flex gap-8';
+  div.style.alignItems = 'center';
+  div.innerHTML = `
+    <input type="url" class="form-control bulk-url-input" placeholder="رابط المنتج">
+    <button class="btn btn-danger btn-sm" onclick="this.parentElement.remove()" style="flex-shrink:0">×</button>`;
+  container.appendChild(div);
+};
+
+window.submitBulkImport = async function() {
+  const inputs = document.querySelectorAll('.bulk-url-input');
+  const urls = Array.from(inputs).map(i => i.value.trim()).filter(Boolean);
+  if (!urls.length) {
+    showToast('أدخل رابط واحد على الأقل', 'error');
+    return;
+  }
+
+  // For now, create products with the URLs as image URLs
+  let created = 0;
+  for (const url of urls) {
+    try {
+      await api.createProduct({
+        name: 'منتج جديد',
+        basePrice: 0,
+        images: [url],
+        imageUrl: url,
+        status: 'draft'
+      });
+      created++;
+    } catch (err) { /* skip */ }
+  }
+  
+  showToast(`تم إنشاء ${created} منتج (مسودة)`);
+  closeBulkImportModal();
+  loadProducts();
+};

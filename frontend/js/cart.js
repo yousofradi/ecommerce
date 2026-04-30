@@ -18,14 +18,16 @@ const Cart = {
       existing.quantity++;
     } else {
       const optionsPrice = selectedOptions.reduce((s, o) => s + (o.price || 0), 0);
+      const effectivePrice = (product.salePrice && product.salePrice < product.basePrice) ? product.salePrice : product.basePrice;
       items.push({
         key,
         productId: product._id,
         name: product.name,
         imageUrl: (product.images && product.images.length > 0) ? product.images[0] : (product.imageUrl || ''),
         basePrice: product.basePrice,
+        salePrice: product.salePrice || null,
         selectedOptions,
-        unitPrice: product.basePrice + optionsPrice,
+        unitPrice: effectivePrice + optionsPrice,
         quantity: 1
       });
     }

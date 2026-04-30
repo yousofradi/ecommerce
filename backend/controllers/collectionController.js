@@ -2,7 +2,7 @@ const Collection = require('../models/Collection');
 
 exports.getCollections = async (req, res) => {
   try {
-    const collections = await Collection.find().sort({ createdAt: -1 });
+    const collections = await Collection.find().sort({ sortOrder: 1, createdAt: -1 });
     res.json(collections);
   } catch (error) {
     res.status(500).json({ error: error.message });

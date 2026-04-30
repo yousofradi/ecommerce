@@ -20,9 +20,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       const p = await api.getProduct(editId);
       document.getElementById('p-name').value = p.name;
       document.getElementById('p-price').value = p.basePrice;
+      document.getElementById('p-sale-price').value = p.salePrice || '';
       document.getElementById('p-desc').value = p.description || '';
       document.getElementById('p-status').value = p.status || 'active';
-      document.getElementById('p-quantity').value = p.quantity || 0;
+      document.getElementById('p-quantity').value = (p.quantity != null) ? p.quantity : '';
       if(p.collectionId) document.getElementById('p-collection').value = p.collectionId;
       
       // Load images - support both new images array and legacy imageUrl
@@ -132,15 +133,18 @@ async function saveProduct(e) {
   const btn = e.target.querySelector('button[type="submit"]');
   btn.disabled = true;
 
+  const salePriceVal = document.getElementById('p-sale-price').value;
+  const qtyVal = document.getElementById('p-quantity').value;
   const data = {
     name: document.getElementById('p-name').value.trim(),
     basePrice: Number(document.getElementById('p-price').value),
+    salePrice: salePriceVal ? Number(salePriceVal) : null,
     images: productImages,
     imageUrl: productImages.length > 0 ? productImages[0] : '',
     description: document.getElementById('p-desc').value.trim(),
     collectionId: document.getElementById('p-collection').value || null,
     status: document.getElementById('p-status').value,
-    quantity: Number(document.getElementById('p-quantity').value) || 0,
+    quantity: qtyVal !== '' ? Number(qtyVal) : null,
     options: optionGroups.filter(g => g.name && g.values.length && g.values[0].label)
   };
 

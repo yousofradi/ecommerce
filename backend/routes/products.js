@@ -5,16 +5,24 @@ const adminAuth = require('../middleware/adminAuth');
 
 // ── Public ──────────────────────────────────────────────
 
-// GET /api/products — list all (with pagination)
+// GET /api/products — list all (with pagination & collection filter)
 router.get('/', async (req, res) => {
   try {
-    const { page, limit, admin } = req.query;
+    const { page, limit, admin, collectionId } = req.query;
     const query = {};
     
     // If not admin request, only show active products
     if (admin !== 'true') {
       query.active = { $ne: false };
       query.status = { $ne: 'draft' };
+    }
+
+    // Filter by collection
+    if (collectionId) {
+      query.$or = [
+        { collectionId: collectionId },
+        { collectionIds: collectionId }
+      ];
     }
 
     const sortObj = { sortOrder: 1, createdAt: -1 };
@@ -37,7 +45,7 @@ router.get('/', async (req, res) => {
       });
     } else {
       const products = await Product.find(query).sort(sortObj);
-      res.json(products); // fallback for existing frontend apps that expect array
+      res.json(products);
     }
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch products' });
@@ -60,14 +68,17 @@ router.get('/:id', async (req, res) => {
 // POST /api/products — create
 router.post('/', adminAuth, async (req, res) => {
   try {
-    const { name, basePrice, imageUrl, images, description, options, status, quantity } = req.body;
+    const { name, basePrice, salePrice, imageUrl, images, description, options, status, quantity, handle, collectionId, collectionIds } = req.body;
 
     if (!name || basePrice == null) {
       return res.status(400).json({ error: 'Name and basePrice are required' });
     }
 
     const count = await Product.countDocuments();
-    const product = new Product({ name, basePrice, imageUrl, images, description, options, sortOrder: count, status, quantity });
+    const product = new Product({ 
+      name, basePrice, salePrice, imageUrl, images, description, options, 
+      sortOrder: count, status, quantity, handle, collectionId, collectionIds 
+    });
     await product.save();
     res.status(201).json(product);
   } catch (err) {
@@ -81,12 +92,16 @@ router.post('/', adminAuth, async (req, res) => {
 // PUT /api/products/:id — update
 router.put('/:id', adminAuth, async (req, res) => {
   try {
-    const { name, basePrice, imageUrl, images, description, options, active, status, quantity } = req.body;
+    const { name, basePrice, salePrice, imageUrl, images, description, options, active, status, quantity, handle, collectionId, collectionIds } = req.body;
 
     const updateData = { name, basePrice, imageUrl, images, description, options };
+    if (salePrice !== undefined) updateData.salePrice = salePrice;
     if (active !== undefined) updateData.active = active;
     if (status !== undefined) updateData.status = status;
     if (quantity !== undefined) updateData.quantity = quantity;
+    if (handle !== undefined) updateData.handle = handle;
+    if (collectionId !== undefined) updateData.collectionId = collectionId;
+    if (collectionIds !== undefined) updateData.collectionIds = collectionIds;
 
     const product = await Product.findByIdAndUpdate(
       req.params.id,
@@ -132,12 +147,9 @@ router.post('/deactivate/batch', adminAuth, async (req, res) => {
   try {
     const { productIds } = req.body;
     if (!Array.isArray(productIds)) return res.status(400).json({ error: 'productIds must be an array' });
-    
-    // Toggle active status: this could just set it to false, or toggle.
-    // The requirement says "deactivate", so we set it to false.
     await Product.updateMany(
       { _id: { $in: productIds } },
-      { $set: { active: false } }
+      { $set: { active: false, status: 'draft' } }
     );
     res.json({ message: 'Products deactivated successfully' });
   } catch (err) {
@@ -145,10 +157,10 @@ router.post('/deactivate/batch', adminAuth, async (req, res) => {
   }
 });
 
-// PUT /api/products/reorder — reorder products
+// PUT /api/products/reorder/batch — reorder products
 router.put('/reorder/batch', adminAuth, async (req, res) => {
   try {
-    const { order } = req.body; // array of { id, sortOrder }
+    const { order } = req.body;
     if (!order || !Array.isArray(order)) {
       return res.status(400).json({ error: 'order array is required' });
     }
