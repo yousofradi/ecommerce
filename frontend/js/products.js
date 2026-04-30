@@ -94,7 +94,7 @@ function renderStoreCard(p) {
   const salePrice = p.salePrice || p.basePrice;
   const hasDiscount = p.salePrice && p.salePrice < p.basePrice;
 
-  const productLink = p.handle ? `/product/all/${encodeURIComponent(p.handle)}` : `product?id=${p._id}`;
+  const productLink = p.handle ? `product?name=${encodeURIComponent(p.handle)}` : `product?id=${p._id}`;
 
   return `
     <a href="${productLink}" class="store-product-card">

@@ -324,15 +324,20 @@ window.updateItemQty = function(idx, val) {
 
 window.promptItemQty = function(idx) {
   const item = currentOrder.items[idx];
-  const val = prompt('أدخل الكمية الجديدة:', item.quantity);
-  if (val !== null) {
-    const qty = parseInt(val, 10);
-    if (qty >= 1) {
-      currentOrder.items[idx].quantity = qty;
-      updateTotals();
-      renderItems();
-    }
+  document.getElementById('modal-qty-idx').value = idx;
+  document.getElementById('modal-item-qty').value = item.quantity;
+  openModal('item-qty-modal');
+};
+
+window.applyItemQty = function() {
+  const idx = parseInt(document.getElementById('modal-qty-idx').value, 10);
+  const qty = parseInt(document.getElementById('modal-item-qty').value, 10);
+  if (qty >= 1 && currentOrder.items[idx]) {
+    currentOrder.items[idx].quantity = qty;
+    updateTotals();
+    renderItems();
   }
+  closeModal('item-qty-modal');
 };
 
 window.openItemDiscountModal = function(idx) {

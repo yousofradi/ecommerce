@@ -9,10 +9,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadAllProducts();
 
   if (collectionId) {
-    document.title = 'تعديل المجموعة — Sundura Admin';
+    document.title = 'تعديل التصنيف — Sundura Admin';
+    const formTitle = document.getElementById('form-page-title');
+    if (formTitle) formTitle.textContent = 'تعديل التصنيف';
     await loadCollection(collectionId);
   } else {
-    document.title = 'إضافة مجموعة — Sundura Admin';
+    document.title = 'إضافة تصنيف — Sundura Admin';
+    const formTitle = document.getElementById('form-page-title');
+    if (formTitle) formTitle.textContent = 'إضافة تصنيف';
     renderProductsList();
   }
 
@@ -58,11 +62,21 @@ function updateImagePreview(url) {
 }
 
 window.promptImage = function() {
-  const url = prompt('أدخل رابط الصورة:');
-  if (url !== null) {
+  document.getElementById('modal-image-url').value = document.getElementById('c-image').value || '';
+  document.getElementById('image-url-modal').classList.remove('hidden');
+};
+
+window.closeImageModal = function() {
+  document.getElementById('image-url-modal').classList.add('hidden');
+};
+
+window.applyImageUrl = function() {
+  const url = document.getElementById('modal-image-url').value.trim();
+  if (url) {
     document.getElementById('c-image').value = url;
     updateImagePreview(url);
   }
+  closeImageModal();
 };
 
 window.removeImage = function() {

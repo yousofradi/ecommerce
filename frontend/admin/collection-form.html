@@ -133,6 +133,10 @@
     </aside>
 
     <main class="admin-main">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px;">
+        <h1 class="page-title" style="margin:0; font-size:1.5rem;" id="form-page-title">إضافة تصنيف</h1>
+        <a href="collections" class="btn btn-secondary" style="background:#f1f5f9; color:#475569; padding:8px 16px; border-radius:6px; text-decoration:none;">← عودة للتصنيفات</a>
+      </div>
       <form id="collection-form">
         <div class="form-layout">
           <!-- Left: Image -->
@@ -215,6 +219,23 @@
       <div class="modal-footer">
         <button type="button" class="btn-text" onclick="closeSelectModal()">إلغاء</button>
         <button type="button" class="btn btn-primary" onclick="saveSelectedProducts()">حفظ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image URL Modal -->
+  <div id="image-url-modal" class="modal-overlay hidden">
+    <div class="modal" style="max-width: 500px;">
+      <div class="modal-header">
+        <span>أدخل رابط الصورة</span>
+        <button type="button" class="btn-remove" onclick="closeImageModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <input type="url" id="modal-image-url" class="form-control" placeholder="الصق الرابط هنا...">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-text" onclick="closeImageModal()">إلغاء</button>
+        <button type="button" class="btn btn-primary" onclick="applyImageUrl()">إضافة</button>
       </div>
     </div>
   </div>

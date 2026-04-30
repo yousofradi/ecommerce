@@ -3,19 +3,10 @@ let currentProduct = null;
 let selectedQty = 1;
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // Support both query param (fallback/local) and path-based handle (Render)
+  // Support both id and name query params
   const params = new URLSearchParams(window.location.search);
   const productId = params.get('id');
-  
-  // If no id query param, try to extract handle from pathname
-  // Expected path format: /product/all/:handle
-  let handle = null;
-  if (!productId) {
-    const pathParts = window.location.pathname.split('/').filter(Boolean);
-    if (pathParts.includes('product') && pathParts.length > 0) {
-      handle = decodeURIComponent(pathParts[pathParts.length - 1]);
-    }
-  }
+  const handle = params.get('name');
 
   const loading = document.getElementById('product-loading');
   const detail = document.getElementById('product-detail');

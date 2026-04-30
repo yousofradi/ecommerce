@@ -380,6 +380,28 @@
     </div>
   </div>
 
+  <!-- Item Quantity Modal -->
+  <div class="modal-overlay" id="item-qty-modal" style="display: none;">
+    <div class="modal-box" style="max-width: 400px; border-radius: 16px;">
+      <div class="modal-header" style="border:none; padding-bottom:0;">
+        <h3 style="width:100%; text-align:right; font-size:1.1rem; color:#1e293b; font-weight:600;">تعديل الكمية</h3>
+      </div>
+      <div class="modal-body" style="padding-top:12px;">
+        <input type="hidden" id="modal-qty-idx">
+        <div class="form-group">
+          <label style="display:block;margin-bottom:8px;font-size:0.85rem;color:var(--text-muted);">الكمية الجديدة:</label>
+          <div style="position:relative; display:flex; align-items:center;">
+            <input type="number" id="modal-item-qty" class="form-control" style="border-radius:12px; padding:12px 16px; text-align:right;" min="1" placeholder="أدخل الكمية">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="border:none; justify-content: flex-start; gap: 12px; flex-direction: row-reverse;">
+        <button type="button" class="btn" style="background:#10b981; color:#fff; border-radius:24px; padding:8px 48px; font-weight:600;" onclick="applyItemQty()">تطبيق</button>
+        <button type="button" class="btn" style="background:#fff; border:1px solid #e2e8f0; color:#1e293b; border-radius:24px; padding:8px 48px; font-weight:600;" onclick="closeModal('item-qty-modal')">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Order Discount Modal -->
   <div class="modal-overlay" id="order-discount-modal" style="display: none;">
     <div class="modal-box" style="max-width: 400px; border-radius: 16px;">
