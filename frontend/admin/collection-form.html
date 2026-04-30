@@ -111,6 +111,10 @@
       border-bottom: 1px solid #eee; cursor: pointer;
     }
     .product-item:hover { background: #f9f9f9; }
+
+    @media (max-width: 768px) {
+      .form-layout { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -166,8 +170,8 @@
 
     <main class="admin-main">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px;">
-        <h1 class="page-title" style="margin:0; font-size:1.5rem;" id="form-page-title">إضافة تصنيف</h1>
         <a href="collections" class="btn btn-secondary" style="background:#f1f5f9; color:#475569; padding:8px 16px; border-radius:6px; text-decoration:none;">← عودة للتصنيفات</a>
+        <h1 class="page-title" style="margin:0; font-size:1.5rem;" id="form-page-title">إضافة تصنيف</h1>
       </div>
       <form id="collection-form">
         <div class="form-layout">

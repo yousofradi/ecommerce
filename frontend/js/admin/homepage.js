@@ -32,15 +32,7 @@ async function loadSections() {
     } catch(err) { sections = []; }
   }
   
-  // Default sections if none
-  if (!sections.length) {
-    sections = [
-      { id: genId(), type: 'products', title: 'عروض لفترة محدودة', showTitle: true, collectionId: '', itemsPerRow: 4, maxItems: 4, style: 'grid' },
-      { id: genId(), type: 'products', title: 'الأكثر طلباً', showTitle: true, collectionId: '', itemsPerRow: 4, maxItems: 6, style: 'grid' },
-      { id: genId(), type: 'collections', title: 'التصنيفات', showTitle: true, selectedCollections: [], itemsPerRow: 2, showNames: true }
-    ];
-    saveSections();
-  }
+  // Default sections removed as per user request
 }
 
 async function saveSections() {

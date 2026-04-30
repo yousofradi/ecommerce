@@ -29,9 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (sections && sections.length > 0) {
       renderFromConfig(sections, products, collections);
     } else {
-      // Fallback: default rendering
-      renderCollections(collections);
-      renderFeaturedSections(products, collections);
+      content.innerHTML = '<div style="text-align:center;padding:60px 20px;color:#94a3b8">لا توجد أقسام معروضة في المتجر حالياً.</div>';
     }
 
   } catch (err) {
@@ -245,7 +243,7 @@ window.quickAddToCart = function(event, p) {
     return;
   }
   if(window.Cart) {
-    window.Cart.addItem(p);
+    window.Cart.addItem(p, []);
     window.Cart.openCart();
   }
 }
