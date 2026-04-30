@@ -38,14 +38,21 @@ async function loadProducts() {
     window.searchQuery = '';
     
   } catch (err) {
+    console.error('Failed to load products:', err);
     tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">فشل تحميل المنتجات</td></tr>';
   }
 }
 
 function updatePaginationInfo(total) {
-  document.getElementById('pagination-info').textContent = `إجمالي: ${total} - صفحة ${currentPage} من ${totalPages}`;
-  document.getElementById('prev-page').disabled = currentPage <= 1;
-  document.getElementById('next-page').disabled = currentPage >= totalPages;
+  const infoEl = document.getElementById('pagination-info');
+  const prevBtn = document.getElementById('prev-page');
+  const nextBtn = document.getElementById('next-page');
+  const countAll = document.getElementById('count-all');
+  
+  if (infoEl) infoEl.textContent = `إجمالي: ${total} - صفحة ${currentPage} من ${totalPages}`;
+  if (prevBtn) prevBtn.disabled = currentPage <= 1;
+  if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
+  if (countAll) countAll.textContent = total;
 }
 
 window.changePage = function(delta) {
@@ -70,8 +77,8 @@ function renderProducts(collections) {
   
   let filteredProducts = allProducts.filter(p => {
     // text search
-    if (query && !p.name.toLowerCase().includes(query)) return false;
-    // nothing more to filter currently for products, maybe add active/draft later
+    const pName = p.name || '';
+    if (query && !pName.toLowerCase().includes(query)) return false;
     return true;
   });
 
@@ -101,7 +108,7 @@ function renderProducts(collections) {
             ? `<img src="${mainImg}" alt="${p.name}" style="width:54px;height:54px;border-radius:8px;object-fit:cover;border:1px solid var(--border-color)">`
             : `<div style="width:54px;height:54px;border-radius:8px;background:var(--bg-body);display:flex;align-items:center;justify-content:center;font-size:1.4rem">📦</div>`}
         </td>
-        <td><strong>${p.name}</strong></td>
+        <td><strong>${p.name || 'بدون اسم'}</strong></td>
         <td>${priceDisplay}</td>
         <td><span class="badge ${statusClass}">${statusLabel}</span></td>
         <td style="text-align:center;font-weight:600">${qty}</td>
@@ -109,7 +116,7 @@ function renderProducts(collections) {
         <td onclick="event.stopPropagation()">
           <div class="flex gap-8">
             <a href="product-form?id=${p._id}" class="btn btn-secondary btn-sm">تعديل</a>
-            <button class="btn btn-danger btn-sm" onclick="deleteProduct('${p._id}','${p.name}')">حذف</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteProduct('${p._id}','${(p.name || '').replace(/'/g, "\\'")}')">حذف</button>
           </div>
         </td>
       </tr>
