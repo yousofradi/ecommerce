@@ -70,7 +70,11 @@ function renderProduct(p) {
     <div class="product-detail-layout">
       <div>
         <div class="product-gallery-main">
-          <img id="main-product-img" src="${mainImg}" alt="${p.name}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2Y1ZjVmNSIvPjwvc3ZnPg=='">
+          ${images.length > 1 ? `
+            <button class="gallery-nav-btn prev" onclick="switchMainImageByOffset(-1)">‹</button>
+            <button class="gallery-nav-btn next" onclick="switchMainImageByOffset(1)">›</button>
+          ` : ''}
+          <img id="main-product-img" src="${mainImg}" alt="${p.name}" data-index="0" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2Y1ZjVmNSIvPjwvc3ZnPg=='">
         </div>
         ${thumbsHTML}
       </div>
@@ -98,11 +102,25 @@ function renderProduct(p) {
 window.switchMainImage = function(index) {
   const images = getImages(currentProduct);
   const mainImg = document.getElementById('main-product-img');
-  if (mainImg && images[index]) mainImg.src = images[index];
+  if (mainImg && images[index]) {
+    mainImg.src = images[index];
+    mainImg.setAttribute('data-index', index);
+  }
   // Update active thumb
   document.querySelectorAll('.product-gallery-thumb').forEach((t, i) => {
     t.classList.toggle('active', i === index);
   });
+};
+
+window.switchMainImageByOffset = function(offset) {
+  const images = getImages(currentProduct);
+  const mainImg = document.getElementById('main-product-img');
+  if (!mainImg) return;
+  const currentIndex = parseInt(mainImg.getAttribute('data-index') || '0');
+  let newIndex = currentIndex + offset;
+  if (newIndex >= images.length) newIndex = 0;
+  if (newIndex < 0) newIndex = images.length - 1;
+  switchMainImage(newIndex);
 };
 
 window.changeQty = function(delta) {

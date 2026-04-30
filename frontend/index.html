@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,14 +9,22 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/store.css">
 </head>
+
 <body class="has-bottom-nav">
   <header class="store-header">
     <div class="container">
-      <button class="header-icon hamburger-btn" onclick="document.getElementById('mobile-menu').classList.toggle('open')">☰</button>
-      <a href="index.html"><img src="https://assets.wuiltstore.com/cmo1fsgmc060f01lwhwpn6ga7__D8_B3_D9_86_D8_AF_D9_88_D8_B1.webp" alt="Sundura" class="store-logo-img"></a>
+      <button class="header-icon hamburger-btn"
+        onclick="document.getElementById('mobile-menu').classList.toggle('open')">☰</button>
+      <a href="index.html"><img
+          src="https://assets.wuiltstore.com/cmo1fsgmc060f01lwhwpn6ga7__D8_B3_D9_86_D8_AF_D9_88_D8_B1.webp"
+          alt="Sundura" class="store-logo-img"></a>
       <div class="header-icons">
         <a href="cart.html" class="header-icon" style="position:relative">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="9" cy="21" r="1" />
+            <circle cx="20" cy="21" r="1" />
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+          </svg>
           <span class="cart-count" id="cart-count" style="display:none;position:absolute;top:-4px;right:-6px">0</span>
         </a>
       </div>
@@ -24,7 +33,9 @@
 
   <main>
     <div class="container" style="padding-top:20px">
-      <div id="home-loading"><div class="spinner"></div></div>
+      <div id="home-loading">
+        <div class="spinner"></div>
+      </div>
       <div id="home-content" class="hidden">
         <!-- Featured Products Section -->
         <section class="home-section" id="featured-section"></section>
@@ -40,7 +51,6 @@
   </main>
 
   <footer class="store-footer">
-    <img src="https://assets.wuiltstore.com/cmo1fsgmc060f01lwhwpn6ga7__D8_B3_D9_86_D8_AF_D9_88_D8_B1.webp" alt="Sundura" class="footer-logo">
     <nav class="footer-nav">
       <a href="index.html">الرئيسية</a>
       <a href="index.html#collections-section">تسوّق</a>
@@ -53,24 +63,42 @@
   <nav class="mobile-bottom-nav">
     <div class="nav-items">
       <a href="index.html" class="nav-item active">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+          <polyline points="9 22 9 12 15 12 15 22" />
+        </svg>
         <span>الرئيسية</span>
       </a>
       <a href="index.html#collections-section" class="nav-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-        <span>متجر</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+          <line x1="8" y1="21" x2="16" y2="21" />
+          <line x1="12" y1="17" x2="12" y2="21" />
+        </svg>
+        <span>المتجر</span>
       </a>
       <a href="cart.html" class="nav-item" id="mobile-cart-link">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="9" cy="21" r="1" />
+          <circle cx="20" cy="21" r="1" />
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+        </svg>
         <span>السلة</span>
         <span class="mobile-nav-badge" id="mobile-cart-count" style="display:none">0</span>
       </a>
       <a href="https://wa.me/+201016612519" target="_blank" class="nav-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        <span>حسابي</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+        <span>واتساب</span>
       </a>
       <a href="#" class="nav-item" onclick="event.preventDefault()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
         <span>القائمة</span>
       </a>
     </div>
@@ -80,4 +108,5 @@
   <script src="js/cart.js"></script>
   <script src="js/products.js"></script>
 </body>
+
 </html>
