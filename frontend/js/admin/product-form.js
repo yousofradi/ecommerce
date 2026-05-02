@@ -57,34 +57,63 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (err) { showToast('فشل تحميل المنتج', 'error'); }
   }
 
+  document.getElementById('product-form').addEventListener('submit', saveProduct);
+  document.getElementById('add-option-group').addEventListener('click', addOptionGroup);
 
+  // File upload drag-and-drop logic
+  const fileInput = document.getElementById('image-file-input');
+  const dropzone = document.getElementById('add-image-dropzone');
+
+  function handleFiles(files) {
+    const uploadStatus = document.getElementById('upload-status');
+    if (uploadStatus) uploadStatus.style.display = 'block';
+    
+    const promises = Array.from(files).map(file => 
+      api.uploadFile(file).then(res => {
+        if (res && res.url) {
+          productImages.push(res.url);
+        }
+      }).catch(err => {
+        console.error('Upload failed', err);
+        showToast('فشل رفع الصورة', 'error');
+      })
+    );
+
+    Promise.all(promises).then(() => {
+      renderImages();
+      if (uploadStatus) uploadStatus.style.display = 'none';
+    });
+  }
+
+  if (dropzone) {
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.style.borderColor = 'var(--primary)';
+    });
+    dropzone.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      dropzone.style.borderColor = '';
+    });
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.style.borderColor = '';
+      if (e.dataTransfer && e.dataTransfer.files) {
+        handleFiles(e.dataTransfer.files);
+      }
+    });
+  }
+
+  if (fileInput) {
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files) {
+        handleFiles(e.target.files);
+      }
+      e.target.value = ''; // reset
+    });
+  }
 });
 
 // ── Image Management ────────────────────────────────────
-
-function showImageInput() {
-  const wrapper = document.getElementById('image-url-input-wrapper');
-  wrapper.classList.remove('hidden');
-  document.getElementById('new-image-url').focus();
-}
-
-window.hideImageInput = function() {
-  document.getElementById('image-url-input-wrapper').classList.add('hidden');
-  document.getElementById('new-image-url').value = '';
-};
-
-window.addImageFromInput = function() {
-  const input = document.getElementById('new-image-url');
-  const url = input.value.trim();
-  if (url) {
-    productImages.push(url);
-    renderImages();
-    input.value = '';
-    input.focus();
-  } else {
-    showToast('أدخل رابط صورة صالح', 'error');
-  }
-};
 
 function removeImage(index) {
   productImages.splice(index, 1);
@@ -93,7 +122,10 @@ function removeImage(index) {
 
 function renderImages() {
   const container = document.getElementById('images-list');
-  const addBtn = document.getElementById('add-image-btn');
+  const addBtn = document.getElementById('add-image-dropzone');
+  
+  if (!container || !addBtn) return;
+  
   container.querySelectorAll('.image-item').forEach(el => el.remove());
   productImages.forEach((url, idx) => {
     const item = document.createElement('div');
