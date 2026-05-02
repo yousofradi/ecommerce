@@ -67,7 +67,7 @@ router.get('/', async (req, res) => {
       }
     }
 
-    const sortObj = { sortOrder: 1, createdAt: -1 };
+    const sortObj = { createdAt: -1 };
     
     // Optimization: Don't fetch description for listings (it's only needed for details page)
     const fieldsToSelect = admin === 'true' ? '' : '-description';
@@ -96,11 +96,11 @@ router.get('/', async (req, res) => {
       
       res.json(result);
     } else {
-      // For non-paginated requests (like the home page), still apply a reasonable limit of 100
+      // For non-paginated requests (like the home page), still apply a reasonable limit of 500
       // unless it's an admin request.
       const queryExec = Product.find(query).select(fieldsToSelect).sort(sortObj);
       if (admin !== 'true') {
-        queryExec.limit(100); 
+        queryExec.limit(500); 
       }
       const products = await queryExec;
       if (admin !== 'true') {

@@ -33,13 +33,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
-function renderFromConfig(sections, products, collections) {
+async function renderFromConfig(sections, products, collections) {
   const container = document.getElementById('home-content');
   let html = '';
   
   for (const s of sections) {
     if (s.type === 'products') {
-      html += renderProductSection(s, products, collections);
+      html += await renderProductSection(s, products, collections);
     } else if (s.type === 'collections') {
       html += renderCollectionSection(s, collections);
     } else if (s.type === 'banner') {
@@ -52,7 +52,7 @@ function renderFromConfig(sections, products, collections) {
   container.innerHTML = html;
 }
 
-function renderProductSection(s, products, collections) {
+async function renderProductSection(s, products, collections) {
   let sectionProducts = [];
   
   if (s.productIds && s.productIds.length > 0) {
@@ -61,17 +61,24 @@ function renderProductSection(s, products, collections) {
       .map(id => products.find(p => p._id === id))
       .filter(Boolean);
   } else if (s.collectionId) {
-    // Filter by category
-    sectionProducts = products.filter(p => {
-      const ids = (p.collectionIds || []).map(id => id.toString());
-      return ids.includes(s.collectionId) || (p.collectionId && p.collectionId.toString() === s.collectionId);
-    });
+    // Fetch products for this specific collection dynamically to avoid limit issues
+    try {
+      const res = await api.getProducts(1, s.maxItems || 8, false, s.collectionId);
+      sectionProducts = res.products || res || [];
+    } catch (e) {
+      console.error('Failed to fetch section products', e);
+      // Fallback to filtering the global list
+      sectionProducts = products.filter(p => {
+        const ids = (p.collectionIds || []).map(id => id.toString());
+        return ids.includes(s.collectionId) || (p.collectionId && p.collectionId.toString() === s.collectionId);
+      });
+    }
   } else {
     // Fallback: all products
     sectionProducts = products;
   }
   
-  sectionProducts = sectionProducts.slice(0, s.maxItems || 4);
+  sectionProducts = sectionProducts.slice(0, s.maxItems || 8);
   if (sectionProducts.length === 0) return '';
   
   const cols = s.itemsPerRow || 4;
