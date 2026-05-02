@@ -49,27 +49,19 @@
             <p style="margin-bottom: 24px; font-size: 0.9rem; color: #111827;">-تحويل النصف والباقي عند الاستلام (+10ج
               رسوم)</p>
 
-            <div
-              style="display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; border: 1.5px solid #374151; border-radius: 50px; padding: 10px 14px; margin: 0 auto 32px; max-width: 100%; width: fit-content; cursor: pointer; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.02);"
-              onclick="copyNumber()">
-              <div style="color: #4b5563; display: flex; align-items: center;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                </svg>
-              </div>
-              <div style="font-size: 1.15rem; font-weight: 700; color: #111827; letter-spacing: 0.5px;">01016612519</div>
-              <div style="display: flex; gap: 6px; align-items: center;">
-                <!-- InstaPay Logo -->
+            <div style="display: flex; align-items: center; justify-content: space-between; border: 1.5px solid #d1d5db; border-radius: 12px; padding: 12px 16px; margin: 0 auto 16px; max-width: 400px; background: #fff;">
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <div style="background: #e60000; color: #fff; padding: 3px 6px; border-radius: 4px; font-weight: bold; font-size: 11px; display: flex; align-items: center; line-height: 1.2;">فودافون كاش</div>
                 <div style="display: flex; align-items: center; line-height: 1;">
-                  <span style="color:#4a2c82;font-weight:900;font-style:italic;font-size:12px;letter-spacing:-0.5px;">INSTA</span><span style="color:#f26522;font-weight:900;font-style:italic;font-size:12px;">PAY</span>
-                </div>
-                <!-- VF Cash Logo -->
-                <div style="background: #e60000; color: #fff; padding: 3px 5px; border-radius: 4px; font-weight: bold; font-size: 10px; display: flex; align-items: center; line-height: 1.2;">
-                  فودافون كاش
+                  <span style="color:#4a2c82;font-weight:900;font-style:italic;font-size:13px;letter-spacing:-0.5px;">INSTA</span><span style="color:#f26522;font-weight:900;font-style:italic;font-size:13px;">PAY</span>
                 </div>
               </div>
+              <div style="font-size: 1.25rem; font-weight: 700; color: #111827; letter-spacing: 1px;" dir="ltr">01016612519</div>
             </div>
+            
+            <button onclick="copyNumber()" style="display: block; margin: 0 auto 32px; background: #f3f4f6; color: #374151; border: 1.5px solid #d1d5db; padding: 8px 32px; border-radius: 50px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: background 0.2s;">
+              نسخ الرقم
+            </button>
           </div>
 
           <div id="order-details-container"
@@ -139,11 +131,10 @@
         modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:9999;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s ease;';
         modal.innerHTML = `
           <div style="background:#fff;padding:24px 32px;border-radius:16px;text-align:center;box-shadow:0 10px 25px rgba(0,0,0,0.15);transform:scale(0.9);transition:transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);" onclick="event.stopPropagation()">
-            <div style="font-size:3rem;margin-bottom:8px;">✅</div>
             <h3 style="margin:0;color:#111827;font-size:1.25rem;font-weight:700;">تم النسخ بنجاح</h3>
           </div>
         `;
-        modal.onclick = function() {
+        modal.onclick = function () {
           modal.style.opacity = '0';
           setTimeout(() => modal.remove(), 200);
         };
@@ -152,9 +143,9 @@
         void modal.offsetWidth;
         modal.style.opacity = '1';
         modal.querySelector('div').style.transform = 'scale(1)';
-        
+
         setTimeout(() => {
-          if(document.body.contains(modal)) {
+          if (document.body.contains(modal)) {
             modal.style.opacity = '0';
             setTimeout(() => modal.remove(), 200);
           }
