@@ -337,6 +337,16 @@ tr:hover td { background: #fafbfc; }
 .text-danger { color: var(--danger); }
 .hidden { display: none !important; }
 
+/* ── Global Number Input Spinner Fix ─────────────────── */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
 /* ── Slide-Out Cart (Storefront) ─────────────────────── */
 .slide-cart-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1000;

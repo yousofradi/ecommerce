@@ -162,18 +162,15 @@ document.addEventListener('DOMContentLoaded', () => {
       sidebar.classList.toggle('open');
     });
 
-    // Close sidebar when a nav link is clicked (mobile)
     sidebar.querySelectorAll('.admin-nav a').forEach(a => {
       a.addEventListener('click', () => {
         if (window.innerWidth < 960) sidebar.classList.remove('open');
       });
     });
 
-    // Close sidebar when clicking outside (on the overlay area)
     document.addEventListener('click', (e) => {
       if (window.innerWidth < 960 && sidebar.classList.contains('open')) {
         const nav = sidebar.querySelector('.admin-nav');
-        // If click is NOT inside the nav, close it
         if (nav && !nav.contains(e.target) && !toggle.contains(e.target)) {
           sidebar.classList.remove('open');
         }
@@ -184,19 +181,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ── Apply Global Settings ──────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
-  // Only apply to storefront (not admin pages)
   if (!document.querySelector('.admin-layout')) {
     try {
       const settings = await api.getSetting('sundura_global_settings');
       if (settings) {
-        // Logo
         if (settings.storeLogo) {
           document.querySelectorAll('.store-logo-img').forEach(img => {
             img.src = settings.storeLogo;
           });
         }
         
-        // Favicon
         if (settings.storeFavicon) {
           let link = document.querySelector("link[rel~='icon']");
           if (!link) {
@@ -207,7 +201,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           link.href = settings.storeFavicon;
         }
 
-        // Title/Name
         if (settings.storeName) {
           document.title = document.title.replace('Sundura Shop', settings.storeName).replace('Sundura', settings.storeName);
           const footerCopy = document.querySelector('.footer-bottom-bar');
@@ -216,7 +209,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
         }
         
-        // Social Links
         const footerNav = document.querySelector('.footer-nav');
         if (footerNav) {
           let socialHtml = '<div class="footer-socials" style="display:flex;gap:16px;justify-content:center;margin-top:16px;">';
@@ -226,15 +218,11 @@ document.addEventListener('DOMContentLoaded', async () => {
           if (settings.socialWa) {
             const waLink = settings.socialWa.startsWith('http') ? settings.socialWa : `https://wa.me/${settings.socialWa.replace(/[^0-9+]/g, '')}`;
             socialHtml += `<a href="${waLink}" target="_blank"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg></a>`;
-            
-            // Also update any existing wa links
             document.querySelectorAll('a[href^="https://wa.me/"]').forEach(a => {
               a.href = waLink;
             });
           }
           socialHtml += '</div>';
-          
-          // Append socials after nav links
           footerNav.insertAdjacentHTML('afterend', socialHtml);
         }
       }
@@ -257,10 +245,7 @@ api.openMenu = function() {
           </button>
         </div>
         <div class="slide-menu-body" id="slide-menu-body">
-          <!-- Skeletons -->
           <div style="padding:15px; display:flex; flex-direction:column; gap:12px;">
-            <div style="height:45px; background:#f1f5f9; border-radius:8px; animation: pulse 1.5s infinite;"></div>
-            <div style="height:45px; background:#f1f5f9; border-radius:8px; animation: pulse 1.5s infinite;"></div>
             <div style="height:45px; background:#f1f5f9; border-radius:8px; animation: pulse 1.5s infinite;"></div>
             <div style="height:45px; background:#f1f5f9; border-radius:8px; animation: pulse 1.5s infinite;"></div>
             <div style="height:45px; background:#f1f5f9; border-radius:8px; animation: pulse 1.5s infinite;"></div>
@@ -294,8 +279,6 @@ api.closeMenu = function() {
   if(overlay) overlay.classList.remove('open');
   if(container) container.classList.remove('open');
 };
-
-
 
 // --- Global Search Logic ---
 api.openSearch = function() {
@@ -364,3 +347,10 @@ api.closeSearch = function() {
   if(overlay) overlay.classList.remove('open');
   document.body.style.overflow = '';
 };
+
+// ── Global Number Input Wheel Prevention ──────────────
+document.addEventListener('wheel', (e) => {
+  if (document.activeElement && document.activeElement.type === 'number') {
+    document.activeElement.blur();
+  }
+}, { passive: true });
