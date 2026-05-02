@@ -26,10 +26,11 @@ const api = {
   },
 
   // Products
-  getProducts(page, limit, admin = true, search = '') {
+  getProducts(page, limit, admin = true, collectionId = '', search = '') {
     let url = `/products?admin=${admin}`;
     if (page) url += `&page=${page}`;
     if (limit) url += `&limit=${limit}`;
+    if (collectionId) url += `&collectionId=${collectionId}`;
     if (search) url += `&search=${encodeURIComponent(search)}`;
     return this._request(url, { useCache: !admin });
   },
