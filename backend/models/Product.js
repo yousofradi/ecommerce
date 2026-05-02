@@ -2,7 +2,8 @@ const mongoose = require('mongoose');
 
 const optionValueSchema = new mongoose.Schema({
   label: { type: String, required: true },
-  price: { type: Number, required: true, default: 0 }
+  price: { type: Number, required: true, default: 0 },
+  salePrice: { type: Number, default: null }
 }, { _id: false });
 
 const optionGroupSchema = new mongoose.Schema({

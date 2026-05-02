@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (colIds.includes(cb.value)) cb.checked = true;
       });
       
-      // Load images - support both new images array and legacy imageUrl
+      // Load images
       if (p.images && p.images.length > 0) {
         productImages = [...p.images];
       } else if (p.imageUrl) {
@@ -44,7 +44,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       renderImages();
       
-      optionGroups = (p.options || []).map(g => ({ name: g.name, required: g.required, values: [...g.values] }));
+      optionGroups = (p.options || []).map(g => ({ 
+        name: g.name, 
+        required: true, // Force required
+        values: g.values.map(v => ({ 
+          label: v.label, 
+          price: v.price || 0, 
+          salePrice: v.salePrice || null 
+        })) 
+      }));
       renderOptionGroups();
     } catch (err) { showToast('فشل تحميل المنتج', 'error'); }
   }
@@ -53,7 +61,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('add-option-group').addEventListener('click', addOptionGroup);
   document.getElementById('add-image-btn').addEventListener('click', showImageInput);
 
-  // Enter key adds image from URL input
   const urlInput = document.getElementById('new-image-url');
   if (urlInput) {
     urlInput.addEventListener('keydown', (e) => {
@@ -96,11 +103,7 @@ function removeImage(index) {
 function renderImages() {
   const container = document.getElementById('images-list');
   const addBtn = document.getElementById('add-image-btn');
-  
-  // Remove all image items (keep the add button)
   container.querySelectorAll('.image-item').forEach(el => el.remove());
-  
-  // Render each image before the add button
   productImages.forEach((url, idx) => {
     const item = document.createElement('div');
     item.className = 'image-item';
@@ -120,41 +123,83 @@ function renderOptionGroups() {
   container.innerHTML = optionGroups.map((g, gi) => `
     <div class="admin-card" style="margin-bottom:12px">
       <div class="flex-between mb-16">
-        <h4>مجموعة خيارات ${gi + 1}</h4>
+        <h4 style="margin:0">مجموعة خيارات ${gi + 1}</h4>
         <button type="button" class="btn btn-danger btn-sm" onclick="removeGroup(${gi})">حذف</button>
       </div>
-      <div class="grid-2" style="gap:12px;margin-bottom:12px">
-        <div class="form-group" style="margin-bottom:0">
-          <label class="form-label">اسم المجموعة</label>
-          <input class="form-control" value="${g.name}" onchange="optionGroups[${gi}].name=this.value" required placeholder="مثال: الحجم">
-        </div>
-        <div class="form-group" style="margin-bottom:0">
-          <label class="form-label">إجباري؟</label>
-          <select class="form-control" onchange="optionGroups[${gi}].required=this.value==='true'">
-            <option value="true" ${g.required ? 'selected' : ''}>نعم</option>
-            <option value="false" ${!g.required ? 'selected' : ''}>لا</option>
-          </select>
-        </div>
+      
+      <div class="form-group" style="margin-bottom:20px">
+        <label class="form-label">اسم المجموعة (مثل: الحجم أو اللون)</label>
+        <input class="form-control" value="${g.name}" onchange="optionGroups[${gi}].name=this.value" required placeholder="مثال: الحجم">
       </div>
-      <div class="form-label mb-8">القيم</div>
-      ${g.values.map((v, vi) => `
-        <div class="flex gap-8 mb-8" style="align-items:center">
-          <div style="flex:2"><input class="form-control" placeholder="الاسم (مثال: كبير)" value="${v.label}" onchange="optionGroups[${gi}].values[${vi}].label=this.value" required></div>
-          <div style="flex:1"><input class="form-control" type="number" placeholder="السعر ±" value="${v.price}" onchange="optionGroups[${gi}].values[${vi}].price=Number(this.value)"></div>
-          <button type="button" class="btn btn-danger btn-sm" onclick="removeValue(${gi},${vi})">×</button>
-        </div>
-      `).join('')}
-      <button type="button" class="btn btn-secondary btn-sm mt-8" onclick="addValue(${gi})">+ إضافة قيمة</button>
+
+      <div class="table-wrapper" style="border: 1px solid #eee; border-radius: 8px;">
+        <table style="margin:0">
+          <thead>
+            <tr>
+              <th style="width:40%">المتغير</th>
+              <th style="width:25%">السعر</th>
+              <th style="width:25%">السعر بعد الخصم</th>
+              <th style="width:10%"></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${g.values.map((v, vi) => `
+              <tr>
+                <td>
+                  <input class="form-control" placeholder="أحمر، كبير..." value="${v.label}" onchange="optionGroups[${gi}].values[${vi}].label=this.value" required>
+                </td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:4px">
+                    <input class="form-control" type="number" value="${v.price}" onchange="optionGroups[${gi}].values[${vi}].price=Number(this.value)">
+                    <span style="font-size:0.75rem;color:#999">ج.م</span>
+                  </div>
+                </td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:4px">
+                    <input class="form-control" type="number" value="${v.salePrice || ''}" placeholder="اختياري" onchange="optionGroups[${gi}].values[${vi}].salePrice=this.value?Number(this.value):null">
+                    <span style="font-size:0.75rem;color:#999">ج.م</span>
+                  </div>
+                </td>
+                <td style="text-align:center">
+                  <button type="button" class="btn btn-danger btn-sm" onclick="removeValue(${gi},${vi})" style="padding:4px 8px">×</button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+      
+      <button type="button" class="btn btn-secondary btn-sm mt-16" onclick="addValue(${gi})">+ إضافة قيمة</button>
     </div>
   `).join('');
 }
 
 function addOptionGroup() {
-  optionGroups.push({ name: '', required: false, values: [{ label: '', price: 0 }] });
+  const defaultPrice = Number(document.getElementById('p-price').value) || 0;
+  const defaultSale = document.getElementById('p-sale-price').value ? Number(document.getElementById('p-sale-price').value) : null;
+  
+  optionGroups.push({ 
+    name: '', 
+    required: true, 
+    values: [{ label: '', price: defaultPrice, salePrice: defaultSale }] 
+  });
   renderOptionGroups();
 }
+
 function removeGroup(gi) { optionGroups.splice(gi, 1); renderOptionGroups(); }
-function addValue(gi) { optionGroups[gi].values.push({ label: '', price: 0 }); renderOptionGroups(); }
+
+function addValue(gi) {
+  const defaultPrice = Number(document.getElementById('p-price').value) || 0;
+  const defaultSale = document.getElementById('p-sale-price').value ? Number(document.getElementById('p-sale-price').value) : null;
+  
+  optionGroups[gi].values.push({ 
+    label: '', 
+    price: defaultPrice, 
+    salePrice: defaultSale 
+  });
+  renderOptionGroups();
+}
+
 function removeValue(gi, vi) {
   if (optionGroups[gi].values.length <= 1) return showToast('يجب أن تحتوي المجموعة على قيمة واحدة على الأقل', 'error');
   optionGroups[gi].values.splice(vi, 1); renderOptionGroups();
@@ -182,12 +227,12 @@ async function saveProduct(e) {
     collectionId: selectedCollections.length > 0 ? selectedCollections[0] : null,
     status: document.getElementById('p-status').value,
     quantity: qtyVal !== '' ? Number(qtyVal) : null,
-    options: optionGroups.filter(g => g.name && g.values.length && g.values[0].label)
+    options: optionGroups.filter(g => g.name && g.values.length && g.values[0].label).map(g => ({...g, required: true}))
   };
 
   try {
-    if (editId) { await api.updateProduct(editId, data); showToast('تم تحديث المنتج <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;"><polyline points="20 6 9 17 4 12"/></svg>'); }
-    else { await api.createProduct(data); showToast('تم إضافة المنتج <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;"><polyline points="20 6 9 17 4 12"/></svg>'); }
+    if (editId) { await api.updateProduct(editId, data); showToast('تم تحديث المنتج'); }
+    else { await api.createProduct(data); showToast('تم إضافة المنتج'); }
     setTimeout(() => window.location.href = 'products', 800);
   } catch (err) {
     showToast(err.message || 'حدث خطأ', 'error');

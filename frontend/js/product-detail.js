@@ -3,7 +3,6 @@ let currentProduct = null;
 let selectedQty = 1;
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // Support both id and name query params
   const params = new URLSearchParams(window.location.search);
   const productId = params.get('id');
   const handle = params.get('name');
@@ -52,17 +51,24 @@ function renderProduct(p) {
   const hasDiscount = p.salePrice && p.salePrice < p.basePrice;
   const mainImg = images[0] || '';
 
-  // Check quantity availability
   const isUnlimited = p.quantity === null || p.quantity === undefined;
   const isAvailable = isUnlimited || p.quantity > 0;
 
   // Options HTML
   const optionsHTML = (p.options || []).map((group, gi) => {
     const valuesHTML = group.values.map((v, vi) => {
-      const priceLabel = v.price > 0 ? `+${formatPrice(v.price)}` : '';
+      // Logic for labels: If this specific option has a price, it's the absolute price.
+      // Since all options are now "Overrides", we show its sale price.
+      const optSaleTotal = v.salePrice !== null ? v.salePrice : (v.price || 0);
+      
+      let priceLabel = '';
+      if (v.price !== 0 || v.salePrice !== null) {
+          priceLabel = `<span class="option-price">(${formatPrice(optSaleTotal)})</span>`;
+      }
+
       return `<div class="radio-option">
         <input type="radio" name="opt_${gi}" id="opt_${gi}_${vi}" value="${vi}" ${vi === 0 ? 'checked' : ''} onchange="updateTotalPrice()">
-        <label for="opt_${gi}_${vi}">${v.label} ${priceLabel ? `<span class="option-price">(${priceLabel})</span>` : ''}</label>
+        <label for="opt_${gi}_${vi}">${v.label} ${priceLabel}</label>
       </div>`;
     }).join('');
     return `<div class="option-group" style="margin-bottom:16px">
@@ -71,13 +77,11 @@ function renderProduct(p) {
     </div>`;
   }).join('');
 
-  // Thumbnails
   const thumbsHTML = images.length > 1 ? `
     <div class="product-gallery-thumbs">
       ${images.map((img, i) => `<img src="${img}" class="product-gallery-thumb ${i === 0 ? 'active' : ''}" onclick="switchMainImage(${i})" alt="thumb">`).join('')}
     </div>` : '';
 
-  // Strip HTML from description
   const descText = (p.description || '').replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').trim();
 
   detail.innerHTML = `
@@ -111,28 +115,48 @@ function renderProduct(p) {
         </button>
       </div>
     </div>`;
+    
+    updateTotalPrice();
 }
 
 window.updateTotalPrice = function() {
   if (!currentProduct) return;
   
-  let optionsExtra = 0;
+  let optionsOriginalTotal = 0;
+  let optionsSaleTotal = 0;
+  let hasOverride = false;
+  
   (currentProduct.options || []).forEach((group, gi) => {
     const selected = document.querySelector(`input[name="opt_${gi}"]:checked`);
     if (selected) {
       const vi = parseInt(selected.value);
-      optionsExtra += (group.values[vi].price || 0);
+      const optVal = group.values[vi];
+      // In this new model, if options exist, they are absolute prices.
+      // We sum all selected options if more than one group exists.
+      hasOverride = true;
+      optionsOriginalTotal += (optVal.price || 0);
+      optionsSaleTotal += (optVal.salePrice !== null ? optVal.salePrice : (optVal.price || 0));
     }
   });
 
-  const basePrice = currentProduct.basePrice + optionsExtra;
-  const salePrice = (currentProduct.salePrice ? currentProduct.salePrice + optionsExtra : basePrice);
+  const finalBasePrice = hasOverride ? optionsOriginalTotal : currentProduct.basePrice;
+  const finalSalePrice = hasOverride ? optionsSaleTotal : (currentProduct.salePrice || currentProduct.basePrice);
+  
+  const hasDiscount = finalSalePrice < finalBasePrice;
   
   const salePriceEl = document.getElementById('display-sale-price');
   const originalPriceEl = document.getElementById('display-original-price');
   
-  if (salePriceEl) salePriceEl.textContent = formatPrice(salePrice);
-  if (originalPriceEl) originalPriceEl.textContent = formatPrice(basePrice);
+  if (salePriceEl) salePriceEl.textContent = formatPrice(finalSalePrice);
+  
+  if (originalPriceEl) {
+      if (hasDiscount) {
+          originalPriceEl.textContent = formatPrice(finalBasePrice);
+          originalPriceEl.style.display = 'inline';
+      } else {
+          originalPriceEl.style.display = 'none';
+      }
+  }
 };
 
 window.switchMainImage = function(index) {
@@ -142,7 +166,6 @@ window.switchMainImage = function(index) {
     mainImg.src = images[index];
     mainImg.setAttribute('data-index', index);
   }
-  // Update active thumb
   document.querySelectorAll('.product-gallery-thumb').forEach((t, i) => {
     t.classList.toggle('active', i === index);
   });
@@ -168,7 +191,6 @@ window.changeQty = function(delta) {
 window.addProductToCart = function() {
   if (!currentProduct) return;
 
-  // Collect selected options
   const selectedOptions = [];
   (currentProduct.options || []).forEach((group, gi) => {
     const selected = document.querySelector(`input[name="opt_${gi}"]:checked`);
@@ -178,12 +200,12 @@ window.addProductToCart = function() {
       selectedOptions.push({
         groupName: group.name,
         label: optVal.label,
-        price: optVal.price || 0
+        price: optVal.price || 0,
+        salePrice: optVal.salePrice
       });
     }
   });
 
-  // Add to cart multiple times for quantity
   for (let i = 0; i < selectedQty; i++) {
     Cart.addItem(currentProduct, selectedOptions);
   }
@@ -193,9 +215,7 @@ window.addProductToCart = function() {
 async function loadRelatedProducts(colId, currentId) {
   try {
     const products = await api.getProductsByCollection(colId);
-    // Filter out current product and limit to 5
     const related = products.filter(p => p._id !== currentId).slice(0, 5);
-    
     if (related.length > 0) {
       const container = document.getElementById('related-products-container');
       const grid = document.getElementById('related-products-grid');

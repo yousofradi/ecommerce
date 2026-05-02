@@ -21,17 +21,31 @@ Object.assign(Cart, {
     if (existing) {
       existing.quantity++;
     } else {
-      const optionsPrice = selectedOptions.reduce((s, o) => s + (o.price || 0), 0);
-      const effectivePrice = (product.salePrice && product.salePrice < product.basePrice) ? product.salePrice : product.basePrice;
+      // Logic for Absolute Prices:
+      // If ANY option is selected, we sum their prices and ignore the global product price.
+      let optionsOriginalTotal = 0;
+      let optionsSaleTotal = 0;
+      let hasOverride = selectedOptions.length > 0;
+      
+      selectedOptions.forEach(o => {
+        optionsOriginalTotal += (o.price || 0);
+        optionsSaleTotal += (o.salePrice !== null && o.salePrice !== undefined ? o.salePrice : (o.price || 0));
+      });
+
+      const finalBasePrice = hasOverride ? optionsOriginalTotal : product.basePrice;
+      const finalSalePrice = hasOverride ? optionsSaleTotal : (product.salePrice || product.basePrice);
+      
+      const finalUnitPrice = (finalSalePrice < finalBasePrice) ? finalSalePrice : finalBasePrice;
+
       items.push({
         key,
         productId: product._id,
         name: product.name,
         imageUrl: (product.images && product.images.length > 0) ? product.images[0] : (product.imageUrl || ''),
-        basePrice: product.basePrice,
-        salePrice: product.salePrice || null,
+        basePrice: finalBasePrice,
+        salePrice: finalSalePrice < finalBasePrice ? finalSalePrice : null,
         selectedOptions,
-        unitPrice: effectivePrice + optionsPrice,
+        unitPrice: finalUnitPrice,
         quantity: 1
       });
     }
@@ -204,5 +218,3 @@ Cart._updateBadge = (function(original) {
     }
   };
 })(Cart._updateBadge);
-
-
