@@ -120,6 +120,8 @@ function removeImage(index) {
   renderImages();
 }
 
+let draggedImageIndex = null;
+
 function renderImages() {
   const container = document.getElementById('images-list');
   const addBtn = document.getElementById('add-image-dropzone');
@@ -130,10 +132,38 @@ function renderImages() {
   productImages.forEach((url, idx) => {
     const item = document.createElement('div');
     item.className = 'image-item';
+    item.draggable = true;
+    item.dataset.index = idx;
+    item.style.cursor = 'grab';
+    
+    // Drag-and-drop reordering logic
+    item.addEventListener('dragstart', (e) => {
+      draggedImageIndex = idx;
+      e.dataTransfer.effectAllowed = 'move';
+      setTimeout(() => item.style.opacity = '0.5', 0);
+    });
+    item.addEventListener('dragend', () => {
+      item.style.opacity = '1';
+      draggedImageIndex = null;
+    });
+    item.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    });
+    item.addEventListener('drop', (e) => {
+      e.preventDefault();
+      if (draggedImageIndex !== null && draggedImageIndex !== idx) {
+        const draggedImage = productImages[draggedImageIndex];
+        productImages.splice(draggedImageIndex, 1);
+        productImages.splice(idx, 0, draggedImage);
+        renderImages();
+      }
+    });
+
     item.innerHTML = `
-      <img src="${url}" alt="صورة ${idx + 1}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTEwIiBoZWlnaHQ9IjExMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTEwIiBoZWlnaHQ9IjExMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzk0YTNiOCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuKdjCBFcnJvcjwvdGV4dD48L3N2Zz4='">
+      <img src="${url}" alt="صورة ${idx + 1}" style="pointer-events: none;" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTEwIiBoZWlnaHQ9IjExMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTEwIiBoZWlnaHQ9IjExMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzk0YTNiOCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuKdjCBFcnJvcjwvdGV4dD48L3N2Zz4='">
       <button type="button" class="remove-img" onclick="removeImage(${idx})">×</button>
-      ${idx === 0 ? '<span style="position:absolute;bottom:4px;right:4px;background:var(--primary);color:#fff;font-size:0.65rem;padding:2px 6px;border-radius:8px;">رئيسية</span>' : ''}
+      ${idx === 0 ? '<span style="position:absolute;bottom:4px;right:4px;background:var(--primary);color:#fff;font-size:0.65rem;padding:2px 6px;border-radius:8px;pointer-events:none;">رئيسية</span>' : ''}
     `;
     container.insertBefore(item, addBtn);
   });

@@ -92,18 +92,39 @@ const api = {
   },
 
   // File Upload
-  async uploadFile(file) {
-    const formData = new FormData();
-    formData.append('image', file);
-    
-    const res = await fetch(`${API_BASE}/upload`, {
-      method: 'POST',
-      headers: { 'x-admin-key': this._adminKey() },
-      body: formData
+  uploadFile(file, onProgress) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `${API_BASE}/upload`, true);
+      xhr.setRequestHeader('x-admin-key', this._adminKey());
+      
+      if (onProgress && xhr.upload) {
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            const percentComplete = Math.round((e.loaded / e.total) * 100);
+            onProgress(percentComplete);
+          }
+        });
+      }
+      
+      xhr.onload = function() {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            resolve(JSON.parse(xhr.responseText));
+          } catch(e) { resolve({}); }
+        } else {
+          try {
+            reject(new Error(JSON.parse(xhr.responseText).error));
+          } catch(e) { reject(new Error('Upload failed')); }
+        }
+      };
+      
+      xhr.onerror = () => reject(new Error('Network Error'));
+      
+      const formData = new FormData();
+      formData.append('image', file);
+      xhr.send(formData);
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Upload failed');
-    return data;
   }
 };
 
