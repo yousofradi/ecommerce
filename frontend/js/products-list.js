@@ -1,24 +1,77 @@
-/** Products List page — loads all store products */
+/** Products List page — loads all store products with pagination */
+let currentPage = 1;
+let totalPages = 1;
+const LIMIT = 30;
+
 document.addEventListener('DOMContentLoaded', async () => {
+  loadProducts(1);
+});
+
+async function loadProducts(page) {
   const grid = document.getElementById('all-products-grid');
   const countSpan = document.getElementById('total-products-count');
-
+  
+  // Show skeleton if it's the first page or if we want to replace content
+  // If we want "Load More", we append. If we want "Next/Prev", we replace.
+  // The user said "in page only shows 30 products", usually implies pagination.
+  
   try {
-    const res = await api.getProducts();
-    const products = Array.isArray(res) ? res : res.products || [];
+    const res = await api._request(`/products?page=${page}&limit=${LIMIT}`);
+    
+    // Handle both array and paginated object response
+    const products = Array.isArray(res) ? res : (res.products || []);
+    const total = res.total !== undefined ? res.total : products.length;
+    totalPages = res.totalPages || Math.ceil(total / LIMIT) || 1;
+    currentPage = page;
 
     if (!products || products.length === 0) {
-      grid.innerHTML = '<div style="text-align:center;padding:60px 20px;color:#999;grid-column:1/-1"><p style="font-size:2rem;margin-bottom:8px">🛍️</p><p>لا توجد منتجات حالياً</p></div>';
+      if (page === 1) {
+        grid.innerHTML = '<div style="text-align:center;padding:60px 20px;color:#999;grid-column:1/-1"><p style="font-size:2rem;margin-bottom:8px">🛍️</p><p>لا توجد منتجات حالياً</p></div>';
+      }
       if (countSpan) countSpan.textContent = '0';
       return;
     }
 
-    if (countSpan) countSpan.textContent = products.length;
-    grid.innerHTML = products.map(p => renderProductCard(p)).join('');
+    if (countSpan) countSpan.textContent = total;
+    
+    const html = products.map(p => renderProductCard(p)).join('');
+    grid.innerHTML = html;
+    
+    renderPagination();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   } catch (err) {
     grid.innerHTML = '<p style="text-align:center;color:#ef4444;grid-column:1/-1;padding:40px">فشل تحميل المنتجات. يرجى المحاولة لاحقاً.</p>';
   }
-});
+}
+
+function renderPagination() {
+  let nav = document.getElementById('pagination-nav');
+  if (!nav) {
+    nav = document.createElement('div');
+    nav.id = 'pagination-nav';
+    nav.className = 'pagination-container';
+    document.getElementById('all-products-grid').after(nav);
+  }
+
+  if (totalPages <= 1) {
+    nav.innerHTML = '';
+    return;
+  }
+
+  let html = `
+    <div style="display:flex; justify-content:center; align-items:center; gap:12px; margin:40px 0;">
+      <button class="btn btn-secondary" onclick="changePage(${currentPage + 1})" ${currentPage >= totalPages ? 'disabled' : ''} style="padding:8px 16px; border-radius:8px;">التالي ←</button>
+      <div style="font-weight:600; color:#475569;">صفحة ${currentPage} من ${totalPages}</div>
+      <button class="btn btn-secondary" onclick="changePage(${currentPage - 1})" ${currentPage <= 1 ? 'disabled' : ''} style="padding:8px 16px; border-radius:8px;">→ السابق</button>
+    </div>
+  `;
+  nav.innerHTML = html;
+}
+
+window.changePage = function(page) {
+  if (page < 1 || page > totalPages) return;
+  loadProducts(page);
+};
 
 function getImg(product) {
   if (product.images && product.images.length > 0) return product.images[0];

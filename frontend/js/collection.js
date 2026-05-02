@@ -1,37 +1,79 @@
-/** Collection page — loads products for a specific collection */
+/** Collection page — loads products for a specific collection with pagination */
+let currentPage = 1;
+let totalPages = 1;
+const LIMIT = 30;
+let currentCollectionId = null;
+
 document.addEventListener('DOMContentLoaded', async () => {
   const params = new URLSearchParams(window.location.search);
-  const collectionId = params.get('id');
-  const grid = document.getElementById('collection-products');
-
-  if (!collectionId) {
-    grid.innerHTML = '<p style="text-align:center;color:#999;grid-column:1/-1;padding:40px">لم يتم تحديد تصنيف</p>';
+  currentCollectionId = params.get('id');
+  if (!currentCollectionId) {
+    document.getElementById('collection-products').innerHTML = '<p style="text-align:center;color:#999;grid-column:1/-1;padding:40px">لم يتم تحديد تصنيف</p>';
     return;
   }
+  loadCollectionProducts(1);
+});
 
+async function loadCollectionProducts(page) {
+  const grid = document.getElementById('collection-products');
+  
   try {
-    // Fetch collection info + products
-    const [collection, products] = await Promise.all([
-      api._request(`/collections/${collectionId}`),
-      api.getProductsByCollection(collectionId)
-    ]);
+    // Fetch collection info (only once)
+    if (page === 1) {
+      const collection = await api._request(`/collections/${currentCollectionId}`);
+      document.title = `${collection.name} | Sundura Shop`;
+      document.getElementById('collection-title').textContent = collection.name;
+      document.getElementById('breadcrumb-name').textContent = collection.name;
+    }
 
-    // Update page title and breadcrumbs
-    document.title = `${collection.name} | Sundura Shop`;
-    document.getElementById('collection-title').textContent = collection.name;
-    document.getElementById('breadcrumb-name').textContent = collection.name;
+    const res = await api._request(`/products?collectionId=${currentCollectionId}&page=${page}&limit=${LIMIT}`);
+    
+    const products = Array.isArray(res) ? res : (res.products || []);
+    const total = res.total !== undefined ? res.total : products.length;
+    totalPages = res.totalPages || Math.ceil(total / LIMIT) || 1;
+    currentPage = page;
 
     if (!products || products.length === 0) {
-      grid.innerHTML = '<div style="text-align:center;padding:60px 20px;color:#999;grid-column:1/-1"><p style="font-size:2rem;margin-bottom:8px">🛍️</p><p>لا توجد منتجات في هذا التصنيف حالياً</p></div>';
+      if (page === 1) {
+        grid.innerHTML = '<div style="text-align:center;padding:60px 20px;color:#999;grid-column:1/-1"><p style="font-size:2rem;margin-bottom:8px">🛍️</p><p>لا توجد منتجات في هذا التصنيف حالياً</p></div>';
+      }
       return;
     }
 
     grid.innerHTML = products.map(p => renderProductCard(p)).join('');
+    renderPagination();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   } catch (err) {
     grid.innerHTML = '<p style="text-align:center;color:#ef4444;grid-column:1/-1;padding:40px">فشل تحميل المنتجات. يرجى المحاولة لاحقاً.</p>';
   }
-});
+}
 
+function renderPagination() {
+  let nav = document.getElementById('pagination-nav');
+  if (!nav) {
+    nav = document.createElement('div');
+    nav.id = 'pagination-nav';
+    document.getElementById('collection-products').after(nav);
+  }
+
+  if (totalPages <= 1) {
+    nav.innerHTML = '';
+    return;
+  }
+
+  nav.innerHTML = `
+    <div style="display:flex; justify-content:center; align-items:center; gap:12px; margin:40px 0;">
+      <button class="btn btn-secondary" onclick="changePage(${currentPage + 1})" ${currentPage >= totalPages ? 'disabled' : ''} style="padding:8px 16px; border-radius:8px;">التالي ←</button>
+      <div style="font-weight:600; color:#475569;">صفحة ${currentPage} من ${totalPages}</div>
+      <button class="btn btn-secondary" onclick="changePage(${currentPage - 1})" ${currentPage <= 1 ? 'disabled' : ''} style="padding:8px 16px; border-radius:8px;">→ السابق</button>
+    </div>
+  `;
+}
+
+window.changePage = function(page) {
+  if (page < 1 || page > totalPages) return;
+  loadCollectionProducts(page);
+};
 
 function getImg(product) {
   if (product.images && product.images.length > 0) return product.images[0];
