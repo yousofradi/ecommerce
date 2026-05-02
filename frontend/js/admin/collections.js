@@ -41,7 +41,8 @@ async function loadCollections() {
     }
 
     list.innerHTML = cols.map(c => `
-      <div class="collection-row" data-name="${c.name.toLowerCase()}" onclick="if(!event.target.closest('.action-menu') && !event.target.closest('.action-dropdown')) window.location.href='collection-form?id=${c._id}'">
+      <div class="collection-row" data-name="${c.name.toLowerCase()}" style="grid-template-columns: 40px 60px 1fr 100px 100px;" onclick="if(!event.target.closest('.action-menu') && !event.target.closest('.action-dropdown') && !event.target.closest('input[type=checkbox]')) window.location.href='collection-form?id=${c._id}'">
+        <div style="text-align: center;"><input type="checkbox" class="collection-checkbox" data-id="${c._id}" onchange="updateBulkBar()"></div>
         ${c.imageUrl 
           ? `<img src="${c.imageUrl}" class="collection-img" alt="${c.name}">`
           : `<div class="collection-img-placeholder">بدون صورة</div>`
@@ -57,6 +58,9 @@ async function loadCollections() {
         </div>
       </div>
     `).join('');
+    
+    // Reset selection state
+    unselectAll();
   } catch (e) {
     list.innerHTML = '<div style="padding:40px;text-align:center;color:red">فشل تحميل التصنيفات</div>';
   }
@@ -85,3 +89,64 @@ async function deleteCol(id) {
     showToast('فشل الحذف', 'error');
   }
 }
+
+// ── Bulk Actions ──────────────────────────────────────────
+
+window.toggleSelectAll = function() {
+  const master = document.getElementById('select-all-collections');
+  const checkboxes = document.querySelectorAll('.collection-checkbox');
+  checkboxes.forEach(cb => {
+    cb.checked = master.checked;
+  });
+  updateBulkBar();
+};
+
+window.updateBulkBar = function() {
+  const bar = document.getElementById('bulk-actions-bar');
+  const selected = document.querySelectorAll('.collection-checkbox:checked');
+  const badge = document.getElementById('selected-count-badge');
+  
+  if (selected.length > 0) {
+    bar.style.display = 'flex';
+    badge.innerText = selected.length;
+  } else {
+    bar.style.display = 'none';
+  }
+  
+  // Update master checkbox state
+  const master = document.getElementById('select-all-collections');
+  const all = document.querySelectorAll('.collection-checkbox');
+  if (master) {
+    master.checked = all.length > 0 && selected.length === all.length;
+    master.indeterminate = selected.length > 0 && selected.length < all.length;
+  }
+};
+
+window.unselectAll = function() {
+  const checkboxes = document.querySelectorAll('.collection-checkbox');
+  checkboxes.forEach(cb => cb.checked = false);
+  const master = document.getElementById('select-all-collections');
+  if (master) {
+    master.checked = false;
+    master.indeterminate = false;
+  }
+  updateBulkBar();
+};
+
+window.bulkDelete = async function() {
+  const selected = document.querySelectorAll('.collection-checkbox:checked');
+  const ids = Array.from(selected).map(cb => cb.getAttribute('data-id'));
+  
+  if (ids.length === 0) return;
+  
+  const confirmed = await window.showConfirmModal('تأكيد الحذف', `هل أنت متأكد من حذف ${ids.length} تصنيفات نهائياً؟`);
+  if (!confirmed) return;
+  
+  try {
+    await api.deleteCollectionsBatch(ids);
+    showToast('تم حذف التصنيفات بنجاح');
+    loadCollections();
+  } catch (err) {
+    showToast(err.message || 'فشل حذف التصنيفات', 'error');
+  }
+};

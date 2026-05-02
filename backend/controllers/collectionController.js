@@ -48,3 +48,15 @@ exports.deleteCollection = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+exports.deleteCollectionsBatch = async (req, res) => {
+  try {
+    const { collectionIds } = req.body;
+    if (!Array.isArray(collectionIds)) return res.status(400).json({ error: 'collectionIds must be an array' });
+    
+    await Collection.deleteMany({ _id: { $in: collectionIds } });
+    res.json({ message: 'Collections deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};

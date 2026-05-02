@@ -40,6 +40,7 @@ const api = {
   createCollection(d) { return this._request('/collections', { method: 'POST', body: JSON.stringify(d), admin: true }); },
   updateCollection(id, d) { return this._request(`/collections/${id}`, { method: 'PUT', body: JSON.stringify(d), admin: true }); },
   deleteCollection(id) { return this._request(`/collections/${id}`, { method: 'DELETE', admin: true }); },
+  deleteCollectionsBatch(collectionIds) { return this._request('/collections/delete/batch', { method: 'POST', body: JSON.stringify({ collectionIds }), admin: true }); },
 
   // Orders
   createOrder(d) { return this._request('/orders', { method: 'POST', body: JSON.stringify(d) }); },
