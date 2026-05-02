@@ -612,6 +612,61 @@ input[type=number] {
   .admin-card { overflow-x: auto; }
 }
 
+/* ── Category / Collections Grid ─────────────────────── */
+.cat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  direction: rtl;
+  max-width: 100%;
+  padding: 16px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+.cat-item {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  aspect-ratio: 1 / 1;
+  display: block;
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.cat-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: initial;
+  display: block;
+}
+.cat-label {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255,255,255,0.93);
+  padding: 6px 10px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1d2939;
+  font-family: inherit;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .cat-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    padding: 10px;
+  }
+  .cat-label {
+    font-size: 13px;
+    padding: 5px 8px;
+  }
+}
+
 /* Tablet adjustments */
 @media (max-width: 768px) and (min-width: 601px) {
   .admin-main { padding: 20px; }

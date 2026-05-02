@@ -89,13 +89,13 @@ function renderCollectionSection(s, collections) {
   return `
     <section class="home-section" id="collections-section">
       ${s.showTitle !== false && s.title ? `<h2 class="home-section-title">${s.title}</h2>` : ''}
-      <div class="collections-grid" id="collections-grid">
+      <div class="cat-grid" id="collections-grid">
         ${displayCols.map(c => {
           const img = c.imageUrl || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2Y1ZWZlOSIvPjwvc3ZnPg==';
           return `
-            <a href="collection?id=${c._id}" class="collection-card">
-              <img src="${img}" alt="${c.name}" class="collection-card-img" loading="lazy" onerror="this.style.background='#f5efe9'">
-              ${s.showNames !== false ? `<div class="collection-card-title">${c.name}</div>` : ''}
+            <a href="collection?id=${c._id}" class="cat-item">
+              <img src="${img}" alt="${c.name}" loading="lazy" onerror="this.style.background='#f5efe9'">
+              ${s.showNames !== false ? `<div class="cat-label">${c.name}</div>` : ''}
             </a>`;
         }).join('')}
       </div>
