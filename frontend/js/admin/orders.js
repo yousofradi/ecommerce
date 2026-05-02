@@ -209,6 +209,16 @@ window.bulkAction = async function(action) {
     } else {
       await archiveSelected();
     }
+  } else if (action === 'cancel') {
+    const confirmed = await window.showConfirmModal('إلغاء الطلبات', `هل أنت متأكد من إلغاء ${orderIds.length} طلبات؟`);
+    if (!confirmed) return;
+    try {
+      await api.cancelOrdersBatch(orderIds);
+      showToast('تم إلغاء الطلبات بنجاح');
+      loadOrders();
+    } catch (err) {
+      showToast(err.message || 'فشل إلغاء الطلبات', 'error');
+    }
   } else if (action === 'delete') {
     const confirmed = await window.showConfirmModal('تأكيد الحذف', `هل أنت متأكد من حذف ${orderIds.length} طلبات نهائياً؟`);
     if (!confirmed) return;
