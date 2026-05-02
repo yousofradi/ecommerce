@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Order Confirmed — eCommerce Store</title>
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/store.css">
 </head>
 <body>
   <div class="page-wrapper">
@@ -28,8 +29,8 @@
     <div class="container">
       <div class="success-container fade-in">
         <div class="success-icon">✅</div>
-        <h1 class="page-title">Order Placed!</h1>
-        <p class="page-subtitle">Thank you for your order. We'll get it to you soon.</p>
+        <h1 class="page-title">تم تأكيد الطلب!</h1>
+        <p class="page-subtitle">شكراً لطلبك. سنقوم بتوصيله في أقرب وقت.</p>
         <div class="success-order-id" id="order-id-display" style="font-size: 1.25rem; font-weight: 700; color: var(--primary); margin-bottom: 24px;">Loading...</div>
         
         <div id="order-details-container" style="display:none; text-align: right; width: 100%; max-width: 500px; margin: 0 auto 32px; background: #f8fafc; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
@@ -86,7 +87,8 @@
       const whatsappBtn = document.getElementById('whatsapp-btn');
       
       if (orderId) {
-        el.textContent = 'رقم الطلب: ' + orderId;
+        const displayId = orderId.replace('Order-', '');
+        el.textContent = 'رقم الطلب: ' + displayId;
         
         if (orderDataStr) {
           try {
