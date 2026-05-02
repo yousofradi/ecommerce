@@ -11,8 +11,8 @@
     .radio-option input[type="radio"] { display: none; }
     .radio-option label {
       display: flex; align-items: center; justify-content: center;
-      width: 100%; cursor: pointer; gap: 12px;
-      background: #fff; padding: 10px 24px; border-radius: 50px;
+      width: 100%; cursor: pointer; gap: 6px;
+      background: #fff; padding: 8px 12px; border-radius: 50px;
       border: 1.5px solid #e5e7eb; transition: all 0.2s ease;
     }
     .radio-option input[type="radio"]:checked + label {
@@ -87,21 +87,21 @@
             <textarea class="form-control" id="cust-notes" placeholder="ملاحظات إضافية..."></textarea>
           </div>
           <h2 class="mb-24 mt-32">طريقة الدفع</h2>
-          <div class="radio-options mb-24">
-            <div class="radio-option" style="margin-bottom: 12px;">
+          <div class="radio-options mb-24" style="display: flex; gap: 8px;">
+            <div class="radio-option" style="flex: 1;">
               <input type="radio" name="payment" id="pay-instapay" value="instapay">
               <label for="pay-instapay">
-                <div style="display: flex; align-items: center; line-height: 1; font-style: italic; font-weight: 900; font-size: 1.1rem; letter-spacing: -0.5px;">
+                <div style="display: flex; align-items: center; line-height: 1; font-style: italic; font-weight: 900; font-size: 0.8rem; letter-spacing: -0.5px;">
                   <span style="color:#4a2c82;">INSTA</span><span style="color:#f26522;">PAY</span>
                 </div>
-                <span dir="ltr" style="font-size: 1.2rem; font-weight: 800; color: #111827; letter-spacing: 0.5px;">01016612519</span>
+                <span dir="ltr" style="font-size: 0.85rem; font-weight: 800; color: #111827;">01016612519</span>
               </label>
             </div>
-            <div class="radio-option" style="margin-bottom: 12px;">
+            <div class="radio-option" style="flex: 1;">
               <input type="radio" name="payment" id="pay-vodafone" value="vodafone_cash">
               <label for="pay-vodafone">
-                <div style="background: #e60000; color: #fff; padding: 4px 10px; border-radius: 6px; font-weight: bold; font-size: 0.8rem; display: flex; align-items: center; line-height: 1;">فودافون كاش</div>
-                <span dir="ltr" style="font-size: 1.2rem; font-weight: 800; color: #111827; letter-spacing: 0.5px;">01016612519</span>
+                <div style="background: #e60000; color: #fff; padding: 2px 5px; border-radius: 4px; font-weight: bold; font-size: 0.6rem; display: flex; align-items: center; line-height: 1;">فودافون</div>
+                <span dir="ltr" style="font-size: 0.85rem; font-weight: 800; color: #111827;">01016612519</span>
               </label>
             </div>
           </div>
