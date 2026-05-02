@@ -167,6 +167,55 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ── Apply Global Settings ──────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  // Only apply to storefront (not admin pages)
+  if (!document.querySelector('.admin-layout')) {
+    try {
+      const settings = await api.getSetting('sundura_global_settings');
+      if (settings) {
+        // Logo
+        if (settings.storeLogo) {
+          document.querySelectorAll('.store-logo-img').forEach(img => {
+            img.src = settings.storeLogo;
+          });
+        }
+        
+        // Favicon
+        if (settings.storeFavicon) {
+          let link = document.querySelector("link[rel~='icon']");
+          if (!link) {
+            link = document.createElement('link');
+            link.rel = 'icon';
+            document.head.appendChild(link);
+          }
+          link.href = settings.storeFavicon;
+        }
+
+        // Title/Name
+        if (settings.storeName) {
+          document.title = document.title.replace('Sundura Shop', settings.storeName).replace('Sundura', settings.storeName);
+          const footerCopy = document.querySelector('.footer-bottom-bar');
+          if (footerCopy) {
+            footerCopy.innerHTML = `© 2025 ${settings.storeName}. جميع الحقوق محفوظة.`;
+          }
+        }
+        
+        // Social Links
+        const footerNav = document.querySelector('.footer-nav');
+        if (footerNav) {
+          let socialHtml = '<div class="footer-socials" style="display:flex;gap:16px;justify-content:center;margin-top:16px;">';
+          if (settings.socialFb) socialHtml += `<a href="${settings.socialFb}" target="_blank"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg></a>`;
+          if (settings.socialIg) socialHtml += `<a href="${settings.socialIg}" target="_blank"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></a>`;
+          if (settings.socialTt) socialHtml += `<a href="${settings.socialTt}" target="_blank"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5v3a3 3 0 0 1-3-3v8a8 8 0 1 1-8-8 1 1 0 0 1 1 1z"></path></svg></a>`;
+          if (settings.socialWa) {
+            const waLink = settings.socialWa.startsWith('http') ? settings.socialWa : `https://wa.me/${settings.socialWa.replace(/[^0-9+]/g, '')}`;
+            socialHtml += `<a href="${waLink}" target="_blank"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg></a>`;
+            
+            // Also update any existing wa links
+            document.querySelectorAll('a[href^="https://wa.me/"]').forEach(a => {
+              a.href = waLink;
+            });
+          }
           socialHtml += '</div>';
           
           // Append socials after nav links
@@ -179,7 +228,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-
 // --- Global Slide Menu Logic ---
 api.openMenu = function() {
   if(!document.getElementById('slide-menu-overlay')) {
@@ -187,13 +235,13 @@ api.openMenu = function() {
       <div class="slide-cart-overlay" id="slide-menu-overlay" onclick="api.closeMenu()"></div>
       <div class="slide-menu" id="slide-menu-container">
         <div class="slide-menu-header">
-          <h3 style="margin:0; font-size:1.15rem; font-weight:700">?????????</h3>
+          <h3 style="margin:0; font-size:1.15rem; font-weight:700">التصنيفات</h3>
           <button class="slide-cart-back" onclick="api.closeMenu()" style="transform:scaleX(-1)">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
           </button>
         </div>
         <div class="slide-menu-body" id="slide-menu-body">
-          <div style="text-align:center;padding:20px;color:#999;">???? ???????...</div>
+          <div style="text-align:center;padding:20px;color:#999;">جاري التحميل...</div>
         </div>
       </div>
     `;
@@ -202,12 +250,12 @@ api.openMenu = function() {
     api.getCollections().then(cols => {
       const body = document.getElementById('slide-menu-body');
       if(!cols || cols.length === 0) {
-        body.innerHTML = '<div style="padding:20px;text-align:center;color:#999">?? ???? ???????</div>';
+        body.innerHTML = '<div style="padding:20px;text-align:center;color:#999">لا توجد تصنيفات</div>';
         return;
       }
       body.innerHTML = cols.map(c => `<a href="collection?id=${c._id}" class="slide-menu-item" onclick="api.closeMenu()">${c.name}</a>`).join('');
     }).catch(err => {
-      document.getElementById('slide-menu-body').innerHTML = '<div style="padding:20px;text-align:center;color:red">??? ???</div>';
+      document.getElementById('slide-menu-body').innerHTML = '<div style="padding:20px;text-align:center;color:red">حدث خطأ</div>';
     });
   }
   
