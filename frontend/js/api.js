@@ -125,6 +125,42 @@ const api = {
       formData.append('image', file);
       xhr.send(formData);
     });
+  },
+  
+  importProducts(file, deleteAll, onProgress) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `${API_BASE}/products/import`, true);
+      xhr.setRequestHeader('x-admin-key', this._adminKey());
+      
+      if (onProgress && xhr.upload) {
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            const percentComplete = Math.round((e.loaded / e.total) * 100);
+            onProgress(percentComplete);
+          }
+        });
+      }
+      
+      xhr.onload = function() {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            resolve(JSON.parse(xhr.responseText));
+          } catch(e) { resolve({}); }
+        } else {
+          try {
+            reject(new Error(JSON.parse(xhr.responseText).error));
+          } catch(e) { reject(new Error('Import failed')); }
+        }
+      };
+      
+      xhr.onerror = () => reject(new Error('Network Error'));
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('deleteAll', deleteAll);
+      xhr.send(formData);
+    });
   }
 };
 

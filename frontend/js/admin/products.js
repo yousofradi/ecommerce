@@ -298,21 +298,13 @@ window.submitCSVImport = async function () {
 
   importBtn.disabled = true;
   progressEl.classList.remove('hidden');
-  progressBar.style.width = '10%';
-  progressText.textContent = 'جاري قراءة الملف...';
+  progressBar.style.width = '0%';
+  progressText.textContent = 'جاري التحميل...';
 
   try {
-    const csvData = await file.text();
-    progressBar.style.width = '30%';
-    progressText.textContent = `جاري إرسال البيانات (${(csvData.length / 1024).toFixed(0)} KB)...`;
-
-    const res = await api._request('/seed', {
-      method: 'POST',
-      body: JSON.stringify({
-        csvData: csvData,
-        clean: cleanCheckbox.checked
-      }),
-      admin: true
+    const res = await api.importProducts(file, cleanCheckbox.checked, (percent) => {
+      progressBar.style.width = percent + '%';
+      progressText.textContent = `جاري رفع الملف... ${percent}%`;
     });
 
     progressBar.style.width = '100%';

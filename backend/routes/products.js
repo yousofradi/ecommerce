@@ -2,6 +2,12 @@ const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
 const adminAuth = require('../middleware/adminAuth');
+const multer = require('multer');
+const csv = require('csv-parser');
+const fs = require('fs');
+const path = require('path');
+
+const upload = multer({ dest: 'uploads/' });
 
 // ── Caching ──────────────────────────────────────────────
 let productCache = new Map();
@@ -287,6 +293,144 @@ router.put('/collection/batch', adminAuth, async (req, res) => {
     res.json({ message: 'Product collections updated successfully' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to update product collections' });
+  }
+});
+
+// POST /api/products/import — Bulk Import
+router.post('/import', adminAuth, upload.single('file'), async (req, res) => {
+  try {
+    const { deleteAll } = req.body;
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+    const cleanPrice = (val) => {
+      if (val === null || val === undefined || val === '') return null;
+      const cleaned = val.toString().replace(/[^\d.]/g, '');
+      return cleaned === '' ? 0 : parseFloat(cleaned);
+    };
+
+    if (deleteAll === 'true') {
+      await Product.deleteMany({});
+      clearCache();
+    }
+
+    // Get all collections to map names
+    const Collection = require('../models/Collection');
+    const collections = await Collection.find({});
+    const collectionMap = {};
+    collections.forEach(c => {
+      collectionMap[c.name.trim()] = c._id;
+    });
+
+    const productsMap = new Map();
+    let lastProduct = null;
+
+    const results = [];
+    const stream = fs.createReadStream(req.file.path).pipe(csv());
+
+    for await (const row of stream) {
+      const title = row['Title'] ? row['Title'].trim() : '';
+      
+      if (title) {
+        // Start a new product
+        const product = {
+          name: title,
+          description: row['Description'] || '',
+          basePrice: cleanPrice(row['Regular Price']),
+          salePrice: row['Sale Price'] ? cleanPrice(row['Sale Price']) : null,
+          imageUrl: '',
+          images: [],
+          status: (row['Status'] || 'active').toLowerCase(),
+          quantity: row['Quantity'] === 'Available' ? null : (parseInt(row['Quantity']) || 0),
+          collectionIds: [],
+          options: []
+        };
+
+        // Handle images
+        if (row['Images']) {
+          const imgs = row['Images'].split(' ').filter(url => url.startsWith('http'));
+          product.images = imgs;
+          product.imageUrl = imgs[0] || '';
+        }
+
+        // Handle collections
+        if (row['Collections']) {
+          const names = row['Collections'].split(',').map(n => n.trim());
+          names.forEach(name => {
+            if (collectionMap[name]) {
+              product.collectionIds.push(collectionMap[name]);
+            }
+          });
+        }
+
+        productsMap.set(title, product);
+        lastProduct = product;
+      }
+
+      // Handle Options (Option1, Option2, Option3)
+      if (lastProduct) {
+        for (let i = 1; i <= 3; i++) {
+          const optName = row[`Option${i} Name`] ? row[`Option${i} Name`].trim() : '';
+          const optValue = row[`Option${i} Value`] ? row[`Option${i} Value`].trim() : '';
+
+          if (optName && optValue) {
+            let group = lastProduct.options.find(g => g.name === optName);
+            if (!group) {
+              group = { name: optName, values: [] };
+              lastProduct.options.push(group);
+            }
+
+            // Option pricing: use row prices if available, otherwise fallback to product prices
+            const price = row['Regular Price'] ? cleanPrice(row['Regular Price']) : lastProduct.basePrice;
+            const sPrice = row['Sale Price'] ? cleanPrice(row['Sale Price']) : lastProduct.salePrice;
+
+            // Avoid duplicates in the same group
+            if (!group.values.find(v => v.label === optValue)) {
+              group.values.push({
+                label: optValue,
+                price: price,
+                salePrice: sPrice
+              });
+            }
+          }
+        }
+      }
+    }
+
+    // Now Upsert products
+    const finalProducts = Array.from(productsMap.values());
+    for (const pData of finalProducts) {
+      // Find current count if creating new
+      if (deleteAll !== 'true') {
+         const existing = await Product.findOne({ name: pData.name });
+         if (!existing) {
+           pData.sortOrder = await Product.countDocuments();
+         }
+      } else {
+        pData.sortOrder = results.length;
+        results.push(pData);
+      }
+      
+      await Product.findOneAndUpdate(
+        { name: pData.name },
+        pData,
+        { upsert: true, new: true, runValidators: true }
+      );
+    }
+
+    // Cleanup file
+    if (fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    clearCache();
+
+    res.json({ message: `Successfully processed ${finalProducts.length} products` });
+
+  } catch (err) {
+    console.error('Import error:', err);
+    if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+    }
+    res.status(500).json({ error: 'Import failed: ' + err.message });
   }
 });
 
