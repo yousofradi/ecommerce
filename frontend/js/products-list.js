@@ -60,9 +60,9 @@ function renderPagination() {
 
   let html = `
     <div style="display:flex; justify-content:center; align-items:center; gap:12px; margin:40px 0;">
-      <button class="btn btn-secondary" onclick="changePage(${currentPage - 1})" ${currentPage <= 1 ? 'disabled' : ''} style="padding:8px 16px; border-radius:8px;">السابق ←</button>
+      <button class="btn btn-secondary" onclick="changePage(${currentPage - 1})" ${currentPage <= 1 ? 'disabled' : ''} style="padding:8px 16px; border-radius:8px;">السابق</button>
       <div style="font-weight:600; color:#475569;">صفحة ${currentPage} من ${totalPages}</div>
-      <button class="btn btn-secondary" onclick="changePage(${currentPage + 1})" ${currentPage >= totalPages ? 'disabled' : ''} style="padding:8px 16px; border-radius:8px;">→ التالي</button>
+      <button class="btn btn-secondary" onclick="changePage(${currentPage + 1})" ${currentPage >= totalPages ? 'disabled' : ''} style="padding:8px 16px; border-radius:8px;">التالي</button>
     </div>
   `;
   nav.innerHTML = html;
