@@ -19,10 +19,10 @@ async function loadCollections() {
   try {
     const [cols, productsRes] = await Promise.all([
       api.getCollections(),
-      api.getProducts({ admin: true })
+      api.getProducts(1, 1000, true) // Fetch many products to get accurate counts
     ]);
     
-    const products = Array.isArray(productsRes) ? productsRes : productsRes.products || [];
+    const products = (Array.isArray(productsRes) ? productsRes : productsRes.products || []).filter(p => p.status !== 'draft');
     const counts = {};
     products.forEach(p => {
       if (p.collectionId) {
@@ -59,7 +59,6 @@ async function loadCollections() {
       </div>
     `).join('');
     
-    // Reset selection state
     unselectAll();
   } catch (e) {
     list.innerHTML = '<div style="padding:40px;text-align:center;color:red">فشل تحميل التصنيفات</div>';
@@ -113,7 +112,6 @@ window.updateBulkBar = function() {
     bar.style.display = 'none';
   }
   
-  // Update master checkbox state
   const master = document.getElementById('select-all-collections');
   const all = document.querySelectorAll('.collection-checkbox');
   if (master) {

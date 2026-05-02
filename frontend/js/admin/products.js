@@ -8,13 +8,14 @@ let allProducts = [];
 let currentPage = 1;
 let totalPages = 1;
 let currentLimit = 30;
+let searchQuery = '';
 
 async function loadProducts() {
   const tbody = document.getElementById('products-tbody');
   tbody.innerHTML = '<tr><td colspan="8" class="text-center"><div class="spinner"></div></td></tr>';
   try {
     const [res, collections] = await Promise.all([
-      api.getProducts(currentPage, currentLimit, true),
+      api.getProducts(currentPage, currentLimit, true, searchQuery),
       api.getCollections().catch(() => [])
     ]);
     const colMap = {};
@@ -24,7 +25,7 @@ async function loadProducts() {
     totalPages = res.totalPages || 1;
 
     if (!products.length) {
-      tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted" style="padding:40px">لا توجد منتجات بعد</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted" style="padding:40px">لا توجد منتجات مطابقة للبحث</td></tr>';
       updatePaginationInfo(0);
       return;
     }
@@ -33,10 +34,6 @@ async function loadProducts() {
     renderProducts(collections);
     updatePaginationInfo(res.total || products.length);
     updateBulkActions();
-
-    // Initial filter state
-    window.currentFilter = 'all';
-    window.searchQuery = '';
 
   } catch (err) {
     console.error('Failed to load products:', err);
@@ -100,17 +97,7 @@ function renderProducts(collections) {
     return p.imageUrl || '';
   };
 
-  const query = (window.searchQuery || '').toLowerCase();
-  const filter = window.currentFilter || 'all';
-
-  let filteredProducts = allProducts.filter(p => {
-    // text search
-    const pName = p.name || '';
-    if (query && !pName.toLowerCase().includes(query)) return false;
-    return true;
-  });
-
-  tbody.innerHTML = filteredProducts.map((p, idx) => {
+  tbody.innerHTML = allProducts.map((p, idx) => {
     const mainImg = getMainImage(p);
     const statusLabel = p.status === 'draft' ? 'مسودة' : 'نشط';
     const statusClass = p.status === 'draft' ? 'badge-warning' : 'badge-success';
@@ -120,7 +107,6 @@ function renderProducts(collections) {
       ? `<span style="font-weight:700">${formatPrice(p.salePrice)}</span> <span style="text-decoration:line-through;color:#999;font-size:0.8rem">${formatPrice(p.basePrice)}</span>`
       : `<span style="font-weight:700">${formatPrice(p.basePrice)}</span>`;
 
-    // Find collection names
     const colNames = [];
     if (p.collectionId && colMap[p.collectionId]) colNames.push(colMap[p.collectionId]);
     if (p.collectionIds) p.collectionIds.forEach(id => { if (colMap[id] && !colNames.includes(colMap[id])) colNames.push(colMap[id]); });
@@ -154,7 +140,6 @@ function renderProducts(collections) {
   if (selectAll) selectAll.checked = false;
 }
 
-// Click row to edit
 window.onRowClick = function (event, productId) {
   window.location.href = `product-form?id=${productId}`;
 };
@@ -253,18 +238,20 @@ window.bulkAction = async function (action) {
   }
 };
 
+let searchDebounce;
 window.filterProductsClient = function () {
-  window.searchQuery = document.getElementById('product-search').value;
-  // Use cached collections if available, or just empty array
-  api.getCollections().then(cols => renderProducts(cols)).catch(() => renderProducts([]));
+  searchQuery = document.getElementById('product-search').value;
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(() => {
+    currentPage = 1;
+    loadProducts();
+  }, 400);
 };
 
 window.setFilter = function (f) {
-  window.currentFilter = f;
-  document.querySelectorAll('.order-tab').forEach(t => t.classList.remove('active'));
-  const activeTab = document.querySelector(`.order-tab[data-filter="${f}"]`);
-  if (activeTab) activeTab.classList.add('active');
-  api.getCollections().then(cols => renderProducts(cols)).catch(() => renderProducts([]));
+  // Not used anymore as we moved to server-side search, 
+  // but if we had a status filter on the server we'd use it here.
+  // For now we'll just keep it simple.
 };
 
 async function deleteProduct(id, name) {
@@ -309,7 +296,6 @@ window.submitCSVImport = async function () {
     return;
   }
 
-  // Read file content
   importBtn.disabled = true;
   progressEl.classList.remove('hidden');
   progressBar.style.width = '10%';
@@ -320,7 +306,6 @@ window.submitCSVImport = async function () {
     progressBar.style.width = '30%';
     progressText.textContent = `جاري إرسال البيانات (${(csvData.length / 1024).toFixed(0)} KB)...`;
 
-    // Send to server seed endpoint
     const res = await api._request('/seed', {
       method: 'POST',
       body: JSON.stringify({
@@ -332,9 +317,8 @@ window.submitCSVImport = async function () {
 
     progressBar.style.width = '100%';
     progressText.textContent = '✅ ' + (res.message || 'تم الاستيراد بنجاح!');
-    showToast(res.message || 'تم استيراد المنتجات بنجاح <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;"><polyline points="20 6 9 17 4 12"/></svg>');
+    showToast(res.message || 'تم استيراد المنتجات بنجاح');
 
-    // Reload products after short delay
     setTimeout(() => {
       closeBulkImportModal();
       loadProducts();
@@ -347,4 +331,3 @@ window.submitCSVImport = async function () {
     importBtn.disabled = false;
   }
 };
-
