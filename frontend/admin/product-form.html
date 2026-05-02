@@ -25,6 +25,106 @@
   font-size: 0.82rem; transition: all 0.2s;
 }
 .add-image-btn:hover { border-color: var(--primary-color); color: var(--primary-color); }
+
+  /* Custom Select Component */
+  .custom-select-container {
+    position: relative;
+    width: 100%;
+  }
+  .select-box {
+    min-height: 44px;
+    padding: 6px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--bg-surface);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    cursor: text;
+    transition: all 0.2s;
+  }
+  .select-box:focus-within {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+  }
+  .selected-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .tag {
+    background: #f0fdf4;
+    color: var(--primary-color);
+    border: 1px solid #bbf7d0;
+    padding: 2px 10px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
+  }
+  .tag-remove {
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    color: #ef4444;
+  }
+  .select-search {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 0.95rem;
+    flex: 1;
+    min-width: 100px;
+    padding: 4px 0;
+  }
+  .select-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-top: 4px;
+    max-height: 300px;
+    overflow-y: auto;
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+  }
+  .select-option {
+    padding: 10px 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background 0.2s;
+    font-size: 0.95rem;
+  }
+  .select-option:hover {
+    background: #f8fafc;
+  }
+  .select-option.selected {
+    background: #f0fdf4;
+  }
+  .option-img {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    object-fit: cover;
+    background: #f1f5f9;
+  }
+  .option-name {
+    flex: 1;
+  }
+  .no-results {
+    padding: 20px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+
   </style>
 </head>
 <body>
@@ -121,10 +221,17 @@
             </div>
             <div class="grid-2" style="gap:16px">
               <div class="form-group">
-                <label class="form-label">التصنيفات</label>
-                <div id="p-collections-container" style="max-height: 120px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 8px 12px; background: var(--bg-surface); display: flex; flex-direction: column; gap: 6px;">
-                  <!-- Checkboxes will be injected here -->
+                <label class="form-label">المجموعات (التصنيفات)</label>
+                <div class="custom-select-container" id="p-collections-select">
+                  <div class="select-box" id="p-collections-trigger">
+                    <div class="selected-tags" id="selected-collections-tags"></div>
+                    <input type="text" class="select-search" id="p-collections-search" placeholder="ابحث عن مجموعة...">
+                  </div>
+                  <div class="select-dropdown" id="p-collections-dropdown" style="display:none">
+                    <!-- Options will be injected here -->
+                  </div>
                 </div>
+                <input type="hidden" name="collection_ids_hidden" id="p-collections-hidden">
               </div>
               <div class="form-group">
                 <label class="form-label" for="p-quantity">الكمية <span class="text-sm text-muted">(اتركه فارغاً = غير محدود)</span></label>

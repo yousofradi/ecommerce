@@ -8,16 +8,93 @@ document.addEventListener('DOMContentLoaded', async () => {
   const params = new URLSearchParams(window.location.search);
   editId = params.get('id');
 
+  let allCollections = [];
+  let selectedCollectionIds = [];
+
   try {
-    const collections = await api.getCollections();
-    const container = document.getElementById('p-collections-container');
-    container.innerHTML = collections.map(c => `
-      <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.9rem;">
-        <input type="checkbox" name="collection_ids" value="${c._id}">
-        ${c.name}
-      </label>
-    `).join('');
+    allCollections = await api.getCollections();
+    initCollectionSelect();
   } catch(e) {}
+
+  function initCollectionSelect() {
+    const trigger = document.getElementById('p-collections-trigger');
+    const searchInput = document.getElementById('p-collections-search');
+    const dropdown = document.getElementById('p-collections-dropdown');
+    const tagsContainer = document.getElementById('selected-collections-tags');
+    const hiddenInput = document.getElementById('p-collections-hidden');
+
+    function renderTags() {
+      tagsContainer.innerHTML = selectedCollectionIds.map(id => {
+        const col = allCollections.find(c => c._id === id);
+        if (!col) return '';
+        return `
+          <div class="tag">
+            ${col.name}
+            <span class="tag-remove" onclick="removeCollectionTag('${id}')">×</span>
+          </div>
+        `;
+      }).join('');
+      hiddenInput.value = JSON.stringify(selectedCollectionIds);
+    }
+
+    window.removeCollectionTag = (id) => {
+      selectedCollectionIds = selectedCollectionIds.filter(cid => cid !== id);
+      renderTags();
+      renderOptions();
+    };
+
+    function renderOptions(filter = '') {
+      const filtered = allCollections.filter(c => 
+        c.name.toLowerCase().includes(filter.toLowerCase())
+      );
+
+      if (filtered.length === 0) {
+        dropdown.innerHTML = '<div class="no-results">لا توجد نتائج</div>';
+        return;
+      }
+
+      dropdown.innerHTML = filtered.map(c => {
+        const isSelected = selectedCollectionIds.includes(c._id);
+        const img = c.imageUrl || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjZjFmNWY5Ii8+PC9zdmc+';
+        return `
+          <div class="select-option ${isSelected ? 'selected' : ''}" onclick="toggleCollection('${c._id}')">
+            <img src="${img}" class="option-img" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjZjFmNWY5Ii8+PC9zdmc+'">
+            <span class="option-name">${c.name}</span>
+            ${isSelected ? '<span style="color:var(--primary-color)">✓</span>' : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.toggleCollection = (id) => {
+      if (selectedCollectionIds.includes(id)) {
+        selectedCollectionIds = selectedCollectionIds.filter(cid => cid !== id);
+      } else {
+        selectedCollectionIds.push(id);
+      }
+      renderTags();
+      renderOptions(searchInput.value);
+    };
+
+    trigger.addEventListener('click', () => {
+      dropdown.style.display = 'block';
+      searchInput.focus();
+      renderOptions(searchInput.value);
+    });
+
+    searchInput.addEventListener('input', (e) => {
+      renderOptions(e.target.value);
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!document.getElementById('p-collections-select').contains(e.target)) {
+        dropdown.style.display = 'none';
+      }
+    });
+
+    // Initial render
+    renderTags();
+  }
 
   if (editId) {
     document.getElementById('form-title').textContent = 'تعديل المنتج';
@@ -32,9 +109,24 @@ document.addEventListener('DOMContentLoaded', async () => {
       
       const colIds = p.collectionIds || [];
       if (p.collectionId && !colIds.includes(p.collectionId)) colIds.push(p.collectionId);
-      document.querySelectorAll('input[name="collection_ids"]').forEach(cb => {
-        if (colIds.includes(cb.value)) cb.checked = true;
-      });
+      selectedCollectionIds = [...colIds];
+      if (window.removeCollectionTag) { // ensure init was called
+        const tagsContainer = document.getElementById('selected-collections-tags');
+        const hiddenInput = document.getElementById('p-collections-hidden');
+        if (tagsContainer) {
+          tagsContainer.innerHTML = selectedCollectionIds.map(id => {
+            const col = allCollections.find(c => c._id === id);
+            if (!col) return '';
+            return `
+              <div class="tag">
+                ${col.name}
+                <span class="tag-remove" onclick="removeCollectionTag('${id}')">×</span>
+              </div>
+            `;
+          }).join('');
+        }
+        if (hiddenInput) hiddenInput.value = JSON.stringify(selectedCollectionIds);
+      }
       
       // Load images
       if (p.images && p.images.length > 0) {
@@ -274,7 +366,6 @@ async function saveProduct(e) {
 
   const salePriceVal = document.getElementById('p-sale-price').value;
   const qtyVal = document.getElementById('p-quantity').value;
-  const selectedCollections = Array.from(document.querySelectorAll('input[name="collection_ids"]:checked')).map(cb => cb.value);
   
   const data = {
     name: document.getElementById('p-name').value.trim(),
@@ -283,8 +374,8 @@ async function saveProduct(e) {
     images: productImages,
     imageUrl: productImages.length > 0 ? productImages[0] : '',
     description: document.getElementById('p-desc').value.trim(),
-    collectionIds: selectedCollections,
-    collectionId: selectedCollections.length > 0 ? selectedCollections[0] : null,
+    collectionIds: selectedCollectionIds,
+    collectionId: selectedCollectionIds.length > 0 ? selectedCollectionIds[0] : null,
     status: document.getElementById('p-status').value,
     quantity: qtyVal !== '' ? Number(qtyVal) : null,
     options: optionGroups.filter(g => g.name && g.values.length && g.values[0].label).map(g => ({...g, required: true}))
