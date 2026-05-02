@@ -324,37 +324,41 @@ router.post('/import', adminAuth, upload.single('file'), async (req, res) => {
     const productsMap = new Map();
     let lastProduct = null;
 
-    const results = [];
-    const stream = fs.createReadStream(req.file.path).pipe(csv());
+    const stream = fs.createReadStream(req.file.path).pipe(csv({
+      mapHeaders: ({ header }) => header.toLowerCase().replace(/\ufeff/g, '').trim()
+    }));
 
     for await (const row of stream) {
-      const title = row['Title'] ? row['Title'].trim() : '';
+      // Keys are now lowercase and trimmed
+      const title = row['title'] ? row['title'].trim() : '';
       
       if (title) {
         // Start a new product
         const product = {
           name: title,
-          description: row['Description'] || '',
-          basePrice: cleanPrice(row['Regular Price']),
-          salePrice: row['Sale Price'] ? cleanPrice(row['Sale Price']) : null,
+          description: row['description'] || '',
+          basePrice: cleanPrice(row['regular price']),
+          salePrice: row['sale price'] ? cleanPrice(row['sale price']) : null,
           imageUrl: '',
           images: [],
-          status: (row['Status'] || 'active').toLowerCase(),
-          quantity: row['Quantity'] === 'Available' ? null : (parseInt(row['Quantity']) || 0),
+          status: (row['status'] || 'active').toLowerCase(),
+          quantity: (row['quantity'] === 'Available' || !row['quantity']) ? null : (parseInt(row['quantity']) || 0),
           collectionIds: [],
           options: []
         };
 
         // Handle images
-        if (row['Images']) {
-          const imgs = row['Images'].split(' ').filter(url => url.startsWith('http'));
+        const imagesVal = row['images'];
+        if (imagesVal) {
+          const imgs = imagesVal.split(/\s+/).filter(url => url.startsWith('http'));
           product.images = imgs;
           product.imageUrl = imgs[0] || '';
         }
 
         // Handle collections
-        if (row['Collections']) {
-          const names = row['Collections'].split(',').map(n => n.trim());
+        const collectionsVal = row['collections'];
+        if (collectionsVal) {
+          const names = collectionsVal.split(',').map(n => n.trim()).filter(Boolean);
           names.forEach(name => {
             if (collectionMap[name]) {
               product.collectionIds.push(collectionMap[name]);
@@ -369,8 +373,8 @@ router.post('/import', adminAuth, upload.single('file'), async (req, res) => {
       // Handle Options (Option1, Option2, Option3)
       if (lastProduct) {
         for (let i = 1; i <= 3; i++) {
-          const optName = row[`Option${i} Name`] ? row[`Option${i} Name`].trim() : '';
-          const optValue = row[`Option${i} Value`] ? row[`Option${i} Value`].trim() : '';
+          const optName = row[`option${i} name`] ? row[`option${i} name`].trim() : '';
+          const optValue = row[`option${i} value`] ? row[`option${i} value`].trim() : '';
 
           if (optName && optValue) {
             let group = lastProduct.options.find(g => g.name === optName);
@@ -380,8 +384,11 @@ router.post('/import', adminAuth, upload.single('file'), async (req, res) => {
             }
 
             // Option pricing: use row prices if available, otherwise fallback to product prices
-            const price = row['Regular Price'] ? cleanPrice(row['Regular Price']) : lastProduct.basePrice;
-            const sPrice = row['Sale Price'] ? cleanPrice(row['Sale Price']) : lastProduct.salePrice;
+            const rowReg = row['regular price'];
+            const rowSale = row['sale price'];
+            
+            const price = rowReg ? cleanPrice(rowReg) : lastProduct.basePrice;
+            const sPrice = rowSale ? cleanPrice(rowSale) : lastProduct.salePrice;
 
             // Avoid duplicates in the same group
             if (!group.values.find(v => v.label === optValue)) {
@@ -398,6 +405,7 @@ router.post('/import', adminAuth, upload.single('file'), async (req, res) => {
 
     // Now Upsert products
     const finalProducts = Array.from(productsMap.values());
+    let index = 0;
     for (const pData of finalProducts) {
       // Find current count if creating new
       if (deleteAll !== 'true') {
@@ -406,8 +414,7 @@ router.post('/import', adminAuth, upload.single('file'), async (req, res) => {
            pData.sortOrder = await Product.countDocuments();
          }
       } else {
-        pData.sortOrder = results.length;
-        results.push(pData);
+        pData.sortOrder = index++;
       }
       
       await Product.findOneAndUpdate(
@@ -418,19 +425,16 @@ router.post('/import', adminAuth, upload.single('file'), async (req, res) => {
     }
 
     // Cleanup file
-    if (fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
-    }
+    try { fs.unlinkSync(req.file.path); } catch(e) {}
     clearCache();
 
-    res.json({ message: `Successfully processed ${finalProducts.length} products` });
-
+    res.json({ message: `تم استيراد ${finalProducts.length} منتج بنجاح`, count: finalProducts.length });
   } catch (err) {
-    console.error('Import error:', err);
-    if (req.file && fs.existsSync(req.file.path)) {
-        fs.unlinkSync(req.file.path);
+    console.error('Import Error:', err);
+    if (req.file) {
+      try { fs.unlinkSync(req.file.path); } catch(e) {}
     }
-    res.status(500).json({ error: 'Import failed: ' + err.message });
+    res.status(500).json({ error: 'فشل استيراد المنتجات: ' + err.message });
   }
 });
 
