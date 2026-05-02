@@ -344,7 +344,7 @@ tr:hover td { background: #fafbfc; }
 }
 .slide-cart-overlay.open { opacity: 1; visibility: visible; }
 .slide-cart {
-  position: fixed; top: 0; left: -420px; width: 70%; max-width: 400px; height: 100vh;
+  position: fixed; top: 0; left: -420px; width: 85%; max-width: 400px; height: 100vh;
   background: #fff; z-index: 1001; box-shadow: 4px 0 24px rgba(0,0,0,0.15);
   transition: left 0.3s cubic-bezier(0.4,0,0.2,1); display: flex; flex-direction: column;
 }
@@ -416,7 +416,7 @@ tr:hover td { background: #fafbfc; }
 }
 .sc-item-img-placeholder { width: 72px; height: 72px; border-radius: 10px; background: #f3f4f6; flex-shrink: 0; }
 .sc-item-info { flex: 1; min-width: 0; }
-.sc-item-name { font-size: 0.9rem; font-weight: 600; color: #111827; margin-bottom: 3px; line-height: 1.35; }
+.sc-item-name { font-size: 0.9rem; font-weight: 600; color: #111827; margin-bottom: 3px; line-height: 1.35; white-space: normal; word-break: break-word; }
 .sc-item-opts { font-size: 0.78rem; color: #6b7280; margin-bottom: 4px; }
 .sc-item-price { font-size: 0.88rem; color: #6b7280; }
 .sc-delete-btn {
