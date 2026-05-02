@@ -57,16 +57,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (err) { showToast('فشل تحميل المنتج', 'error'); }
   }
 
-  document.getElementById('product-form').addEventListener('submit', saveProduct);
-  document.getElementById('add-option-group').addEventListener('click', addOptionGroup);
-  document.getElementById('add-image-btn').addEventListener('click', showImageInput);
 
-  const urlInput = document.getElementById('new-image-url');
-  if (urlInput) {
-    urlInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); addImageFromInput(); }
-    });
-  }
 });
 
 // ── Image Management ────────────────────────────────────

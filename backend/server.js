@@ -17,6 +17,10 @@ app.use('/api/collections', require('./routes/collectionRoutes'));
 app.use('/api/webhooks', require('./routes/webhookRoutes'));
 app.use('/api/settings', require('./routes/settings'));
 app.use('/api/seed', require('./routes/seed'));
+app.use('/api/upload', require('./routes/upload'));
+
+// Serve static uploads
+app.use('/uploads', express.static('uploads'));
 
 // ── Root route ──────────────────────────────────────────
 app.get('/', (req, res) => {

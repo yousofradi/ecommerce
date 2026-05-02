@@ -89,6 +89,21 @@ const api = {
   async checkAdmin() {
     try { await this._request('/orders', { admin: true }); return true; }
     catch { return false; }
+  },
+
+  // File Upload
+  async uploadFile(file) {
+    const formData = new FormData();
+    formData.append('image', file);
+    
+    const res = await fetch(`${API_BASE}/upload`, {
+      method: 'POST',
+      headers: { 'x-admin-key': this._adminKey() },
+      body: formData
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Upload failed');
+    return data;
   }
 };
 
