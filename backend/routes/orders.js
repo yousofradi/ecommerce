@@ -137,6 +137,56 @@ router.post('/unarchive/batch', adminAuth, async (req, res) => {
   }
 });
 
+// POST /api/orders/cancel/batch — cancel multiple orders
+router.post('/cancel/batch', adminAuth, async (req, res) => {
+  try {
+    const { orderIds } = req.body;
+    if (!Array.isArray(orderIds)) return res.status(400).json({ error: 'orderIds must be an array' });
+    
+    await Order.updateMany(
+      { orderId: { $in: orderIds } },
+      { $set: { status: 'cancelled' } }
+    );
+
+    // Fetch to send webhooks
+    const orders = await Order.find({ orderId: { $in: orderIds } });
+    for (const order of orders) {
+      const payload = order.toObject();
+      payload.cancelled = true;
+      payload.totalPrice = 0;
+      payload.shippingFee = 0;
+      payload.discount = 0;
+      payload.paidAmount = 0;
+      payload.items = payload.items.map(item => ({
+        ...item,
+        basePrice: 0,
+        finalPrice: 0,
+        quantity: 0,
+        discount: 0,
+        selectedOptions: (item.selectedOptions || []).map(opt => ({ ...opt, price: 0 }))
+      }));
+      sendWebhook('order.cancelled', payload);
+    }
+
+    res.json({ message: 'Orders cancelled successfully' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to cancel orders' });
+  }
+});
+
+// POST /api/orders/delete/batch — delete multiple orders
+router.post('/delete/batch', adminAuth, async (req, res) => {
+  try {
+    const { orderIds } = req.body;
+    if (!Array.isArray(orderIds)) return res.status(400).json({ error: 'orderIds must be an array' });
+    
+    await Order.deleteMany({ orderId: { $in: orderIds } });
+    res.json({ message: 'Orders deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete orders' });
+  }
+});
+
 // POST /api/orders/:orderId/cancel — cancel order
 router.post('/:orderId/cancel', adminAuth, async (req, res) => {
   try {

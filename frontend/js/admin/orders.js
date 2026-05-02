@@ -222,11 +222,8 @@ window.bulkAction = async function(action) {
   } else if (action === 'delete') {
     const confirmed = await window.showConfirmModal('تأكيد الحذف', `هل أنت متأكد من حذف ${orderIds.length} طلبات نهائياً؟`);
     if (!confirmed) return;
-    
     try {
-      for (const id of orderIds) {
-        await api.deleteOrder(id);
-      }
+      await api.deleteOrdersBatch(orderIds);
       showToast('تم حذف الطلبات بنجاح');
       loadOrders();
     } catch (err) {
