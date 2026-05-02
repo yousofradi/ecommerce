@@ -138,8 +138,22 @@
             </div>
           </div>
 
+          <!-- Images -->
+          <div class="admin-card mb-24">
+            <h3 class="mb-16">صور المنتج</h3>
+            <p class="text-sm text-muted mb-16">اسحب الصور وأفلتها هنا أو اضغط للإضافة من جهازك. الصورة الأولى هي الصورة الرئيسية.</p>
+            <div class="images-list" id="images-list">
+              <!-- Images will be rendered here -->
+              <label class="add-image-btn" id="add-image-dropzone">
+                <input type="file" id="image-file-input" multiple accept="image/*" class="hidden" style="display:none;">
+                <span class="plus">+</span>
+                <span>إضافة صورة</span>
+              </label>
+            </div>
+            <div id="upload-status" class="text-sm text-muted mt-8 hidden" style="display:none;">جاري الرفع...</div>
+          </div>
 
-          
+          <!-- Option Groups -->
           <div class="admin-card mb-24">
             <div class="flex-between mb-16">
               <div>
