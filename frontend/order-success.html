@@ -28,13 +28,33 @@
     <main class="page-content">
     <div class="container">
       <div class="success-container fade-in">
-        <div class="success-icon">✅</div>
-        <h1 class="page-title">تم تأكيد الطلب!</h1>
-        <p class="page-subtitle">شكراً لطلبك. سنقوم بتوصيله في أقرب وقت.</p>
-        <div class="success-order-id" id="order-id-display" style="font-size: 1.25rem; font-weight: 700; color: var(--primary); margin-bottom: 24px;">Loading...</div>
+        <div style="text-align: right; padding: 0 10px;">
+          <h1 style="font-size: 1.3rem; margin-bottom: 12px; color: #111827; font-weight: 700;">تم حجز الطلب بنجاح</h1>
+          <p style="font-weight: 700; margin-bottom: 8px; font-size: 0.95rem; color: #111827;">للتأكيد يرجي ارسال اسكرين بالتحويل علي الواتساب</p>
+          <p style="margin-bottom: 4px; font-size: 0.9rem; color: #111827;">- تحويل المبلغ كامل</p>
+          <p style="margin-bottom: 24px; font-size: 0.9rem; color: #111827;">- تحويل النصف والباقي عند الاستلام</p>
+          
+          <div style="display: flex; align-items: center; justify-content: space-between; border: 2px solid #111827; border-radius: 50px; padding: 12px 20px; margin: 0 auto 32px; max-width: 400px; cursor: pointer; background: #fff;" onclick="navigator.clipboard.writeText('01016612519').then(() => alert('تم النسخ!'))">
+            <div style="color: #6b7280; display: flex; align-items: center;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            </div>
+            <div style="font-size: 1.25rem; font-weight: 700; color: #111827; letter-spacing: 1px;">01016612519</div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <!-- InstaPay Logo -->
+              <div style="display: flex; align-items: center; line-height: 1;">
+                 <span style="color:#4a2c82;font-weight:900;font-style:italic;font-size:14px;letter-spacing:-0.5px;">INSTA</span><span style="color:#f26522;font-weight:900;font-style:italic;font-size:14px;">PAY</span>
+              </div>
+              <!-- VF Cash Logo -->
+              <div style="background: #e60000; color: #fff; padding: 3px 6px; border-radius: 4px; font-weight: bold; font-size: 10px; display: flex; align-items: center; gap: 4px; line-height: 1;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+                فودافون كاش
+              </div>
+            </div>
+          </div>
+        </div>
         
         <div id="order-details-container" style="display:none; text-align: right; width: 100%; max-width: 500px; margin: 0 auto 32px; background: #f8fafc; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
-          <h3 style="margin: 0 0 16px; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">ملخص الطلب</h3>
+          <h3 style="margin: 0 0 16px; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; font-size: 1.2rem;">ملخص الطلب <span id="summary-order-id" style="color: #0f172a;"></span></h3>
           
           <div style="margin-bottom: 16px;">
             <h4 style="margin: 0 0 8px; color: #475569; font-size: 0.95rem;">بيانات العميل</h4>
@@ -66,12 +86,12 @@
           </div>
         </div>
 
-        <div class="mt-32" style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
-          <a href="index" class="btn btn-secondary">العودة للمتجر</a>
-          <a href="#" id="whatsapp-btn" target="_blank" class="btn" style="background: #25D366; color: #fff; border: none; display: none; align-items: center; gap: 8px;">
+        <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: nowrap; margin-bottom: 40px; padding: 0 10px;">
+          <a href="#" id="whatsapp-btn" target="_blank" class="btn" style="flex: 2; background: #25D366; color: #fff; border: none; display: none; justify-content: center; align-items: center; gap: 8px; font-size: 1rem; border-radius: 8px; padding: 12px;">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
             تواصل معنا على واتساب
           </a>
+          <a href="index.html" class="btn btn-secondary" style="flex: 1; display: flex; justify-content: center; align-items: center; background: #fff; color: #374151; border: 1px solid #d1d5db; border-radius: 8px; font-size: 1rem; padding: 12px;">العودة للمتجر</a>
         </div>
       </div>
     </div>
@@ -83,12 +103,12 @@
     document.addEventListener('DOMContentLoaded', () => {
       const orderId = sessionStorage.getItem('lastOrderId');
       const orderDataStr = sessionStorage.getItem('lastOrderData');
-      const el = document.getElementById('order-id-display');
+      const summaryOrderIdEl = document.getElementById('summary-order-id');
       const whatsappBtn = document.getElementById('whatsapp-btn');
       
       if (orderId) {
         const displayId = orderId.replace('Order-', '');
-        el.textContent = 'رقم الطلب: ' + displayId;
+        if (summaryOrderIdEl) summaryOrderIdEl.textContent = displayId;
         
         if (orderDataStr) {
           try {
@@ -127,8 +147,6 @@
         
         sessionStorage.removeItem('lastOrderId');
         sessionStorage.removeItem('lastOrderData');
-      } else {
-        el.textContent = 'لا يوجد طلب حديث';
       }
       Cart.clear();
     });
