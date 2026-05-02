@@ -28,4 +28,10 @@ const productSchema = new mongoose.Schema({
   quantity: { type: Number, default: null }
 }, { timestamps: true });
 
+productSchema.index({ active: 1, status: 1 });
+productSchema.index({ collectionId: 1 });
+productSchema.index({ collectionIds: 1 });
+productSchema.index({ handle: 1 });
+productSchema.index({ sortOrder: 1, createdAt: -1 });
+
 module.exports = mongoose.model('Product', productSchema);

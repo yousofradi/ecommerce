@@ -3,12 +3,30 @@ const router = express.Router();
 const Product = require('../models/Product');
 const adminAuth = require('../middleware/adminAuth');
 
+// ── Caching ──────────────────────────────────────────────
+let productCache = new Map();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 mins
+
+function clearCache() {
+  productCache.clear();
+}
+
 // ── Public ──────────────────────────────────────────────
 
 // GET /api/products — list all (with pagination & collection filter)
 router.get('/', async (req, res) => {
   try {
     const { page, limit, admin, collectionId, search } = req.query;
+    
+    // Simple caching for public requests
+    const cacheKey = JSON.stringify({ page, limit, admin, collectionId, search });
+    if (admin !== 'true' && productCache.has(cacheKey)) {
+      const cached = productCache.get(cacheKey);
+      if (Date.now() - cached.time < CACHE_DURATION) {
+        return res.json(cached.data);
+      }
+    }
+
     const query = {};
     
     // If not admin request, only show active products
@@ -44,6 +62,9 @@ router.get('/', async (req, res) => {
     }
 
     const sortObj = { sortOrder: 1, createdAt: -1 };
+    
+    // Optimization: Don't fetch description for listings (it's only needed for details page)
+    const fieldsToSelect = admin === 'true' ? '' : '-description';
 
     if (page || limit) {
       const pageNum = parseInt(page) || 1;
@@ -51,18 +72,35 @@ router.get('/', async (req, res) => {
       const skip = (pageNum - 1) * limitNum;
       
       const [products, total] = await Promise.all([
-        Product.find(query).sort(sortObj).skip(skip).limit(limitNum),
+        Product.find(query).select(fieldsToSelect).sort(sortObj).skip(skip).limit(limitNum),
         Product.countDocuments(query)
       ]);
       
-      res.json({
+      const result = {
         products,
         total,
         page: pageNum,
         totalPages: Math.ceil(total / limitNum)
-      });
+      };
+
+      if (admin !== 'true') {
+        const cacheKey = JSON.stringify({ page, limit, admin, collectionId, search });
+        productCache.set(cacheKey, { data: result, time: Date.now() });
+      }
+      
+      res.json(result);
     } else {
-      const products = await Product.find(query).sort(sortObj);
+      // For non-paginated requests (like the home page), still apply a reasonable limit of 100
+      // unless it's an admin request.
+      const queryExec = Product.find(query).select(fieldsToSelect).sort(sortObj);
+      if (admin !== 'true') {
+        queryExec.limit(100); 
+      }
+      const products = await queryExec;
+      if (admin !== 'true') {
+        const cacheKey = JSON.stringify({ page, limit, admin, collectionId, search });
+        productCache.set(cacheKey, { data: products, time: Date.now() });
+      }
       res.json(products);
     }
   } catch (err) {
@@ -109,6 +147,7 @@ router.post('/', adminAuth, async (req, res) => {
       sortOrder: count, status, quantity, handle, collectionId, collectionIds 
     });
     await product.save();
+    clearCache();
     res.status(201).json(product);
   } catch (err) {
     if (err.name === 'ValidationError') {
@@ -139,6 +178,7 @@ router.put('/:id', adminAuth, async (req, res) => {
     );
 
     if (!product) return res.status(404).json({ error: 'Product not found' });
+    clearCache();
     res.json(product);
   } catch (err) {
     if (err.name === 'ValidationError') {
@@ -153,6 +193,7 @@ router.delete('/:id', adminAuth, async (req, res) => {
   try {
     const product = await Product.findByIdAndDelete(req.params.id);
     if (!product) return res.status(404).json({ error: 'Product not found' });
+    clearCache();
     res.json({ message: 'Product deleted' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete product' });
@@ -165,6 +206,7 @@ router.post('/delete/batch', adminAuth, async (req, res) => {
     const { productIds } = req.body;
     if (!Array.isArray(productIds)) return res.status(400).json({ error: 'productIds must be an array' });
     await Product.deleteMany({ _id: { $in: productIds } });
+    clearCache();
     res.json({ message: 'Products deleted successfully' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete products' });
@@ -180,6 +222,7 @@ router.post('/deactivate/batch', adminAuth, async (req, res) => {
       { _id: { $in: productIds } },
       { $set: { active: false, status: 'draft' } }
     );
+    clearCache();
     res.json({ message: 'Products deactivated successfully' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to deactivate products' });
@@ -200,6 +243,7 @@ router.put('/reorder/batch', adminAuth, async (req, res) => {
       }
     }));
     await Product.bulkWrite(ops);
+    clearCache();
     res.json({ message: 'Products reordered' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to reorder products' });
@@ -239,6 +283,7 @@ router.put('/collection/batch', adminAuth, async (req, res) => {
       return res.status(400).json({ error: 'invalid action' });
     }
     
+    clearCache();
     res.json({ message: 'Product collections updated successfully' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to update product collections' });

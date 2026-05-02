@@ -94,7 +94,7 @@ function renderCollectionSection(s, collections) {
           const img = c.imageUrl || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2Y1ZWZlOSIvPjwvc3ZnPg==';
           return `
             <a href="collection?id=${c._id}" class="collection-card">
-              <img src="${img}" alt="${c.name}" class="collection-card-img" onerror="this.style.background='#f5efe9'">
+              <img src="${img}" alt="${c.name}" class="collection-card-img" loading="lazy" onerror="this.style.background='#f5efe9'">
               ${s.showNames !== false ? `<div class="collection-card-title">${c.name}</div>` : ''}
             </a>`;
         }).join('')}
@@ -111,7 +111,7 @@ function renderBannerSection(s) {
     <section class="home-section">
       ${s.showTitle !== false && s.title ? `<h2 class="home-section-title">${s.title}</h2>` : ''}
       ${wrapper}
-        <img src="${s.imageUrl}" alt="${s.title || 'Banner'}" style="width:100%;border-radius:12px;max-height:400px;object-fit:contain;background:#f5efe9">
+        <img src="${s.imageUrl}" alt="${s.title || 'Banner'}" style="width:100%;border-radius:12px;max-height:400px;object-fit:contain;background:#f5efe9" loading="lazy">
       ${wrapperEnd}
     </section>`;
 }
@@ -139,7 +139,7 @@ function renderCollections(collections) {
     const img = c.imageUrl || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2Y1ZWZlOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuGYjuGZiDwvdGV4dD48L3N2Zz4=';
     return `
       <a href="collection?id=${c._id}" class="collection-card">
-        <img src="${img}" alt="${c.name}" class="collection-card-img" onerror="this.style.background='#f5efe9'">
+        <img src="${img}" alt="${c.name}" class="collection-card-img" loading="lazy" onerror="this.style.background='#f5efe9'">
         <div class="collection-card-title">${c.name}</div>
       </a>`;
   }).join('');
@@ -211,8 +211,8 @@ function renderStoreCard(p) {
   return `
     <div class="store-product-card" style="display:flex;flex-direction:column;">
       <a href="${productLink}" style="display:block; text-decoration:none; color:inherit; flex:1;">
-        <div class="store-product-img" style="position:relative">
-          ${img ? `<img src="${img}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">` : ''}
+        <div class="store-product-img" style="position:relative; background:#f8fafc;">
+          ${img ? `<img src="${img}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover" loading="lazy" onerror="this.style.display='none'">` : ''}
           ${hasDiscount ? '<span class="discount-badge">خصم</span>' : ''}
         </div>
         <div class="store-product-info">

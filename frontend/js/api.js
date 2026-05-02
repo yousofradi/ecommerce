@@ -4,11 +4,24 @@ const api = {
   _adminKey() { return localStorage.getItem('adminKey') || ''; },
 
   async _request(path, opts = {}) {
+    const cacheKey = `api_cache_${path}`;
+    if (opts.useCache) {
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        const { data, time } = JSON.parse(cached);
+        if (Date.now() - time < 60000) return data; // 1 min cache
+      }
+    }
+
     const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
     if (opts.admin) headers['x-admin-key'] = this._adminKey();
     const res = await fetch(`${API_BASE}${path}`, { ...opts, headers });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    
+    if (opts.useCache) {
+      sessionStorage.setItem(cacheKey, JSON.stringify({ data, time: Date.now() }));
+    }
     return data;
   },
 
@@ -17,7 +30,7 @@ const api = {
     let url = `/products?admin=${admin}`;
     if (page) url += `&page=${page}`;
     if (limit) url += `&limit=${limit}`;
-    return this._request(url);
+    return this._request(url, { useCache: !admin });
   },
   searchProducts(query) {
     return this._request(`/products?admin=false&search=${encodeURIComponent(query)}`);
@@ -315,9 +328,8 @@ api.openSearch = function() {
       debounce = setTimeout(async () => {
         results.innerHTML = '<div class="search-loading">جاري البحث...</div>';
         try {
-          const products = await api.getProducts();
-          const filtered = products.filter(p => p.name.includes(q) || (p.description && p.description.includes(q)));
-          if(filtered.length === 0) {
+          const filtered = await api.searchProducts(q);
+          if(!filtered || filtered.length === 0) {
             results.innerHTML = '<div class="search-empty">لا توجد نتائج</div>';
             return;
           }

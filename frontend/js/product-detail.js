@@ -61,7 +61,7 @@ function renderProduct(p) {
     const valuesHTML = group.values.map((v, vi) => {
       const priceLabel = v.price > 0 ? `+${formatPrice(v.price)}` : '';
       return `<div class="radio-option">
-        <input type="radio" name="opt_${gi}" id="opt_${gi}_${vi}" value="${vi}" ${vi === 0 ? 'checked' : ''}>
+        <input type="radio" name="opt_${gi}" id="opt_${gi}_${vi}" value="${vi}" ${vi === 0 ? 'checked' : ''} onchange="updateTotalPrice()">
         <label for="opt_${gi}_${vi}">${v.label} ${priceLabel ? `<span class="option-price">(${priceLabel})</span>` : ''}</label>
       </div>`;
     }).join('');
@@ -95,8 +95,8 @@ function renderProduct(p) {
       <div class="product-detail-info">
         <h1>${p.name}</h1>
         <div class="product-detail-prices">
-          <span class="detail-price-sale">${formatPrice(salePrice)}</span>
-          ${hasDiscount ? `<span class="detail-price-original">${formatPrice(p.basePrice)}</span>` : ''}
+          <span class="detail-price-sale" id="display-sale-price">${formatPrice(salePrice)}</span>
+          ${hasDiscount ? `<span class="detail-price-original" id="display-original-price">${formatPrice(p.basePrice)}</span>` : ''}
         </div>
         ${descText ? `<div class="product-detail-desc">${descText}</div>` : ''}
         ${optionsHTML}
@@ -112,6 +112,28 @@ function renderProduct(p) {
       </div>
     </div>`;
 }
+
+window.updateTotalPrice = function() {
+  if (!currentProduct) return;
+  
+  let optionsExtra = 0;
+  (currentProduct.options || []).forEach((group, gi) => {
+    const selected = document.querySelector(`input[name="opt_${gi}"]:checked`);
+    if (selected) {
+      const vi = parseInt(selected.value);
+      optionsExtra += (group.values[vi].price || 0);
+    }
+  });
+
+  const basePrice = currentProduct.basePrice + optionsExtra;
+  const salePrice = (currentProduct.salePrice ? currentProduct.salePrice + optionsExtra : basePrice);
+  
+  const salePriceEl = document.getElementById('display-sale-price');
+  const originalPriceEl = document.getElementById('display-original-price');
+  
+  if (salePriceEl) salePriceEl.textContent = formatPrice(salePrice);
+  if (originalPriceEl) originalPriceEl.textContent = formatPrice(basePrice);
+};
 
 window.switchMainImage = function(index) {
   const images = getImages(currentProduct);
