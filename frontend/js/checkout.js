@@ -57,10 +57,19 @@ function setupForm() {
     btn.disabled = true; btn.textContent = 'Placing Order...';
 
     const gov = document.getElementById('government').value;
-    if (!gov) { showToast('Please select your governorate', 'error'); btn.disabled = false; btn.textContent = 'Place Order'; return; }
+    if (!gov) { showToast('اختر المحافظة أولاً', 'error'); btn.disabled = false; btn.textContent = 'تأكيد الطلب'; return; }
+
+    const name = document.getElementById('cust-name').value.trim();
+    if (name.split(/\s+/).filter(Boolean).length < 2) { showToast('الرجاء إدخال الاسم الثنائي (الاسم الأول والأخير)', 'error'); btn.disabled = false; btn.textContent = 'تأكيد الطلب'; return; }
+
+    const phone = document.getElementById('cust-phone').value.trim();
+    if (!/^01[0-9]{9}$/.test(phone)) { showToast('رقم الهاتف يجب أن يكون 11 رقم ويبدأ بـ 01', 'error'); btn.disabled = false; btn.textContent = 'تأكيد الطلب'; return; }
+
+    const address = document.getElementById('cust-address').value.trim();
+    if (address.split(/\s+/).filter(Boolean).length < 2) { showToast('الرجاء إدخال العنوان بالتفصيل (أكثر من كلمة)', 'error'); btn.disabled = false; btn.textContent = 'تأكيد الطلب'; return; }
 
     const payment = document.querySelector('input[name="payment"]:checked');
-    if (!payment) { showToast('Please select a payment method', 'error'); btn.disabled = false; btn.textContent = 'Place Order'; return; }
+    if (!payment) { showToast('اختر طريقة الدفع', 'error'); btn.disabled = false; btn.textContent = 'تأكيد الطلب'; return; }
 
     const items = Cart.getItems().map(item => {
       const effectiveBase = (item.salePrice && item.salePrice < item.basePrice) ? item.salePrice : item.basePrice;
@@ -94,8 +103,8 @@ function setupForm() {
       sessionStorage.setItem('lastOrderData', JSON.stringify(order));
       window.location.href = 'order-success';
     } catch (err) {
-      showToast(err.message || 'Failed to place order', 'error');
-      btn.disabled = false; btn.textContent = 'Place Order';
+      showToast(err.message || 'فشل في إتمام الطلب', 'error');
+      btn.disabled = false; btn.textContent = 'تأكيد الطلب';
     }
   });
 }
