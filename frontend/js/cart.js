@@ -39,10 +39,10 @@ Object.assign(Cart, {
   },
 
   updateQty(key, qty) {
+    if (qty <= 0) return; // Must use delete button to remove
     const items = this._load();
     const item = items.find(i => i.key === key);
     if (item) {
-      if (qty <= 0) { this.removeItem(key); return; }
       item.quantity = qty;
     }
     this._save(items);

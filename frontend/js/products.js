@@ -2,7 +2,6 @@
 const STORAGE_KEY = 'sundura_homepage_sections';
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const loading = document.getElementById('home-loading');
   const content = document.getElementById('home-content');
 
   try {
@@ -10,9 +9,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       api.getProducts(null, null, false),
       api.getCollections()
     ]);
-
-    loading.classList.add('hidden');
-    content.classList.remove('hidden');
 
     // Try to load homepage config
     let sections = [];
@@ -33,7 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
   } catch (err) {
-    loading.innerHTML = '<p style="text-align:center;color:#ef4444;padding:40px">فشل تحميل المتجر. يرجى المحاولة لاحقاً.</p>';
+    if (content) content.innerHTML = '<p style="text-align:center;color:#ef4444;padding:40px">فشل تحميل المتجر. يرجى المحاولة لاحقاً.</p>';
   }
 });
 
@@ -115,7 +111,7 @@ function renderBannerSection(s) {
     <section class="home-section">
       ${s.showTitle !== false && s.title ? `<h2 class="home-section-title">${s.title}</h2>` : ''}
       ${wrapper}
-        <img src="${s.imageUrl}" alt="${s.title || 'Banner'}" style="width:100%;border-radius:12px;max-height:400px;object-fit:cover">
+        <img src="${s.imageUrl}" alt="${s.title || 'Banner'}" style="width:100%;border-radius:12px;max-height:400px;object-fit:contain;background:#f5efe9">
       ${wrapperEnd}
     </section>`;
 }
@@ -215,8 +211,8 @@ function renderStoreCard(p) {
   return `
     <div class="store-product-card" style="display:flex;flex-direction:column;">
       <a href="${productLink}" style="display:block; text-decoration:none; color:inherit; flex:1;">
-        <div class="store-product-img" style="position:relative">
-          ${img ? `<img src="${img}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">` : ''}
+        <div class="store-product-img" style="position:relative;background:#f5efe9">
+          ${img ? `<img src="${img}" alt="${p.name}" style="width:100%;height:100%;object-fit:contain" onerror="this.style.display='none'">` : ''}
           ${hasDiscount ? '<span class="discount-badge">خصم</span>' : ''}
         </div>
         <div class="store-product-info">
