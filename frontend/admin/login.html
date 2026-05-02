@@ -47,6 +47,7 @@
       const ok = await api.checkAdmin();
 
       if (ok) {
+        localStorage.setItem('loginTimestamp', Date.now().toString());
         window.location.href = 'index';
       } else {
         localStorage.removeItem('adminKey');
