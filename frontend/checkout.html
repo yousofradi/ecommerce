@@ -10,14 +10,14 @@
     .radio-option { width: 100%; }
     .radio-option input[type="radio"] { display: none; }
     .radio-option label {
-      display: flex; align-items: center; justify-content: space-between;
-      width: 100%; cursor: pointer; gap: 8px;
-      background: #fff; padding: 12px 16px; border-radius: 10px;
-      border: 1.5px solid #d1d5db; transition: all 0.2s ease;
+      display: flex; align-items: center; justify-content: center;
+      width: 100%; cursor: pointer; gap: 12px;
+      background: #fff; padding: 10px 24px; border-radius: 50px;
+      border: 1.5px solid #e5e7eb; transition: all 0.2s ease;
     }
     .radio-option input[type="radio"]:checked + label {
       background: #F3EBD7 !important;
-      border-color: #916C4F;
+      border-color: #d1d5db;
     }
   </style>
 </head>
@@ -87,21 +87,21 @@
             <textarea class="form-control" id="cust-notes" placeholder="ملاحظات إضافية..."></textarea>
           </div>
           <h2 class="mb-24 mt-32">طريقة الدفع</h2>
-          <div class="radio-options mb-24" style="display: flex; gap: 10px;">
-            <div class="radio-option" style="flex: 1;">
+          <div class="radio-options mb-24">
+            <div class="radio-option" style="margin-bottom: 12px;">
               <input type="radio" name="payment" id="pay-instapay" value="instapay">
-              <label for="pay-instapay" style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; height: 100%; gap: 4px;">
-                <span dir="ltr" style="font-size: 0.9rem; font-weight: 700; color: #111827;">01016612519</span>
-                <div style="display: flex; align-items: center; line-height: 1;">
-                  <span style="color:#f26522;font-weight:900;font-style:italic;font-size:12px;">PAY</span><span style="color:#4a2c82;font-weight:900;font-style:italic;font-size:12px;letter-spacing:-0.5px;">INSTA</span>
+              <label for="pay-instapay">
+                <div style="display: flex; align-items: center; line-height: 1; font-style: italic; font-weight: 900; font-size: 1.1rem; letter-spacing: -0.5px;">
+                  <span style="color:#4a2c82;">INSTA</span><span style="color:#f26522;">PAY</span>
                 </div>
+                <span dir="ltr" style="font-size: 1.2rem; font-weight: 800; color: #111827; letter-spacing: 0.5px;">01016612519</span>
               </label>
             </div>
-            <div class="radio-option" style="flex: 1;">
+            <div class="radio-option" style="margin-bottom: 12px;">
               <input type="radio" name="payment" id="pay-vodafone" value="vodafone_cash">
-              <label for="pay-vodafone" style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; height: 100%; gap: 4px;">
-                <span dir="ltr" style="font-size: 0.9rem; font-weight: 700; color: #111827;">01016612519</span>
-                <div style="background: #e60000; color: #fff; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 10px; display: flex; align-items: center; line-height: 1.2;">فودافون كاش</div>
+              <label for="pay-vodafone">
+                <div style="background: #e60000; color: #fff; padding: 4px 10px; border-radius: 6px; font-weight: bold; font-size: 0.8rem; display: flex; align-items: center; line-height: 1;">فودافون كاش</div>
+                <span dir="ltr" style="font-size: 1.2rem; font-weight: 800; color: #111827; letter-spacing: 0.5px;">01016612519</span>
               </label>
             </div>
           </div>
