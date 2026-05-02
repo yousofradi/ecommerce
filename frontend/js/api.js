@@ -256,7 +256,9 @@ api.openMenu = function() {
         body.innerHTML = '<div style="padding:20px;text-align:center;color:#999">لا توجد تصنيفات</div>';
         return;
       }
-      body.innerHTML = cols.map(c => `<a href="collection?id=${c._id}" class="slide-menu-item" onclick="api.closeMenu()">${c.name}</a>`).join('');
+      body.innerHTML = `
+        <a href="products" class="slide-menu-item" onclick="api.closeMenu()" style="font-weight:700; color:var(--primary); border-bottom: 2px solid #f1f5f9; background: #f8fafc;">كل المنتجات</a>
+      ` + cols.map(c => `<a href="collection?id=${c._id}" class="slide-menu-item" onclick="api.closeMenu()">${c.name}</a>`).join('');
     }).catch(err => {
       document.getElementById('slide-menu-body').innerHTML = '<div style="padding:20px;text-align:center;color:red">حدث خطأ</div>';
     });
