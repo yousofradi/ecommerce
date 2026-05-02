@@ -83,6 +83,35 @@ window.removeImage = function() {
   updateImagePreview('');
 };
 
+window.uploadCollectionImage = function(files) {
+  if (!files || files.length === 0) return;
+  const file = files[0];
+  
+  const progressContainer = document.getElementById('upload-progress');
+  const progressBar = progressContainer ? progressContainer.querySelector('.upload-progress-bar-fill') : null;
+  const progressText = document.getElementById('upload-progress-text');
+  
+  if (progressContainer) progressContainer.style.display = 'block';
+  
+  api.uploadFile(file, (percent) => {
+    if (progressBar) progressBar.style.width = percent + '%';
+    if (progressText) progressText.textContent = `رفع ${percent}%`;
+  }).then(res => {
+    if (res && res.url) {
+      document.getElementById('c-image').value = res.url;
+      updateImagePreview(res.url);
+    }
+  }).catch(err => {
+    console.error('Upload failed', err);
+    showToast('فشل رفع الصورة', 'error');
+  }).finally(() => {
+    if (progressContainer) progressContainer.style.display = 'none';
+    if (progressBar) progressBar.style.width = '0%';
+    if (progressText) progressText.textContent = '';
+    document.getElementById('collection-image-upload').value = ''; // reset input
+  });
+};
+
 function renderProductsList(productsToRender = collectionProducts) {
   document.getElementById('products-count').textContent = collectionProducts.length;
   const list = document.getElementById('collection-products-list');

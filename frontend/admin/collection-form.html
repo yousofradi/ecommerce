@@ -225,12 +225,18 @@
           <!-- Image (Sidebar) -->
           <div class="admin-card">
             <h3 style="margin-bottom:16px;font-size:0.9rem;text-align:right">صورة</h3>
-            <div class="image-upload-area" id="image-preview-container">
+            <div class="image-upload-area" id="image-preview-container" style="cursor: pointer" onclick="document.getElementById('collection-image-upload').click()">
               <span style="color:#aaa">لا توجد صورة</span>
             </div>
-            <div class="image-actions">
+            <div id="upload-progress" class="upload-progress-container" style="display:none; margin-top: 16px;">
+              <div class="upload-progress-text" id="upload-progress-text" style="font-size: 0.8rem; margin-bottom: 4px; text-align: center;"></div>
+              <div class="upload-progress-bar-bg"><div class="upload-progress-bar-fill" style="width:0%"></div></div>
+            </div>
+            <div class="image-actions" style="flex-wrap: wrap;">
+              <input type="file" id="collection-image-upload" accept="image/*" style="display:none" onchange="uploadCollectionImage(this.files)">
               <button type="button" class="btn-text danger" onclick="removeImage()">إزالة</button>
-              <button type="button" class="btn-text" onclick="promptImage()">تغيير</button>
+              <button type="button" class="btn-text" onclick="document.getElementById('collection-image-upload').click()">رفع صورة</button>
+              <button type="button" class="btn-text" onclick="promptImage()">رابط</button>
             </div>
             <input type="hidden" id="c-image">
           </div>

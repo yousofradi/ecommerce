@@ -65,11 +65,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   const dropzone = document.getElementById('add-image-dropzone');
 
   function handleFiles(files) {
-    const uploadStatus = document.getElementById('upload-status');
-    if (uploadStatus) uploadStatus.style.display = 'block';
+    const progressContainer = document.getElementById('upload-progress');
+    const progressBar = progressContainer ? progressContainer.querySelector('.upload-progress-bar-fill') : null;
+    const progressText = document.getElementById('upload-progress-text');
+    if (progressContainer) progressContainer.style.display = 'flex';
     
     const promises = Array.from(files).map(file => 
-      api.uploadFile(file).then(res => {
+      api.uploadFile(file, (percent) => {
+        if (progressBar) progressBar.style.width = percent + '%';
+        if (progressText) progressText.textContent = `رفع ${percent}%`;
+      }).then(res => {
         if (res && res.url) {
           productImages.push(res.url);
         }
@@ -81,7 +86,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     Promise.all(promises).then(() => {
       renderImages();
-      if (uploadStatus) uploadStatus.style.display = 'none';
+      if (progressContainer) progressContainer.style.display = 'none';
+      if (progressBar) progressBar.style.width = '0%';
+      if (progressText) progressText.textContent = '';
     });
   }
 
