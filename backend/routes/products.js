@@ -11,7 +11,7 @@ const upload = multer({ dest: 'uploads/' });
 
 // ── Caching ──────────────────────────────────────────────
 let productCache = new Map();
-const CACHE_DURATION = 5 * 60 * 1000; // 5 mins
+const CACHE_DURATION = 1 * 1000; // 1 second for instant sync
 
 function clearCache() {
   productCache.clear();
@@ -311,14 +311,24 @@ router.post('/import', adminAuth, upload.single('file'), async (req, res) => {
     if (deleteAll === 'true') {
       await Product.deleteMany({});
       clearCache();
+      // Also clear collection cache if it existed (we'll ensure it's cleared at end of import too)
     }
+
+    const normalizeArabic = (str) => {
+      if (!str) return '';
+      return str.trim()
+        .replace(/[أإآ]/g, 'ا')
+        .replace(/ة/g, 'ه')
+        .replace(/ى/g, 'ي')
+        .toLowerCase();
+    };
 
     // Get all collections to map names
     const Collection = require('../models/Collection');
     const collections = await Collection.find({});
     const collectionMap = {};
     collections.forEach(c => {
-      collectionMap[c.name.trim()] = c._id;
+      collectionMap[normalizeArabic(c.name)] = c._id;
     });
 
     const productsMap = new Map();
@@ -359,11 +369,12 @@ router.post('/import', adminAuth, upload.single('file'), async (req, res) => {
         const collectionsVal = row['collections'];
         if (collectionsVal) {
           const names = collectionsVal.split(',').map(n => n.trim()).filter(Boolean);
-          names.forEach(name => {
-            if (collectionMap[name]) {
-              product.collectionIds.push(collectionMap[name]);
+          for (const name of names) {
+            const normName = normalizeArabic(name);
+            if (collectionMap[normName]) {
+              product.collectionIds.push(collectionMap[normName]);
             }
-          });
+          }
         }
 
         productsMap.set(title, product);
