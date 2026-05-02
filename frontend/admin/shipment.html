@@ -184,7 +184,7 @@
           await api.createShipping({ governorate: gov, fee });
         }
         hideAddForm();
-        showToast('تم الحفظ ✓');
+        showToast('تم الحفظ <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;"><polyline points="20 6 9 17 4 12"/></svg>');
         loadShipping();
       } catch (e) { showToast(e.message, 'error'); }
       finally { btn.disabled = false; }
@@ -228,7 +228,7 @@
         for (const s of newFees) {
           await api.createShipping(s);
         }
-        showToast('تم تحديث المحافظات بنجاح ✓');
+        showToast('تم تحديث المحافظات بنجاح <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;"><polyline points="20 6 9 17 4 12"/></svg>');
         loadShipping();
       } catch (err) {
         showToast(err.message || 'فشل التحديث الشامل', 'error');

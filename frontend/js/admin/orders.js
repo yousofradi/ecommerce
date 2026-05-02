@@ -108,7 +108,7 @@ function renderOrders(orders) {
     if (o.status === 'cancelled') {
       statusBadge = `<span style="display:inline-block; padding:4px 12px; border-radius:16px; background:#fee2e2; color:#dc2626; font-size:0.85rem; font-weight:600;">ملغي</span>`;
     } else if (o.paid) {
-      statusBadge = `<span style="display:inline-block; padding:4px 12px; border-radius:16px; background:#dcfce7; color:#16a34a; font-size:0.85rem; font-weight:600;">مدفوع ✓</span>`;
+      statusBadge = `<span style="display:inline-block; padding:4px 12px; border-radius:16px; background:#dcfce7; color:#16a34a; font-size:0.85rem; font-weight:600;">مدفوع <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;"><polyline points="20 6 9 17 4 12"/></svg></span>`;
     } else if (o.paidAmount > 0) {
       statusBadge = `<span style="display:inline-block; padding:4px 12px; border-radius:16px; background:#fef3c7; color:#92400e; font-size:0.85rem; font-weight:600;">مدفوع جزئياً <span style="font-size:0.75rem; font-weight:normal; opacity:0.8;">${formatPrice(o.paidAmount)} / ${formatPrice(o.totalPrice)}</span></span>`;
     } else {

@@ -286,7 +286,7 @@ function renderCart() {
     const imgSrc = p.imageUrl || '';
     const imgHtml = imgSrc
       ? `<img src="${imgSrc}" style="width:56px;height:56px;border-radius:8px;object-fit:cover;border:1px solid #e2e8f0;" alt="${p.name}" onerror="this.style.display='none'">`
-      : `<div style="width:56px;height:56px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.5rem">📦</div>`;
+      : `<div style="width:56px;height:56px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.5rem"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>`;
 
     const optText = (c.selectedOptions || []).map(op => op.label).join(' / ');
 
@@ -443,10 +443,10 @@ window.submitOrder = async function() {
 
   try {
     await api.createOrder(payload);
-    showToast('تم إنشاء الطلب بنجاح! ✓');
+    showToast('تم إنشاء الطلب بنجاح! <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;"><polyline points="20 6 9 17 4 12"/></svg>');
     setTimeout(() => window.location.href = 'orders', 900);
   } catch (err) {
-    btns.forEach(b => { b.disabled = false; b.textContent = '✓ إنشاء الطلب'; });
+    btns.forEach(b => { b.disabled = false; b.textContent = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;"><polyline points="20 6 9 17 4 12"/></svg> إنشاء الطلب'; });
     showToast(err.message || 'حدث خطأ أثناء إنشاء الطلب', 'error');
   }
 };
@@ -486,7 +486,7 @@ window.removeItem = function(idx) {
   const p = item.product;
   const imgHtml = p.imageUrl
     ? `<div style="position:relative"><img src="${p.imageUrl}" style="width:80px;height:80px;border-radius:8px;object-fit:cover;"><span style="position:absolute;bottom:-5px;left:-5px;background:#64748b;color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;border:2px solid #fff;">${item.quantity}</span></div>`
-    : `<div style="width:80px;height:80px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.5rem">📦</div>`;
+    : `<div style="width:80px;height:80px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.5rem"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>`;
   previewEl.innerHTML = `
     <div style="font-weight:600; color:#1e293b; font-size:1rem; text-align:right; flex:1; margin-right:16px;">${p.name}</div>
     ${imgHtml}

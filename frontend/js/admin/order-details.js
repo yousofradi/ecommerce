@@ -91,7 +91,7 @@ function renderItems() {
   container.innerHTML = currentOrder.items.map((item, idx) => {
     const imgHtml = item.imageUrl 
       ? `<img src="${item.imageUrl}" class="item-img" alt="${item.name}">`
-      : `<div class="item-img" style="background:var(--bg-body);display:flex;align-items:center;justify-content:center;font-size:1.5rem">📦</div>`;
+      : `<div class="item-img" style="background:var(--bg-body);display:flex;align-items:center;justify-content:center;font-size:1.5rem"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>`;
       
     const optText = (item.selectedOptions || []).map(op => op.label).join(' / ');
     
@@ -123,7 +123,7 @@ function renderItems() {
           <!-- Reorder arrows -->
           <div style="display:flex; gap:2px;">
             <button class="btn btn-sm" onclick="moveItem(${idx}, -1)" style="background:#fff; border:1px solid #e2e8f0; color:#475569; padding:4px 8px; border-radius:6px; height:32px; ${idx === 0 ? 'opacity:0.3;cursor:not-allowed;' : ''}" ${idx === 0 ? 'disabled' : ''} title="تحريك لأعلى">▲</button>
-            <button class="btn btn-sm" onclick="moveItem(${idx}, 1)" style="background:#fff; border:1px solid #e2e8f0; color:#475569; padding:4px 8px; border-radius:6px; height:32px; ${idx === currentOrder.items.length - 1 ? 'opacity:0.3;cursor:not-allowed;' : ''}" ${idx === currentOrder.items.length - 1 ? 'disabled' : ''} title="تحريك لأسفل">▼</button>
+            <button class="btn btn-sm" onclick="moveItem(${idx}, 1)" style="background:#fff; border:1px solid #e2e8f0; color:#475569; padding:4px 8px; border-radius:6px; height:32px; ${idx === currentOrder.items.length - 1 ? 'opacity:0.3;cursor:not-allowed;' : ''}" ${idx === currentOrder.items.length - 1 ? 'disabled' : ''} title="تحريك لأسفل"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-top: -2px;"><path d="M6 9l6 6 6-6"/></svg></button>
           </div>
 
           <button class="btn btn-sm" onclick="openItemDiscountModal(${idx})" style="background: #fff; border: 1px solid #e2e8f0; color: #475569; display: flex; align-items: center; gap: 6px; font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; height: 32px;">
@@ -355,7 +355,7 @@ window.removeItem = function(idx) {
   const previewEl = document.getElementById('delete-item-preview');
   const imgHtml = item.imageUrl 
     ? `<div style="position:relative"><img src="${item.imageUrl}" style="width:80px;height:80px;border-radius:8px;object-fit:cover;"><span style="position:absolute;bottom:-5px;left:-5px;background:#64748b;color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;border:2px solid #fff;">${item.quantity}</span></div>`
-    : `<div style="width:80px;height:80px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.5rem">📦</div>`;
+    : `<div style="width:80px;height:80px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.5rem"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>`;
     
   previewEl.innerHTML = `
     <div style="font-weight:600; color:#1e293b; font-size:1rem; text-align:right; flex:1; margin-right:16px;">${item.name}</div>
@@ -442,7 +442,7 @@ window.saveOrderChanges = async function(silent = false) {
     currentOrder.forcePaymentWebhook = false; // Reset the flag
     
     if (!silent) {
-      showToast('تم حفظ التغييرات ✓');
+      showToast('تم حفظ التغييرات <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;"><polyline points="20 6 9 17 4 12"/></svg>');
       setTimeout(() => window.location.reload(), 1000);
     } else {
       showToast('تم تحديث البيانات بنجاح', 'success');
@@ -534,7 +534,7 @@ window.renderModalProducts = function() {
   if (col) filtered = filtered.filter(p => p.collectionId === col);
 
   listEl.innerHTML = filtered.map(p => {
-    const imgHtml = p.imageUrl ? `<img src="${p.imageUrl}" class="pli-img">` : `<div class="pli-img">📦</div>`;
+    const imgHtml = p.imageUrl ? `<img src="${p.imageUrl}" class="pli-img">` : `<div class="pli-img"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>`;
     const hasOptions = p.options && p.options.length > 0;
     const effectiveBase = (p.salePrice && p.salePrice < p.basePrice) ? p.salePrice : p.basePrice;
     
@@ -578,7 +578,7 @@ window.renderModalProducts = function() {
       <div>
         <div class="product-list-item" style="display:flex; align-items:center; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border-color); cursor:pointer;" onclick="toggleProductVariants('${p._id}')">
           <div class="pli-info" style="display:flex; align-items:center; gap:12px;">
-            <div id="icon-${p._id}" style="transition:transform 0.2s; color:var(--text-muted);">▼</div>
+            <div id="icon-${p._id}" style="transition:transform 0.2s; color:var(--text-muted);"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-top: -2px;"><path d="M6 9l6 6 6-6"/></svg></div>
             ${imgHtml}
             <div style="font-weight:600;font-size:0.95rem">${p.name}</div>
           </div>

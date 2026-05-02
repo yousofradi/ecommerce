@@ -134,7 +134,7 @@ function renderProducts(collections) {
         <td>
           ${mainImg
         ? `<img src="${mainImg}" alt="${p.name}" style="width:54px;height:54px;border-radius:8px;object-fit:cover;border:1px solid var(--border-color)">`
-        : `<div style="width:54px;height:54px;border-radius:8px;background:var(--bg-body);display:flex;align-items:center;justify-content:center;font-size:1.4rem">📦</div>`}
+        : `<div style="width:54px;height:54px;border-radius:8px;background:var(--bg-body);display:flex;align-items:center;justify-content:center;font-size:1.4rem"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>`}
         </td>
         <td><strong>${p.name || 'بدون اسم'}</strong></td>
         <td>${priceDisplay}</td>
@@ -332,7 +332,7 @@ window.submitCSVImport = async function () {
 
     progressBar.style.width = '100%';
     progressText.textContent = '✅ ' + (res.message || 'تم الاستيراد بنجاح!');
-    showToast(res.message || 'تم استيراد المنتجات بنجاح ✓');
+    showToast(res.message || 'تم استيراد المنتجات بنجاح <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;"><polyline points="20 6 9 17 4 12"/></svg>');
 
     // Reload products after short delay
     setTimeout(() => {

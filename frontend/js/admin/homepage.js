@@ -437,7 +437,7 @@ window.openCollectionPicker = function(sectionId) {
         </div>
         <div class="hp-modal-body">
           <div class="form-row" style="margin-bottom:12px">
-            <input type="text" id="col-picker-search" placeholder="🔍 بحث في المجموعات" oninput="filterColPicker()">
+            <input type="text" id="col-picker-search" placeholder="<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> بحث في المجموعات" oninput="filterColPicker()">
           </div>
           <div id="col-picker-list">
             ${allCollections.map(c => `

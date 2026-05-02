@@ -52,7 +52,7 @@ async function loadCollections() {
           <div class="action-menu" onclick="event.stopPropagation(); toggleMenu('${c._id}')">⋮</div>
           <div id="menu-${c._id}" class="action-dropdown hidden" style="position:absolute;left:50%;transform:translateX(-50%);background:#fff;border:1px solid #ddd;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.12);z-index:100;padding:4px;min-width:120px;">
             <a href="collection-form?id=${c._id}" style="display:block;padding:10px 14px;color:#333;text-decoration:none;border-radius:6px;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background=''">✏️ تعديل</a>
-            <div style="cursor:pointer;padding:10px 14px;color:#ef4444;border-radius:6px;" onclick="deleteCol('${c._id}')" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background=''">🗑️ حذف</div>
+            <div style="cursor:pointer;padding:10px 14px;color:#ef4444;border-radius:6px;" onclick="deleteCol('${c._id}')" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background=''"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg> حذف</div>
           </div>
         </div>
       </div>

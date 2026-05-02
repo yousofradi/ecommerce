@@ -186,8 +186,8 @@ async function saveProduct(e) {
   };
 
   try {
-    if (editId) { await api.updateProduct(editId, data); showToast('تم تحديث المنتج ✓'); }
-    else { await api.createProduct(data); showToast('تم إضافة المنتج ✓'); }
+    if (editId) { await api.updateProduct(editId, data); showToast('تم تحديث المنتج <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;"><polyline points="20 6 9 17 4 12"/></svg>'); }
+    else { await api.createProduct(data); showToast('تم إضافة المنتج <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;"><polyline points="20 6 9 17 4 12"/></svg>'); }
     setTimeout(() => window.location.href = 'products', 800);
   } catch (err) {
     showToast(err.message || 'حدث خطأ', 'error');

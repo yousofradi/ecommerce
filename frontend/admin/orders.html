@@ -166,7 +166,7 @@
           </div>
           <div class="page-actions-container" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
             <a href="order-form" class="btn btn-primary" style="gap:6px; background:#0f766e; border:none; border-radius:20px; padding:8px 20px; font-weight:600;">+ أنشئ طلب</a>
-            <button onclick="printInvoices()" class="btn btn-secondary" style="gap:6px; border-radius:20px; padding:8px 20px; background:#fff; border:1px solid #e2e8f0; color:#475569; font-weight:600;" id="print-invoices-btn">استخراج 📥</button>
+            <button onclick="printInvoices()" class="btn btn-secondary" style="gap:6px; border-radius:20px; padding:8px 20px; background:#fff; border:1px solid #e2e8f0; color:#475569; font-weight:600;" id="print-invoices-btn">استخراج <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
           </div>
         </div>
 
@@ -184,7 +184,7 @@
             <!-- Search (On Left in RTL) -->
             <div style="position:relative; width:300px; max-width:100%;">
               <input type="text" id="order-search" placeholder="البحث والتصنيفات" style="width:100%; padding:8px 16px; padding-left:40px; border:1px solid #e2e8f0; border-radius:8px; font-size:0.9rem;" oninput="filterOrdersClient()">
-              <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#94a3b8; pointer-events:none;">🔍</span>
+              <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#94a3b8; pointer-events:none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
             </div>
           </div>
           
@@ -197,14 +197,14 @@
             <div style="position:relative;">
               <button class="btn btn-secondary" onclick="toggleBulkMenu(event)" style="border-radius:20px; padding:8px 16px; border:1px solid #e2e8f0; background:#fff; color:#475569; font-weight:600; display:flex; align-items:center; gap:8px;">
                 المزيد
-                <span style="font-size:0.8rem; margin-top:2px;">▼</span>
+                <span style="font-size:0.8rem; margin-top:2px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-top: -2px;"><path d="M6 9l6 6 6-6"/></svg></span>
               </button>
               <div id="bulk-menu" style="display:none; position:absolute; top:100%; right:0; margin-top:8px; background:#fff; border:1px solid #e2e8f0; border-radius:8px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); width:200px; z-index:100; overflow:hidden;">
                 <button onclick="bulkAction('archive')" style="width:100%; text-align:right; padding:12px 16px; background:none; border:none; border-bottom:1px solid #f1f5f9; cursor:pointer; display:flex; align-items:center; gap:12px; color:#475569; font-size:0.95rem; font-family:inherit;">
-                  <span style="font-size:1.1rem; filter:grayscale(1); opacity:0.7;">📦</span> أرشفة
+                  <span style="font-size:1.1rem; filter:grayscale(1); opacity:0.7;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></span> أرشفة
                 </button>
                 <button onclick="bulkAction('delete')" style="width:100%; text-align:right; padding:12px 16px; background:none; border:none; cursor:pointer; display:flex; align-items:center; gap:12px; color:#ef4444; font-size:0.95rem; font-family:inherit;">
-                  <span style="font-size:1.1rem; filter:grayscale(1); opacity:0.7;">🗑️</span> إلغاء
+                  <span style="font-size:1.1rem; filter:grayscale(1); opacity:0.7;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></span> إلغاء
                 </button>
               </div>
             </div>
