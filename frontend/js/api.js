@@ -244,7 +244,14 @@ api.openMenu = function() {
           </button>
         </div>
         <div class="slide-menu-body" id="slide-menu-body">
-          <div style="text-align:center;padding:20px;color:#999;">جاري التحميل...</div>
+          <!-- Skeletons -->
+          <div style="padding:15px; display:flex; flex-direction:column; gap:12px;">
+            <div style="height:45px; background:#f1f5f9; border-radius:8px; animation: pulse 1.5s infinite;"></div>
+            <div style="height:45px; background:#f1f5f9; border-radius:8px; animation: pulse 1.5s infinite;"></div>
+            <div style="height:45px; background:#f1f5f9; border-radius:8px; animation: pulse 1.5s infinite;"></div>
+            <div style="height:45px; background:#f1f5f9; border-radius:8px; animation: pulse 1.5s infinite;"></div>
+            <div style="height:45px; background:#f1f5f9; border-radius:8px; animation: pulse 1.5s infinite;"></div>
+          </div>
         </div>
       </div>
     `;
