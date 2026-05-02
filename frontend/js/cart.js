@@ -91,16 +91,22 @@ document.addEventListener('DOMContentLoaded', () => {
     
     cartEl.innerHTML = `
       <div class="slide-cart-header">
-        <h3 style="margin:0; font-size:1.2rem">سلة التسوق (<span id="slide-cart-count">0</span>)</h3>
-        <button class="modal-close" onclick="Cart.closeCart()">×</button>
+        <button class="slide-cart-back" onclick="Cart.closeCart()">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+          <h3 style="margin:0; font-size:1.15rem; font-weight:700">السلة</h3>
+        </div>
       </div>
       <div class="slide-cart-body" id="slide-cart-body"></div>
       <div class="slide-cart-footer">
-        <div class="flex-between mb-16" style="font-weight:700; font-size:1.1rem">
-          <span>المجموع:</span>
-          <span id="slide-cart-total">0 EGP</span>
+        <div class="slide-cart-subtotal">
+          <span class="slide-cart-subtotal-label">مجموع جزئي:</span>
+          <span id="slide-cart-total" class="slide-cart-subtotal-value">0 ج.م</span>
         </div>
-        <a href="checkout" class="btn btn-primary btn-block">إتمام الشراء</a>
+        <a href="checkout" class="btn btn-primary btn-block slide-cart-checkout-btn">الدفع ←</a>
+        <a href="cart" class="btn btn-secondary btn-block slide-cart-view-btn">عرض محتويات السلة</a>
       </div>
     `;
 
@@ -147,38 +153,44 @@ Cart.closeCart = function() {
 Cart.renderSlideCart = function() {
   const items = this.getItems();
   const body = document.getElementById('slide-cart-body');
+  const totalEl = document.getElementById('slide-cart-total');
   
-  document.getElementById('slide-cart-count').textContent = this.getCount();
-  document.getElementById('slide-cart-total').textContent = formatPrice(this.getTotal());
+  if (totalEl) totalEl.textContent = formatPrice(this.getTotal());
 
   if (items.length === 0) {
-    body.innerHTML = '<div style="text-align:center; color:var(--text-muted); margin-top:40px;">سلة التسوق فارغة</div>';
+    body.innerHTML = '<div style="text-align:center; color:var(--text-muted); margin-top:60px; padding:20px;"><div style="font-size:3rem;margin-bottom:12px">🛒</div><p>سلة التسوق فارغة</p></div>';
     return;
   }
 
   body.innerHTML = items.map(item => {
-    const imgSrc = item.imageUrl || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjZjFmNWY5Ii8+PC9zdmc+';
+    const imgSrc = item.imageUrl || '';
     const opts = item.selectedOptions.map(o => `${o.groupName}: ${o.label}`).join(', ');
     return `
-      <div class="cart-item" style="padding:12px 0; border:none; border-bottom:1px solid var(--border-color); border-radius:0; gap:12px;">
-        <img src="${imgSrc}" class="cart-item-img" style="width:60px; height:60px;" alt="${item.name}">
-        <div class="cart-item-info">
-          <div class="cart-item-name" style="font-size:0.95rem; margin-bottom:2px;">${item.name}</div>
-          ${opts ? `<div class="cart-item-options" style="font-size:0.8rem; margin-bottom:6px;">${opts}</div>` : ''}
-          <div class="flex-between">
-            <div class="qty-control" style="transform: scale(0.85); transform-origin: left center;">
-              <button class="qty-btn" onclick="Cart.updateQty('${item.key}', ${item.quantity - 1}); Cart.renderSlideCart()">-</button>
-              <div class="qty-value">${item.quantity}</div>
-              <button class="qty-btn" onclick="Cart.updateQty('${item.key}', ${item.quantity + 1}); Cart.renderSlideCart()">+</button>
-            </div>
-            <div class="cart-item-price" style="font-size:0.95rem;">${formatPrice(item.unitPrice * item.quantity)}</div>
+      <div class="sc-item">
+        <div class="sc-item-top">
+          <button class="sc-delete-btn" onclick="Cart.removeItem('${item.key}'); Cart.renderSlideCart()" title="حذف">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          <div class="sc-item-info">
+            <div class="sc-item-name">${item.name}</div>
+            ${opts ? `<div class="sc-item-opts">${opts}</div>` : ''}
+            <div class="sc-item-price">${formatPrice(item.unitPrice)}</div>
           </div>
+          ${imgSrc ? `<img src="${imgSrc}" class="sc-item-img" alt="${item.name}" onerror="this.style.display='none'">` : '<div class="sc-item-img sc-item-img-placeholder"></div>'}
         </div>
-        <button class="btn btn-sm btn-danger" style="padding:4px 8px; font-size:1.2rem; line-height:1;" onclick="Cart.removeItem('${item.key}'); Cart.renderSlideCart()">×</button>
+        <div class="sc-item-qty-row">
+          <div class="sc-qty-control">
+            <button class="sc-qty-btn" onclick="Cart.updateQty('${item.key}', ${item.quantity + 1}); Cart.renderSlideCart()">+</button>
+            <span class="sc-qty-value">${item.quantity}</span>
+            <button class="sc-qty-btn" onclick="Cart.updateQty('${item.key}', ${item.quantity - 1}); Cart.renderSlideCart()" ${item.quantity <= 1 ? 'disabled style="opacity:0.35;cursor:not-allowed"' : ''}>−</button>
+          </div>
+          <div class="sc-item-total">${formatPrice(item.unitPrice * item.quantity)}</div>
+        </div>
       </div>
     `;
   }).join('');
 };
+
 
 // ── Mobile bottom nav cart count update ───────────────
 Cart._updateBadge = (function(original) {
