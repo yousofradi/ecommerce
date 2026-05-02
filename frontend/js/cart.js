@@ -168,23 +168,23 @@ Cart.renderSlideCart = function() {
     return `
       <div class="sc-item">
         <div class="sc-item-top">
-          <button class="sc-delete-btn" onclick="Cart.removeItem('${item.key}'); Cart.renderSlideCart()" title="حذف">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
+          ${imgSrc ? `<img src="${imgSrc}" class="sc-item-img" alt="${item.name}" onerror="this.style.display='none'">` : '<div class="sc-item-img sc-item-img-placeholder"></div>'}
           <div class="sc-item-info">
             <div class="sc-item-name">${item.name}</div>
             ${opts ? `<div class="sc-item-opts">${opts}</div>` : ''}
             <div class="sc-item-price">${formatPrice(item.unitPrice)}</div>
           </div>
-          ${imgSrc ? `<img src="${imgSrc}" class="sc-item-img" alt="${item.name}" onerror="this.style.display='none'">` : '<div class="sc-item-img sc-item-img-placeholder"></div>'}
+          <button class="sc-delete-btn" onclick="Cart.removeItem('${item.key}'); Cart.renderSlideCart()" title="حذف">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
         </div>
         <div class="sc-item-qty-row">
+          <div class="sc-item-total">${formatPrice(item.unitPrice * item.quantity)}</div>
           <div class="sc-qty-control">
             <button class="sc-qty-btn" onclick="Cart.updateQty('${item.key}', ${item.quantity + 1}); Cart.renderSlideCart()">+</button>
             <span class="sc-qty-value">${item.quantity}</span>
             <button class="sc-qty-btn" onclick="Cart.updateQty('${item.key}', ${item.quantity - 1}); Cart.renderSlideCart()" ${item.quantity <= 1 ? 'disabled style="opacity:0.35;cursor:not-allowed"' : ''}>−</button>
           </div>
-          <div class="sc-item-total">${formatPrice(item.unitPrice * item.quantity)}</div>
         </div>
       </div>
     `;
@@ -205,105 +205,4 @@ Cart._updateBadge = (function(original) {
   };
 })(Cart._updateBadge);
 
-// ── Global Storefront Search ───────────────────────────
-(function() {
-  let searchDebounceTimer = null;
 
-  function injectSearch() {
-    if (document.querySelector('.admin-layout')) return; // Skip admin pages
-
-    // Inject overlay HTML
-    const overlay = document.createElement('div');
-    overlay.className = 'search-overlay';
-    overlay.id = 'search-overlay';
-    overlay.innerHTML = `
-      <div class="search-box" id="search-box">
-        <div class="search-input-row">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" id="search-input" placeholder="ابحث عن منتج..." autocomplete="off" dir="rtl">
-          <button class="search-close-btn" onclick="window.closeSearch()">×</button>
-        </div>
-        <div class="search-results" id="search-results">
-          <div class="search-empty">ابدأ الكتابة للبحث عن المنتجات</div>
-        </div>
-      </div>`;
-    document.body.appendChild(overlay);
-
-    // Close when clicking outside the box
-    overlay.addEventListener('click', function(e) {
-      if (!document.getElementById('search-box').contains(e.target)) {
-        window.closeSearch();
-      }
-    });
-
-    // Close on Escape
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') window.closeSearch();
-    });
-
-    // Search input handler with debounce
-    document.getElementById('search-input').addEventListener('input', function() {
-      const q = this.value.trim();
-      clearTimeout(searchDebounceTimer);
-      if (!q) {
-        document.getElementById('search-results').innerHTML = '<div class="search-empty">ابدأ الكتابة للبحث عن المنتجات</div>';
-        return;
-      }
-      document.getElementById('search-results').innerHTML = '<div class="search-loading">جاري البحث...</div>';
-      searchDebounceTimer = setTimeout(() => doSearch(q), 350);
-    });
-
-    // Add search icons to headers
-    document.querySelectorAll('.store-header .header-icons').forEach(iconsDiv => {
-      if (iconsDiv.querySelector('.search-icon-btn')) return;
-      const btn = document.createElement('button');
-      btn.className = 'search-icon-btn';
-      btn.setAttribute('aria-label', 'بحث');
-      btn.onclick = () => window.openSearch();
-      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`;
-      iconsDiv.insertBefore(btn, iconsDiv.firstChild);
-    });
-  }
-
-  async function doSearch(q) {
-    const resultsEl = document.getElementById('search-results');
-    if (!resultsEl) return;
-    try {
-      const products = await api.searchProducts(q);
-      if (!products || products.length === 0) {
-        resultsEl.innerHTML = '<div class="search-empty">لا توجد نتائج لـ «' + q + '»</div>';
-        return;
-      }
-      resultsEl.innerHTML = products.slice(0, 12).map(p => {
-        const img = (p.images && p.images[0]) || p.imageUrl || '';
-        const price = p.salePrice || p.basePrice;
-        const link = p.handle ? `product?name=${encodeURIComponent(p.handle)}` : `product?id=${p._id}`;
-        return `
-          <a href="${link}" class="search-result-item" onclick="window.closeSearch()">
-            ${img ? `<img src="${img}" class="search-result-img" alt="${p.name}" onerror="this.style.display='none'">` : '<div class="search-result-img"></div>'}
-            <div class="search-result-info">
-              <div class="search-result-name">${p.name}</div>
-              <div class="search-result-price">${formatPrice(price)}</div>
-            </div>
-          </a>`;
-      }).join('');
-    } catch(e) {
-      resultsEl.innerHTML = '<div class="search-empty">فشل البحث، يرجى المحاولة مرة أخرى</div>';
-    }
-  }
-
-  window.openSearch = function() {
-    const overlay = document.getElementById('search-overlay');
-    if (overlay) {
-      overlay.classList.add('open');
-      setTimeout(() => document.getElementById('search-input')?.focus(), 100);
-    }
-  };
-
-  window.closeSearch = function() {
-    const overlay = document.getElementById('search-overlay');
-    if (overlay) overlay.classList.remove('open');
-  };
-
-  document.addEventListener('DOMContentLoaded', injectSearch);
-})();

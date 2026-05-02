@@ -270,3 +270,73 @@ api.closeMenu = function() {
   if(container) container.classList.remove('open');
 };
 
+
+
+// --- Global Search Logic ---
+api.openSearch = function() {
+  if(!document.getElementById('search-overlay')) {
+    const searchHTML = `
+      <div class="search-overlay" id="search-overlay">
+        <div class="search-box">
+          <div class="search-input-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="global-search-input" placeholder="ابحث عن منتجات..." autocomplete="off">
+            <button class="search-close-btn" onclick="api.closeSearch()">✕</button>
+          </div>
+          <div class="search-results" id="global-search-results"></div>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', searchHTML);
+    
+    const input = document.getElementById('global-search-input');
+    const results = document.getElementById('global-search-results');
+    
+    let debounce;
+    input.addEventListener('input', (e) => {
+      const q = e.target.value.trim();
+      clearTimeout(debounce);
+      if(q.length < 2) {
+        results.innerHTML = '';
+        return;
+      }
+      debounce = setTimeout(async () => {
+        results.innerHTML = '<div class="search-loading">جاري البحث...</div>';
+        try {
+          const products = await api.getProducts();
+          const filtered = products.filter(p => p.name.includes(q) || (p.description && p.description.includes(q)));
+          if(filtered.length === 0) {
+            results.innerHTML = '<div class="search-empty">لا توجد نتائج</div>';
+            return;
+          }
+          results.innerHTML = filtered.map(p => `
+            <a href="product?id=${p._id}" class="search-result-item">
+              <img src="${p.imageUrl}" class="search-result-img" onerror="this.style.display='none'">
+              <div class="search-result-info">
+                <div class="search-result-name">${p.name}</div>
+                <div class="search-result-price">${p.salePrice || p.price} ج.م</div>
+              </div>
+            </a>
+          `).join('');
+        } catch(err) {
+          results.innerHTML = '<div class="search-empty">خطأ في التحميل</div>';
+        }
+      }, 300);
+    });
+    
+    document.getElementById('search-overlay').addEventListener('click', (e) => {
+      if(e.target.id === 'search-overlay') api.closeSearch();
+    });
+  }
+  
+  const overlay = document.getElementById('search-overlay');
+  overlay.classList.add('open');
+  document.getElementById('global-search-input').focus();
+  document.body.style.overflow = 'hidden';
+};
+
+api.closeSearch = function() {
+  const overlay = document.getElementById('search-overlay');
+  if(overlay) overlay.classList.remove('open');
+  document.body.style.overflow = '';
+};

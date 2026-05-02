@@ -25,7 +25,12 @@
   color: var(--text-main); font-size: 1.3rem; padding: 4px;
   display: flex; align-items: center;
 }
-.hamburger-btn { font-size: 1.6rem; }
+.hamburger-btn { font-size: 1.6rem; order: 1; }
+.back-btn { font-size: 1.4rem; order: 1; text-decoration: none; color: inherit; }
+.store-logo-link { order: 2; margin: 0 auto; }
+.header-icons { order: 3; display: flex; align-items: center; gap: 14px; }
+.header-icons .nav-item { position: relative; }
+
 
 /* ── Collection Grid (Homepage) ──────────────────────── */
 .collections-grid {
@@ -258,11 +263,19 @@
 .mobile-bottom-nav .nav-item.active { color: var(--sundura-brown); }
 .mobile-bottom-nav .nav-item svg { width: 22px; height: 22px; }
 .mobile-nav-badge {
-  position: absolute; top: -2px; right: 8px;
+  position: absolute; top: 0; right: 4px;
   background: var(--sundura-brown); color: #fff;
-  font-size: 0.6rem; min-width: 14px; height: 14px;
-  border-radius: 7px; display: flex; align-items: center;
+  font-size: 0.65rem; min-width: 15px; height: 15px;
+  border-radius: 50%; display: flex; align-items: center;
   justify-content: center; font-weight: 700;
+  line-height: 1; padding: 0;
+}
+.cart-count {
+  background: var(--sundura-brown); color: #fff;
+  font-size: 0.65rem; min-width: 15px; height: 15px;
+  border-radius: 50%; display: flex; align-items: center;
+  justify-content: center; font-weight: 700;
+  line-height: 1;
 }
 
 /* ── Responsive ───────────────────────────────────────── */
