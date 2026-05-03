@@ -152,6 +152,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('product-form').addEventListener('submit', saveProduct);
   document.getElementById('add-option-group').addEventListener('click', addOptionGroup);
 
+  // Manual click listener for header button
+  const headerSaveBtn = document.getElementById('header-save-btn');
+  if (headerSaveBtn) {
+    headerSaveBtn.addEventListener('click', () => {
+      document.getElementById('product-form').requestSubmit();
+    });
+  }
+
   // File upload drag-and-drop logic
   const fileInput = document.getElementById('image-file-input');
   const dropzone = document.getElementById('add-image-dropzone');
@@ -361,8 +369,11 @@ function removeValue(gi, vi) {
 
 async function saveProduct(e) {
   e.preventDefault();
-  const btn = e.target.querySelector('button[type="submit"]');
-  btn.disabled = true;
+  const btn = document.getElementById('header-save-btn') || e.target.querySelector('button[type="submit"]');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'جارٍ الحفظ...';
+  }
 
   const salePriceVal = document.getElementById('p-sale-price').value;
   const qtyVal = document.getElementById('p-quantity').value;
@@ -387,6 +398,9 @@ async function saveProduct(e) {
     setTimeout(() => window.location.href = 'products', 800);
   } catch (err) {
     showToast(err.message || 'حدث خطأ', 'error');
-    btn.disabled = false;
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'حفظ المنتج';
+    }
   }
 }

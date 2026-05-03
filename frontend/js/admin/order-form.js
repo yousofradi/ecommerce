@@ -300,6 +300,12 @@ window.submitOrder = async function() {
   const gov = document.getElementById('c-gov').value;
   if (!name || !phone || !address || !gov) return showToast('يرجى ملء جميع الحقول المطلوبة للعميل', 'error');
 
+  const btn = document.getElementById('submit-btn');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'جارٍ الحفظ...';
+  }
+
   const finalItems = cartItems.map(c => ({
     productId: c.product._id,
     name: c.product.name,
@@ -325,6 +331,10 @@ window.submitOrder = async function() {
     setTimeout(() => window.location.href = 'orders', 900);
   } catch (err) {
     showToast(err.message || 'حدث خطأ أثناء إنشاء الطلب', 'error');
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'حفظ الطلب';
+    }
   }
 };
 

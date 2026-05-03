@@ -23,6 +23,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('collection-form').addEventListener('submit', saveCollection);
   document.getElementById('products-search').addEventListener('input', filterCollectionProducts);
   document.getElementById('available-search').addEventListener('input', filterAvailableProducts);
+
+  // Manual click listener for header button
+  const headerSaveBtn = document.getElementById('header-save-btn');
+  if (headerSaveBtn) {
+    headerSaveBtn.addEventListener('click', () => {
+      document.getElementById('collection-form').requestSubmit();
+    });
+  }
 });
 
 async function loadAllProducts() {
@@ -218,6 +226,11 @@ window.openReorderModal = function() {
 
 async function saveCollection(e) {
   e.preventDefault();
+  const btn = document.getElementById('header-save-btn') || e.target.querySelector('button[type="submit"]');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'جارٍ الحفظ...';
+  }
   const data = {
     name: document.getElementById('c-name').value.trim(),
     imageUrl: document.getElementById('c-image').value.trim(),
@@ -250,5 +263,9 @@ async function saveCollection(e) {
     setTimeout(() => window.location.href = 'collections', 1000);
   } catch (err) {
     showToast('حدث خطأ أثناء الحفظ', 'error');
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'حفظ التصنيف';
+    }
   }
 }

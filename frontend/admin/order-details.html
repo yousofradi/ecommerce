@@ -158,18 +158,19 @@
     <main class="admin-main">
       <div style="max-width:1300px">
         
-        <div class="flex-between mb-24">
-          <div>
-            <h1 class="page-title" style="margin-bottom:4px;display:flex;align-items:center;gap:12px">
-              <a href="orders" style="font-size:1.2rem;color:var(--text-main);text-decoration:none;font-weight:700">الطلبات ></a>
-              <span id="page-order-id" style="display:none">تعديل الطلب #...</span>
-            </h1>
-          </div>
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
           <div class="flex gap-12">
-            <button class="btn btn-danger" onclick="cancelOrder()" id="cancel-order-btn">إلغاء الطلب</button>
-            <button class="btn btn-secondary" onclick="window.location.reload()">تجاهل</button>
-            <button class="btn btn-primary" id="save-all-btn" onclick="saveOrderChanges()">احفظ التغييرات</button>
+            <button class="btn btn-primary" id="save-all-btn" onclick="saveOrderChanges()" style="background:#0f766e; border:none; border-radius:24px; padding:8px 24px; font-weight:600; font-size:0.95rem;">احفظ التغييرات</button>
+            <button class="btn btn-secondary" onclick="window.location.reload()" style="border-radius:24px; padding:8px 24px;">تجاهل</button>
+            <button class="btn btn-danger" onclick="cancelOrder()" id="cancel-order-btn" style="border-radius:24px; padding:8px 24px;">إلغاء الطلب</button>
           </div>
+          <h1 class="page-title" style="margin:0; display:flex; align-items:center; gap:8px">
+            <a href="orders" style="font-size:1.1rem; color:var(--text-main); text-decoration:none; font-weight:700; display:flex; align-items:center; gap:6px">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+              الطلبات
+            </a>
+            <span id="page-order-id" style="display:none">تعديل الطلب #...</span>
+          </h1>
         </div>
 
         <div class="order-details-layout">
