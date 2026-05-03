@@ -450,6 +450,7 @@ function syncVariants() {
     );
     if (existing) return existing;
 
+    return {
       combination: combo,
       price: defaultPrice,
       salePrice: defaultSalePrice,
