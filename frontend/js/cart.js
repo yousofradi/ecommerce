@@ -219,8 +219,19 @@ Cart._updateBadge = (function(original) {
   };
 })(Cart._updateBadge);
 // ── Handle BFcache (close cart when returning via back button) ──
+// ── Handle BFcache (close cart when returning via back button) ──
 window.addEventListener('pageshow', (event) => {
   if (event.persisted && window.Cart) {
-    Cart.closeCart();
+    const overlay = document.getElementById('slide-cart-overlay');
+    const cart = document.getElementById('slide-cart');
+    if (overlay && cart) {
+      overlay.classList.add('no-animation');
+      cart.classList.add('no-animation');
+      Cart.closeCart();
+      setTimeout(() => {
+        overlay.classList.remove('no-animation');
+        cart.classList.remove('no-animation');
+      }, 50);
+    }
   }
 });

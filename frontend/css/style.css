@@ -1060,6 +1060,8 @@ input::-webkit-inner-spin-button {
 input[type=number] {
   -moz-appearance: textfield;
 }
+.no-animation { transition: none !important; }
+
 
 /* ── Slide-Out Cart (Storefront) ─────────────────────── */
 .slide-cart-overlay {
