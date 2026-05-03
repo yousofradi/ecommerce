@@ -355,17 +355,18 @@
 .product-gallery-thumbs {
   display: flex;
   gap: 8px;
+  flex-wrap: nowrap;
   overflow-x: auto;
-  padding: 4px 0 5px;
+  padding: 4px 0 12px;
   scrollbar-width: none;
-  /* Firefox */
   -ms-overflow-style: none;
-  /* IE and Edge */
 }
-
+.product-gallery-thumbs:has(.product-gallery-thumb:nth-child(8)) {
+  flex-wrap: wrap;
+  overflow-x: visible;
+}
 .product-gallery-thumbs::-webkit-scrollbar {
   display: none;
-  /* Hide scrollbar for Chrome, Safari and Opera */
 }
 
 .product-gallery-thumb {
