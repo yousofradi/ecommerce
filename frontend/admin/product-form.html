@@ -461,181 +461,7 @@
     }
 
     /* Teal Gallery Button */
-<<<<<<< Updated upstream
     .btn-gallery-teal {
-=======
-    .bulk-action-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: #fef2f2;
-      border: 1px solid #fee2e2;
-      border-radius: 12px;
-      padding: 12px 20px;
-      margin-bottom: 16px;
-      animation: slideDown 0.3s ease-out;
-    }
-
-    @keyframes slideDown {
-      from {
-        transform: translateY(-10px);
-        opacity: 0;
-      }
-
-      to {
-        transform: translateY(0);
-        opacity: 1;
-      }
-    }
-
-    .bulk-action-info {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      color: #991b1b;
-      font-weight: 600;
-    }
-
-    .btn-delete-bulk {
-      background: #dc2626;
-      color: #fff;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: background 0.2s;
-    }
-
-    .btn-delete-bulk:hover {
-      background: #b91c1c;
-    }
-
-    /* Gallery Modal Redesign */
-    #gallery-modal .modal-box {
-      max-width: 850px;
-      width: 95%;
-      border-radius: 16px;
-      overflow: hidden;
-    }
-
-    #gallery-modal .modal-header {
-      padding: 24px;
-      border-bottom: 1px solid #f2f4f7;
-      display: flex;
-      flex-direction: row-reverse;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    #gallery-modal .modal-header h3 {
-      margin: 0;
-      font-size: 1.15rem;
-      color: #101828;
-      font-weight: 700;
-    }
-
-    #gallery-modal .close-modal {
-      font-size: 24px;
-      color: #94a3b8;
-      background: none;
-      border: none;
-      cursor: pointer;
-    }
-
-    .gallery-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      gap: 16px;
-      padding: 24px;
-      max-height: 50vh;
-      overflow-y: auto;
-    }
-
-    .gallery-item {
-      position: relative;
-      aspect-ratio: 1;
-      border-radius: 12px;
-      overflow: hidden;
-      border: 2px solid transparent;
-      cursor: pointer;
-      transition: all 0.2s;
-      background: #f9fafb;
-    }
-
-    .gallery-item:hover {
-      border-color: #0f766e44;
-    }
-
-    .gallery-item.selected {
-      border-color: #0f766e;
-      box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.1);
-    }
-
-    .gallery-item img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .gallery-item-check {
-      position: absolute;
-      top: 8px;
-      left: 8px;
-      width: 20px;
-      height: 20px;
-      background: #fff;
-      border: 1px solid #d0d5dd;
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 2;
-    }
-
-    .gallery-item.selected .gallery-item-check {
-      background: #0f766e;
-      border-color: #0f766e;
-    }
-
-    .gallery-item.selected .gallery-item-check::after {
-      content: '✓';
-      color: #fff;
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    #gallery-modal .modal-footer {
-      padding: 24px;
-      border-top: 1px solid #f2f4f7;
-      display: flex;
-      justify-content: flex-start;
-      gap: 12px;
-    }
-
-    #gallery-modal .btn-confirm-gallery {
-      background: #0f766e;
-      color: #fff;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 20px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    #gallery-modal .btn-cancel-gallery {
-      background: #fff;
-      color: #344054;
-      border: 1px solid #d0d5dd;
-      padding: 12px 24px;
-      border-radius: 20px;
-      font-weight: 600;
-      cursor: pointer;
-    }
->>>>>>> Stashed changes
       color: #0f766e;
       background: #f0fdfa;
       border: 1px solid #99f6e4;
@@ -681,7 +507,8 @@
       cursor: pointer;
     }
 
-    .variant-table td:first-child, .variant-table th:first-child {
+    .variant-table td:first-child,
+    .variant-table th:first-child {
       text-align: center;
     }
 
@@ -1127,28 +954,29 @@
 
               <div style="margin-top:32px; border-top:1px solid #eee; padding-top:24px">
                 <div class="mb-16">
-                  <h3 style="margin:0; font-size:1rem">إعداد المتغيرات</h3>
-
-                  <div class="table-wrapper" style="overflow-x:auto; width:100%; -webkit-overflow-scrolling:touch; border:1px solid #eaecf0; border-radius:12px">
+                  <h3 style="margin:0; font-size:1rem">إعدادات المتغيرات</h3>
+                  <div class="table-wrapper"
+                    style="overflow-x:auto; width:100%; -webkit-overflow-scrolling:touch; border:1px solid #eaecf0; border-radius:12px">
                     <table class="variant-table" style="min-width:700px; width:100%">
-                    <thead>
-                      <tr>
-                        <th style="width:50px"><input type="checkbox" class="selection-checkbox" id="select-all-variants"></th>
-                        <th style="width:30%; text-align:right">المتغير</th>
-                        <th style="width:10%">عرض الكل</th>
-                        <th style="width:20%">السعر</th>
-                        <th style="width:20%">السعر بعد الخصم</th>
-                        <th style="width:15%">الكمية</th>
-                      </tr>
-                    </thead>
-                    <tbody id="variants-list-body">
-                      <!-- Variants will be generated here -->
-                    </tbody>
-                  </table>
+                      <thead>
+                        <tr>
+                          <th style="width:50px"><input type="checkbox" class="selection-checkbox"
+                              id="select-all-variants"></th>
+                          <th style="width:30%; text-align:right">المتغير</th>
+                          <th style="width:10%">عرض الكل</th>
+                          <th style="width:20%">السعر</th>
+                          <th style="width:20%">بعد الخصم</th>
+                          <th style="width:15%">الكمية</th>
+                        </tr>
+                      </thead>
+                      <tbody id="variants-list-body">
+                        <!-- Variants will be generated here -->
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
 
 
@@ -1160,17 +988,17 @@
 
   <!-- Image Picker Modal -->
   <div id="gallery-modal" class="modal-overlay" style="display:none; z-index:2001">
-    <div class="modal-box">
+    <div class="modal-box" style="max-width:600px">
       <div class="modal-header">
-        <h3>تحديد صورة المتغير</h3>
+        <h3>اختر صورة من معرض الصور</h3>
         <button type="button" class="close-modal" onclick="closeGalleryModal()">×</button>
       </div>
-      <div class="modal-body" style="padding:0">
+      <div class="modal-body">
         <div class="gallery-grid" id="gallery-modal-grid"></div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn-confirm-gallery" id="confirm-gallery-selection">حدد صورة</button>
-        <button type="button" class="btn-cancel-gallery" onclick="closeGalleryModal()">إلغاء</button>
+        <button type="button" class="btn btn-secondary" onclick="closeGalleryModal()">إلغاء</button>
+        <button type="button" class="btn btn-primary" id="confirm-gallery-selection">تأكيد الاختيار</button>
       </div>
     </div>
   </div>
