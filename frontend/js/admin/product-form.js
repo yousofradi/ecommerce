@@ -304,53 +304,76 @@ function renderOptionSetup() {
   container.innerHTML = '';
   
   optionGroups.forEach((g, gi) => {
-    if (optionEditModes[gi] === undefined) optionEditModes[gi] = !g.name; // New groups start in edit mode
+    if (optionEditModes[gi] === undefined) optionEditModes[gi] = !g.name;
 
-    const groupCard = document.createElement('div');
-    groupCard.className = `variant-group-card ${optionEditModes[gi] ? 'edit-mode' : 'display-mode'}`;
-    groupCard.dataset.index = gi;
+    const card = document.createElement('div');
+    card.className = `variant-group-card ${optionEditModes[gi] ? 'edit-mode' : 'display-mode'}`;
     
-    groupCard.innerHTML = `
-      <div class="variant-group-header">
-        <div style="display:flex; align-items:center; gap:8px">
-          <div class="drag-handle group-drag-handle">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+    if (optionEditModes[gi]) {
+      // Edit Mode
+      card.innerHTML = `
+        <div class="variant-group-edit-body">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
+            <div class="drag-handle group-drag-handle">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+            </div>
+            <label class="form-label" style="margin:0; font-weight:600">اسم الخيار</label>
+            <div style="width:20px"></div> <!-- Spacer for balance -->
           </div>
-          <span style="font-weight:700">${g.name || 'مجموعة جديدة'}</span>
-        </div>
-        <div style="display:flex; gap:8px">
-          ${optionEditModes[gi] ? 
-            `<button type="button" class="btn btn-primary btn-sm" onclick="saveOptionGroup(${gi})">حفظ</button>` : 
-            `<button type="button" class="btn btn-secondary btn-sm" onclick="editOptionGroup(${gi})">تعديل</button>`
-          }
-          <button type="button" class="btn btn-danger btn-sm" onclick="removeOptionGroup(${gi})">إزالة</button>
-        </div>
-      </div>
-      <div class="variant-group-body" onclick="${!optionEditModes[gi] ? `editOptionGroup(${gi})` : ''}">
-        <div class="variant-group-display">
-          ${g.values.filter(v => v).map(v => `<span class="tag">${v}</span>`).join('')}
-        </div>
-        <div class="variant-group-edit">
-          <div class="form-group">
-            <label class="form-label">اسم الخيار</label>
-            <input type="text" class="form-control" value="${g.name}" placeholder="مثال: اللون" onchange="updateGroupName(${gi}, this.value)">
-          </div>
-          <div id="option-values-${gi}" class="values-list">
+          <input type="text" class="form-control mb-16" value="${g.name}" placeholder="مثال: اللون" onchange="updateGroupName(${gi}, this.value)">
+          
+          <div id="option-values-${gi}">
             ${g.values.map((v, vi) => `
               <div class="variant-value-row" data-index="${vi}">
                 <div class="drag-handle value-drag-handle">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
                 </div>
-                <input type="text" class="form-control" value="${v}" onchange="updateValueName(${gi}, ${vi}, this.value)">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="removeOptionValue(${gi}, ${vi})">×</button>
+                <input type="text" class="form-control" value="${v}" placeholder="قيمة الخيار" onchange="updateValueName(${gi}, ${vi}, this.value)">
+                <button type="button" class="btn-remove-value" onclick="removeOptionValue(${gi}, ${vi})" title="حذف">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                </button>
               </div>
             `).join('')}
           </div>
-          <button type="button" class="btn btn-secondary btn-sm mt-8" onclick="addOptionValue(${gi})">+ إضافة قيمة أخرى</button>
+          
+          <div class="variant-value-row">
+            <div class="drag-handle" style="visibility:hidden">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+            </div>
+            <input type="text" class="form-control add-value-input" placeholder="إضافة قيمة أخرى" onclick="addOptionValue(${gi})">
+            <button type="button" class="btn-remove-value" style="visibility:hidden">
+               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            </button>
+          </div>
+          
+          <div class="variant-group-actions">
+            <button type="button" class="btn-remove-group" onclick="removeOptionGroup(${gi})">إزالة</button>
+            <button type="button" class="btn-save-group" onclick="saveOptionGroup(${gi})">حفظ</button>
+          </div>
         </div>
-      </div>
-    `;
-    container.appendChild(groupCard);
+      `;
+    } else {
+      // Display Mode
+      card.innerHTML = `
+        <div class="variant-group-body" onclick="editOptionGroup(${gi})">
+          <div class="variant-group-display-tags">
+            ${g.values.filter(v => v).map(v => `<span class="tag">${v}</span>`).join('')}
+          </div>
+          <div class="variant-group-display-info">
+            <div style="display:flex; flex-direction:column">
+              <span class="name">${g.name}</span>
+              <span class="type">النوع: النص</span>
+            </div>
+            <div class="drag-handle group-drag-handle" onclick="event.stopPropagation()">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    container.appendChild(card);
+
+
 
     // Initialize value sortable for this group if in edit mode
     if (optionEditModes[gi]) {
@@ -397,6 +420,7 @@ window.saveOptionGroup = function(gi) {
   optionEditModes[gi] = false;
   renderOptionSetup();
 }
+
 
 function addOptionGroup() {
   optionGroups.push({ name: '', values: [''] });
@@ -638,20 +662,50 @@ document.getElementById('confirm-gallery-selection').addEventListener('click', c
 
 function openBulkEditModal() {
   const tbody = document.getElementById('bulk-edit-list');
+  const modal = document.getElementById('bulk-edit-modal');
+  
+  // Update subtitle with count
+  const oldSubtitle = modal.querySelector('.bulk-edit-subtitle');
+  if (oldSubtitle) oldSubtitle.remove();
+  const subtitle = document.createElement('div');
+  subtitle.className = 'bulk-edit-subtitle';
+  subtitle.textContent = `أنت تقوم بتعديل ${variants.length} متغيرات`;
+  modal.querySelector('.modal-header').insertAdjacentElement('afterend', subtitle);
+
   tbody.innerHTML = variants.map((v, idx) => {
     const name = Object.values(v.combination).join(' / ');
     return `
       <tr>
-        <td>${name}</td>
-        <td><input type="number" class="form-control" value="${v.price}" onchange="updateBulkField(${idx}, 'price', this.value)"></td>
-        <td><input type="number" class="form-control" value="${v.salePrice || ''}" onchange="updateBulkField(${idx}, 'salePrice', this.value)"></td>
-        <td><input type="number" class="form-control" value="${v.cost || ''}" onchange="updateBulkField(${idx}, 'cost', this.value)"></td>
-        <td><input type="number" class="form-control" value="${v.quantity === null ? '' : v.quantity}" onchange="updateBulkField(${idx}, 'quantity', this.value)"></td>
+        <td style="font-weight:500; color:#101828">${name}</td>
+        <td style="text-align:center">
+          <div class="img-icon-btn" onclick="openGalleryModal(${idx})">
+            ${v.imageUrl ? `<img src="${v.imageUrl}">` : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>'}
+          </div>
+        </td>
+        <td>
+          <div class="input-group-rtl">
+            <span class="addon">ج.م</span>
+            <input type="number" value="${v.price}" onchange="updateVariantField(${idx}, 'price', this.value)">
+          </div>
+        </td>
+        <td>
+          <div class="input-group-rtl">
+            <span class="addon">ج.م</span>
+            <input type="number" value="${v.salePrice || ''}" onchange="updateVariantField(${idx}, 'salePrice', this.value)">
+          </div>
+        </td>
+        <td>
+          <div class="input-group-rtl">
+            <span class="addon">ج.م</span>
+            <input type="number" value="${v.cost || ''}" onchange="updateVariantField(${idx}, 'cost', this.value)">
+          </div>
+        </td>
       </tr>
     `;
   }).join('');
-  document.getElementById('bulk-edit-modal').style.display = 'flex';
+  modal.style.display = 'flex';
 }
+
 
 window.updateBulkField = function(idx, field, val) {
   updateVariantField(idx, field, val);

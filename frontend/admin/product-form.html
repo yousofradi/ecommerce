@@ -147,32 +147,156 @@
     align-items: center;
     cursor: default;
   }
+  .variant-group-card {
+    border: 1px solid #eaecf0;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(16, 24, 40, 0.1);
+    overflow: hidden;
+  }
+
+  .variant-group-header {
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eaecf0;
+    background: #f9fafb;
+  }
+
   .variant-group-card.display-mode .variant-group-body {
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  .variant-group-display-info {
     display: flex;
     align-items: center;
     gap: 12px;
-    flex-wrap: wrap;
-    padding: 12px 16px;
-    cursor: pointer;
   }
+
+  .variant-group-display-info .name {
+    font-weight: 700;
+    color: #101828;
+  }
+
+  .variant-group-display-info .type {
+    font-size: 0.85rem;
+    color: #667085;
+  }
+
+  .variant-group-display-tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .variant-group-display-tags .tag {
+    background: #f2f4f7;
+    color: #344054;
+    border: 1px solid #d0d5dd;
+    padding: 2px 10px;
+    border-radius: 16px;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
   .variant-group-card.edit-mode .variant-group-display { display: none; }
   .variant-group-card.display-mode .variant-group-edit { display: none; }
-  
+
+  .variant-group-edit-body {
+    padding: 16px;
+  }
+
+  .variant-value-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .variant-value-row .form-control {
+    flex: 1;
+    height: 40px;
+    text-align: right;
+  }
+
+  .btn-remove-value {
+    color: #667085;
+    background: none;
+    border: 1px solid #d0d5dd;
+    border-radius: 8px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-remove-value:hover {
+    color: #d92d20;
+    background: #fef3f2;
+    border-color: #fda29b;
+  }
+
   .drag-handle {
     cursor: grab;
     color: #94a3b8;
     display: flex;
     align-items: center;
+    padding: 8px;
   }
+
   .drag-handle:active { cursor: grabbing; }
 
+  .add-value-input {
+    border: 1px dashed #d0d5dd;
+    background: #fcfcfd;
+    color: #667085;
+  }
+
+  .variant-group-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #eaecf0;
+  }
+
+  .btn-save-group {
+    background: #0f766e;
+    color: #fff;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .btn-remove-group {
+    color: #d92d20;
+    background: #fff;
+    border: 1px solid #fda29b;
+    padding: 10px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
   .variant-table th {
-    background: #f8fafc;
+    background: #f9fafb;
     padding: 12px;
     text-align: right;
     font-size: 0.85rem;
-    color: #475569;
-    border-bottom: 1px solid #e2e8f0;
+    color: #475467;
+    border-bottom: 1px solid #eaecf0;
     font-weight: 600;
   }
   .variant-row.parent {
@@ -180,7 +304,7 @@
     cursor: pointer;
     transition: background 0.2s;
   }
-  .variant-row.parent:hover { background: #f8fafc; }
+  .variant-row.parent:hover { background: #f9fafb; }
   .variant-row.child { background: #fafafa; }
   
   .expansion-arrow {
@@ -201,19 +325,78 @@
   }
   .bulk-edit-table th, .bulk-edit-table td {
     padding: 12px;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid #eaecf0;
     text-align: right;
     font-size: 0.9rem;
   }
-  .bulk-edit-table th { background: #f8fafc; color: #64748b; }
+  .bulk-edit-table th { background: #f9fafb; color: #475467; }
   
   .variant-img-picker {
-    width: 40px; height: 40px; border: 1px dashed #cbd5e1; border-radius: 6px;
+    width: 40px; height: 40px; border: 1px solid #d0d5dd; border-radius: 8px;
     display: flex; align-items: center; justify-content: center;
-    cursor: pointer; overflow: hidden; background: #f8fafc;
+    cursor: pointer; overflow: hidden; background: #fff;
   }
   .variant-img-picker img { width: 100%; height: 100%; object-fit: cover; }
-  .variant-img-picker:hover { border-color: var(--primary-color); background: #f0fdf4; }
+  .variant-img-picker:hover { border-color: #0f766e; background: #f0fdf4; }
+
+  .btn-add-group {
+    width: 100%;
+    padding: 12px;
+    background: #f9fafb;
+    border: 1px solid #eaecf0;
+    border-radius: 8px;
+    color: #475467;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+  }
+  .btn-add-group:hover {
+    background: #f2f4f7;
+    border-color: #d0d5dd;
+  }
+
+  /* Bulk Edit Improvements */
+  .bulk-edit-subtitle {
+    padding: 0 20px 10px;
+    color: #667085;
+    font-size: 0.9rem;
+  }
+  .input-group-rtl {
+    display: flex;
+    align-items: center;
+    border: 1px solid #d0d5dd;
+    border-radius: 8px;
+    overflow: hidden;
+    height: 40px;
+  }
+  .input-group-rtl .addon {
+    background: #f9fafb;
+    padding: 0 12px;
+    border-left: 1px solid #d0d5dd;
+    color: #667085;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    height: 100%;
+  }
+  .input-group-rtl input {
+    border: none !important;
+    padding: 0 12px !important;
+    height: 100% !important;
+    flex: 1;
+    text-align: right;
+  }
+  .img-icon-btn {
+    width: 32px; height: 32px; border-radius: 6px; border: 1px solid #d0d5dd;
+    display: flex; align-items: center; justify-content: center; cursor: pointer; color: #667085;
+  }
+  .img-icon-btn img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; }
 
   .switch { position: relative; display: inline-block; width: 44px; height: 22px; }
   .switch input { opacity: 0; width: 0; height: 0; }
@@ -236,6 +419,7 @@
     content: "✓"; position: absolute; top: 4px; right: 4px; background: var(--primary-color);
     color: #fff; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px;
   }
+  
   </style>
 
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
@@ -395,7 +579,10 @@
               <div id="option-groups-setup">
                 <!-- Option Groups will be added here -->
               </div>
-              <button type="button" class="btn btn-secondary btn-sm" id="add-option-group" style="margin-top:12px">+ إضافة خيار آخر</button>
+              <button type="button" class="btn-add-group" id="add-option-group">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                إضافة خيار آخر
+              </button>
               
               <div style="margin-top:32px; border-top:1px solid #eee; padding-top:24px">
                 <div class="flex-between mb-16">
@@ -458,16 +645,16 @@
           <h3>تعديل عدة متغيرات بنفس الوقت</h3>
           <button type="button" class="close-modal" onclick="closeBulkEditModal()">×</button>
         </div>
-        <div class="modal-body" style="max-height:70vh; overflow-y:auto">
+        <div class="modal-body" style="max-height:70vh; overflow-y:auto; padding:0">
           <div class="table-wrapper">
-            <table class="bulk-edit-table">
+            <table class="bulk-edit-table" style="margin-top:0">
               <thead>
                 <tr>
-                  <th style="width:30%">المتغير</th>
+                  <th style="width:25%">المتغير</th>
+                  <th style="width:10%; text-align:center">صورة</th>
                   <th style="width:20%">السعر</th>
-                  <th style="width:20%">السعر بعد الخصم</th>
-                  <th style="width:20%">تكلفة المنتج</th>
-                  <th style="width:10%">الكمية</th>
+                  <th style="width:20%">تخفيض</th>
+                  <th style="width:20%">تكلفة</th>
                 </tr>
               </thead>
               <tbody id="bulk-edit-list">
@@ -476,6 +663,7 @@
             </table>
           </div>
         </div>
+
         <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center">
           <div style="font-size:0.9rem; color:#64748b">سيتم تطبيق التعديلات على جميع العناصر المختارة</div>
           <div>
