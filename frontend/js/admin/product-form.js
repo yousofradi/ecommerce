@@ -516,37 +516,38 @@ function renderVariantsTable() {
 
     const totalQty = children.reduce((sum, c) => sum + (Number(c.quantity) || 0), 0);
 
-    // Parent Row
-    html += `
-      <tr class="variant-row parent ${isExpanded ? 'expanded' : ''}" onclick="toggleVariantChildren('${parentVal}')">
-        <td><input type="checkbox" class="selection-checkbox" onclick="event.stopPropagation()"></td>
-        <td style="text-align:right">
-          <div style="display:flex; align-items:center; gap:8px">
-            <span style="font-weight:700">${parentVal}</span>
-            <span style="font-size:0.85rem; color:#667085; font-weight:400; margin-right:4px">${children.length} متغيران</span>
-            <span class="expansion-arrow">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-            </span>
-          </div>
-        </td>
-        <td></td>
-        <td>
-          <div class="currency-input-group disabled">
-            <span class="addon">ج.م</span>
-            <input type="text" value="${priceRange}" disabled>
-          </div>
-        </td>
-        <td>
-          <div class="currency-input-group disabled">
-            <span class="addon">ج.م</span>
-            <input type="text" value="${salePriceRange}" disabled>
-          </div>
-        </td>
-        <td style="text-align:center">
-          <input type="text" class="qty-input" value="${totalQty}" disabled style="background:#f9fafb; color:#667085">
-        </td>
-      </tr>
-    `;
+    // Skip Parent Row if only one group
+    if (optionGroups.length > 1) {
+      html += `
+        <tr class="variant-row parent ${isExpanded ? 'expanded' : ''}" onclick="toggleVariantChildren('${parentVal}')">
+          <td><input type="checkbox" class="selection-checkbox" onclick="event.stopPropagation()"></td>
+          <td style="text-align:right">
+            <div style="display:flex; align-items:center; gap:8px">
+              <span style="font-weight:700">${parentVal}</span>
+              <span style="font-size:0.85rem; color:#667085; font-weight:400; margin-right:4px">${children.length} متغيرات</span>
+              <span class="expansion-arrow">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </span>
+            </div>
+          </td>
+          <td>
+            <div class="currency-input-group disabled">
+              <span class="addon">ج.م</span>
+              <input type="text" value="${priceRange}" disabled>
+            </div>
+          </td>
+          <td>
+            <div class="currency-input-group disabled">
+              <span class="addon">ج.م</span>
+              <input type="text" value="${salePriceRange}" disabled>
+            </div>
+          </td>
+          <td style="text-align:center">
+            <input type="text" class="qty-input" value="${totalQty}" disabled style="background:#f9fafb; color:#667085">
+          </td>
+        </tr>
+      `;
+    }
 
     // Children Rows
     children.forEach(c => {
@@ -555,8 +556,12 @@ function renderVariantsTable() {
         .map(([key, val]) => val)
         .join(' / ');
 
+      // If single group, don't indent
+      const rowClass = optionGroups.length > 1 ? 'variant-row child child-indent' : 'variant-row child';
+      const rowStyle = (optionGroups.length === 1 || isExpanded) ? 'table-row' : 'none';
+
       html += `
-        <tr class="variant-row child child-indent parent-${parentVal.replace(/\s+/g, '-')}" style="display:${isExpanded ? 'table-row' : 'none'}">
+        <tr class="${rowClass} parent-${parentVal.replace(/\s+/g, '-')}" style="display:${rowStyle}">
           <td><input type="checkbox" class="selection-checkbox"></td>
           <td style="text-align:right">
             <div style="display:flex; align-items:center;">
@@ -565,11 +570,6 @@ function renderVariantsTable() {
               </button>
               <span style="color:#0f766e; font-weight:500">${otherOptions || parentVal}</span>
             </div>
-          </td>
-          <td style="text-align:center">
-             <div class="variant-img-picker" style="width:32px; height:32px; margin:0 auto">
-                ${c.imageUrl ? `<img src="${c.imageUrl}">` : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>'}
-             </div>
           </td>
           <td>
             <div class="currency-input-group">
