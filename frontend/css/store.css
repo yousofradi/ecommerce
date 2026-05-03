@@ -790,18 +790,42 @@
     display: none;
   }
 
+  .product-page .container {
+    padding: 0;
+  }
   .product-detail-layout {
     display: flex;
     flex-direction: column;
     gap: 20px;
   }
 
-  .product-detail-layout>div:first-child,
-  .product-detail-info,
-  .product-extra-info {
-    padding: 0px 20px;
+  .product-detail-layout>div:first-child {
+    padding: 0;
     grid-column: auto;
     grid-row: auto;
+  }
+  .product-gallery-main, .skeleton-img {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+  .product-detail-info,
+  .product-extra-info,
+  .breadcrumbs,
+  .skeleton-breadcrumb,
+  .skeleton-title,
+  .skeleton-price,
+  .skeleton-desc,
+  .product-purchase-row {
+    padding-left: 20px;
+    padding-right: 20px;
+    grid-column: auto;
+    grid-row: auto;
+  }
+  /* Gallery thumbnails should still have padding so they don't touch edges */
+  .product-gallery-thumbs {
+    padding-left: 20px;
+    padding-right: 20px;
   }
 
   .collection-header h1 {
