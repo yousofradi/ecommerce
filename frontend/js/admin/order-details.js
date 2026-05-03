@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         govSelect.add(new Option(gov, gov));
       });
     }
-    
+
     renderOrder();
   } catch (err) {
     showToast('فشل تحميل بيانات الطلب', 'error');
@@ -50,25 +50,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ── Rendering ──────────────────────────────────────────
 function renderOrder() {
   if (!currentOrder) return;
-  
+
   const o = currentOrder;
   document.getElementById('page-order-id').textContent = `تعديل الطلب #${o.orderId}`;
-  
+
   if (o.status === 'cancelled') {
     document.getElementById('cancel-order-btn').style.display = 'none';
     document.getElementById('page-order-id').innerHTML += ' <span class="badge badge-danger">ملغي</span>';
   }
-  
+
   // Customer Info
   document.getElementById('view-c-name').textContent = o.customer.name || '—';
   document.getElementById('view-c-phone').textContent = o.customer.phone || '—';
   document.getElementById('view-c-phone2').textContent = o.customer.secondPhone || '—';
-  
+
   // Shipping Info
   document.getElementById('view-c-address').textContent = o.customer.address || '—';
   document.getElementById('view-c-gov').textContent = o.customer.government || '—';
   document.getElementById('view-c-notes').textContent = o.customer.notes || 'لا يوجد ملاحظات';
-  
+
   // Payment
   const paymentLabels = {
     'vodafone_cash': 'فودافون كاش',
@@ -76,7 +76,7 @@ function renderOrder() {
   };
   document.getElementById('view-payment-method').textContent = paymentLabels[o.paymentMethod] || o.paymentMethod;
   document.getElementById('view-paid-amount').textContent = formatPrice(o.paidAmount || 0);
-  
+
   renderItems();
   updateTotals();
 }
@@ -87,14 +87,14 @@ function renderItems() {
     container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted)">لا توجد منتجات</div>';
     return;
   }
-  
+
   container.innerHTML = currentOrder.items.map((item, idx) => {
-    const imgHtml = item.imageUrl 
+    const imgHtml = item.imageUrl
       ? `<img src="${item.imageUrl}" class="item-img" alt="${item.name}">`
       : `<div class="item-img" style="background:var(--bg-body);display:flex;align-items:center;justify-content:center;font-size:1.5rem"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>`;
-      
+
     const optText = (item.selectedOptions || []).map(op => op.label).join(' / ');
-    
+
     return `
       <div class="product-card-item" draggable="true" data-idx="${idx}" ondragstart="onDragStart(event)" ondragover="onDragOver(event)" ondrop="onDrop(event)" ondragend="onDragEnd(event)" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin-bottom: 12px; background: #fff; transition: opacity 0.2s, transform 0.2s; cursor: grab;">
         <!-- Top Row: Info & Pricing -->
@@ -151,19 +151,19 @@ function renderItems() {
 function updateTotals() {
   const o = currentOrder;
   let subtotal = 0;
-  
+
   o.items.forEach(item => {
     const optExtra = (item.selectedOptions || []).reduce((s, op) => s + (op.price || 0), 0);
     item.finalPrice = Math.max(0, (item.basePrice + optExtra) * item.quantity - (item.discount || 0));
     subtotal += item.finalPrice;
   });
-  
+
   o.totalPrice = Math.max(0, subtotal + o.shippingFee - (o.discount || 0));
-  
+
   document.getElementById('sum-subtotal').textContent = formatPrice(subtotal);
   document.getElementById('sum-items-count').textContent = o.items.reduce((s, i) => s + i.quantity, 0);
   document.getElementById('sum-shipping').textContent = formatPrice(o.shippingFee);
-  
+
   const discRow = document.getElementById('sum-discount-row');
   if (o.discount !== 0 && o.discount !== undefined && o.discount !== null) {
     discRow.style.display = 'flex';
@@ -176,7 +176,7 @@ function updateTotals() {
   } else {
     discRow.style.display = 'none';
   }
-  
+
   document.getElementById('sum-total').textContent = formatPrice(o.totalPrice);
   updatePaymentStatusUI();
 }
@@ -185,10 +185,10 @@ function updatePaymentStatusUI() {
   const o = currentOrder;
   const remaining = Math.max(0, o.totalPrice - (o.paidAmount || 0));
   document.getElementById('sum-remaining').textContent = formatPrice(remaining);
-  
+
   const btn = document.getElementById('btn-mark-paid');
   const badge = document.getElementById('view-payment-status');
-  
+
   if (remaining === 0 && o.totalPrice > 0) {
     btn.style.display = 'none';
     badge.textContent = 'مدفوع';
@@ -209,22 +209,22 @@ function updatePaymentStatusUI() {
 
 // ── Modals & Editing ───────────────────────────────────
 
-window.openModal = function(modalId) {
+window.openModal = function (modalId) {
   document.getElementById(modalId).style.display = 'flex';
 };
 
-window.closeModal = function(modalId) {
+window.closeModal = function (modalId) {
   document.getElementById(modalId).style.display = 'none';
 };
 
-window.openCustomerModal = function() {
+window.openCustomerModal = function () {
   document.getElementById('modal-c-name').value = currentOrder.customer.name || '';
   document.getElementById('modal-c-phone').value = currentOrder.customer.phone || '';
   document.getElementById('modal-c-phone2').value = currentOrder.customer.secondPhone || '';
   document.getElementById('customer-modal').style.display = 'flex';
 };
 
-window.applyCustomerChanges = function() {
+window.applyCustomerChanges = function () {
   currentOrder.customer.name = document.getElementById('modal-c-name').value.trim();
   currentOrder.customer.phone = document.getElementById('modal-c-phone').value.trim();
   currentOrder.customer.secondPhone = document.getElementById('modal-c-phone2').value.trim();
@@ -233,14 +233,14 @@ window.applyCustomerChanges = function() {
   saveOrderChanges(true); // Silent save
 };
 
-window.openShippingModal = function() {
+window.openShippingModal = function () {
   document.getElementById('modal-c-address').value = currentOrder.customer.address || '';
   document.getElementById('modal-c-gov').value = currentOrder.customer.government || '';
   document.getElementById('modal-c-notes').value = currentOrder.customer.notes || '';
   document.getElementById('shipping-modal').style.display = 'flex';
 };
 
-window.applyShippingChanges = function() {
+window.applyShippingChanges = function () {
   currentOrder.customer.address = document.getElementById('modal-c-address').value.trim();
   currentOrder.customer.government = document.getElementById('modal-c-gov').value.trim();
   currentOrder.customer.notes = document.getElementById('modal-c-notes').value.trim();
@@ -249,13 +249,13 @@ window.applyShippingChanges = function() {
   saveOrderChanges(true); // Silent save
 };
 
-window.openPaymentModal = function() {
+window.openPaymentModal = function () {
   document.getElementById('modal-payment-method').value = currentOrder.paymentMethod || 'vodafone_cash';
   document.getElementById('modal-paid-amount').value = currentOrder.paidAmount || 0;
   document.getElementById('payment-modal').style.display = 'flex';
 };
 
-window.applyPaymentChanges = function() {
+window.applyPaymentChanges = function () {
   currentOrder.paymentMethod = document.getElementById('modal-payment-method').value;
   currentOrder.paidAmount = parseFloat(document.getElementById('modal-paid-amount').value) || 0;
   currentOrder.forcePaymentWebhook = true; // Flag to force trigger webhook
@@ -269,20 +269,20 @@ window.applyPaymentChanges = function() {
 // ── Drag-and-Drop Reorder ──────────────────────────────
 let dragIdx = null;
 
-window.onDragStart = function(e) {
+window.onDragStart = function (e) {
   dragIdx = parseInt(e.currentTarget.dataset.idx);
   e.currentTarget.style.opacity = '0.4';
   e.dataTransfer.effectAllowed = 'move';
 };
 
-window.onDragOver = function(e) {
+window.onDragOver = function (e) {
   e.preventDefault();
   e.dataTransfer.dropEffect = 'move';
   const card = e.currentTarget;
   card.style.borderTop = '3px solid var(--primary)';
 };
 
-window.onDrop = function(e) {
+window.onDrop = function (e) {
   e.preventDefault();
   const dropIdx = parseInt(e.currentTarget.dataset.idx);
   e.currentTarget.style.borderTop = '';
@@ -295,7 +295,7 @@ window.onDrop = function(e) {
   }
 };
 
-window.onDragEnd = function(e) {
+window.onDragEnd = function (e) {
   e.currentTarget.style.opacity = '1';
   // Clean up all border highlights
   document.querySelectorAll('.product-card-item').forEach(el => {
@@ -304,7 +304,7 @@ window.onDragEnd = function(e) {
   dragIdx = null;
 };
 
-window.moveItem = function(idx, direction) {
+window.moveItem = function (idx, direction) {
   const items = currentOrder.items;
   const newIdx = idx + direction;
   if (newIdx < 0 || newIdx >= items.length) return;
@@ -313,7 +313,7 @@ window.moveItem = function(idx, direction) {
   updateTotals();
 };
 
-window.updateItemQty = function(idx, val) {
+window.updateItemQty = function (idx, val) {
   const qty = parseInt(val, 10);
   if (qty >= 1) {
     currentOrder.items[idx].quantity = qty;
@@ -322,14 +322,14 @@ window.updateItemQty = function(idx, val) {
   }
 };
 
-window.promptItemQty = function(idx) {
+window.promptItemQty = function (idx) {
   const item = currentOrder.items[idx];
   document.getElementById('modal-qty-idx').value = idx;
   document.getElementById('modal-item-qty').value = item.quantity;
   openModal('item-qty-modal');
 };
 
-window.applyItemQty = function() {
+window.applyItemQty = function () {
   const idx = parseInt(document.getElementById('modal-qty-idx').value, 10);
   const qty = parseInt(document.getElementById('modal-item-qty').value, 10);
   if (qty >= 1 && currentOrder.items[idx]) {
@@ -340,32 +340,32 @@ window.applyItemQty = function() {
   closeModal('item-qty-modal');
 };
 
-window.openItemDiscountModal = function(idx) {
+window.openItemDiscountModal = function (idx) {
   const item = currentOrder.items[idx];
   document.getElementById('modal-item-idx').value = idx;
   document.getElementById('modal-item-discount').value = item.discount || 0;
   openModal('item-discount-modal');
 };
 
-window.removeItem = function(idx) {
+window.removeItem = function (idx) {
   const item = currentOrder.items[idx];
   if (!item) return;
-  
+
   document.getElementById('modal-delete-idx').value = idx;
   const previewEl = document.getElementById('delete-item-preview');
-  const imgHtml = item.imageUrl 
+  const imgHtml = item.imageUrl
     ? `<div style="position:relative"><img src="${item.imageUrl}" style="width:80px;height:80px;border-radius:8px;object-fit:cover;"><span style="position:absolute;bottom:-5px;left:-5px;background:#64748b;color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;border:2px solid #fff;">${item.quantity}</span></div>`
     : `<div style="width:80px;height:80px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.5rem"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>`;
-    
+
   previewEl.innerHTML = `
     <div style="font-weight:600; color:#1e293b; font-size:1rem; text-align:right; flex:1; margin-right:16px;">${item.name}</div>
     ${imgHtml}
   `;
-  
+
   openModal('delete-confirm-modal');
 };
 
-window.confirmRemoveItem = function() {
+window.confirmRemoveItem = function () {
   const idx = parseInt(document.getElementById('modal-delete-idx').value);
   if (!isNaN(idx)) {
     currentOrder.items.splice(idx, 1);
@@ -375,31 +375,31 @@ window.confirmRemoveItem = function() {
   }
 };
 
-window.promptOrderDiscount = function() {
+window.promptOrderDiscount = function () {
   openModal('order-discount-modal');
   document.getElementById('modal-order-discount').value = currentOrder.discount || 0;
 };
 
-window.openOrderDiscountModal = function() {
+window.openOrderDiscountModal = function () {
   openModal('order-discount-modal');
   document.getElementById('modal-order-discount').value = currentOrder.discount || 0;
 };
 
-window.applyOrderDiscount = function() {
+window.applyOrderDiscount = function () {
   const val = document.getElementById('modal-order-discount').value;
   currentOrder.discount = parseFloat(val) || 0;
   closeModal('order-discount-modal');
   updateTotals();
 };
 
-window.openItemDiscountModal = function(idx) {
+window.openItemDiscountModal = function (idx) {
   const item = currentOrder.items[idx];
   document.getElementById('modal-item-idx').value = idx;
   document.getElementById('modal-item-discount').value = item.discount || 0;
   openModal('item-discount-modal');
 };
 
-window.applyItemDiscount = function() {
+window.applyItemDiscount = function () {
   const idx = parseInt(document.getElementById('modal-item-idx').value);
   const val = document.getElementById('modal-item-discount').value;
   const item = currentOrder.items[idx];
@@ -411,7 +411,7 @@ window.applyItemDiscount = function() {
   }
 };
 
-window.markFullyPaid = function() {
+window.markFullyPaid = function () {
   currentOrder.paidAmount = currentOrder.totalPrice;
   currentOrder.forcePaymentWebhook = true;
   renderOrder();
@@ -420,13 +420,13 @@ window.markFullyPaid = function() {
 
 // ── Save ───────────────────────────────────────────────
 
-window.saveOrderChanges = async function(silent = false) {
+window.saveOrderChanges = async function (silent = false) {
   const btn = document.getElementById('save-all-btn');
   if (!silent) {
     btn.disabled = true;
     btn.textContent = 'جارٍ الحفظ...';
   }
-  
+
   try {
     const updates = {
       items: currentOrder.items,
@@ -438,11 +438,9 @@ window.saveOrderChanges = async function(silent = false) {
       forcePaymentWebhook: currentOrder.forcePaymentWebhook
     };
 
-    console.log(`[OrderDetails] Updating order ${currentOrder.orderId}`, updates);
-    const res = await api.updateOrder(currentOrder.orderId, updates);
-    console.log('[OrderDetails] Order update successful:', res);
+    await api.updateOrder(currentOrder.orderId, updates);
     currentOrder.forcePaymentWebhook = false; // Reset the flag
-    
+
     if (!silent) {
       showToast('تم حفظ التغييرات <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;"><polyline points="20 6 9 17 4 12"/></svg>');
       setTimeout(() => window.location.reload(), 1000);
@@ -450,26 +448,23 @@ window.saveOrderChanges = async function(silent = false) {
       showToast('تم تحديث البيانات بنجاح', 'success');
     }
   } catch (err) {
-    console.error('[OrderDetails] Order update failed:', err);
-    showToast(err.message || 'فشل الحفظ', 'error');
-  } finally {
-    if (btn && !silent) {
-      console.log('[OrderDetails] Resetting button state');
+    if (!silent) {
       btn.disabled = false;
       btn.textContent = 'احفظ التغييرات';
     }
+    showToast(err.message || 'فشل الحفظ', 'error');
   }
 };
 
-window.cancelOrder = async function() {
+window.cancelOrder = async function () {
   const confirmed = await window.showConfirmModal('تأكيد الإلغاء', 'هل أنت متأكد من إلغاء هذا الطلب؟ سيتم إرسال إشعار بذلك وتصفير القيم.');
   if (!confirmed) return;
-  
+
   try {
     const btn = document.getElementById('cancel-order-btn');
     btn.disabled = true;
     btn.textContent = 'جارٍ الإلغاء...';
-    
+
     await api.cancelOrder(currentOrder.orderId);
     showToast('تم إلغاء الطلب بنجاح');
     setTimeout(() => window.location.reload(), 1000);
@@ -481,7 +476,7 @@ window.cancelOrder = async function() {
 };
 
 // ── Modal Products ─────────────────────────────────────
-window.openProductsModal = async function() {
+window.openProductsModal = async function () {
   document.getElementById('products-modal').style.display = 'flex';
   if (Object.keys(collectionsMap).length === 0) {
     try {
@@ -491,16 +486,16 @@ window.openProductsModal = async function() {
         collectionsMap[c._id] = c.name;
         sel.add(new Option(c.name, c._id));
       });
-    } catch (e) {}
+    } catch (e) { }
   }
   renderModalProducts();
 };
 
-window.closeProductsModal = function() {
+window.closeProductsModal = function () {
   document.getElementById('products-modal').style.display = 'none';
 };
 
-window.toggleProductVariants = function(pid) {
+window.toggleProductVariants = function (pid) {
   const el = document.getElementById(`variants-${pid}`);
   const icon = document.getElementById(`icon-${pid}`);
   if (!el) return;
@@ -515,10 +510,10 @@ window.toggleProductVariants = function(pid) {
 
 function getProductCombinations(options) {
   if (!options || options.length === 0) return [];
-  let results = [ [] ];
+  let results = [[]];
   for (const group of options) {
     const currentResults = [];
-    const values = group.required ? group.values : [{label: 'بدون ' + group.name, price: 0}, ...group.values];
+    const values = group.required ? group.values : [{ label: 'بدون ' + group.name, price: 0 }, ...group.values];
     for (const res of results) {
       for (const val of values) {
         currentResults.push([...res, { groupName: group.name, label: val.label, price: val.price }]);
@@ -529,7 +524,7 @@ function getProductCombinations(options) {
   return results;
 }
 
-window.renderModalProducts = function() {
+window.renderModalProducts = function () {
   const q = document.getElementById('modal-search').value.toLowerCase().trim();
   const col = document.getElementById('modal-col-filter').value;
   const listEl = document.getElementById('modal-products-list');
@@ -542,7 +537,7 @@ window.renderModalProducts = function() {
     const imgHtml = p.imageUrl ? `<img src="${p.imageUrl}" class="pli-img">` : `<div class="pli-img"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>`;
     const hasOptions = p.options && p.options.length > 0;
     const effectiveBase = (p.salePrice && p.salePrice < p.basePrice) ? p.salePrice : p.basePrice;
-    
+
     if (!hasOptions) {
       return `
         <div style="width: 100%; display: block;">
@@ -597,7 +592,7 @@ window.renderModalProducts = function() {
   }).join('');
 };
 
-window.addSelectedProducts = function() {
+window.addSelectedProducts = function () {
   // 1. Add simple products
   const checkedSimple = document.querySelectorAll('.product-select-cb:checked');
   checkedSimple.forEach(cb => {

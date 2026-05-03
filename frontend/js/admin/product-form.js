@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     allCollections = await api.getCollections();
     initCollectionSelect();
-  } catch(e) {}
+  } catch (e) { }
 
   function initCollectionSelect() {
     const trigger = document.getElementById('p-collections-trigger');
@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     function renderOptions(filter = '') {
-      const filtered = allCollections.filter(c => 
+      const filtered = allCollections.filter(c =>
         c.name.toLowerCase().includes(filter.toLowerCase())
       );
 
@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('p-desc').value = p.description || '';
       document.getElementById('p-status').value = p.status || 'active';
       document.getElementById('p-quantity').value = (p.quantity != null) ? p.quantity : '';
-      
+
       const colIds = p.collectionIds || [];
       if (p.collectionId && !colIds.includes(p.collectionId)) colIds.push(p.collectionId);
       selectedCollectionIds = [...colIds];
@@ -127,7 +127,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         if (hiddenInput) hiddenInput.value = JSON.stringify(selectedCollectionIds);
       }
-      
+
       // Load images
       if (p.images && p.images.length > 0) {
         productImages = [...p.images];
@@ -135,15 +135,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         productImages = [p.imageUrl];
       }
       renderImages();
-      
-      optionGroups = (p.options || []).map(g => ({ 
-        name: g.name, 
+
+      optionGroups = (p.options || []).map(g => ({
+        name: g.name,
         required: true, // Force required
-        values: g.values.map(v => ({ 
-          label: v.label, 
-          price: v.price || 0, 
-          salePrice: v.salePrice || null 
-        })) 
+        values: g.values.map(v => ({
+          label: v.label,
+          price: v.price || 0,
+          salePrice: v.salePrice || null
+        }))
       }));
       renderOptionGroups();
     } catch (err) { showToast('فشل تحميل المنتج', 'error'); }
@@ -152,13 +152,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('product-form').addEventListener('submit', saveProduct);
   document.getElementById('add-option-group').addEventListener('click', addOptionGroup);
 
-  // Manual click listener for header button
-  const headerSaveBtn = document.getElementById('header-save-btn');
-  if (headerSaveBtn) {
-    headerSaveBtn.addEventListener('click', () => {
-      document.getElementById('product-form').requestSubmit();
-    });
-  }
+
 
   // File upload drag-and-drop logic
   const fileInput = document.getElementById('image-file-input');
@@ -169,8 +163,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const progressBar = progressContainer ? progressContainer.querySelector('.upload-progress-bar-fill') : null;
     const progressText = document.getElementById('upload-progress-text');
     if (progressContainer) progressContainer.style.display = 'flex';
-    
-    const promises = Array.from(files).map(file => 
+
+    const promises = Array.from(files).map(file =>
       api.uploadFile(file, (percent) => {
         if (progressBar) progressBar.style.width = percent + '%';
         if (progressText) progressText.textContent = `رفع ${percent}%`;
@@ -232,9 +226,9 @@ let draggedImageIndex = null;
 function renderImages() {
   const container = document.getElementById('images-list');
   const addBtn = document.getElementById('add-image-dropzone');
-  
+
   if (!container || !addBtn) return;
-  
+
   container.querySelectorAll('.image-item').forEach(el => el.remove());
   productImages.forEach((url, idx) => {
     const item = document.createElement('div');
@@ -242,7 +236,7 @@ function renderImages() {
     item.draggable = true;
     item.dataset.index = idx;
     item.style.cursor = 'grab';
-    
+
     // Drag-and-drop reordering logic
     item.addEventListener('dragstart', (e) => {
       draggedImageIndex = idx;
@@ -337,11 +331,11 @@ function renderOptionGroups() {
 function addOptionGroup() {
   const defaultPrice = Number(document.getElementById('p-price').value) || 0;
   const defaultSale = document.getElementById('p-sale-price').value ? Number(document.getElementById('p-sale-price').value) : null;
-  
-  optionGroups.push({ 
-    name: '', 
-    required: true, 
-    values: [{ label: '', price: defaultPrice, salePrice: defaultSale }] 
+
+  optionGroups.push({
+    name: '',
+    required: true,
+    values: [{ label: '', price: defaultPrice, salePrice: defaultSale }]
   });
   renderOptionGroups();
 }
@@ -351,11 +345,11 @@ function removeGroup(gi) { optionGroups.splice(gi, 1); renderOptionGroups(); }
 function addValue(gi) {
   const defaultPrice = Number(document.getElementById('p-price').value) || 0;
   const defaultSale = document.getElementById('p-sale-price').value ? Number(document.getElementById('p-sale-price').value) : null;
-  
-  optionGroups[gi].values.push({ 
-    label: '', 
-    price: defaultPrice, 
-    salePrice: defaultSale 
+
+  optionGroups[gi].values.push({
+    label: '',
+    price: defaultPrice,
+    salePrice: defaultSale
   });
   renderOptionGroups();
 }
@@ -377,7 +371,7 @@ async function saveProduct(e) {
 
   const salePriceVal = document.getElementById('p-sale-price').value;
   const qtyVal = document.getElementById('p-quantity').value;
-  
+
   const data = {
     name: document.getElementById('p-name').value.trim(),
     basePrice: Number(document.getElementById('p-price').value),
@@ -389,28 +383,16 @@ async function saveProduct(e) {
     collectionId: selectedCollectionIds.length > 0 ? selectedCollectionIds[0] : null,
     status: document.getElementById('p-status').value,
     quantity: qtyVal !== '' ? Number(qtyVal) : null,
-    options: optionGroups.filter(g => g.name && g.values.length && g.values[0].label).map(g => ({...g, required: true}))
+    options: optionGroups.filter(g => g.name && g.values.length && g.values[0].label).map(g => ({ ...g, required: true }))
   };
 
-  console.log('[ProductForm] Starting save...', data);
   try {
-    if (editId) { 
-      console.log(`[ProductForm] Updating product ${editId}`);
-      await api.updateProduct(editId, data); 
-      showToast('تم تحديث المنتج'); 
-    } else { 
-      console.log('[ProductForm] Creating new product');
-      await api.createProduct(data); 
-      showToast('تم إضافة المنتج'); 
-    }
-    console.log('[ProductForm] Save successful, redirecting...');
+    if (editId) { await api.updateProduct(editId, data); showToast('تم تحديث المنتج'); }
+    else { await api.createProduct(data); showToast('تم إضافة المنتج'); }
     setTimeout(() => window.location.href = 'products', 800);
   } catch (err) {
-    console.error('[ProductForm] Save failed:', err);
     showToast(err.message || 'حدث خطأ', 'error');
-  } finally {
     if (btn) {
-      console.log('[ProductForm] Resetting button state');
       btn.disabled = false;
       btn.textContent = 'حفظ المنتج';
     }

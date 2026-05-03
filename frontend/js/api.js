@@ -15,39 +15,14 @@ const api = {
 
     const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
     if (opts.admin) headers['x-admin-key'] = this._adminKey();
-    
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), 20000); // 20 second timeout
+    const res = await fetch(`${API_BASE}${path}`, { ...opts, headers });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
 
-    try {
-      console.log(`[API] Sending ${opts.method || 'GET'} to ${path}`, opts.body ? JSON.parse(opts.body) : '');
-      const res = await fetch(`${API_BASE}${path}`, { 
-        ...opts, 
-        headers,
-        signal: controller.signal
-      });
-      clearTimeout(id);
-
-      const data = await res.json();
-      console.log(`[API] Response from ${path}:`, data);
-
-      if (!res.ok) {
-        throw new Error(data.error || data.message || `HTTP ${res.status}`);
-      }
-      
-      if (opts.useCache) {
-        sessionStorage.setItem(cacheKey, JSON.stringify({ data, time: Date.now() }));
-      }
-      return data;
-    } catch (err) {
-      clearTimeout(id);
-      if (err.name === 'AbortError') {
-        console.error(`[API] Request timed out for ${path}`);
-        throw new Error('فشل الاتصال: انتهت مهلة الطلب (20 ثانية)');
-      }
-      console.error(`[API] Request failed for ${path}:`, err);
-      throw err;
+    if (opts.useCache) {
+      sessionStorage.setItem(cacheKey, JSON.stringify({ data, time: Date.now() }));
     }
+    return data;
   },
 
   // Products
@@ -123,7 +98,7 @@ const api = {
       const xhr = new XMLHttpRequest();
       xhr.open('POST', `${API_BASE}/upload`, true);
       xhr.setRequestHeader('x-admin-key', this._adminKey());
-      
+
       if (onProgress && xhr.upload) {
         xhr.upload.addEventListener('progress', (e) => {
           if (e.lengthComputable) {
@@ -132,33 +107,33 @@ const api = {
           }
         });
       }
-      
-      xhr.onload = function() {
+
+      xhr.onload = function () {
         if (xhr.status >= 200 && xhr.status < 300) {
           try {
             resolve(JSON.parse(xhr.responseText));
-          } catch(e) { resolve({}); }
+          } catch (e) { resolve({}); }
         } else {
           try {
             reject(new Error(JSON.parse(xhr.responseText).error));
-          } catch(e) { reject(new Error('Upload failed')); }
+          } catch (e) { reject(new Error('Upload failed')); }
         }
       };
-      
+
       xhr.onerror = () => reject(new Error('Network Error'));
-      
+
       const formData = new FormData();
       formData.append('image', file);
       xhr.send(formData);
     });
   },
-  
+
   importProducts(file, deleteAll, onProgress) {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.open('POST', `${API_BASE}/products/import`, true);
       xhr.setRequestHeader('x-admin-key', this._adminKey());
-      
+
       if (onProgress && xhr.upload) {
         xhr.upload.addEventListener('progress', (e) => {
           if (e.lengthComputable) {
@@ -167,21 +142,21 @@ const api = {
           }
         });
       }
-      
-      xhr.onload = function() {
+
+      xhr.onload = function () {
         if (xhr.status >= 200 && xhr.status < 300) {
           try {
             resolve(JSON.parse(xhr.responseText));
-          } catch(e) { resolve({}); }
+          } catch (e) { resolve({}); }
         } else {
           try {
             reject(new Error(JSON.parse(xhr.responseText).error));
-          } catch(e) { reject(new Error('Import failed')); }
+          } catch (e) { reject(new Error('Import failed')); }
         }
       };
-      
+
       xhr.onerror = () => reject(new Error('Network Error'));
-      
+
       const formData = new FormData();
       formData.append('file', file);
       formData.append('deleteAll', deleteAll);
@@ -208,7 +183,7 @@ function showToast(msg, type = 'success') {
 }
 
 // ── Global Confirm Modal ────────────────────────────────
-window.showConfirmModal = function(title, message) {
+window.showConfirmModal = function (title, message) {
   return new Promise((resolve) => {
     const modal = document.createElement('div');
     modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
@@ -254,7 +229,7 @@ function formatPrice(p) {
 // ── Mobile sidebar toggle (auto-init) ─────────────────
 document.addEventListener('DOMContentLoaded', () => {
   const sidebar = document.querySelector('.admin-sidebar');
-  const toggle  = document.querySelector('.sidebar-toggle');
+  const toggle = document.querySelector('.sidebar-toggle');
   if (sidebar && toggle) {
     toggle.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -289,7 +264,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             img.src = settings.storeLogo;
           });
         }
-        
+
         if (settings.storeFavicon) {
           let link = document.querySelector("link[rel~='icon']");
           if (!link) {
@@ -307,7 +282,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             footerCopy.innerHTML = `© 2025 ${settings.storeName}. جميع الحقوق محفوظة.`;
           }
         }
-        
+
         const footerNav = document.querySelector('.footer-nav');
         if (footerNav) {
           let socialHtml = '<div class="footer-socials" style="display:flex;gap:16px;justify-content:center;margin-top:16px;">';
@@ -325,15 +300,15 @@ document.addEventListener('DOMContentLoaded', async () => {
           footerNav.insertAdjacentHTML('afterend', socialHtml);
         }
       }
-    } catch(e) {
+    } catch (e) {
       console.log('No global settings found or failed to load');
     }
   }
 });
 
 // --- Global Slide Menu Logic ---
-api.openMenu = function() {
-  if(!document.getElementById('slide-menu-overlay')) {
+api.openMenu = function () {
+  if (!document.getElementById('slide-menu-overlay')) {
     const menuHTML = `
       <div class="slide-cart-overlay" id="slide-menu-overlay" onclick="api.closeMenu()"></div>
       <div class="slide-menu" id="slide-menu-container">
@@ -353,10 +328,10 @@ api.openMenu = function() {
       </div>
     `;
     document.body.insertAdjacentHTML('beforeend', menuHTML);
-    
+
     api.getCollections().then(cols => {
       const body = document.getElementById('slide-menu-body');
-      if(!cols || cols.length === 0) {
+      if (!cols || cols.length === 0) {
         body.innerHTML = '<div style="padding:20px;text-align:center;color:#999">لا توجد تصنيفات</div>';
         return;
       }
@@ -367,21 +342,21 @@ api.openMenu = function() {
       document.getElementById('slide-menu-body').innerHTML = '<div style="padding:20px;text-align:center;color:red">حدث خطأ</div>';
     });
   }
-  
+
   document.getElementById('slide-menu-overlay').classList.add('open');
   document.getElementById('slide-menu-container').classList.add('open');
 };
 
-api.closeMenu = function() {
+api.closeMenu = function () {
   const overlay = document.getElementById('slide-menu-overlay');
   const container = document.getElementById('slide-menu-container');
-  if(overlay) overlay.classList.remove('open');
-  if(container) container.classList.remove('open');
+  if (overlay) overlay.classList.remove('open');
+  if (container) container.classList.remove('open');
 };
 
 // --- Global Search Logic ---
-api.openSearch = function() {
-  if(!document.getElementById('search-overlay')) {
+api.openSearch = function () {
+  if (!document.getElementById('search-overlay')) {
     const searchHTML = `
       <div class="search-overlay" id="search-overlay">
         <div class="search-box">
@@ -395,15 +370,15 @@ api.openSearch = function() {
       </div>
     `;
     document.body.insertAdjacentHTML('beforeend', searchHTML);
-    
+
     const input = document.getElementById('global-search-input');
     const results = document.getElementById('global-search-results');
-    
+
     let debounce;
     input.addEventListener('input', (e) => {
       const q = e.target.value.trim();
       clearTimeout(debounce);
-      if(q.length < 2) {
+      if (q.length < 2) {
         results.innerHTML = '';
         return;
       }
@@ -411,7 +386,7 @@ api.openSearch = function() {
         results.innerHTML = '<div class="search-loading">جاري البحث...</div>';
         try {
           const filtered = await api.searchProducts(q);
-          if(!filtered || filtered.length === 0) {
+          if (!filtered || filtered.length === 0) {
             results.innerHTML = '<div class="search-empty">لا توجد نتائج</div>';
             return;
           }
@@ -424,26 +399,26 @@ api.openSearch = function() {
               </div>
             </a>
           `).join('');
-        } catch(err) {
+        } catch (err) {
           results.innerHTML = '<div class="search-empty">خطأ في التحميل</div>';
         }
       }, 300);
     });
-    
+
     document.getElementById('search-overlay').addEventListener('click', (e) => {
-      if(e.target.id === 'search-overlay') api.closeSearch();
+      if (e.target.id === 'search-overlay') api.closeSearch();
     });
   }
-  
+
   const overlay = document.getElementById('search-overlay');
   overlay.classList.add('open');
   document.getElementById('global-search-input').focus();
   document.body.style.overflow = 'hidden';
 };
 
-api.closeSearch = function() {
+api.closeSearch = function () {
   const overlay = document.getElementById('search-overlay');
-  if(overlay) overlay.classList.remove('open');
+  if (overlay) overlay.classList.remove('open');
   document.body.style.overflow = '';
 };
 

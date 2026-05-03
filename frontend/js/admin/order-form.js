@@ -10,13 +10,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   try {
     let products = [];
-    try { 
-      const res = await api.getProducts(1, 1000, true); 
+    try {
+      const res = await api.getProducts(1, 1000, true);
       products = (res.products || res).filter(p => p.status !== 'draft');
-    } catch (e) {}
-    
+    } catch (e) { }
+
     let shipping = {};
-    try { shipping = await api.getShipping(); } catch (e) {}
+    try { shipping = await api.getShipping(); } catch (e) { }
 
     // Fallback if DB is empty
     if (Object.keys(shipping).length === 0) {
@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         'القاهرة': 85, 'الجيزة': 85, 'الإسكندرية': 85, 'البحيرة': 85, 'القليوبية': 85, 'الغربية': 85, 'المنوفية': 85, 'دمياط': 85, 'الدقهلية': 85, 'كفر الشيخ': 85, 'الشرقية': 85, 'الاسماعيلية': 95, 'السويس': 95, 'بورسعيد': 95, 'الفيوم': 110, 'بني سويف': 110, 'المنيا': 110, 'اسيوط': 110, 'سوهاج': 130, 'قنا': 130, 'أسوان': 130, 'الأقصر': 130, 'البحر الأحمر': 130, 'مرسي مطروح': 135, 'الوادي الجديد': 135, 'شمال سيناء': 135, 'جنوب سيناء': 135
       };
     }
-    
+
     allProducts = products;
     shippingMap = shipping;
 
@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // ── Products Modal ─────────────────────────────────────
 let collectionsMap = {};
-window.openProductsModal = async function() {
+window.openProductsModal = async function () {
   document.getElementById('products-modal').classList.add('open');
   if (Object.keys(collectionsMap).length === 0) {
     try {
@@ -52,18 +52,18 @@ window.openProductsModal = async function() {
         collectionsMap[c._id] = c.name;
         sel.add(new Option(c.name, c._id));
       });
-    } catch (e) {}
+    } catch (e) { }
   }
   document.getElementById('modal-search').value = '';
   document.getElementById('modal-col-filter').value = '';
   renderModalProducts();
 };
 
-window.closeProductsModal = function() {
+window.closeProductsModal = function () {
   document.getElementById('products-modal').classList.remove('open');
 };
 
-window.toggleProductVariants = function(pid) {
+window.toggleProductVariants = function (pid) {
   const el = document.getElementById(`variants-${pid}`);
   const icon = document.getElementById(`icon-${pid}`);
   if (!el) return;
@@ -78,10 +78,10 @@ window.toggleProductVariants = function(pid) {
 
 function getProductCombinations(options) {
   if (!options || options.length === 0) return [];
-  let results = [ [] ];
+  let results = [[]];
   for (const group of options) {
     const currentResults = [];
-    const values = group.required ? group.values : [{label: 'بدون ' + group.name, price: 0}, ...group.values];
+    const values = group.required ? group.values : [{ label: 'بدون ' + group.name, price: 0 }, ...group.values];
     for (const res of results) {
       for (const val of values) {
         currentResults.push([...res, { groupName: group.name, label: val.label, price: val.price }]);
@@ -92,7 +92,7 @@ function getProductCombinations(options) {
   return results;
 }
 
-window.renderModalProducts = function() {
+window.renderModalProducts = function () {
   const q = document.getElementById('modal-search').value.toLowerCase().trim();
   const col = document.getElementById('modal-col-filter').value;
   const listEl = document.getElementById('modal-products-list');
@@ -162,7 +162,7 @@ window.renderModalProducts = function() {
   }).join('');
 };
 
-window.addSelectedProducts = function() {
+window.addSelectedProducts = function () {
   const checkedSimple = document.querySelectorAll('.product-select-cb:checked');
   const checkedVariants = document.querySelectorAll('.product-variant-cb:checked');
 
@@ -203,12 +203,12 @@ window.addSelectedProducts = function() {
   renderCart();
 };
 
-window.removeCartItem = function(index) {
+window.removeCartItem = function (index) {
   cartItems.splice(index, 1);
   renderCart();
 };
 
-window.updateItemQty = function(idx, val) {
+window.updateItemQty = function (idx, val) {
   const qty = parseInt(val, 10);
   if (qty >= 1) {
     cartItems[idx].quantity = qty;
@@ -274,7 +274,7 @@ function itemTotal(c) {
   return Math.max(0, (effectiveBase + optExtra) * c.quantity - (c.discount || 0));
 }
 
-window.recalcSummary = function() {
+window.recalcSummary = function () {
   let subtotal = 0;
   cartItems.forEach(c => subtotal += itemTotal(c));
   const gov = document.getElementById('c-gov').value;
@@ -286,13 +286,13 @@ window.recalcSummary = function() {
   document.getElementById('sum-total').textContent = formatPrice(total);
 };
 
-window.updatePaymentUI = function() {
+window.updatePaymentUI = function () {
   document.querySelectorAll('.payment-method-card').forEach(card => {
     card.classList.toggle('selected', card.querySelector('input').checked);
   });
 };
 
-window.submitOrder = async function() {
+window.submitOrder = async function () {
   if (cartItems.length === 0) return showToast('أضف منتجاً واحداً على الأقل', 'error');
   const name = document.getElementById('c-name').value.trim();
   const phone = document.getElementById('c-phone').value.trim();
@@ -325,25 +325,20 @@ window.submitOrder = async function() {
     paidAmount: Math.max(0, parseFloat(document.getElementById('paid-amount').value) || 0)
   };
 
-  console.log('[OrderForm] Submitting order...', payload);
   try {
-    const res = await api.createOrder(payload);
-    console.log('[OrderForm] Order created successfully:', res);
+    await api.createOrder(payload);
     showToast('تم إنشاء الطلب بنجاح!');
     setTimeout(() => window.location.href = 'orders', 900);
   } catch (err) {
-    console.error('[OrderForm] Order submission failed:', err);
     showToast(err.message || 'حدث خطأ أثناء إنشاء الطلب', 'error');
-  } finally {
     if (btn) {
-      console.log('[OrderForm] Resetting button state');
       btn.disabled = false;
       btn.textContent = 'حفظ الطلب';
     }
   }
 };
 
-window.setupSearch = function() {
+window.setupSearch = function () {
   const input = document.getElementById('product-search-input');
   if (!input) return;
   input.addEventListener('input', (e) => {
@@ -360,7 +355,7 @@ window.setupSearch = function() {
   });
 };
 
-window.addToCart = function(id) {
+window.addToCart = function (id) {
   const p = allProducts.find(x => x._id === id);
   if (!p) return;
   cartItems.push({ product: p, quantity: 1, selectedOptions: [], discount: 0 });

@@ -5,7 +5,7 @@ let sortableList = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   if (!requireAdmin()) return;
-  
+
   await loadAllProducts();
 
   if (collectionId) {
@@ -24,13 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('products-search').addEventListener('input', filterCollectionProducts);
   document.getElementById('available-search').addEventListener('input', filterAvailableProducts);
 
-  // Manual click listener for header button
-  const headerSaveBtn = document.getElementById('header-save-btn');
-  if (headerSaveBtn) {
-    headerSaveBtn.addEventListener('click', () => {
-      document.getElementById('collection-form').requestSubmit();
-    });
-  }
+
 });
 
 async function loadAllProducts() {
@@ -68,16 +62,16 @@ function updateImagePreview(url) {
   }
 }
 
-window.promptImage = function() {
+window.promptImage = function () {
   document.getElementById('modal-image-url').value = document.getElementById('c-image').value || '';
   document.getElementById('image-url-modal').classList.remove('hidden');
 };
 
-window.closeImageModal = function() {
+window.closeImageModal = function () {
   document.getElementById('image-url-modal').classList.add('hidden');
 };
 
-window.applyImageUrl = function() {
+window.applyImageUrl = function () {
   const url = document.getElementById('modal-image-url').value.trim();
   if (url) {
     document.getElementById('c-image').value = url;
@@ -86,21 +80,21 @@ window.applyImageUrl = function() {
   closeImageModal();
 };
 
-window.removeImage = function() {
+window.removeImage = function () {
   document.getElementById('c-image').value = '';
   updateImagePreview('');
 };
 
-window.uploadCollectionImage = function(files) {
+window.uploadCollectionImage = function (files) {
   if (!files || files.length === 0) return;
   const file = files[0];
-  
+
   const progressContainer = document.getElementById('upload-progress');
   const progressBar = progressContainer ? progressContainer.querySelector('.upload-progress-bar-fill') : null;
   const progressText = document.getElementById('upload-progress-text');
-  
+
   if (progressContainer) progressContainer.style.display = 'block';
-  
+
   api.uploadFile(file, (percent) => {
     if (progressBar) progressBar.style.width = percent + '%';
     if (progressText) progressText.textContent = `رفع ${percent}%`;
@@ -123,7 +117,7 @@ window.uploadCollectionImage = function(files) {
 function renderProductsList(productsToRender = collectionProducts) {
   document.getElementById('products-count').textContent = collectionProducts.length;
   const list = document.getElementById('collection-products-list');
-  
+
   if (productsToRender.length === 0) {
     list.innerHTML = '<div style="padding:24px;text-align:center;color:#999">لا توجد منتجات في هذه المجموعة</div>';
     if (sortableList) sortableList.destroy();
@@ -159,19 +153,19 @@ function filterCollectionProducts(e) {
   renderProductsList(filtered);
 }
 
-window.removeProductFromCollection = function(id) {
+window.removeProductFromCollection = function (id) {
   collectionProducts = collectionProducts.filter(p => p._id !== id);
   renderProductsList();
 };
 
 /* --- Select Products Modal --- */
 
-window.openSelectModal = function() {
+window.openSelectModal = function () {
   document.getElementById('select-modal').classList.remove('hidden');
   renderSelectModalLists();
 };
 
-window.closeSelectModal = function() {
+window.closeSelectModal = function () {
   document.getElementById('select-modal').classList.add('hidden');
 };
 
@@ -199,7 +193,7 @@ function renderSelectModalLists(query = '') {
   `).join('');
 }
 
-window.toggleProductSelect = function(id, add) {
+window.toggleProductSelect = function (id, add) {
   if (add) {
     const p = allProducts.find(p => p._id === id);
     if (p) collectionProducts.push(p);
@@ -213,12 +207,12 @@ function filterAvailableProducts(e) {
   renderSelectModalLists(e.target.value.toLowerCase());
 }
 
-window.saveSelectedProducts = function() {
+window.saveSelectedProducts = function () {
   renderProductsList();
   closeSelectModal();
 };
 
-window.openReorderModal = function() {
+window.openReorderModal = function () {
   showToast('يمكنك سحب وإفلات المنتجات في القائمة للترتيب', 'info');
 };
 
@@ -237,15 +231,12 @@ async function saveCollection(e) {
     description: document.getElementById('c-desc').innerHTML.trim()
   };
 
-  console.log('[CollectionForm] Starting save...', data);
   try {
     let savedCol;
     if (collectionId) {
-      console.log(`[CollectionForm] Updating collection ${collectionId}`);
       savedCol = await api.updateCollection(collectionId, data);
       showToast('تم التحديث بنجاح');
     } else {
-      console.log('[CollectionForm] Creating new collection');
       savedCol = await api.createCollection(data);
       collectionId = savedCol._id;
       showToast('تم الإنشاء بنجاح');
@@ -253,7 +244,6 @@ async function saveCollection(e) {
 
     // Now update products collection bulk
     const productIds = collectionProducts.map(p => p._id);
-    console.log(`[CollectionForm] Syncing ${productIds.length} products to collection ${collectionId}`);
     await api._request(`/products/collection/batch`, {
       method: 'PUT',
       body: JSON.stringify({
@@ -264,14 +254,10 @@ async function saveCollection(e) {
       admin: true
     });
 
-    console.log('[CollectionForm] Save successful, redirecting...');
     setTimeout(() => window.location.href = 'collections', 1000);
   } catch (err) {
-    console.error('[CollectionForm] Save failed:', err);
     showToast('حدث خطأ أثناء الحفظ', 'error');
-  } finally {
     if (btn) {
-      console.log('[CollectionForm] Resetting button state');
       btn.disabled = false;
       btn.textContent = 'حفظ التصنيف';
     }
