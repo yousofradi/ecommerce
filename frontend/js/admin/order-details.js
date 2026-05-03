@@ -438,7 +438,9 @@ window.saveOrderChanges = async function(silent = false) {
       forcePaymentWebhook: currentOrder.forcePaymentWebhook
     };
 
-    await api.updateOrder(currentOrder.orderId, updates);
+    console.log(`[OrderDetails] Updating order ${currentOrder.orderId}`, updates);
+    const res = await api.updateOrder(currentOrder.orderId, updates);
+    console.log('[OrderDetails] Order update successful:', res);
     currentOrder.forcePaymentWebhook = false; // Reset the flag
     
     if (!silent) {
@@ -448,11 +450,14 @@ window.saveOrderChanges = async function(silent = false) {
       showToast('تم تحديث البيانات بنجاح', 'success');
     }
   } catch (err) {
-    if (!silent) {
+    console.error('[OrderDetails] Order update failed:', err);
+    showToast(err.message || 'فشل الحفظ', 'error');
+  } finally {
+    if (btn && !silent) {
+      console.log('[OrderDetails] Resetting button state');
       btn.disabled = false;
       btn.textContent = 'احفظ التغييرات';
     }
-    showToast(err.message || 'فشل الحفظ', 'error');
   }
 };
 

@@ -237,12 +237,15 @@ async function saveCollection(e) {
     description: document.getElementById('c-desc').innerHTML.trim()
   };
 
+  console.log('[CollectionForm] Starting save...', data);
   try {
     let savedCol;
     if (collectionId) {
+      console.log(`[CollectionForm] Updating collection ${collectionId}`);
       savedCol = await api.updateCollection(collectionId, data);
       showToast('تم التحديث بنجاح');
     } else {
+      console.log('[CollectionForm] Creating new collection');
       savedCol = await api.createCollection(data);
       collectionId = savedCol._id;
       showToast('تم الإنشاء بنجاح');
@@ -250,6 +253,7 @@ async function saveCollection(e) {
 
     // Now update products collection bulk
     const productIds = collectionProducts.map(p => p._id);
+    console.log(`[CollectionForm] Syncing ${productIds.length} products to collection ${collectionId}`);
     await api._request(`/products/collection/batch`, {
       method: 'PUT',
       body: JSON.stringify({
@@ -260,10 +264,14 @@ async function saveCollection(e) {
       admin: true
     });
 
+    console.log('[CollectionForm] Save successful, redirecting...');
     setTimeout(() => window.location.href = 'collections', 1000);
   } catch (err) {
+    console.error('[CollectionForm] Save failed:', err);
     showToast('حدث خطأ أثناء الحفظ', 'error');
+  } finally {
     if (btn) {
+      console.log('[CollectionForm] Resetting button state');
       btn.disabled = false;
       btn.textContent = 'حفظ التصنيف';
     }

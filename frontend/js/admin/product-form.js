@@ -392,13 +392,25 @@ async function saveProduct(e) {
     options: optionGroups.filter(g => g.name && g.values.length && g.values[0].label).map(g => ({...g, required: true}))
   };
 
+  console.log('[ProductForm] Starting save...', data);
   try {
-    if (editId) { await api.updateProduct(editId, data); showToast('تم تحديث المنتج'); }
-    else { await api.createProduct(data); showToast('تم إضافة المنتج'); }
+    if (editId) { 
+      console.log(`[ProductForm] Updating product ${editId}`);
+      await api.updateProduct(editId, data); 
+      showToast('تم تحديث المنتج'); 
+    } else { 
+      console.log('[ProductForm] Creating new product');
+      await api.createProduct(data); 
+      showToast('تم إضافة المنتج'); 
+    }
+    console.log('[ProductForm] Save successful, redirecting...');
     setTimeout(() => window.location.href = 'products', 800);
   } catch (err) {
+    console.error('[ProductForm] Save failed:', err);
     showToast(err.message || 'حدث خطأ', 'error');
+  } finally {
     if (btn) {
+      console.log('[ProductForm] Resetting button state');
       btn.disabled = false;
       btn.textContent = 'حفظ المنتج';
     }

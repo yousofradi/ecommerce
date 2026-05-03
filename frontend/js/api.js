@@ -15,14 +15,39 @@ const api = {
 
     const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
     if (opts.admin) headers['x-admin-key'] = this._adminKey();
-    const res = await fetch(`${API_BASE}${path}`, { ...opts, headers });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
     
-    if (opts.useCache) {
-      sessionStorage.setItem(cacheKey, JSON.stringify({ data, time: Date.now() }));
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), 20000); // 20 second timeout
+
+    try {
+      console.log(`[API] Sending ${opts.method || 'GET'} to ${path}`, opts.body ? JSON.parse(opts.body) : '');
+      const res = await fetch(`${API_BASE}${path}`, { 
+        ...opts, 
+        headers,
+        signal: controller.signal
+      });
+      clearTimeout(id);
+
+      const data = await res.json();
+      console.log(`[API] Response from ${path}:`, data);
+
+      if (!res.ok) {
+        throw new Error(data.error || data.message || `HTTP ${res.status}`);
+      }
+      
+      if (opts.useCache) {
+        sessionStorage.setItem(cacheKey, JSON.stringify({ data, time: Date.now() }));
+      }
+      return data;
+    } catch (err) {
+      clearTimeout(id);
+      if (err.name === 'AbortError') {
+        console.error(`[API] Request timed out for ${path}`);
+        throw new Error('فشل الاتصال: انتهت مهلة الطلب (20 ثانية)');
+      }
+      console.error(`[API] Request failed for ${path}:`, err);
+      throw err;
     }
-    return data;
   },
 
   // Products

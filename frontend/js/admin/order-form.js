@@ -325,13 +325,18 @@ window.submitOrder = async function() {
     paidAmount: Math.max(0, parseFloat(document.getElementById('paid-amount').value) || 0)
   };
 
+  console.log('[OrderForm] Submitting order...', payload);
   try {
-    await api.createOrder(payload);
+    const res = await api.createOrder(payload);
+    console.log('[OrderForm] Order created successfully:', res);
     showToast('تم إنشاء الطلب بنجاح!');
     setTimeout(() => window.location.href = 'orders', 900);
   } catch (err) {
+    console.error('[OrderForm] Order submission failed:', err);
     showToast(err.message || 'حدث خطأ أثناء إنشاء الطلب', 'error');
+  } finally {
     if (btn) {
+      console.log('[OrderForm] Resetting button state');
       btn.disabled = false;
       btn.textContent = 'حفظ الطلب';
     }
