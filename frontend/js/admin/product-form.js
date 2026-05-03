@@ -256,7 +256,6 @@ function renderImages() {
 
 // ── Variant Setup (Option Groups) ───────────────────────
 
-let optionEditModes = []; // tracks which groups are in edit mode
 
 function renderOptionSetup() {
   const container = document.getElementById('option-groups-setup');
