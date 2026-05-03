@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     document.title = `${currentProduct.name} | Sundura Shop`;
     document.getElementById('breadcrumb-name').textContent = currentProduct.name;
+    document.getElementById('breadcrumb-container').classList.remove('hidden');
     loading.classList.add('hidden');
     detail.classList.remove('hidden');
     detail.classList.add('fade-in');
