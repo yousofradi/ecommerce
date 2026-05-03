@@ -5,98 +5,17 @@ let editId = null;
 let productImages = [];
 let allCollections = [];
 let selectedCollectionIds = [];
+let optionEditModes = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
   if (!requireAdmin()) return;
   const params = new URLSearchParams(window.location.search);
   editId = params.get('id');
 
-
-
   try {
     allCollections = await api.getCollections();
     initCollectionSelect();
-  } catch (e) { }
-
-  function initCollectionSelect() {
-    const trigger = document.getElementById('p-collections-trigger');
-    const searchInput = document.getElementById('p-collections-search');
-    const dropdown = document.getElementById('p-collections-dropdown');
-    const tagsContainer = document.getElementById('selected-collections-tags');
-    const hiddenInput = document.getElementById('p-collections-hidden');
-
-    function renderTags() {
-      tagsContainer.innerHTML = selectedCollectionIds.map(id => {
-        const col = allCollections.find(c => c._id === id);
-        if (!col) return '';
-        return `
-          <div class="tag">
-            ${col.name}
-            <span class="tag-remove" onclick="removeCollectionTag('${id}')">×</span>
-          </div>
-        `;
-      }).join('');
-      hiddenInput.value = JSON.stringify(selectedCollectionIds);
-    }
-
-    window.removeCollectionTag = (id) => {
-      selectedCollectionIds = selectedCollectionIds.filter(cid => cid !== id);
-      renderTags();
-      renderOptions();
-    };
-
-    function renderOptions(filter = '') {
-      const filtered = allCollections.filter(c =>
-        c.name.toLowerCase().includes(filter.toLowerCase())
-      );
-
-      if (filtered.length === 0) {
-        dropdown.innerHTML = '<div class="no-results">لا توجد نتائج</div>';
-        return;
-      }
-
-      dropdown.innerHTML = filtered.map(c => {
-        const isSelected = selectedCollectionIds.includes(c._id);
-        const img = c.imageUrl || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjZjFmNWY5Ii8+PC9zdmc+';
-        return `
-          <div class="select-option ${isSelected ? 'selected' : ''}" onclick="toggleCollection('${c._id}')">
-            <img src="${img}" class="option-img" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjZjFmNWY5Ii8+PC9zdmc+'">
-            <span class="option-name">${c.name}</span>
-            ${isSelected ? '<span style="color:var(--primary-color)">✓</span>' : ''}
-          </div>
-        `;
-      }).join('');
-    }
-
-    window.toggleCollection = (id) => {
-      if (selectedCollectionIds.includes(id)) {
-        selectedCollectionIds = selectedCollectionIds.filter(cid => cid !== id);
-      } else {
-        selectedCollectionIds.push(id);
-      }
-      renderTags();
-      renderOptions(searchInput.value);
-    };
-
-    trigger.addEventListener('click', () => {
-      dropdown.style.display = 'block';
-      searchInput.focus();
-      renderOptions(searchInput.value);
-    });
-
-    searchInput.addEventListener('input', (e) => {
-      renderOptions(e.target.value);
-    });
-
-    document.addEventListener('click', (e) => {
-      if (!document.getElementById('p-collections-select').contains(e.target)) {
-        dropdown.style.display = 'none';
-      }
-    });
-
-    // Initial render
-    renderTags();
-  }
+  } catch (e) { console.error('Collections fetch failed', e); }
 
   if (editId) {
     document.getElementById('form-title').textContent = 'تعديل المنتج';
@@ -112,76 +31,93 @@ document.addEventListener('DOMContentLoaded', async () => {
       const colIds = p.collectionIds || [];
       if (p.collectionId && !colIds.includes(p.collectionId)) colIds.push(p.collectionId);
       selectedCollectionIds = [...colIds];
-      if (window.removeCollectionTag) { // ensure init was called
-        const tagsContainer = document.getElementById('selected-collections-tags');
-        const hiddenInput = document.getElementById('p-collections-hidden');
-        if (tagsContainer) {
-          tagsContainer.innerHTML = selectedCollectionIds.map(id => {
-            const col = allCollections.find(c => c._id === id);
-            if (!col) return '';
-            return `
-              <div class="tag">
-                ${col.name}
-                <span class="tag-remove" onclick="removeCollectionTag('${id}')">×</span>
-              </div>
-            `;
-          }).join('');
-        }
-        if (hiddenInput) hiddenInput.value = JSON.stringify(selectedCollectionIds);
+      
+      // Re-run collection tags UI
+      const tagsContainer = document.getElementById('selected-collections-tags');
+      const hiddenInput = document.getElementById('p-collections-hidden');
+      if (tagsContainer) {
+        tagsContainer.innerHTML = selectedCollectionIds.map(id => {
+          const col = allCollections.find(c => c._id === id);
+          if (!col) return '';
+          return `<div class="tag">${col.name}<span class="tag-remove" onclick="removeCollectionTag('${id}')">×</span></div>`;
+        }).join('');
       }
+      if (hiddenInput) hiddenInput.value = JSON.stringify(selectedCollectionIds);
 
-      // Load images
-      if (p.images && p.images.length > 0) {
-        productImages = [...p.images];
-      } else if (p.imageUrl) {
-        productImages = [p.imageUrl];
-      }
+      // Images
+      productImages = p.images && p.images.length > 0 ? [...p.images] : (p.imageUrl ? [p.imageUrl] : []);
       renderImages();
 
-        optionGroups = (p.options || []).map(g => ({
-          name: g.name,
-          values: g.values.map(v => v.label)
-        }));
-        optionEditModes = optionGroups.map(() => false);
+      // Variants
+      optionGroups = (p.options || []).map(g => ({
+        name: g.name,
+        values: g.values.map(v => v.label)
+      }));
+      optionEditModes = optionGroups.map(() => false);
 
-        variants = (p.variants || []).map(v => ({
-          combination: v.combination instanceof Map ? Object.fromEntries(v.combination) : v.combination,
-          price: v.price,
-          salePrice: v.salePrice,
-          cost: v.cost || null,
-          quantity: v.quantity,
-          imageUrl: v.imageUrl,
-          active: v.active !== false
-        }));
+      variants = (p.variants || []).map(v => ({
+        combination: v.combination instanceof Map ? Object.fromEntries(v.combination) : v.combination,
+        price: v.price,
+        salePrice: v.salePrice,
+        cost: v.cost || null,
+        quantity: v.quantity,
+        imageUrl: v.imageUrl,
+        active: v.active !== false
+      }));
 
-
-        if (optionGroups.length > 0) {
-          document.getElementById('enable-variants').checked = true;
-          document.getElementById('variant-setup-container').style.display = 'block';
-        }
-        renderOptionSetup();
-        renderVariantsTable();
-      } catch (err) { showToast('فشل تحميل المنتج', 'error'); }
-    }
-  
-    document.getElementById('product-form').addEventListener('submit', saveProduct);
-    document.getElementById('add-option-group').addEventListener('click', addOptionGroup);
-    document.getElementById('enable-variants').addEventListener('change', (e) => {
-      document.getElementById('variant-setup-container').style.display = e.target.checked ? 'block' : 'none';
-      if (e.target.checked && optionGroups.length === 0) {
-        addOptionGroup();
+      if (optionGroups.length > 0) {
+        document.getElementById('enable-variants').checked = true;
+        document.getElementById('variant-setup-container').style.display = 'block';
       }
+      renderOptionSetup();
+      renderVariantsTable();
+    } catch (err) { 
+      console.error('Error fetching product:', err);
+      showToast('فشل تحميل المنتج', 'error'); 
+    }
+  }
+
+  // Common Event Listeners
+  const productForm = document.getElementById('product-form');
+  if (productForm) productForm.addEventListener('submit', saveProduct);
+  
+  const addOptBtn = document.getElementById('add-option-group');
+  if (addOptBtn) addOptBtn.addEventListener('click', addOptionGroup);
+  
+  const enableVarCheck = document.getElementById('enable-variants');
+  if (enableVarCheck) {
+    enableVarCheck.addEventListener('change', (e) => {
+      document.getElementById('variant-setup-container').style.display = e.target.checked ? 'block' : 'none';
+      if (e.target.checked && optionGroups.length === 0) addOptionGroup();
     });
+  }
 
-    // Bulk Edit
-    document.getElementById('bulk-edit-btn').addEventListener('click', openBulkEditModal);
-    document.getElementById('confirm-bulk-edit').addEventListener('click', applyBulkEdit);
+  const bulkBtn = document.getElementById('bulk-edit-btn');
+  if (bulkBtn) bulkBtn.addEventListener('click', openBulkEditModal);
+  
+  const confirmBulkBtn = document.getElementById('confirm-bulk-edit');
+  if (confirmBulkBtn) confirmBulkBtn.addEventListener('click', applyBulkEdit);
 
-
-
-  // File upload drag-and-drop logic
+  // File upload logic
   const fileInput = document.getElementById('image-file-input');
   const dropzone = document.getElementById('add-image-dropzone');
+
+  if (dropzone) {
+    dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.style.borderColor = 'var(--primary)'; });
+    dropzone.addEventListener('dragleave', (e) => { e.preventDefault(); dropzone.style.borderColor = ''; });
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.style.borderColor = '';
+      if (e.dataTransfer && e.dataTransfer.files) handleFiles(e.dataTransfer.files);
+    });
+  }
+
+  if (fileInput) {
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files) handleFiles(e.target.files);
+      e.target.value = '';
+    });
+  }
 
   function handleFiles(files) {
     const progressContainer = document.getElementById('upload-progress');
@@ -194,9 +130,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (progressBar) progressBar.style.width = percent + '%';
         if (progressText) progressText.textContent = `رفع ${percent}%`;
       }).then(res => {
-        if (res && res.url) {
-          productImages.push(res.url);
-        }
+        if (res && res.url) productImages.push(res.url);
       }).catch(err => {
         console.error('Upload failed', err);
         showToast('فشل رفع الصورة', 'error');
@@ -211,33 +145,58 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  if (dropzone) {
-    dropzone.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      dropzone.style.borderColor = 'var(--primary)';
-    });
-    dropzone.addEventListener('dragleave', (e) => {
-      e.preventDefault();
-      dropzone.style.borderColor = '';
-    });
-    dropzone.addEventListener('drop', (e) => {
-      e.preventDefault();
-      dropzone.style.borderColor = '';
-      if (e.dataTransfer && e.dataTransfer.files) {
-        handleFiles(e.dataTransfer.files);
-      }
-    });
-  }
+  function initCollectionSelect() {
+    const trigger = document.getElementById('p-collections-trigger');
+    const searchInput = document.getElementById('p-collections-search');
+    const dropdown = document.getElementById('p-collections-dropdown');
+    const tagsContainer = document.getElementById('selected-collections-tags');
+    const hiddenInput = document.getElementById('p-collections-hidden');
 
-  if (fileInput) {
-    fileInput.addEventListener('change', (e) => {
-      if (e.target.files) {
-        handleFiles(e.target.files);
-      }
-      e.target.value = ''; // reset
-    });
+    function renderTags() {
+      tagsContainer.innerHTML = selectedCollectionIds.map(id => {
+        const col = allCollections.find(c => c._id === id);
+        if (!col) return '';
+        return `<div class="tag">${col.name}<span class="tag-remove" onclick="removeCollectionTag('${id}')">×</span></div>`;
+      }).join('');
+      hiddenInput.value = JSON.stringify(selectedCollectionIds);
+    }
+
+    window.removeCollectionTag = (id) => {
+      selectedCollectionIds = selectedCollectionIds.filter(cid => cid !== id);
+      renderTags();
+      renderOptions();
+    };
+
+    function renderOptions(filter = '') {
+      const filtered = allCollections.filter(c => c.name.toLowerCase().includes(filter.toLowerCase()));
+      if (filtered.length === 0) { dropdown.innerHTML = '<div class="no-results">لا توجد نتائج</div>'; return; }
+      dropdown.innerHTML = filtered.map(c => {
+        const isSelected = selectedCollectionIds.includes(c._id);
+        const img = c.imageUrl || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjZjFmNWY5Ii8+PC9zdmc+';
+        return `
+          <div class="select-option ${isSelected ? 'selected' : ''}" onclick="toggleCollection('${c._id}')">
+            <img src="${img}" class="option-img" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjZjFmNWY5Ii8+PC9zdmc+'">
+            <span class="option-name">${c.name}</span>
+            ${isSelected ? '<span style="color:var(--primary-color)">✓</span>' : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.toggleCollection = (id) => {
+      if (selectedCollectionIds.includes(id)) selectedCollectionIds = selectedCollectionIds.filter(cid => cid !== id);
+      else selectedCollectionIds.push(id);
+      renderTags();
+      renderOptions(searchInput.value);
+    };
+
+    if (trigger) trigger.addEventListener('click', () => { dropdown.style.display = 'block'; searchInput.focus(); renderOptions(searchInput.value); });
+    if (searchInput) searchInput.addEventListener('input', (e) => renderOptions(e.target.value));
+    document.addEventListener('click', (e) => { if (!document.getElementById('p-collections-select').contains(e.target)) dropdown.style.display = 'none'; });
+    renderTags();
   }
 });
+
 
 // ── Image Management ────────────────────────────────────
 
