@@ -625,12 +625,20 @@ let currentPickingVariantIndex = null;
 window.openGalleryModal = function(idx) {
   currentPickingVariantIndex = idx;
   const grid = document.getElementById('gallery-modal-grid');
+  const confirmBtn = document.getElementById('confirm-gallery-selection');
+  
   grid.innerHTML = productImages.map((img, i) => `
     <div class="gallery-item ${variants[idx].imageUrl === img ? 'selected' : ''}" onclick="selectGalleryImage('${img}')">
       <div class="gallery-item-check"></div>
       <img src="${img}">
     </div>
   `).join('');
+
+  // Disable button if no image is currently selected for this variant
+  if (confirmBtn) {
+    confirmBtn.disabled = !variants[idx].imageUrl;
+  }
+  
   document.getElementById('gallery-modal').style.display = 'flex';
 }
 
@@ -639,6 +647,9 @@ window.selectGalleryImage = function(url) {
     el.classList.toggle('selected', el.querySelector('img').src === url);
   });
   variants[currentPickingVariantIndex].imageUrl = url;
+  
+  const confirmBtn = document.getElementById('confirm-gallery-selection');
+  if (confirmBtn) confirmBtn.disabled = false;
 }
 
 window.closeGalleryModal = function() {
