@@ -321,6 +321,7 @@
 }
 
 .product-detail-info {
+  width: 100%;
   padding: 0px 20px;
   margin-top: 15px;
   grid-column: 2;
@@ -609,6 +610,7 @@
 
 .tab-content {
   padding: 0 20px;
+  margin-bottom: 15px;
 }
 
 .product-detail-desc {
