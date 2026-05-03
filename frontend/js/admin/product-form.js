@@ -142,14 +142,18 @@ document.addEventListener('DOMContentLoaded', async () => {
           name: g.name,
           values: g.values.map(v => v.label)
         }));
+        optionEditModes = optionGroups.map(() => false);
+
         variants = (p.variants || []).map(v => ({
           combination: v.combination instanceof Map ? Object.fromEntries(v.combination) : v.combination,
           price: v.price,
           salePrice: v.salePrice,
+          cost: v.cost || null,
           quantity: v.quantity,
           imageUrl: v.imageUrl,
           active: v.active !== false
         }));
+
 
         if (optionGroups.length > 0) {
           document.getElementById('enable-variants').checked = true;
@@ -291,46 +295,119 @@ function renderImages() {
   });
 }
 
-// ── Option Groups ────────────────────────────────────────
-
-
 // ── Variant Setup (Option Groups) ───────────────────────
+
+let optionEditModes = []; // tracks which groups are in edit mode
 
 function renderOptionSetup() {
   const container = document.getElementById('option-groups-setup');
-  container.innerHTML = optionGroups.map((g, gi) => `
-    <div class="variant-group-card">
+  container.innerHTML = '';
+  
+  optionGroups.forEach((g, gi) => {
+    if (optionEditModes[gi] === undefined) optionEditModes[gi] = !g.name; // New groups start in edit mode
+
+    const groupCard = document.createElement('div');
+    groupCard.className = `variant-group-card ${optionEditModes[gi] ? 'edit-mode' : 'display-mode'}`;
+    groupCard.dataset.index = gi;
+    
+    groupCard.innerHTML = `
       <div class="variant-group-header">
-        <span style="font-weight:700">مجموعة خيارات ${gi + 1}</span>
-        <button type="button" class="btn btn-danger btn-sm" onclick="removeOptionGroup(${gi})">إزالة</button>
-      </div>
-      <div class="variant-group-body">
-        <div class="form-group">
-          <label class="form-label">اسم الخيار</label>
-          <input type="text" class="form-control" value="${g.name}" placeholder="مثال: اللون" onchange="updateGroupName(${gi}, this.value)">
+        <div style="display:flex; align-items:center; gap:8px">
+          <div class="drag-handle group-drag-handle">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+          </div>
+          <span style="font-weight:700">${g.name || 'مجموعة جديدة'}</span>
         </div>
-        <div id="option-values-${gi}">
-          ${g.values.map((v, vi) => `
-            <div class="variant-value-row">
-              <input type="text" class="form-control" value="${v}" onchange="updateValueName(${gi}, ${vi}, this.value)">
-              <button type="button" class="btn btn-secondary btn-sm" onclick="removeOptionValue(${gi}, ${vi})">×</button>
-            </div>
-          `).join('')}
+        <div style="display:flex; gap:8px">
+          ${optionEditModes[gi] ? 
+            `<button type="button" class="btn btn-primary btn-sm" onclick="saveOptionGroup(${gi})">حفظ</button>` : 
+            `<button type="button" class="btn btn-secondary btn-sm" onclick="editOptionGroup(${gi})">تعديل</button>`
+          }
+          <button type="button" class="btn btn-danger btn-sm" onclick="removeOptionGroup(${gi})">إزالة</button>
         </div>
-        <button type="button" class="btn btn-secondary btn-sm mt-8" onclick="addOptionValue(${gi})">+ إضافة قيمة أخرى</button>
       </div>
-    </div>
-  `).join('');
+      <div class="variant-group-body" onclick="${!optionEditModes[gi] ? `editOptionGroup(${gi})` : ''}">
+        <div class="variant-group-display">
+          ${g.values.filter(v => v).map(v => `<span class="tag">${v}</span>`).join('')}
+        </div>
+        <div class="variant-group-edit">
+          <div class="form-group">
+            <label class="form-label">اسم الخيار</label>
+            <input type="text" class="form-control" value="${g.name}" placeholder="مثال: اللون" onchange="updateGroupName(${gi}, this.value)">
+          </div>
+          <div id="option-values-${gi}" class="values-list">
+            ${g.values.map((v, vi) => `
+              <div class="variant-value-row" data-index="${vi}">
+                <div class="drag-handle value-drag-handle">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+                </div>
+                <input type="text" class="form-control" value="${v}" onchange="updateValueName(${gi}, ${vi}, this.value)">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="removeOptionValue(${gi}, ${vi})">×</button>
+              </div>
+            `).join('')}
+          </div>
+          <button type="button" class="btn btn-secondary btn-sm mt-8" onclick="addOptionValue(${gi})">+ إضافة قيمة أخرى</button>
+        </div>
+      </div>
+    `;
+    container.appendChild(groupCard);
+
+    // Initialize value sortable for this group if in edit mode
+    if (optionEditModes[gi]) {
+      new Sortable(document.getElementById(`option-values-${gi}`), {
+        handle: '.value-drag-handle',
+        animation: 150,
+        onEnd: (evt) => {
+          const vals = [...optionGroups[gi].values];
+          const [moved] = vals.splice(evt.oldIndex, 1);
+          vals.splice(evt.newIndex, 0, moved);
+          optionGroups[gi].values = vals;
+          syncVariants();
+        }
+      });
+    }
+  });
+
+  // Initialize group sortable
+  new Sortable(container, {
+    handle: '.group-drag-handle',
+    animation: 150,
+    onEnd: (evt) => {
+      const groups = [...optionGroups];
+      const [moved] = groups.splice(evt.oldIndex, 1);
+      groups.splice(evt.newIndex, 0, moved);
+      optionGroups = groups;
+      
+      const modes = [...optionEditModes];
+      const [movedMode] = modes.splice(evt.oldIndex, 1);
+      modes.splice(evt.newIndex, 0, movedMode);
+      optionEditModes = modes;
+      
+      syncVariants();
+    }
+  });
+}
+
+window.editOptionGroup = function(gi) {
+  optionEditModes[gi] = true;
+  renderOptionSetup();
+}
+
+window.saveOptionGroup = function(gi) {
+  optionEditModes[gi] = false;
+  renderOptionSetup();
 }
 
 function addOptionGroup() {
   optionGroups.push({ name: '', values: [''] });
+  optionEditModes[optionGroups.length - 1] = true;
   renderOptionSetup();
   syncVariants();
 }
 
 function removeOptionGroup(gi) {
   optionGroups.splice(gi, 1);
+  optionEditModes.splice(gi, 1);
   renderOptionSetup();
   syncVariants();
 }
@@ -396,6 +473,7 @@ function syncVariants() {
       combination: combo,
       price: defaultPrice,
       salePrice: defaultSalePrice,
+      cost: null,
       quantity: null,
       imageUrl: '',
       active: true
@@ -405,7 +483,9 @@ function syncVariants() {
   renderVariantsTable();
 }
 
-// ── Variant Table Rendering (Hierarchical) ──────────────
+// ── Variant Table Rendering (Hierarchical with Expansion) ──
+
+let expandedParents = new Set();
 
 function renderVariantsTable() {
   const tbody = document.getElementById('variants-list-body');
@@ -429,35 +509,30 @@ function renderVariantsTable() {
 
   let html = '';
   Object.entries(groups).forEach(([parentVal, children]) => {
-    const isSingle = children.length === 1 && Object.keys(children[0].combination).length === 1;
+    const isExpanded = expandedParents.has(parentVal);
     
     // Calculate price range for parent
     const prices = children.map(c => c.price);
     const minPrice = Math.min(...prices);
     const maxPrice = Math.max(...prices);
-    const priceDisplay = minPrice === maxPrice ? minPrice : `${minPrice} - ${maxPrice}`;
+    const priceDisplay = minPrice === maxPrice ? `${minPrice} ج.م` : `${minPrice} - ${maxPrice} ج.م`;
 
-    const salePrices = children.map(c => c.salePrice || c.price);
-    const minSale = Math.min(...salePrices);
-    const maxSale = Math.max(...salePrices);
-    const saleDisplay = minSale === maxSale ? minSale : `${minSale} - ${maxSale}`;
+    const totalQty = children.every(c => c.quantity === null) ? 'غير محدود' : children.reduce((sum, c) => sum + (c.quantity || 0), 0);
 
     // Parent Row
     html += `
-      <tr class="variant-row parent">
+      <tr class="variant-row parent ${isExpanded ? 'expanded' : ''}" onclick="toggleVariantChildren('${parentVal}')">
         <td>
           <div style="display:flex; align-items:center; gap:8px">
-            <span style="cursor:pointer" onclick="toggleVariantChildren('${parentVal}')">
-              ${parentVal}
-              <span style="font-size:0.75rem; color:#94a3b8; font-weight:400; margin-right:4px">(${children.length} متغير)</span>
-            </span>
+            <span class="expansion-arrow">▼</span>
+            <span>${parentVal}</span>
+            <span style="font-size:0.75rem; color:#94a3b8; font-weight:400; margin-right:8px">(${children.length} متغيرات)</span>
           </div>
         </td>
-        <td>${priceDisplay} ج.م</td>
-        <td>${saleDisplay} ج.م</td>
-        <td>${children.every(c => c.quantity === null) ? 'غير محدود' : children.reduce((sum, c) => sum + (c.quantity || 0), 0)}</td>
+        <td>${priceDisplay}</td>
+        <td>${totalQty}</td>
         <td style="text-align:center">
-          <input type="checkbox" onchange="toggleVariantGroup('${parentVal}', this.checked)" checked>
+          <input type="checkbox" onchange="event.stopPropagation(); toggleVariantGroup('${parentVal}', this.checked)" checked>
         </td>
       </tr>
     `;
@@ -470,20 +545,26 @@ function renderVariantsTable() {
         .join(' / ');
 
       html += `
-        <tr class="variant-row child parent-${parentVal.replace(/\s+/g, '-')}" style="display:table-row">
+        <tr class="variant-row child parent-${parentVal.replace(/\s+/g, '-')}" style="display:${isExpanded ? 'table-row' : 'none'}">
           <td>
-            <div style="display:flex; align-items:center; gap:12px">
+            <div style="display:flex; align-items:center; gap:12px; padding-right:24px">
               <div class="variant-img-picker" onclick="openGalleryModal(${c.originalIndex})">
                 ${c.imageUrl ? `<img src="${c.imageUrl}">` : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>'}
               </div>
               <span>${otherOptions || parentVal}</span>
             </div>
           </td>
-          <td><input type="number" class="form-control" value="${c.price}" onchange="updateVariantField(${c.originalIndex}, 'price', this.value)"></td>
-          <td><input type="number" class="form-control" value="${c.salePrice || ''}" placeholder="اختياري" onchange="updateVariantField(${c.originalIndex}, 'salePrice', this.value)"></td>
-          <td><input type="number" class="form-control" value="${c.quantity === null ? '' : c.quantity}" placeholder="غير محدود" onchange="updateVariantField(${c.originalIndex}, 'quantity', this.value)"></td>
+          <td>
+            <div style="display:flex; gap:8px">
+              <input type="number" class="form-control" value="${c.price}" placeholder="السعر" onchange="updateVariantField(${c.originalIndex}, 'price', this.value)" style="width:80px">
+              <input type="number" class="form-control" value="${c.salePrice || ''}" placeholder="الخصم" onchange="updateVariantField(${c.originalIndex}, 'salePrice', this.value)" style="width:80px">
+            </div>
+          </td>
+          <td>
+            <input type="number" class="form-control" value="${c.quantity === null ? '' : c.quantity}" placeholder="غير محدود" onchange="updateVariantField(${c.originalIndex}, 'quantity', this.value)" style="width:80px">
+          </td>
           <td style="text-align:center">
-            <button type="button" class="btn btn-danger btn-sm" onclick="removeVariant(${c.originalIndex})" title="حذف هذا المزيج">×</button>
+            <button type="button" class="btn btn-danger btn-sm" onclick="removeVariant(${c.originalIndex})" title="حذف">×</button>
           </td>
         </tr>
       `;
@@ -494,13 +575,17 @@ function renderVariantsTable() {
 }
 
 window.toggleVariantChildren = function(parentVal) {
-  const rows = document.querySelectorAll(`.parent-${parentVal.replace(/\s+/g, '-')}`);
-  rows.forEach(r => r.style.display = r.style.display === 'none' ? 'table-row' : 'none');
+  if (expandedParents.has(parentVal)) {
+    expandedParents.delete(parentVal);
+  } else {
+    expandedParents.add(parentVal);
+  }
+  renderVariantsTable();
 }
 
 window.updateVariantField = function(idx, field, val) {
-  if (field === 'price' || field === 'salePrice' || field === 'quantity') {
-    variants[idx][field] = val === '' ? (field === 'quantity' ? null : 0) : Number(val);
+  if (field === 'price' || field === 'salePrice' || field === 'quantity' || field === 'cost') {
+    variants[idx][field] = val === '' ? (field === 'quantity' || field === 'cost' ? null : 0) : Number(val);
   } else {
     variants[idx][field] = val;
   }
@@ -552,37 +637,43 @@ document.getElementById('confirm-gallery-selection').addEventListener('click', c
 // ── Bulk Edit Logic ─────────────────────────────────────
 
 function openBulkEditModal() {
+  const tbody = document.getElementById('bulk-edit-list');
+  tbody.innerHTML = variants.map((v, idx) => {
+    const name = Object.values(v.combination).join(' / ');
+    return `
+      <tr>
+        <td>${name}</td>
+        <td><input type="number" class="form-control" value="${v.price}" onchange="updateBulkField(${idx}, 'price', this.value)"></td>
+        <td><input type="number" class="form-control" value="${v.salePrice || ''}" onchange="updateBulkField(${idx}, 'salePrice', this.value)"></td>
+        <td><input type="number" class="form-control" value="${v.cost || ''}" onchange="updateBulkField(${idx}, 'cost', this.value)"></td>
+        <td><input type="number" class="form-control" value="${v.quantity === null ? '' : v.quantity}" onchange="updateBulkField(${idx}, 'quantity', this.value)"></td>
+      </tr>
+    `;
+  }).join('');
   document.getElementById('bulk-edit-modal').style.display = 'flex';
+}
+
+window.updateBulkField = function(idx, field, val) {
+  updateVariantField(idx, field, val);
 }
 
 function closeBulkEditModal() {
   document.getElementById('bulk-edit-modal').style.display = 'none';
+  renderVariantsTable();
 }
 
 function applyBulkEdit() {
-  const price = document.getElementById('bulk-price').value;
-  const salePrice = document.getElementById('bulk-sale-price').value;
-  const qty = document.getElementById('bulk-quantity').value;
-
-  variants.forEach(v => {
-    if (price !== '') v.price = Number(price);
-    if (salePrice !== '') v.salePrice = Number(salePrice);
-    if (qty !== '') v.quantity = Number(qty);
-  });
-
-  renderVariantsTable();
   closeBulkEditModal();
 }
-
 
 // ── Save ─────────────────────────────────────────────────
 
 async function saveProduct(e) {
   e.preventDefault();
-  const btn = document.getElementById('header-save-btn') || e.target.querySelector('button[type="submit"]');
+  const btn = document.querySelector('button[type="submit"]');
   if (btn) {
     btn.disabled = true;
-    btn.textContent = 'جارٍ الحفظ...';
+    btn.textContent = 'جاري الحفظ...';
   }
 
   const salePriceVal = document.getElementById('p-sale-price').value;
@@ -602,11 +693,11 @@ async function saveProduct(e) {
     options: optionGroups.filter(g => g.name && g.values.some(v => v)).map(g => ({
       name: g.name,
       required: true,
-      values: g.values.filter(v => v).map(v => ({ label: v, price: 0 })) // Prices are in variants now
+      values: g.values.filter(v => v).map(v => ({ label: v, price: 0 }))
     })),
     variants: document.getElementById('enable-variants').checked ? variants.map(v => ({
       ...v,
-      combination: v.combination // Already in correct object format for Map
+      combination: v.combination 
     })) : []
   };
 

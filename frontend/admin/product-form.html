@@ -145,130 +145,101 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    cursor: default;
   }
-  .variant-group-body {
-    padding: 16px;
-  }
-  .variant-value-row {
+  .variant-group-card.display-mode .variant-group-body {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 12px;
+    flex-wrap: wrap;
+    padding: 12px 16px;
+    cursor: pointer;
   }
-  .variant-table {
+  .variant-group-card.edit-mode .variant-group-display { display: none; }
+  .variant-group-card.display-mode .variant-group-edit { display: none; }
+  
+  .drag-handle {
+    cursor: grab;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+  }
+  .drag-handle:active { cursor: grabbing; }
+
+  .variant-table th {
+    background: #f8fafc;
+    padding: 12px;
+    text-align: right;
+    font-size: 0.85rem;
+    color: #475569;
+    border-bottom: 1px solid #e2e8f0;
+    font-weight: 600;
+  }
+  .variant-row.parent {
+    background: #fff;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .variant-row.parent:hover { background: #f8fafc; }
+  .variant-row.child { background: #fafafa; }
+  
+  .expansion-arrow {
+    display: inline-block;
+    transition: transform 0.2s;
+    margin-left: 8px;
+    color: #94a3b8;
+  }
+  .variant-row.parent.expanded .expansion-arrow {
+    transform: rotate(180deg);
+  }
+  
+  /* Bulk Edit Modal Table */
+  .bulk-edit-table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 16px;
   }
-  .variant-table th {
-    background: #f1f5f9;
-    padding: 10px;
-    text-align: right;
-    font-size: 0.85rem;
-    color: #64748b;
-    border-bottom: 2px solid #e2e8f0;
-  }
-  .variant-table td {
-    padding: 12px 10px;
+  .bulk-edit-table th, .bulk-edit-table td {
+    padding: 12px;
     border-bottom: 1px solid #e2e8f0;
-    vertical-align: middle;
+    text-align: right;
+    font-size: 0.9rem;
   }
-  .variant-row.parent {
-    background: #f8fafc;
-    font-weight: 700;
-  }
-  .variant-row.child {
-    background: #fff;
-  }
-  .variant-row.child td:first-child {
-    padding-right: 32px;
-    color: #0f766e;
-  }
+  .bulk-edit-table th { background: #f8fafc; color: #64748b; }
+  
   .variant-img-picker {
-    width: 40px;
-    height: 40px;
-    border: 1px dashed #cbd5e1;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    overflow: hidden;
-    background: #f8fafc;
+    width: 40px; height: 40px; border: 1px dashed #cbd5e1; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; overflow: hidden; background: #f8fafc;
   }
-  .variant-img-picker img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  .variant-img-picker:hover {
-    border-color: var(--primary-color);
-    background: #f0fdf4;
-  }
+  .variant-img-picker img { width: 100%; height: 100%; object-fit: cover; }
+  .variant-img-picker:hover { border-color: var(--primary-color); background: #f0fdf4; }
 
-  /* Toggle Switch */
-  .switch {
-    position: relative;
-    display: inline-block;
-    width: 44px;
-    height: 22px;
-  }
+  .switch { position: relative; display: inline-block; width: 44px; height: 22px; }
   .switch input { opacity: 0; width: 0; height: 0; }
   .slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-color: #cbd5e1;
-    transition: .4s;
-    border-radius: 34px;
+    position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #cbd5e1; transition: .4s; border-radius: 34px;
   }
   .slider:before {
-    position: absolute;
-    content: "";
-    height: 16px;
-    width: 16px;
-    left: 3px;
-    bottom: 3px;
-    background-color: white;
-    transition: .4s;
-    border-radius: 50%;
+    position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px;
+    background-color: white; transition: .4s; border-radius: 50%;
   }
   input:checked + .slider { background-color: #0f766e; }
   input:checked + .slider:before { transform: translateX(22px); }
 
-  /* Gallery Modal */
-  .gallery-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 12px;
-    margin-top: 16px;
-  }
-  .gallery-item {
-    aspect-ratio: 1/1;
-    border: 2px solid transparent;
-    border-radius: 8px;
-    overflow: hidden;
-    cursor: pointer;
-    position: relative;
-  }
+  .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; margin-top: 16px; }
+  .gallery-item { aspect-ratio: 1/1; border: 2px solid transparent; border-radius: 8px; overflow: hidden; cursor: pointer; position: relative; }
   .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
   .gallery-item.selected { border-color: var(--primary-color); }
   .gallery-item.selected::after {
-    content: "✓";
-    position: absolute;
-    top: 4px;
-    right: 4px;
-    background: var(--primary-color);
-    color: #fff;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
+    content: "✓"; position: absolute; top: 4px; right: 4px; background: var(--primary-color);
+    color: #fff; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px;
   }
   </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
 
 </head>
 <body>
@@ -482,31 +453,39 @@
 
     <!-- Bulk Edit Modal -->
     <div id="bulk-edit-modal" class="modal-overlay" style="display:none; z-index:2001">
-      <div class="modal-box" style="max-width:500px">
+      <div class="modal-box" style="max-width:800px; width:95%">
         <div class="modal-header">
-          <h3>تعديل جماعي للمتغيرات</h3>
+          <h3>تعديل عدة متغيرات بنفس الوقت</h3>
           <button type="button" class="close-modal" onclick="closeBulkEditModal()">×</button>
         </div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label class="form-label">السعر</label>
-            <input type="number" id="bulk-price" class="form-control" placeholder="أدخل السعر الجديد">
-          </div>
-          <div class="form-group">
-            <label class="form-label">السعر بعد الخصم</label>
-            <input type="number" id="bulk-sale-price" class="form-control" placeholder="أدخل السعر بعد الخصم">
-          </div>
-          <div class="form-group">
-            <label class="form-label">الكمية</label>
-            <input type="number" id="bulk-quantity" class="form-control" placeholder="أدخل الكمية الجديدة">
+        <div class="modal-body" style="max-height:70vh; overflow-y:auto">
+          <div class="table-wrapper">
+            <table class="bulk-edit-table">
+              <thead>
+                <tr>
+                  <th style="width:30%">المتغير</th>
+                  <th style="width:20%">السعر</th>
+                  <th style="width:20%">السعر بعد الخصم</th>
+                  <th style="width:20%">تكلفة المنتج</th>
+                  <th style="width:10%">الكمية</th>
+                </tr>
+              </thead>
+              <tbody id="bulk-edit-list">
+                <!-- Variants will be injected here -->
+              </tbody>
+            </table>
           </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" onclick="closeBulkEditModal()">إلغاء</button>
-          <button type="button" class="btn btn-primary" id="confirm-bulk-edit">تطبيق التعديلات</button>
+        <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center">
+          <div style="font-size:0.9rem; color:#64748b">سيتم تطبيق التعديلات على جميع العناصر المختارة</div>
+          <div>
+            <button type="button" class="btn btn-secondary" onclick="closeBulkEditModal()">إلغاء</button>
+            <button type="button" class="btn btn-primary" id="confirm-bulk-edit">حفظ التعديلات</button>
+          </div>
         </div>
       </div>
     </div>
+
 
   <script src="../js/api.js"></script>
 

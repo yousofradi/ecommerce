@@ -16,10 +16,12 @@ const variantSchema = new mongoose.Schema({
   combination: { type: Map, of: String }, // e.g. { "اللون": "اسود", "الطول": "قصير" }
   price: { type: Number, default: 0 },
   salePrice: { type: Number, default: null },
+  cost: { type: Number, default: null },
   quantity: { type: Number, default: null },
   imageUrl: { type: String, default: '' },
   active: { type: Boolean, default: true }
 }, { _id: false });
+
 
 const productSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
