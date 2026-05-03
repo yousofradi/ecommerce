@@ -356,22 +356,21 @@ function renderOptionSetup() {
       // Display Mode
       card.innerHTML = `
         <div class="variant-group-body" onclick="editOptionGroup(${gi})">
-          <div class="variant-group-display-tags">
-            ${g.values.filter(v => v).map(v => `<span class="tag">${v}</span>`).join('')}
-          </div>
           <div class="variant-group-display-info">
-            <div style="display:flex; flex-direction:column">
-              <span class="name">${g.name}</span>
-              <span class="type">النوع: النص</span>
-            </div>
             <div class="drag-handle group-drag-handle" onclick="event.stopPropagation()">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
             </div>
+            <span class="name">${g.name}</span>
+          </div>
+          <div class="variant-group-display-tags">
+            ${g.values.filter(v => v).map(v => `<span class="tag">${v}</span>`).join('')}
           </div>
         </div>
       `;
     }
+
     container.appendChild(card);
+
 
 
 
