@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('breadcrumb-name').textContent = currentProduct.name;
     loading.classList.add('hidden');
     detail.classList.remove('hidden');
+    detail.classList.add('fade-in');
     renderProduct(currentProduct);
     
     if (currentProduct.collectionId) {
@@ -61,14 +62,9 @@ function renderProduct(p) {
       // Since all options are now "Overrides", we show its sale price.
       const optSaleTotal = v.salePrice !== null ? v.salePrice : (v.price || 0);
       
-      let priceLabel = '';
-      if (v.price !== 0 || v.salePrice !== null) {
-          priceLabel = `<span class="option-price">(${formatPrice(optSaleTotal)})</span>`;
-      }
-
       return `<div class="radio-option">
         <input type="radio" name="opt_${gi}" id="opt_${gi}_${vi}" value="${vi}" ${vi === 0 ? 'checked' : ''} onchange="updateTotalPrice()">
-        <label for="opt_${gi}_${vi}">${v.label} ${priceLabel}</label>
+        <label for="opt_${gi}_${vi}">${v.label}</label>
       </div>`;
     }).join('');
     return `<div class="option-group" style="margin-bottom:16px">
@@ -104,15 +100,18 @@ function renderProduct(p) {
         </div>
         ${descText ? `<div class="product-detail-desc">${descText}</div>` : ''}
         ${optionsHTML}
-        <div class="qty-selector">
-          <label>الكمية:</label>
-          <button onclick="changeQty(-1)">-</button>
-          <input type="number" id="qty-input" value="1" min="1" onchange="selectedQty=Math.max(1,parseInt(this.value)||1)">
-          <button onclick="changeQty(1)">+</button>
+        
+        <div class="product-purchase-row">
+          <div class="qty-selector">
+            <button onclick="changeQty(-1)">-</button>
+            <input type="number" id="qty-input" value="1" min="1" onchange="selectedQty=Math.max(1,parseInt(this.value)||1)">
+            <button onclick="changeQty(1)">+</button>
+          </div>
+          <button class="detail-add-btn" onclick="addProductToCart()" ${!isAvailable ? 'disabled style="opacity:0.5"' : ''}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:8px; vertical-align:middle;"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+            <span>${isAvailable ? 'أضف إلى السلة' : 'غير متوفر'}</span>
+          </button>
         </div>
-        <button class="detail-add-btn" onclick="addProductToCart()" ${!isAvailable ? 'disabled style="opacity:0.5"' : ''}>
-          ${isAvailable ? 'أضف إلى السلة' : 'غير متوفر'}
-        </button>
       </div>
     </div>`;
     
