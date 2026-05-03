@@ -306,6 +306,8 @@ window.addProductToCart = function() {
     });
   }
 
+  const itemToSave = { ...currentProduct };
+  
   // Calculate prices using the same logic as updateTotalPrice
   let finalBasePrice, finalSalePrice;
 
