@@ -68,6 +68,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (optionGroups.length > 0) {
         document.getElementById('enable-variants').checked = true;
         document.getElementById('variant-setup-container').style.display = 'block';
+        if (variants.length === 0) {
+          syncVariants();
+        }
       }
       renderOptionSetup();
       renderVariantsTable();
@@ -486,6 +489,12 @@ function renderVariantsTable() {
     if (!groups[parentVal]) groups[parentVal] = [];
     groups[parentVal].push({ ...v, originalIndex: idx });
   });
+
+  const parentKeys = Object.keys(groups);
+  // Auto-expand if only one group OR if there is only one parent value
+  if (optionGroups.length === 1 || parentKeys.length === 1) {
+    parentKeys.forEach(k => expandedParents.add(k));
+  }
 
   let html = '';
   Object.entries(groups).forEach(([parentVal, children]) => {

@@ -149,16 +149,20 @@ window.renderModalProducts = function () {
       `;
     }).join('');
 
+    const isSingleGroup = p.options && p.options.length === 1;
+    const displayStyle = isSingleGroup ? 'block' : 'none';
+    const iconStyle = isSingleGroup ? 'transform: rotate(180deg);' : '';
+
     return `
       <div>
         <div class="product-list-item" style="display:flex; align-items:center; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border-color); cursor:pointer;" onclick="toggleProductVariants('${p._id}')">
           <div class="pli-info" style="display:flex; align-items:center; gap:12px;">
-            <div id="icon-${p._id}" style="transition:transform 0.2s; color:var(--text-muted);">▼</div>
+            <div id="icon-${p._id}" style="transition:transform 0.2s; color:var(--text-muted); ${iconStyle}">▼</div>
             ${imgHtml}
             <div style="font-weight:600;font-size:0.95rem">${p.name}</div>
           </div>
         </div>
-        <div id="variants-${p._id}" style="display:none;">
+        <div id="variants-${p._id}" style="display:${displayStyle};">
           ${variantsHtml}
         </div>
       </div>
