@@ -6,8 +6,6 @@ let productImages = [];
 let allCollections = [];
 let selectedCollectionIds = [];
 let optionEditModes = [];
-let selectedVariantIndices = new Set();
-let expandedParents = new Set();
 
 document.addEventListener('DOMContentLoaded', async () => {
   if (!requireAdmin()) return;
@@ -466,13 +464,16 @@ function syncVariants() {
   renderVariantsTable();
 }
 
+// ── Variant Table Rendering (Hierarchical with Expansion) ──
+
+let expandedParents = new Set();
+
 function renderVariantsTable() {
   const tbody = document.getElementById('variants-list-body');
   if (!tbody) return;
 
   if (variants.length === 0) {
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px; color:#94a3b8">أضف خيارات للمنتج للبدء في إدارة المتغيرات</td></tr>';
-    updateBulkBarUI();
     return;
   }
 
@@ -505,12 +506,11 @@ function renderVariantsTable() {
     }
 
     const totalQty = children.reduce((sum, c) => sum + (Number(c.quantity) || 0), 0);
-    const allGroupSelected = children.every(c => selectedVariantIndices.has(c.originalIndex));
 
     // Parent Row
     html += `
       <tr class="variant-row parent ${isExpanded ? 'expanded' : ''}" onclick="toggleVariantChildren('${parentVal}')">
-        <td><input type="checkbox" class="selection-checkbox" ${allGroupSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleVariantGroupSelection('${parentVal}', this.checked)"></td>
+        <td><input type="checkbox" class="selection-checkbox" onclick="event.stopPropagation()"></td>
         <td style="text-align:right">
           <div style="display:flex; align-items:center; gap:8px">
             <span style="font-weight:700">${parentVal}</span>
@@ -541,7 +541,6 @@ function renderVariantsTable() {
 
     // Children Rows
     children.forEach(c => {
-      const isSelected = selectedVariantIndices.has(c.originalIndex);
       const otherOptions = Object.entries(c.combination)
         .filter(([key]) => key !== firstGroupName)
         .map(([key, val]) => val)
@@ -549,7 +548,7 @@ function renderVariantsTable() {
 
       html += `
         <tr class="variant-row child child-indent parent-${parentVal.replace(/\s+/g, '-')}" style="display:${isExpanded ? 'table-row' : 'none'}">
-          <td><input type="checkbox" class="selection-checkbox" ${isSelected ? 'checked' : ''} onchange="toggleVariantSelection(${c.originalIndex}, this.checked)"></td>
+          <td><input type="checkbox" class="selection-checkbox"></td>
           <td style="text-align:right">
             <div style="display:flex; align-items:center;">
               <button type="button" class="btn-gallery-teal" onclick="openGalleryModal(${c.originalIndex})">
@@ -581,65 +580,22 @@ function renderVariantsTable() {
         </tr>
       `;
     });
+
   });
 
   tbody.innerHTML = html;
-  updateBulkBarUI();
 }
 
-window.toggleVariantSelection = function(idx, checked) {
-  if (checked) selectedVariantIndices.add(idx);
-  else selectedVariantIndices.delete(idx);
-  updateBulkBarUI();
-}
+window.toggleVariantChildren = function(parentVal) {
 
-window.toggleVariantGroupSelection = function(parentVal, checked) {
-  const firstGroupName = optionGroups[0].name;
-  variants.forEach((v, idx) => {
-    if (v.combination[firstGroupName] === parentVal) {
-      if (checked) selectedVariantIndices.add(idx);
-      else selectedVariantIndices.delete(idx);
-    }
-  });
+  if (expandedParents.has(parentVal)) {
+    expandedParents.delete(parentVal);
+  } else {
+    expandedParents.add(parentVal);
+  }
   renderVariantsTable();
 }
 
-function updateBulkBarUI() {
-  const bar = document.getElementById('variants-bulk-bar');
-  const countSpan = document.getElementById('selected-variants-count');
-  const count = selectedVariantIndices.size;
-  if (bar) bar.style.display = count > 0 ? 'flex' : 'none';
-  if (countSpan) countSpan.textContent = `تم تحديد ${count} متغيرات`;
-  
-  const selectAll = document.getElementById('select-all-variants');
-  if (selectAll) selectAll.checked = (count > 0 && count === variants.length);
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  const selectAll = document.getElementById('select-all-variants');
-  if (selectAll) {
-    selectAll.addEventListener('change', (e) => {
-      const checked = e.target.checked;
-      if (checked) variants.forEach((_, idx) => selectedVariantIndices.add(idx));
-      else selectedVariantIndices.clear();
-      renderVariantsTable();
-    });
-  }
-
-  const deleteBulkBtn = document.getElementById('delete-selected-variants');
-  if (deleteBulkBtn) {
-    deleteBulkBtn.addEventListener('click', deleteSelectedVariants);
-  }
-});
-
-function deleteSelectedVariants() {
-  if (!confirm(`هل أنت متأكد من حذف ${selectedVariantIndices.size} متغيرات؟`)) return;
-  
-  variants = variants.filter((_, idx) => !selectedVariantIndices.has(idx));
-  selectedVariantIndices.clear();
-  renderVariantsTable();
-  showToast('تم حذف المتغيرات المحددة');
-}
 window.updateVariantField = function(idx, field, val) {
   if (field === 'price' || field === 'salePrice' || field === 'quantity' || field === 'cost') {
     variants[idx][field] = val === '' ? (field === 'quantity' || field === 'cost' ? null : 0) : Number(val);
