@@ -313,16 +313,16 @@ function renderOptionSetup() {
       // Edit Mode
       card.innerHTML = `
         <div class="variant-group-edit-body">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
             <div class="drag-handle group-drag-handle">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
             </div>
-            <label class="form-label" style="margin:0; font-weight:600">اسم الخيار</label>
-            <div style="width:20px"></div> <!-- Spacer for balance -->
+            <label class="form-label" style="margin:0; white-space:nowrap; font-weight:600;">اسم الخيار</label>
+            <input type="text" class="form-control" value="${g.name}" placeholder="مثال: اللون" onchange="updateGroupName(${gi}, this.value)" style="flex:1;">
           </div>
-          <input type="text" class="form-control mb-16" value="${g.name}" placeholder="مثال: اللون" onchange="updateGroupName(${gi}, this.value)">
           
           <div id="option-values-${gi}">
+
             ${g.values.map((v, vi) => `
               <div class="variant-value-row" data-index="${vi}">
                 <div class="drag-handle value-drag-handle">
