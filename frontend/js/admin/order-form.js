@@ -128,19 +128,23 @@ window.renderModalProducts = function () {
       `;
     }
 
-    const combinations = getProductCombinations(p.options);
-    const variantsHtml = combinations.map((combo, idx) => {
-      const title = combo.map(c => c.label).join(' / ');
-      const extraPrice = combo.reduce((sum, c) => sum + (c.price || 0), 0);
-      const finalPrice = effectiveBase + extraPrice;
-      const comboStr = encodeURIComponent(JSON.stringify(combo));
+    const combinations = (p.variants && p.variants.length > 0) ? p.variants : [];
+    const variantsHtml = combinations.map((variant, idx) => {
+      const comboObj = variant.combination instanceof Map ? Object.fromEntries(variant.combination) : variant.combination;
+      const title = Object.values(comboObj).join(' / ');
+      const finalPrice = (variant.salePrice !== null && variant.salePrice !== undefined) ? variant.salePrice : variant.price;
+      
+      // Convert combo to the format expected by addSelectedProducts
+      const comboForSelection = Object.entries(comboObj).map(([groupName, label]) => ({ groupName, label, price: 0 }));
+      const comboStr = encodeURIComponent(JSON.stringify(comboForSelection));
+      
       return `
         <label class="product-variant-item" style="display:flex; align-items:center; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border-color); background:#fafafa; cursor:pointer; padding-right:48px;">
           <div style="display:flex; align-items:center; gap:12px;">
             <div style="font-size:0.9rem;font-weight:500;">${title}</div>
             <div style="font-size:0.85rem;color:var(--primary)">${formatPrice(finalPrice)}</div>
           </div>
-          <input type="checkbox" class="pli-checkbox product-variant-cb" data-pid="${p._id}" data-combo="${comboStr}" style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer;">
+          <input type="checkbox" class="pli-checkbox product-variant-cb" data-pid="${p._id}" data-price="${finalPrice}" data-combo="${comboStr}" style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer;">
         </label>
       `;
     }).join('');
@@ -186,15 +190,17 @@ window.addSelectedProducts = function () {
     const p = allProducts.find(x => x._id === cb.dataset.pid);
     if (p) {
       const combo = JSON.parse(decodeURIComponent(cb.dataset.combo));
+      const price = parseFloat(cb.dataset.price);
       const existing = cartItems.find(c => {
         if (c.product._id !== p._id) return false;
         if (!c.selectedOptions || c.selectedOptions.length !== combo.length) return false;
+        if (c.price !== price) return false; // Different price means different variant/deal
         return combo.every(cv => c.selectedOptions.some(so => so.groupName === cv.groupName && so.label === cv.label));
       });
       if (existing) {
         existing.quantity++;
       } else {
-        cartItems.push({ product: p, quantity: 1, selectedOptions: combo, discount: 0 });
+        cartItems.push({ product: p, quantity: 1, selectedOptions: combo, discount: 0, price: price });
       }
     }
   });
@@ -238,6 +244,7 @@ function renderCart() {
       : `<div style="width:56px;height:56px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.5rem">📦</div>`;
 
     const optText = (c.selectedOptions || []).map(op => op.label).join(' / ');
+    const effectiveUnitPrice = c.price !== undefined ? c.price : ((p.salePrice && p.salePrice < p.basePrice) ? p.salePrice : p.basePrice);
 
     return `
       <div class="product-card-item" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin-bottom: 12px; background: #fff;">
@@ -250,7 +257,7 @@ function renderCart() {
             ${imgHtml}
           </div>
           <div style="display: flex; align-items: center; gap: 16px; flex-direction: row-reverse;">
-            <div style="font-size: 0.9rem; color: #64748b;" dir="ltr">${c.quantity} x ${formatPrice((p.salePrice && p.salePrice < p.basePrice) ? p.salePrice : p.basePrice)}</div>
+            <div style="font-size: 0.9rem; color: #64748b;" dir="ltr">${c.quantity} x ${formatPrice(effectiveUnitPrice)}</div>
             <div style="font-weight: 700; font-size: 1.1rem; color: #1e293b;">${formatPrice(itemTotal(c))}</div>
           </div>
         </div>
@@ -269,9 +276,8 @@ function renderCart() {
 }
 
 function itemTotal(c) {
-  const optExtra = c.selectedOptions.reduce((s, o) => s + (o.price || 0), 0);
-  const effectiveBase = (c.product.salePrice && c.product.salePrice < c.product.basePrice) ? c.product.salePrice : c.product.basePrice;
-  return Math.max(0, (effectiveBase + optExtra) * c.quantity - (c.discount || 0));
+  const effectiveUnitPrice = c.price !== undefined ? c.price : ((c.product.salePrice && c.product.salePrice < c.product.basePrice) ? c.product.salePrice : c.product.basePrice);
+  return Math.max(0, effectiveUnitPrice * c.quantity - (c.discount || 0));
 }
 
 window.recalcSummary = function () {

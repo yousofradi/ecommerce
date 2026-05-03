@@ -21,21 +21,10 @@ Object.assign(Cart, {
     if (existing) {
       existing.quantity++;
     } else {
-      // Logic for Absolute Prices:
-      // If ANY option is selected, we sum their prices and ignore the global product price.
-      let optionsOriginalTotal = 0;
-      let optionsSaleTotal = 0;
-      let hasOverride = selectedOptions.length > 0;
+      const finalBasePrice = product.basePrice || 0;
+      const finalSalePrice = (product.salePrice !== null && product.salePrice !== undefined) ? product.salePrice : null;
       
-      selectedOptions.forEach(o => {
-        optionsOriginalTotal += (o.price || 0);
-        optionsSaleTotal += (o.salePrice !== null && o.salePrice !== undefined ? o.salePrice : (o.price || 0));
-      });
-
-      const finalBasePrice = hasOverride ? optionsOriginalTotal : product.basePrice;
-      const finalSalePrice = hasOverride ? optionsSaleTotal : (product.salePrice || product.basePrice);
-      
-      const finalUnitPrice = (finalSalePrice < finalBasePrice) ? finalSalePrice : finalBasePrice;
+      const finalUnitPrice = (finalSalePrice !== null && finalSalePrice < finalBasePrice) ? finalSalePrice : finalBasePrice;
 
       items.push({
         key,
@@ -43,7 +32,7 @@ Object.assign(Cart, {
         name: product.name,
         imageUrl: (product.images && product.images.length > 0) ? product.images[0] : (product.imageUrl || ''),
         basePrice: finalBasePrice,
-        salePrice: finalSalePrice < finalBasePrice ? finalSalePrice : null,
+        salePrice: finalSalePrice,
         selectedOptions,
         unitPrice: finalUnitPrice,
         quantity: 1
