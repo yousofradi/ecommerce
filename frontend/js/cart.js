@@ -218,3 +218,9 @@ Cart._updateBadge = (function(original) {
     }
   };
 })(Cart._updateBadge);
+// ── Handle BFcache (close cart when returning via back button) ──
+window.addEventListener('pageshow', (event) => {
+  if (event.persisted && window.Cart) {
+    Cart.closeCart();
+  }
+});
