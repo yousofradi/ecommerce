@@ -2,14 +2,15 @@
 let optionGroups = [];
 let editId = null;
 let productImages = [];
+let allCollections = [];
+let selectedCollectionIds = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
   if (!requireAdmin()) return;
   const params = new URLSearchParams(window.location.search);
   editId = params.get('id');
 
-  let allCollections = [];
-  let selectedCollectionIds = [];
+
 
   try {
     allCollections = await api.getCollections();
