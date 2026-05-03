@@ -627,6 +627,7 @@ window.openGalleryModal = function(idx) {
   const grid = document.getElementById('gallery-modal-grid');
   grid.innerHTML = productImages.map((img, i) => `
     <div class="gallery-item ${variants[idx].imageUrl === img ? 'selected' : ''}" onclick="selectGalleryImage('${img}')">
+      <div class="gallery-item-check"></div>
       <img src="${img}">
     </div>
   `).join('');
