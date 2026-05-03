@@ -93,10 +93,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   const bulkBtn = document.getElementById('bulk-edit-btn');
-  if (bulkBtn) bulkBtn.addEventListener('click', openBulkEditModal);
+  if (bulkBtn) bulkBtn.style.display = 'none';
   
   const confirmBulkBtn = document.getElementById('confirm-bulk-edit');
-  if (confirmBulkBtn) confirmBulkBtn.addEventListener('click', applyBulkEdit);
+  if (confirmBulkBtn) confirmBulkBtn.style.display = 'none';
 
   // File upload logic
   const fileInput = document.getElementById('image-file-input');
@@ -505,6 +505,8 @@ function renderVariantsTable() {
       salePriceRange = minSale === maxSale ? `${minSale}` : `${minSale} - ${maxSale}`;
     }
 
+    const totalQty = children.reduce((sum, c) => sum + (Number(c.quantity) || 0), 0);
+
     // Parent Row
     html += `
       <tr class="variant-row parent ${isExpanded ? 'expanded' : ''}" onclick="toggleVariantChildren('${parentVal}')">
@@ -532,7 +534,7 @@ function renderVariantsTable() {
           </div>
         </td>
         <td style="text-align:center">
-          <div class="btn-status">متوفر</div>
+          <input type="text" class="qty-input" value="${totalQty}" disabled style="background:#f9fafb; color:#667085">
         </td>
       </tr>
     `;
@@ -573,11 +575,12 @@ function renderVariantsTable() {
             </div>
           </td>
           <td style="text-align:center">
-            <div class="btn-status">متوفر</div>
+            <input type="number" class="qty-input" value="${c.quantity === null ? '' : c.quantity}" placeholder="∞" onchange="updateVariantField(${c.originalIndex}, 'quantity', this.value)">
           </td>
         </tr>
       `;
     });
+
   });
 
   tbody.innerHTML = html;
