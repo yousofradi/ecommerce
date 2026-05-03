@@ -98,7 +98,6 @@ function renderProduct(p) {
           <span class="detail-price-sale" id="display-sale-price">${formatPrice(salePrice)}</span>
           ${hasDiscount ? `<span class="detail-price-original" id="display-original-price">${formatPrice(p.basePrice)}</span>` : ''}
         </div>
-        ${descText ? `<div class="product-detail-desc">${descText}</div>` : ''}
         ${optionsHTML}
         
         <div class="product-purchase-row">
@@ -113,7 +112,19 @@ function renderProduct(p) {
           </button>
         </div>
       </div>
-    </div>`;
+    </div>
+    
+    ${descText ? `
+      <div class="product-extra-info">
+        <div class="product-tabs">
+          <div class="tab-item active">وصف المنتج</div>
+        </div>
+        <div class="tab-content">
+          <div class="product-detail-desc">${p.description || ''}</div>
+        </div>
+      </div>
+    ` : ''}
+    `;
     
     updateTotalPrice();
 }
