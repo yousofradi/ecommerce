@@ -549,6 +549,15 @@
   color: #111;
 }
 
+.radio-option input:disabled+label {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+  color: #94a3b8;
+}
+
+
 /* ── Purchase Row ── */
 .product-purchase-row {
   display: flex;

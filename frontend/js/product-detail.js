@@ -216,7 +216,41 @@ window.updateTotalPrice = function() {
     const mainImg = document.getElementById('main-product-img');
     if (mainImg) mainImg.src = variantImg;
   }
+
+  updateDisabledOptions(selectedOptionsMap);
 };
+
+window.updateDisabledOptions = function(currentSelections) {
+  if (!currentProduct || !currentProduct.variants || currentProduct.variants.length === 0) return;
+
+  const activeVariants = currentProduct.variants.filter(v => v.active !== false);
+
+  (currentProduct.options || []).forEach((group, gi) => {
+    group.values.forEach((v, vi) => {
+      const input = document.getElementById(`opt_${gi}_${vi}`);
+      if (!input) return;
+
+      // Check if this value is valid given CURRENT selections in OTHER groups
+      const isPossible = activeVariants.some(variant => {
+        const combo = variant.combination instanceof Map ? Object.fromEntries(variant.combination) : variant.combination;
+        
+        // 1. Must match this value
+        if (combo[group.name] !== v.label) return false;
+
+        // 2. Must match selections in ALL other groups
+        return (currentProduct.options || []).every((otherGroup, ogi) => {
+          if (ogi === gi) return true; // Skip current group
+          const selectedInOther = currentSelections[otherGroup.name];
+          if (!selectedInOther) return true; // If nothing selected in other group, it's fine
+          return combo[otherGroup.name] === selectedInOther;
+        });
+      });
+
+      input.disabled = !isPossible;
+    });
+  });
+};
+
 
 
 window.switchMainImage = function(index) {
