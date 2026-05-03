@@ -112,19 +112,18 @@ function renderProduct(p) {
           </button>
         </div>
       </div>
-    </div>
-    
-    ${descText ? `
-      <div class="product-extra-info">
-        <div class="product-tabs">
-          <div class="tab-item active">وصف المنتج</div>
+      
+      ${descText ? `
+        <div class="product-extra-info">
+          <div class="product-tabs">
+            <div class="tab-item active">وصف المنتج</div>
+          </div>
+          <div class="tab-content">
+            <div class="product-detail-desc">${p.description || ''}</div>
+          </div>
         </div>
-        <div class="tab-content">
-          <div class="product-detail-desc">${p.description || ''}</div>
-        </div>
-      </div>
-    ` : ''}
-    `;
+      ` : ''}
+    </div>`;
     
     updateTotalPrice();
 }
