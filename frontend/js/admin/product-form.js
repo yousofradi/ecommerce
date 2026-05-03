@@ -1,5 +1,6 @@
 /** Admin product form — create/edit */
 let optionGroups = [];
+let variants = []; // New hierarchical variants
 let editId = null;
 let productImages = [];
 let allCollections = [];
@@ -137,21 +138,40 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       renderImages();
 
-      optionGroups = (p.options || []).map(g => ({
-        name: g.name,
-        required: true, // Force required
-        values: g.values.map(v => ({
-          label: v.label,
-          price: v.price || 0,
-          salePrice: v.salePrice || null
-        }))
-      }));
-      renderOptionGroups();
-    } catch (err) { showToast('فشل تحميل المنتج', 'error'); }
-  }
+        optionGroups = (p.options || []).map(g => ({
+          name: g.name,
+          values: g.values.map(v => v.label)
+        }));
+        variants = (p.variants || []).map(v => ({
+          combination: v.combination instanceof Map ? Object.fromEntries(v.combination) : v.combination,
+          price: v.price,
+          salePrice: v.salePrice,
+          quantity: v.quantity,
+          imageUrl: v.imageUrl,
+          active: v.active !== false
+        }));
 
-  document.getElementById('product-form').addEventListener('submit', saveProduct);
-  document.getElementById('add-option-group').addEventListener('click', addOptionGroup);
+        if (optionGroups.length > 0) {
+          document.getElementById('enable-variants').checked = true;
+          document.getElementById('variant-setup-container').style.display = 'block';
+        }
+        renderOptionSetup();
+        renderVariantsTable();
+      } catch (err) { showToast('فشل تحميل المنتج', 'error'); }
+    }
+  
+    document.getElementById('product-form').addEventListener('submit', saveProduct);
+    document.getElementById('add-option-group').addEventListener('click', addOptionGroup);
+    document.getElementById('enable-variants').addEventListener('change', (e) => {
+      document.getElementById('variant-setup-container').style.display = e.target.checked ? 'block' : 'none';
+      if (e.target.checked && optionGroups.length === 0) {
+        addOptionGroup();
+      }
+    });
+
+    // Bulk Edit
+    document.getElementById('bulk-edit-btn').addEventListener('click', openBulkEditModal);
+    document.getElementById('confirm-bulk-edit').addEventListener('click', applyBulkEdit);
 
 
 
@@ -273,92 +293,287 @@ function renderImages() {
 
 // ── Option Groups ────────────────────────────────────────
 
-function renderOptionGroups() {
-  const container = document.getElementById('option-groups');
-  container.innerHTML = optionGroups.map((g, gi) => `
-    <div class="admin-card" style="margin-bottom:12px">
-      <div class="flex-between mb-16">
-        <h4 style="margin:0">مجموعة خيارات ${gi + 1}</h4>
-        <button type="button" class="btn btn-danger btn-sm" onclick="removeGroup(${gi})">حذف</button>
-      </div>
-      
-      <div class="form-group" style="margin-bottom:20px">
-        <label class="form-label">اسم المجموعة (مثل: الحجم أو اللون)</label>
-        <input class="form-control" value="${g.name}" onchange="optionGroups[${gi}].name=this.value" required placeholder="مثال: الحجم">
-      </div>
 
-      <div class="table-wrapper" style="border: 1px solid #eee; border-radius: 8px;">
-        <table style="margin:0">
-          <thead>
-            <tr>
-              <th style="width:40%">المتغير</th>
-              <th style="width:25%">السعر</th>
-              <th style="width:25%">السعر بعد الخصم</th>
-              <th style="width:10%"></th>
-            </tr>
-          </thead>
-          <tbody>
-            ${g.values.map((v, vi) => `
-              <tr>
-                <td>
-                  <input class="form-control" placeholder="أحمر، كبير..." value="${v.label}" onchange="optionGroups[${gi}].values[${vi}].label=this.value" required>
-                </td>
-                <td>
-                  <div style="display:flex;align-items:center;gap:4px">
-                    <input class="form-control" type="number" value="${v.price}" onchange="optionGroups[${gi}].values[${vi}].price=Number(this.value)">
-                    <span style="font-size:0.75rem;color:#999">ج.م</span>
-                  </div>
-                </td>
-                <td>
-                  <div style="display:flex;align-items:center;gap:4px">
-                    <input class="form-control" type="number" value="${v.salePrice || ''}" placeholder="اختياري" onchange="optionGroups[${gi}].values[${vi}].salePrice=this.value?Number(this.value):null">
-                    <span style="font-size:0.75rem;color:#999">ج.م</span>
-                  </div>
-                </td>
-                <td style="text-align:center">
-                  <button type="button" class="btn btn-danger btn-sm" onclick="removeValue(${gi},${vi})" style="padding:4px 8px">×</button>
-                </td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
+// ── Variant Setup (Option Groups) ───────────────────────
+
+function renderOptionSetup() {
+  const container = document.getElementById('option-groups-setup');
+  container.innerHTML = optionGroups.map((g, gi) => `
+    <div class="variant-group-card">
+      <div class="variant-group-header">
+        <span style="font-weight:700">مجموعة خيارات ${gi + 1}</span>
+        <button type="button" class="btn btn-danger btn-sm" onclick="removeOptionGroup(${gi})">إزالة</button>
       </div>
-      
-      <button type="button" class="btn btn-secondary btn-sm mt-16" onclick="addValue(${gi})">+ إضافة قيمة</button>
+      <div class="variant-group-body">
+        <div class="form-group">
+          <label class="form-label">اسم الخيار</label>
+          <input type="text" class="form-control" value="${g.name}" placeholder="مثال: اللون" onchange="updateGroupName(${gi}, this.value)">
+        </div>
+        <div id="option-values-${gi}">
+          ${g.values.map((v, vi) => `
+            <div class="variant-value-row">
+              <input type="text" class="form-control" value="${v}" onchange="updateValueName(${gi}, ${vi}, this.value)">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="removeOptionValue(${gi}, ${vi})">×</button>
+            </div>
+          `).join('')}
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm mt-8" onclick="addOptionValue(${gi})">+ إضافة قيمة أخرى</button>
+      </div>
     </div>
   `).join('');
 }
 
 function addOptionGroup() {
-  const defaultPrice = Number(document.getElementById('p-price').value) || 0;
-  const defaultSale = document.getElementById('p-sale-price').value ? Number(document.getElementById('p-sale-price').value) : null;
+  optionGroups.push({ name: '', values: [''] });
+  renderOptionSetup();
+  syncVariants();
+}
 
-  optionGroups.push({
-    name: '',
-    required: true,
-    values: [{ label: '', price: defaultPrice, salePrice: defaultSale }]
+function removeOptionGroup(gi) {
+  optionGroups.splice(gi, 1);
+  renderOptionSetup();
+  syncVariants();
+}
+
+function addOptionValue(gi) {
+  optionGroups[gi].values.push('');
+  renderOptionSetup();
+  syncVariants();
+}
+
+function removeOptionValue(gi, vi) {
+  if (optionGroups[gi].values.length <= 1) return;
+  optionGroups[gi].values.splice(vi, 1);
+  renderOptionSetup();
+  syncVariants();
+}
+
+function updateGroupName(gi, val) {
+  optionGroups[gi].name = val;
+  syncVariants();
+}
+
+function updateValueName(gi, vi, val) {
+  optionGroups[gi].values[vi] = val;
+  syncVariants();
+}
+
+// ── Variant Generation ──────────────────────────────────
+
+function syncVariants() {
+  const oldVariants = [...variants];
+  const validGroups = optionGroups.filter(g => g.name && g.values.some(v => v));
+  
+  if (validGroups.length === 0) {
+    variants = [];
+    renderVariantsTable();
+    return;
+  }
+
+  // Generate all combinations
+  let combinations = [{}];
+  validGroups.forEach(group => {
+    let newCombos = [];
+    group.values.filter(v => v).forEach(value => {
+      combinations.forEach(combo => {
+        newCombos.push({ ...combo, [group.name]: value });
+      });
+    });
+    combinations = newCombos;
   });
-  renderOptionGroups();
-}
 
-function removeGroup(gi) { optionGroups.splice(gi, 1); renderOptionGroups(); }
-
-function addValue(gi) {
   const defaultPrice = Number(document.getElementById('p-price').value) || 0;
-  const defaultSale = document.getElementById('p-sale-price').value ? Number(document.getElementById('p-sale-price').value) : null;
+  const defaultSalePrice = document.getElementById('p-sale-price').value ? Number(document.getElementById('p-sale-price').value) : null;
 
-  optionGroups[gi].values.push({
-    label: '',
-    price: defaultPrice,
-    salePrice: defaultSale
+  variants = combinations.map(combo => {
+    // Check if we already have data for this combination
+    const existing = oldVariants.find(v => 
+      Object.entries(combo).every(([key, val]) => v.combination[key] === val)
+    );
+    if (existing) return existing;
+
+    return {
+      combination: combo,
+      price: defaultPrice,
+      salePrice: defaultSalePrice,
+      quantity: null,
+      imageUrl: '',
+      active: true
+    };
   });
-  renderOptionGroups();
+
+  renderVariantsTable();
 }
 
-function removeValue(gi, vi) {
-  if (optionGroups[gi].values.length <= 1) return showToast('يجب أن تحتوي المجموعة على قيمة واحدة على الأقل', 'error');
-  optionGroups[gi].values.splice(vi, 1); renderOptionGroups();
+// ── Variant Table Rendering (Hierarchical) ──────────────
+
+function renderVariantsTable() {
+  const tbody = document.getElementById('variants-list-body');
+  if (!tbody) return;
+
+  if (variants.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:40px; color:#94a3b8">أضف خيارات للمنتج للبدء في إدارة المتغيرات</td></tr>';
+    return;
+  }
+
+  const firstGroupName = optionGroups[0]?.name;
+  if (!firstGroupName) return;
+
+  // Group by first option
+  const groups = {};
+  variants.forEach((v, idx) => {
+    const parentVal = v.combination[firstGroupName];
+    if (!groups[parentVal]) groups[parentVal] = [];
+    groups[parentVal].push({ ...v, originalIndex: idx });
+  });
+
+  let html = '';
+  Object.entries(groups).forEach(([parentVal, children]) => {
+    const isSingle = children.length === 1 && Object.keys(children[0].combination).length === 1;
+    
+    // Calculate price range for parent
+    const prices = children.map(c => c.price);
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+    const priceDisplay = minPrice === maxPrice ? minPrice : `${minPrice} - ${maxPrice}`;
+
+    const salePrices = children.map(c => c.salePrice || c.price);
+    const minSale = Math.min(...salePrices);
+    const maxSale = Math.max(...salePrices);
+    const saleDisplay = minSale === maxSale ? minSale : `${minSale} - ${maxSale}`;
+
+    // Parent Row
+    html += `
+      <tr class="variant-row parent">
+        <td>
+          <div style="display:flex; align-items:center; gap:8px">
+            <span style="cursor:pointer" onclick="toggleVariantChildren('${parentVal}')">
+              ${parentVal}
+              <span style="font-size:0.75rem; color:#94a3b8; font-weight:400; margin-right:4px">(${children.length} متغير)</span>
+            </span>
+          </div>
+        </td>
+        <td>${priceDisplay} ج.م</td>
+        <td>${saleDisplay} ج.م</td>
+        <td>${children.every(c => c.quantity === null) ? 'غير محدود' : children.reduce((sum, c) => sum + (c.quantity || 0), 0)}</td>
+        <td style="text-align:center">
+          <input type="checkbox" onchange="toggleVariantGroup('${parentVal}', this.checked)" checked>
+        </td>
+      </tr>
+    `;
+
+    // Children Rows
+    children.forEach(c => {
+      const otherOptions = Object.entries(c.combination)
+        .filter(([key]) => key !== firstGroupName)
+        .map(([key, val]) => val)
+        .join(' / ');
+
+      html += `
+        <tr class="variant-row child parent-${parentVal.replace(/\s+/g, '-')}" style="display:table-row">
+          <td>
+            <div style="display:flex; align-items:center; gap:12px">
+              <div class="variant-img-picker" onclick="openGalleryModal(${c.originalIndex})">
+                ${c.imageUrl ? `<img src="${c.imageUrl}">` : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>'}
+              </div>
+              <span>${otherOptions || parentVal}</span>
+            </div>
+          </td>
+          <td><input type="number" class="form-control" value="${c.price}" onchange="updateVariantField(${c.originalIndex}, 'price', this.value)"></td>
+          <td><input type="number" class="form-control" value="${c.salePrice || ''}" placeholder="اختياري" onchange="updateVariantField(${c.originalIndex}, 'salePrice', this.value)"></td>
+          <td><input type="number" class="form-control" value="${c.quantity === null ? '' : c.quantity}" placeholder="غير محدود" onchange="updateVariantField(${c.originalIndex}, 'quantity', this.value)"></td>
+          <td style="text-align:center">
+            <button type="button" class="btn btn-danger btn-sm" onclick="removeVariant(${c.originalIndex})" title="حذف هذا المزيج">×</button>
+          </td>
+        </tr>
+      `;
+    });
+  });
+
+  tbody.innerHTML = html;
 }
+
+window.toggleVariantChildren = function(parentVal) {
+  const rows = document.querySelectorAll(`.parent-${parentVal.replace(/\s+/g, '-')}`);
+  rows.forEach(r => r.style.display = r.style.display === 'none' ? 'table-row' : 'none');
+}
+
+window.updateVariantField = function(idx, field, val) {
+  if (field === 'price' || field === 'salePrice' || field === 'quantity') {
+    variants[idx][field] = val === '' ? (field === 'quantity' ? null : 0) : Number(val);
+  } else {
+    variants[idx][field] = val;
+  }
+}
+
+window.removeVariant = function(idx) {
+  variants.splice(idx, 1);
+  renderVariantsTable();
+}
+
+window.toggleVariantGroup = function(parentVal, active) {
+  const firstGroupName = optionGroups[0].name;
+  variants.forEach(v => {
+    if (v.combination[firstGroupName] === parentVal) {
+      v.active = active;
+    }
+  });
+}
+
+// ── Internal Gallery Modal ──────────────────────────────
+
+let currentPickingVariantIndex = null;
+
+window.openGalleryModal = function(idx) {
+  currentPickingVariantIndex = idx;
+  const grid = document.getElementById('gallery-modal-grid');
+  grid.innerHTML = productImages.map((img, i) => `
+    <div class="gallery-item ${variants[idx].imageUrl === img ? 'selected' : ''}" onclick="selectGalleryImage('${img}')">
+      <img src="${img}">
+    </div>
+  `).join('');
+  document.getElementById('gallery-modal').style.display = 'flex';
+}
+
+window.selectGalleryImage = function(url) {
+  document.querySelectorAll('.gallery-item').forEach(el => {
+    el.classList.toggle('selected', el.querySelector('img').src === url);
+  });
+  variants[currentPickingVariantIndex].imageUrl = url;
+}
+
+window.closeGalleryModal = function() {
+  document.getElementById('gallery-modal').style.display = 'none';
+  renderVariantsTable();
+}
+
+document.getElementById('confirm-gallery-selection').addEventListener('click', closeGalleryModal);
+
+// ── Bulk Edit Logic ─────────────────────────────────────
+
+function openBulkEditModal() {
+  document.getElementById('bulk-edit-modal').style.display = 'flex';
+}
+
+function closeBulkEditModal() {
+  document.getElementById('bulk-edit-modal').style.display = 'none';
+}
+
+function applyBulkEdit() {
+  const price = document.getElementById('bulk-price').value;
+  const salePrice = document.getElementById('bulk-sale-price').value;
+  const qty = document.getElementById('bulk-quantity').value;
+
+  variants.forEach(v => {
+    if (price !== '') v.price = Number(price);
+    if (salePrice !== '') v.salePrice = Number(salePrice);
+    if (qty !== '') v.quantity = Number(qty);
+  });
+
+  renderVariantsTable();
+  closeBulkEditModal();
+}
+
 
 // ── Save ─────────────────────────────────────────────────
 
@@ -384,7 +599,15 @@ async function saveProduct(e) {
     collectionId: selectedCollectionIds.length > 0 ? selectedCollectionIds[0] : null,
     status: document.getElementById('p-status').value,
     quantity: qtyVal !== '' ? Number(qtyVal) : null,
-    options: optionGroups.filter(g => g.name && g.values.length && g.values[0].label).map(g => ({ ...g, required: true }))
+    options: optionGroups.filter(g => g.name && g.values.some(v => v)).map(g => ({
+      name: g.name,
+      required: true,
+      values: g.values.filter(v => v).map(v => ({ label: v, price: 0 })) // Prices are in variants now
+    })),
+    variants: document.getElementById('enable-variants').checked ? variants.map(v => ({
+      ...v,
+      combination: v.combination // Already in correct object format for Map
+    })) : []
   };
 
   try {
@@ -399,3 +622,4 @@ async function saveProduct(e) {
     }
   }
 }
+

@@ -12,6 +12,15 @@ const optionGroupSchema = new mongoose.Schema({
   values: { type: [optionValueSchema], required: true, validate: v => v.length > 0 }
 }, { _id: false });
 
+const variantSchema = new mongoose.Schema({
+  combination: { type: Map, of: String }, // e.g. { "اللون": "اسود", "الطول": "قصير" }
+  price: { type: Number, default: 0 },
+  salePrice: { type: Number, default: null },
+  quantity: { type: Number, default: null },
+  imageUrl: { type: String, default: '' },
+  active: { type: Boolean, default: true }
+}, { _id: false });
+
 const productSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   handle: { type: String, default: '' },
@@ -23,11 +32,13 @@ const productSchema = new mongoose.Schema({
   collectionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Collection', default: null },
   collectionIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Collection' }],
   options: { type: [optionGroupSchema], default: [] },
+  variants: { type: [variantSchema], default: [] },
   sortOrder: { type: Number, default: 0 },
   active: { type: Boolean, default: true },
   status: { type: String, enum: ['active', 'draft'], default: 'active' },
   quantity: { type: Number, default: null }
 }, { timestamps: true });
+
 
 productSchema.index({ active: 1, status: 1 });
 productSchema.index({ collectionId: 1 });

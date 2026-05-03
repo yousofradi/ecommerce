@@ -141,7 +141,7 @@ router.get('/handle/:handle', async (req, res) => {
 // POST /api/products — create
 router.post('/', adminAuth, async (req, res) => {
   try {
-    const { name, basePrice, salePrice, imageUrl, images, description, options, status, quantity, handle, collectionId, collectionIds } = req.body;
+    const { name, basePrice, salePrice, imageUrl, images, description, options, variants, status, quantity, handle, collectionId, collectionIds } = req.body;
 
     if (!name || basePrice == null) {
       return res.status(400).json({ error: 'Name and basePrice are required' });
@@ -149,7 +149,7 @@ router.post('/', adminAuth, async (req, res) => {
 
     const count = await Product.countDocuments();
     const product = new Product({ 
-      name, basePrice, salePrice, imageUrl, images, description, options, 
+      name, basePrice, salePrice, imageUrl, images, description, options, variants,
       sortOrder: count, status, quantity, handle, collectionId, collectionIds 
     });
     await product.save();
@@ -166,10 +166,11 @@ router.post('/', adminAuth, async (req, res) => {
 // PUT /api/products/:id — update
 router.put('/:id', adminAuth, async (req, res) => {
   try {
-    const { name, basePrice, salePrice, imageUrl, images, description, options, active, status, quantity, handle, collectionId, collectionIds } = req.body;
+    const { name, basePrice, salePrice, imageUrl, images, description, options, variants, active, status, quantity, handle, collectionId, collectionIds } = req.body;
 
     const updateData = { name, basePrice, imageUrl, images, description, options };
     if (salePrice !== undefined) updateData.salePrice = salePrice;
+    if (variants !== undefined) updateData.variants = variants;
     if (active !== undefined) updateData.active = active;
     if (status !== undefined) updateData.status = status;
     if (quantity !== undefined) updateData.quantity = quantity;

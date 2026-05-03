@@ -132,42 +132,92 @@ function renderProduct(p) {
 window.updateTotalPrice = function() {
   if (!currentProduct) return;
   
-  let optionsOriginalTotal = 0;
-  let optionsSaleTotal = 0;
-  let hasOverride = false;
-  
+  const selectedOptionsMap = {};
+  const selectedOptionsList = [];
   (currentProduct.options || []).forEach((group, gi) => {
     const selected = document.querySelector(`input[name="opt_${gi}"]:checked`);
     if (selected) {
       const vi = parseInt(selected.value);
-      const optVal = group.values[vi];
-      // In this new model, if options exist, they are absolute prices.
-      // We sum all selected options if more than one group exists.
-      hasOverride = true;
-      optionsOriginalTotal += (optVal.price || 0);
-      optionsSaleTotal += (optVal.salePrice !== null ? optVal.salePrice : (optVal.price || 0));
+      const label = group.values[vi].label;
+      selectedOptionsMap[group.name] = label;
+      selectedOptionsList.push({ groupName: group.name, label });
     }
   });
 
-  const finalBasePrice = hasOverride ? optionsOriginalTotal : currentProduct.basePrice;
-  const finalSalePrice = hasOverride ? optionsSaleTotal : (currentProduct.salePrice || currentProduct.basePrice);
+  // Find matching variant
+  let matchingVariant = null;
+  if (currentProduct.variants && currentProduct.variants.length > 0) {
+    matchingVariant = currentProduct.variants.find(v => {
+      const combo = v.combination instanceof Map ? Object.fromEntries(v.combination) : v.combination;
+      return Object.entries(selectedOptionsMap).every(([key, val]) => combo[key] === val);
+    });
+  }
+
+  let finalBasePrice, finalSalePrice, variantImg = null, isAvailable = true;
+
+  if (matchingVariant) {
+    finalBasePrice = matchingVariant.price;
+    finalSalePrice = matchingVariant.salePrice !== null ? matchingVariant.salePrice : matchingVariant.price;
+    variantImg = matchingVariant.imageUrl;
+    isAvailable = matchingVariant.active !== false && (matchingVariant.quantity === null || matchingVariant.quantity > 0);
+  } else {
+    // Fallback to sum of options logic or base price
+    let optionsOriginalTotal = 0;
+    let optionsSaleTotal = 0;
+    let hasOverride = false;
+    
+    (currentProduct.options || []).forEach((group, gi) => {
+      const selected = document.querySelector(`input[name="opt_${gi}"]:checked`);
+      if (selected) {
+        const vi = parseInt(selected.value);
+        const optVal = group.values[vi];
+        hasOverride = true;
+        optionsOriginalTotal += (optVal.price || 0);
+        optionsSaleTotal += (optVal.salePrice !== null ? optVal.salePrice : (optVal.price || 0));
+      }
+    });
+
+    finalBasePrice = hasOverride ? optionsOriginalTotal : currentProduct.basePrice;
+    finalSalePrice = hasOverride ? optionsSaleTotal : (currentProduct.salePrice || currentProduct.basePrice);
+    isAvailable = currentProduct.quantity === null || currentProduct.quantity > 0;
+  }
   
   const hasDiscount = finalSalePrice < finalBasePrice;
-  
   const salePriceEl = document.getElementById('display-sale-price');
   const originalPriceEl = document.getElementById('display-original-price');
+  const addBtn = document.querySelector('.detail-add-btn');
   
   if (salePriceEl) salePriceEl.textContent = formatPrice(finalSalePrice);
-  
   if (originalPriceEl) {
-      if (hasDiscount) {
-          originalPriceEl.textContent = formatPrice(finalBasePrice);
-          originalPriceEl.style.display = 'inline';
-      } else {
-          originalPriceEl.style.display = 'none';
-      }
+    if (hasDiscount) {
+      originalPriceEl.textContent = formatPrice(finalBasePrice);
+      originalPriceEl.style.display = 'inline';
+    } else {
+      originalPriceEl.style.display = 'none';
+    }
+  }
+
+  // Update availability button
+  if (addBtn) {
+    const btnText = addBtn.querySelector('span');
+    if (isAvailable) {
+      addBtn.disabled = false;
+      addBtn.style.opacity = '1';
+      if (btnText) btnText.textContent = 'أضف إلى السلة';
+    } else {
+      addBtn.disabled = true;
+      addBtn.style.opacity = '0.5';
+      if (btnText) btnText.textContent = 'غير متوفر';
+    }
+  }
+
+  // Update image if variant has one
+  if (variantImg) {
+    const mainImg = document.getElementById('main-product-img');
+    if (mainImg) mainImg.src = variantImg;
   }
 };
+
 
 window.switchMainImage = function(index) {
   const images = getImages(currentProduct);
@@ -201,26 +251,40 @@ window.changeQty = function(delta) {
 window.addProductToCart = function() {
   if (!currentProduct) return;
 
-  const selectedOptions = [];
+  const selectedOptionsMap = {};
+  const selectedOptionsList = [];
   (currentProduct.options || []).forEach((group, gi) => {
     const selected = document.querySelector(`input[name="opt_${gi}"]:checked`);
     if (selected) {
       const vi = parseInt(selected.value);
-      const optVal = group.values[vi];
-      selectedOptions.push({
-        groupName: group.name,
-        label: optVal.label,
-        price: optVal.price || 0,
-        salePrice: optVal.salePrice
-      });
+      const label = group.values[vi].label;
+      selectedOptionsMap[group.name] = label;
+      selectedOptionsList.push({ groupName: group.name, label });
     }
   });
 
+  // Find matching variant for price/image
+  let matchingVariant = null;
+  if (currentProduct.variants && currentProduct.variants.length > 0) {
+    matchingVariant = currentProduct.variants.find(v => {
+      const combo = v.combination instanceof Map ? Object.fromEntries(v.combination) : v.combination;
+      return Object.entries(selectedOptionsMap).every(([key, val]) => combo[key] === val);
+    });
+  }
+
+  const itemToSave = { ...currentProduct };
+  if (matchingVariant) {
+    itemToSave.basePrice = matchingVariant.price;
+    itemToSave.salePrice = matchingVariant.salePrice;
+    if (matchingVariant.imageUrl) itemToSave.imageUrl = matchingVariant.imageUrl;
+  }
+
   for (let i = 0; i < selectedQty; i++) {
-    Cart.addItem(currentProduct, selectedOptions);
+    Cart.addItem(itemToSave, selectedOptionsList);
   }
   Cart.openCart();
 };
+
 
 async function loadRelatedProducts(colId, currentId) {
   try {
