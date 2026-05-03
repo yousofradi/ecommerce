@@ -492,7 +492,6 @@ function syncVariants() {
     );
     if (existing) return existing;
 
-    return {
       combination: combo,
       price: defaultPrice,
       salePrice: defaultSalePrice,
@@ -515,14 +514,13 @@ function renderVariantsTable() {
   if (!tbody) return;
 
   if (variants.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:40px; color:#94a3b8">أضف خيارات للمنتج للبدء في إدارة المتغيرات</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px; color:#94a3b8">أضف خيارات للمنتج للبدء في إدارة المتغيرات</td></tr>';
     return;
   }
 
   const firstGroupName = optionGroups[0]?.name;
   if (!firstGroupName) return;
 
-  // Group by first option
   const groups = {};
   variants.forEach((v, idx) => {
     const parentVal = v.combination[firstGroupName];
@@ -534,30 +532,48 @@ function renderVariantsTable() {
   Object.entries(groups).forEach(([parentVal, children]) => {
     const isExpanded = expandedParents.has(parentVal);
     
-    // Calculate price range for parent
+    // Price ranges
     const prices = children.map(c => c.price);
     const minPrice = Math.min(...prices);
     const maxPrice = Math.max(...prices);
-    const priceDisplay = minPrice === maxPrice ? `${minPrice} ج.م` : `${minPrice} - ${maxPrice} ج.م`;
+    const priceRange = minPrice === maxPrice ? `${minPrice}` : `${minPrice} - ${maxPrice}`;
 
-    const totalQty = children.every(c => c.quantity === null) ? 'غير محدود' : children.reduce((sum, c) => sum + (c.quantity || 0), 0);
+    const salePrices = children.map(c => c.salePrice).filter(p => p !== null);
+    let salePriceRange = '-';
+    if (salePrices.length > 0) {
+      const minSale = Math.min(...salePrices);
+      const maxSale = Math.max(...salePrices);
+      salePriceRange = minSale === maxSale ? `${minSale}` : `${minSale} - ${maxSale}`;
+    }
 
     // Parent Row
     html += `
       <tr class="variant-row parent ${isExpanded ? 'expanded' : ''}" onclick="toggleVariantChildren('${parentVal}')">
-        <td>
+        <td><input type="checkbox" class="selection-checkbox" onclick="event.stopPropagation()"></td>
+        <td style="text-align:right">
           <div style="display:flex; align-items:center; gap:8px">
+            <span style="font-weight:700">${parentVal}</span>
+            <span style="font-size:0.85rem; color:#667085; font-weight:400; margin-right:4px">${children.length} متغيران</span>
             <span class="expansion-arrow">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </span>
-            <span style="font-weight:600">${parentVal}</span>
-            <span style="font-size:0.75rem; color:#94a3b8; font-weight:400; margin-right:8px">(${children.length} متغيرات)</span>
           </div>
         </td>
-        <td style="font-weight:500">${priceDisplay}</td>
-        <td style="color:#667085">${totalQty}</td>
+        <td></td>
+        <td>
+          <div class="currency-input-group disabled">
+            <span class="addon">ج.م</span>
+            <input type="text" value="${priceRange}" disabled>
+          </div>
+        </td>
+        <td>
+          <div class="currency-input-group disabled">
+            <span class="addon">ج.م</span>
+            <input type="text" value="${salePriceRange}" disabled>
+          </div>
+        </td>
         <td style="text-align:center">
-          <input type="checkbox" onchange="event.stopPropagation(); toggleVariantGroup('${parentVal}', this.checked)" checked>
+          <div class="btn-status">متوفر</div>
         </td>
       </tr>
     `;
@@ -570,39 +586,46 @@ function renderVariantsTable() {
         .join(' / ');
 
       html += `
-        <tr class="variant-row child parent-${parentVal.replace(/\s+/g, '-')}" style="display:${isExpanded ? 'table-row' : 'none'}">
-          <td>
-            <div style="display:flex; align-items:center; gap:12px; padding-right:24px">
-              <div class="variant-img-picker" onclick="openGalleryModal(${c.originalIndex})">
-                ${c.imageUrl ? `<img src="${c.imageUrl}">` : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>'}
-              </div>
-              <span style="color:#344054">${otherOptions || parentVal}</span>
+        <tr class="variant-row child child-indent parent-${parentVal.replace(/\s+/g, '-')}" style="display:${isExpanded ? 'table-row' : 'none'}">
+          <td><input type="checkbox" class="selection-checkbox"></td>
+          <td style="text-align:right">
+            <div style="display:flex; align-items:center;">
+              <button type="button" class="btn-gallery-teal" onclick="openGalleryModal(${c.originalIndex})">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+              </button>
+              <span style="color:#0f766e; font-weight:500">${otherOptions || parentVal}</span>
             </div>
-          </td>
-          <td>
-            <div style="display:flex; gap:8px">
-              <input type="number" class="form-control" value="${c.price}" placeholder="السعر" onchange="updateVariantField(${c.originalIndex}, 'price', this.value)" style="width:100px">
-              <input type="number" class="form-control" value="${c.salePrice || ''}" placeholder="الخصم" onchange="updateVariantField(${c.originalIndex}, 'salePrice', this.value)" style="width:100px">
-            </div>
-          </td>
-          <td>
-            <input type="number" class="form-control" value="${c.quantity === null ? '' : c.quantity}" placeholder="غير محدود" onchange="updateVariantField(${c.originalIndex}, 'quantity', this.value)" style="width:100px">
           </td>
           <td style="text-align:center">
-            <button type="button" class="btn-table-action" onclick="removeVariant(${c.originalIndex})" title="حذف">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-            </button>
+             <div class="variant-img-picker" style="width:32px; height:32px; margin:0 auto">
+                ${c.imageUrl ? `<img src="${c.imageUrl}">` : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>'}
+             </div>
+          </td>
+          <td>
+            <div class="currency-input-group">
+              <span class="addon">ج.م</span>
+              <input type="number" value="${c.price}" onchange="updateVariantField(${c.originalIndex}, 'price', this.value)">
+            </div>
+          </td>
+          <td>
+            <div class="currency-input-group">
+              <span class="addon">ج.م</span>
+              <input type="number" value="${c.salePrice || ''}" onchange="updateVariantField(${c.originalIndex}, 'salePrice', this.value)">
+            </div>
+          </td>
+          <td style="text-align:center">
+            <div class="btn-status">متوفر</div>
           </td>
         </tr>
       `;
     });
-
   });
 
   tbody.innerHTML = html;
 }
 
 window.toggleVariantChildren = function(parentVal) {
+
   if (expandedParents.has(parentVal)) {
     expandedParents.delete(parentVal);
   } else {
