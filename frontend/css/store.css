@@ -361,10 +361,12 @@
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
+
 .product-gallery-thumbs:has(.product-gallery-thumb:nth-child(8)) {
   flex-wrap: wrap;
   overflow-x: visible;
 }
+
 .product-gallery-thumbs::-webkit-scrollbar {
   display: none;
 }
@@ -783,7 +785,7 @@
   .product-detail-layout>div:first-child,
   .product-detail-info,
   .product-extra-info {
-    padding: 20px;
+    padding: 0px 20px;
     grid-column: auto;
     grid-row: auto;
   }
