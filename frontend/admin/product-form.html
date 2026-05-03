@@ -387,7 +387,9 @@
     }
 
     .expansion-arrow {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       transition: transform 0.2s;
       margin-left: 8px;
       color: #94a3b8;
@@ -396,6 +398,34 @@
     .variant-row.parent.expanded .expansion-arrow {
       transform: rotate(180deg);
     }
+
+    .btn-table-action {
+      background: #fff;
+      border: 1px solid #d0d5dd;
+      color: #667085;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-table-action:hover {
+      background: #fef3f2;
+      border-color: #fda29b;
+      color: #d92d20;
+    }
+
+    .variant-table .form-control {
+      height: 36px;
+      font-size: 0.85rem;
+      padding: 0 8px;
+      border-radius: 6px;
+    }
+
 
     /* Bulk Edit Modal Table */
     .bulk-edit-table {
