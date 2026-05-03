@@ -569,6 +569,7 @@
 
 /* ── Product Extra Info (Tabs) ── */
 .product-extra-info {
+  width: 100%;
   margin-top: 20px;
   border-top: 1px solid #eee;
   background-color: rgb(255, 255, 255);
