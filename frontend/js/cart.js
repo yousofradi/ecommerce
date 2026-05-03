@@ -20,6 +20,12 @@ Object.assign(Cart, {
     const existing = items.find(i => i.key === key);
     if (existing) {
       existing.quantity++;
+      // Update price to latest resolved price in case it changed
+      const latestBase = product.basePrice || 0;
+      const latestSale = (product.salePrice !== null && product.salePrice !== undefined) ? product.salePrice : null;
+      existing.unitPrice = (latestSale !== null && latestSale < latestBase) ? latestSale : latestBase;
+      existing.basePrice = latestBase;
+      existing.salePrice = latestSale;
     } else {
       const finalBasePrice = product.basePrice || 0;
       const finalSalePrice = (product.salePrice !== null && product.salePrice !== undefined) ? product.salePrice : null;

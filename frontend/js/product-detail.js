@@ -309,7 +309,7 @@ window.addProductToCart = function() {
   const itemToSave = { ...currentProduct };
   if (matchingVariant) {
     itemToSave.basePrice = matchingVariant.price;
-    itemToSave.salePrice = matchingVariant.salePrice;
+    itemToSave.salePrice = matchingVariant.salePrice !== null ? matchingVariant.salePrice : matchingVariant.price;
     if (matchingVariant.imageUrl) itemToSave.imageUrl = matchingVariant.imageUrl;
   }
 
