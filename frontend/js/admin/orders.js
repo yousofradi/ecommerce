@@ -122,10 +122,10 @@ function renderOrders(orders) {
           <input type="checkbox" class="order-checkbox" value="${o.orderId}" onchange="updateArchiveButton()" style="width:16px; height:16px; border-radius:4px; accent-color:#0f766e;">
         </td>
         <td style="color:#0ea5e9; font-weight:600; font-size:0.95rem;" dir="ltr">#${displayId}</td>
-        <td>
+        <td style="text-align: right;">
           <div style="font-weight:600; color:#1e293b;">${o.customer?.name || 'بدون اسم'}</div>
-          <div style="font-size:0.85rem; color:#64748b;">${o.customer?.phone || ''}</div>
-          <div style="font-size:0.85rem; color:#64748b;">${o.customer?.government || ''}</div>
+          <div style="font-size:0.85rem; color:#64748b;"><span style="color:#94a3b8; font-size:0.75rem;">الهاتف:</span> ${o.customer?.phone || '—'}</div>
+          <div style="font-size:0.85rem; color:#64748b;"><span style="color:#94a3b8; font-size:0.75rem;">المحافظة:</span> ${o.customer?.government || '—'}</div>
         </td>
         <td style="font-size:0.95rem; color:#475569;">${o.items?.length || 0} منتج</td>
         <td>${statusBadge}</td>
