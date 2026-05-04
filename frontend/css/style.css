@@ -1710,7 +1710,7 @@ input[type=number] {
   .modal-overlay .modal-box {
     width: 96% !important;
     max-width: 96% !important;
-    max-height: 90vh !important;
+    max-height: 90vh;
   }
 
   .modal-overlay .modal-body .grid-2 {
