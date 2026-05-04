@@ -395,12 +395,14 @@
           <div>
             <!-- Products -->
             <div class="info-card">
-              <div class="info-card-header" style="background:#fff">
+              <div class="info-card-header" style="background:#fff; display: flex; justify-content: space-between; align-items: center; flex-direction: row-reverse;">
+                <h3 style="color:#1e293b; font-weight:700; font-size: 1.1rem; margin: 0;">منتجات الطلب</h3>
                 <button class="btn btn-secondary btn-sm" onclick="openProductsModal()"
-                  style="background:#fff;border-color:var(--border-color)">+ أضف منتج</button>
-                <h3 style="color:#000;font-weight:600">منتجات الطلب</h3>
+                  style="background:#fff; border: 1px solid #e2e8f0; border-radius: 20px; padding: 6px 16px; font-weight: 600; color: #475569; display: flex; align-items: center; gap: 4px;">
+                  <span style="font-size: 1.1rem; margin-top: -2px;">+</span> أضف منتج
+                </button>
               </div>
-              <div class="info-card-body" id="order-items-container" style="padding-top:0">
+              <div class="info-card-body" id="order-items-container" style="padding: 0;">
                 <!-- Items injected here -->
               </div>
             </div>

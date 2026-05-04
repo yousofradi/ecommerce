@@ -107,61 +107,53 @@ function renderOrder() {
 function renderItems() {
   const container = document.getElementById('order-items-container');
   if (!currentOrder.items || currentOrder.items.length === 0) {
-    container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted)">لا توجد منتجات</div>';
+    container.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-muted)">لا توجد منتجات في هذا الطلب</div>';
     return;
   }
 
   container.innerHTML = currentOrder.items.map((item, idx) => {
     const imgHtml = item.imageUrl
-      ? `<img src="${item.imageUrl}" class="item-img" alt="${item.name}">`
-      : `<div class="item-img" style="background:var(--bg-body);display:flex;align-items:center;justify-content:center;font-size:1.5rem"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>`;
+      ? `<img src="${item.imageUrl}" style="width:52px; height:52px; border-radius:8px; object-fit:cover; border:1px solid #f1f5f9;" alt="${item.name}">`
+      : `<div style="width:52px; height:52px; border-radius:8px; background:#f8fafc; display:flex; align-items:center; justify-content:center; color:#94a3b8; border:1px solid #f1f5f9;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>`;
 
     const optText = (item.selectedOptions || []).map(op => op.label).join(' / ');
+    const unitPrice = item.basePrice + (item.selectedOptions || []).reduce((s, op) => s + (op.price || 0), 0);
 
     return `
-      <div class="product-card-item" draggable="true" data-idx="${idx}" ondragstart="onDragStart(event)" ondragover="onDragOver(event)" ondrop="onDrop(event)" ondragend="onDragEnd(event)" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin-bottom: 12px; background: #fff; transition: opacity 0.2s, transform 0.2s; cursor: grab;">
-        <!-- Top Row: Info & Pricing -->
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
-          <!-- Right side: Name + Drag Handle, then Image -->
-          <div style="display: flex; align-items: center; gap: 12px; flex-direction: row-reverse;">
-            <div style="cursor:grab; color:#94a3b8; display:flex; align-items:center; padding:4px;" title="اسحب لتغيير الترتيب">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="5" r="2"/><circle cx="15" cy="5" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="9" cy="19" r="2"/><circle cx="15" cy="19" r="2"/></svg>
-            </div>
-            <div style="text-align: right;">
-              <div style="font-weight: 600; font-size: 1rem; color: #1e293b;">${item.name}</div>
-              ${optText ? `<div style="font-size: 0.85rem; color: #64748b; margin-top: 4px;">${optText}</div>` : ''}
-              ${item.discount ? `<div style="font-size:0.8rem;color:${item.discount > 0 ? 'var(--danger)' : 'var(--primary)'};margin-top:4px">${item.discount > 0 ? 'خصم:' : 'إضافة:'} ${formatPrice(Math.abs(item.discount))}</div>` : ''}
-            </div>
+      <div style="padding: 16px 20px; border-bottom: 1px solid #f1f5f9; background: #fff; display: flex; flex-direction: column; gap: 12px;">
+        <!-- Top Row -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-direction: row-reverse;">
+          <div style="display: flex; align-items: center; gap: 12px; flex-direction: row-reverse; flex: 1;">
             ${imgHtml}
+            <div style="text-align: right;">
+              <div style="font-weight: 700; font-size: 1rem; color: #1e293b;">${item.name}</div>
+              ${optText ? `<div style="font-size: 0.85rem; color: #64748b; margin-top: 2px;">${optText}</div>` : ''}
+              ${item.discount ? `<div style="font-size:0.75rem; color:#dc2626; margin-top:4px; font-weight:600;">خصم: ${formatPrice(item.discount)}</div>` : ''}
+            </div>
           </div>
-          <!-- Left side: Pricing -->
-          <div style="display: flex; align-items: center; gap: 16px;">
-            <div style="font-weight: 700; font-size: 1.1rem; color: #1e293b;">${formatPrice(item.finalPrice)}</div>
-            <div style="font-size: 0.9rem; color: #64748b;" dir="ltr">${item.quantity} x ${formatPrice(item.basePrice)}</div>
+          
+          <div style="display: flex; align-items: center; gap: 24px; flex-direction: row-reverse;">
+            <div style="font-size: 0.9rem; color: #64748b; white-space: nowrap;" dir="ltr">${formatPrice(unitPrice)} × ${item.quantity}</div>
+            <div style="font-weight: 700; font-size: 1.05rem; color: #1e293b; min-width: 80px; text-align: left;">${formatPrice(item.finalPrice)}</div>
           </div>
         </div>
 
-        <!-- Bottom Row: Actions -->
-        <div style="display: flex; gap: 8px; justify-content: flex-start; flex-direction: row-reverse; align-items: center;">
-          <!-- Reorder arrows -->
-          <div style="display:flex; gap:2px;">
-            <button class="btn btn-sm" onclick="moveItem(${idx}, -1)" style="background:#fff; border:1px solid #e2e8f0; color:#475569; padding:4px 8px; border-radius:6px; height:32px; ${idx === 0 ? 'opacity:0.3;cursor:not-allowed;' : ''}" ${idx === 0 ? 'disabled' : ''} title="تحريك لأعلى">▲</button>
-            <button class="btn btn-sm" onclick="moveItem(${idx}, 1)" style="background:#fff; border:1px solid #e2e8f0; color:#475569; padding:4px 8px; border-radius:6px; height:32px; ${idx === currentOrder.items.length - 1 ? 'opacity:0.3;cursor:not-allowed;' : ''}" ${idx === currentOrder.items.length - 1 ? 'disabled' : ''} title="تحريك لأسفل"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-top: -2px;"><path d="M6 9l6 6 6-6"/></svg></button>
+        <!-- Bottom Row -->
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-direction: row-reverse;">
+          <div style="display: flex; align-items: center; gap: 12px; flex-direction: row-reverse;">
+            <button class="btn btn-sm" onclick="openItemDiscountModal(${idx})" style="background: #fff; border: 1px solid #e2e8f0; color: #475569; display: flex; align-items: center; gap: 6px; font-size: 0.8rem; padding: 6px 14px; border-radius: 8px; height: 36px; font-weight: 600;">
+              تطبيق خصم
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="5" x2="5" y2="19"></line><circle cx="6.5" cy="6.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg>
+            </button>
+            
+            <div style="display: flex; align-items: center; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: #fff; height: 36px; min-width: 110px;">
+              <button onclick="updateItemQty(${idx}, ${item.quantity + 1})" style="flex: 1; height: 100%; border: none; background: transparent; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; border-left: 1px solid #e2e8f0;">+</button>
+              <div style="width: 40px; text-align: center; font-weight: 700; font-size: 0.95rem;">${item.quantity}</div>
+              <button onclick="${item.quantity > 1 ? `updateItemQty(${idx}, ${item.quantity - 1})` : ''}" style="flex: 1; height: 100%; border: none; background: ${item.quantity > 1 ? 'transparent' : '#f8fafc'}; cursor: ${item.quantity > 1 ? 'pointer' : 'not-allowed'}; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; border-right: 1px solid #e2e8f0; color: ${item.quantity > 1 ? 'inherit' : '#cbd5e1'};" ${item.quantity <= 1 ? 'disabled' : ''}>-</button>
+            </div>
           </div>
 
-          <button class="btn btn-sm" onclick="openItemDiscountModal(${idx})" style="background: #fff; border: 1px solid #e2e8f0; color: #475569; display: flex; align-items: center; gap: 6px; font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; height: 32px;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="2"></circle><circle cx="15" cy="15" r="2"></circle><path d="M19 5L5 19"></path></svg>
-            خصم / زيادة
-          </button>
-          
-          <!-- Quantity Stepper restored -->
-          <div class="qty-stepper" style="display:flex; align-items:center; border:1px solid #e2e8f0; border-radius:6px; overflow:hidden; background:#fff; height: 32px;">
-            <button type="button" onclick="updateItemQty(${idx}, ${item.quantity + 1})" style="width:28px;height:32px;background:#fff;border:none;border-left:1px solid #e2e8f0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">+</button>
-            <div style="width:32px;text-align:center;font-size:0.95rem;line-height:32px;font-weight:600;">${item.quantity}</div>
-            <button type="button" onclick="${item.quantity > 1 ? `updateItemQty(${idx}, ${item.quantity - 1})` : ''}" style="width:28px;height:32px;background:${item.quantity > 1 ? '#fff' : '#f8fafc'};border:none;border-right:1px solid #e2e8f0;cursor:${item.quantity > 1 ? 'pointer' : 'not-allowed'};display:flex;align-items:center;justify-content:center;color:${item.quantity > 1 ? 'inherit' : '#cbd5e1'};font-size:1.1rem;" ${item.quantity <= 1 ? 'disabled' : ''}>-</button>
-          </div>
-
-          <button class="btn btn-sm" onclick="removeItem(${idx})" style="background: #fff; border: 1px solid #fee2e2; color: #ef4444; display: flex; align-items: center; gap: 6px; font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; height: 32px;">
+          <button onclick="removeItem(${idx})" style="background: #fff; border: 1px solid #f1f5f9; color: #ef4444; display: flex; align-items: center; gap: 8px; font-size: 0.85rem; padding: 6px 14px; border-radius: 8px; height: 36px; cursor: pointer; font-weight: 500;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
             إزالة
           </button>
@@ -454,14 +446,12 @@ window.applyItemDiscount = async function () {
     closeModal('item-discount-modal');
     updateTotals();
     renderItems();
-
-    // Save immediately
     await saveOrderChanges(true);
-
-    // Hide the unsaved changes bar
-    const bar = document.getElementById('unsaved-changes-bar');
-    if (bar) bar.classList.remove('visible');
   }
+  
+  // Hide the unsaved changes bar
+  const bar = document.getElementById('unsaved-changes-bar');
+  if (bar) bar.classList.remove('visible');
 };
 
 window.markFullyPaid = async function () {
