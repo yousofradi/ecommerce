@@ -155,11 +155,26 @@ function initUnsavedChangesBar() {
     bar.classList.remove('visible');
   };
 
+  const isSelectionControl = (el) => {
+    if (!el) return false;
+    return el.id && el.id.startsWith('select-all') || 
+           el.classList.contains('order-checkbox') || 
+           el.classList.contains('product-checkbox') || 
+           el.classList.contains('collection-checkbox') ||
+           el.classList.contains('selection-checkbox') ||
+           el.classList.contains('pli-checkbox') ||
+           el.classList.contains('product-select-cb') ||
+           el.classList.contains('product-variant-cb');
+  };
+
   // Detect changes
   document.addEventListener('input', (e) => {
     // Ignore inputs inside modals (like product selection modal)
     if (e.target.closest('.modal-overlay') || e.target.closest('.modal-box') || e.target.closest('.hp-modal')) return;
     
+    // Ignore selection controls
+    if (isSelectionControl(e.target)) return;
+
     if (e.target.closest('form') || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
       window.markAsModified();
     }
@@ -168,16 +183,8 @@ function initUnsavedChangesBar() {
   document.addEventListener('change', (e) => {
     if (e.target.closest('.modal-overlay') || e.target.closest('.modal-box') || e.target.closest('.hp-modal')) return;
 
-    // Ignore selection checkboxes in tables (Orders, Products, Collections, etc.)
-    const isSelectionCb = e.target.id === 'select-all' || 
-                          e.target.classList.contains('order-checkbox') || 
-                          e.target.classList.contains('product-checkbox') || 
-                          e.target.classList.contains('collection-checkbox') ||
-                          e.target.classList.contains('selection-checkbox') ||
-                          e.target.classList.contains('pli-checkbox') ||
-                          e.target.classList.contains('product-select-cb') ||
-                          e.target.classList.contains('product-variant-cb');
-    if (isSelectionCb) return;
+    // Ignore selection controls
+    if (isSelectionControl(e.target)) return;
 
     if (e.target.tagName === 'SELECT' || e.target.type === 'checkbox' || e.target.type === 'radio') {
       window.markAsModified();
