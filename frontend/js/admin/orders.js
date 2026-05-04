@@ -93,26 +93,25 @@ function renderOrders(orders) {
     const dateObj = new Date(o.createdAt);
     const dateStr = dateObj.toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' });
     
-    // Payment badge
+    // Payment Method Badge
     let payBadge = '';
-    if (o.paymentMethod === 'vodafone_cash') {
-      payBadge = `<span style="display:inline-block; padding:4px 12px; border-radius:16px; background:#fce7f3; color:#9d174d; font-size:0.85rem; font-weight:600;">ف.كاش</span>`;
-    } else if (o.paymentMethod === 'instapay') {
-      payBadge = `<span style="display:inline-block; padding:4px 12px; border-radius:16px; background:#dcfce7; color:#16a34a; font-size:0.85rem; font-weight:600;">إنستاباي</span>`;
-    } else {
-      payBadge = o.paymentMethod;
-    }
+    const payMethodLabels = {
+      'vodafone_cash': 'فودافون كاش',
+      'instapay': 'إنستاباي'
+    };
+    const methodLabel = payMethodLabels[o.paymentMethod] || o.paymentMethod || '—';
+    payBadge = `<span style="font-size:0.85rem; color:#64748b;">${methodLabel}</span>`;
 
-    // Status badge
+    // Status Badge (Payment & Fulfillment)
     let statusBadge = '';
     if (o.status === 'cancelled') {
-      statusBadge = `<span style="display:inline-block; padding:4px 12px; border-radius:16px; background:#fee2e2; color:#dc2626; font-size:0.85rem; font-weight:600;">ملغي</span>`;
+      statusBadge = `<span class="status-badge-pill" style="background:#fee2e2; color:#dc2626; border:1px solid #fecaca;"><span style="width:6px; height:6px; border-radius:50%; background:#dc2626;"></span>ملغي</span>`;
     } else if (o.paid) {
-      statusBadge = `<span style="display:inline-block; padding:4px 12px; border-radius:16px; background:#dcfce7; color:#16a34a; font-size:0.85rem; font-weight:600;">مدفوع <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;"><polyline points="20 6 9 17 4 12"/></svg></span>`;
+      statusBadge = `<span class="status-badge-pill" style="background:#dcfce7; color:#16a34a; border:1px solid #bbf7d0;"><span style="width:6px; height:6px; border-radius:50%; background:#16a34a;"></span>مدفوع</span>`;
     } else if (o.paidAmount > 0) {
-      statusBadge = `<span style="display:inline-block; padding:4px 12px; border-radius:16px; background:#fef3c7; color:#92400e; font-size:0.85rem; font-weight:600; text-align:center; min-width:110px;">مدفوع جزئياً<div style="font-size:0.75rem; font-weight:normal; opacity:0.9; margin-top:2px;">المتبقي: ${formatPrice(o.totalPrice - o.paidAmount)}</div></span>`;
+      statusBadge = `<span class="status-badge-pill" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a;"><span style="width:6px; height:6px; border-radius:50%; background:#92400e;"></span>مدفوع جزئياً</span>`;
     } else {
-      statusBadge = `<span style="display:inline-block; padding:4px 12px; border-radius:16px; background:#f1f5f9; color:#475569; font-size:0.85rem; font-weight:600;">غير مدفوع</span>`;
+      statusBadge = `<span class="status-badge-pill" style="background:#f1f5f9; color:#475569; border:1px solid #e2e8f0;"><span style="width:6px; height:6px; border-radius:50%; background:#94a3b8;"></span>غير مدفوع</span>`;
     }
     
     const displayId = o.orderId.replace('Order-', '').replace('Scoop-', '');
