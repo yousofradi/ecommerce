@@ -15,14 +15,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
+  document.body.classList.add('is-loading');
+
   try {
-    const [order, products, shipping] = await Promise.all([
+    const [order, shipping] = await Promise.all([
       api.getOrder(orderId),
-      api.getProducts().catch(() => []),
       api.getShipping().catch(() => ({}))
     ]);
     currentOrder = order;
-    allProducts = products;
     shippingMap = shipping;
 
     // Fallback if DB is empty
@@ -41,8 +41,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     renderOrder();
+    document.body.classList.remove('is-loading');
   } catch (err) {
     showToast('فشل تحميل بيانات الطلب', 'error');
+    document.body.classList.remove('is-loading');
   }
 
   // Global Save Handler
@@ -617,6 +619,30 @@ window.renderModalProducts = function () {
       </div>
     `;
   }).join('');
+};
+
+window.openProductsModal = async function () {
+  openModal('products-modal');
+  
+  if (allProducts.length === 0) {
+    const listEl = document.getElementById('modal-products-list');
+    listEl.innerHTML = '<div style="padding:20px; text-align:center;">جاري تحميل المنتجات...</div>';
+    try {
+      const [products, collections] = await Promise.all([
+        api.getProducts(),
+        api.getCollections()
+      ]);
+      allProducts = products;
+      const colFilter = document.getElementById('modal-col-filter');
+      colFilter.innerHTML = '<option value="">جميع المنتجات</option>';
+      collections.forEach(c => {
+        colFilter.add(new Option(c.name, c._id));
+      });
+    } catch (err) {
+      console.error('Failed to load products for modal', err);
+    }
+  }
+  renderModalProducts();
 };
 
 window.addSelectedProducts = function () {

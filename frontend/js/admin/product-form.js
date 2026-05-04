@@ -12,15 +12,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   const params = new URLSearchParams(window.location.search);
   editId = params.get('id');
 
-  try {
-    allCollections = await api.getCollections();
-    initCollectionSelect();
-  } catch (e) { console.error('Collections fetch failed', e); }
+  document.body.classList.add('is-loading');
 
-  if (editId) {
-    document.getElementById('form-title').textContent = 'تعديل المنتج';
-    try {
-      const p = await api.getProduct(editId);
+  try {
+    const [collections, product] = await Promise.all([
+      api.getCollections().catch(() => []),
+      editId ? api.getProduct(editId) : Promise.resolve(null)
+    ]);
+    
+    allCollections = collections;
+    initCollectionSelect();
+
+    if (product) {
+      const p = product;
+      document.getElementById('form-title').textContent = 'تعديل المنتج';
       document.getElementById('p-name').value = p.name;
       document.getElementById('p-price').value = p.basePrice;
       document.getElementById('p-sale-price').value = p.salePrice || '';
@@ -74,10 +79,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       renderOptionSetup();
       renderVariantsTable();
-    } catch (err) { 
-      console.error('Error fetching product:', err);
-      showToast('فشل تحميل المنتج', 'error'); 
     }
+    document.body.classList.remove('is-loading');
+  } catch (err) { 
+    console.error('Error loading page data:', err);
+    showToast('فشل تحميل البيانات', 'error'); 
+    document.body.classList.remove('is-loading');
   }
 
   const productForm = document.getElementById('product-form');

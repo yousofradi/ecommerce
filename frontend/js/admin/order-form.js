@@ -8,15 +8,16 @@ let cartItems = []; // [{ product, quantity, selectedOptions, discount }]
 document.addEventListener('DOMContentLoaded', async () => {
   if (!requireAdmin()) return;
 
-  try {
-    let products = [];
-    try {
-      const res = await api.getProducts(1, 1000, true);
-      products = (res.products || res).filter(p => p.status !== 'draft');
-    } catch (e) { }
+  document.body.classList.add('is-loading');
 
-    let shipping = {};
-    try { shipping = await api.getShipping(); } catch (e) { }
+  try {
+    const [productsRes, shippingRes] = await Promise.all([
+      api.getProducts(1, 1000, true).catch(() => []),
+      api.getShipping().catch(() => ({}))
+    ]);
+
+    const products = (productsRes.products || productsRes).filter(p => p.status !== 'draft');
+    let shipping = shippingRes;
 
     // Fallback if DB is empty
     if (Object.keys(shipping).length === 0) {
@@ -29,11 +30,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     shippingMap = shipping;
 
     const govSelect = document.getElementById('c-gov');
-    Object.keys(shippingMap).forEach(gov => {
-      govSelect.add(new Option(gov, gov));
-    });
+    if (govSelect) {
+      Object.keys(shippingMap).forEach(gov => {
+        govSelect.add(new Option(gov, gov));
+      });
+    }
+    document.body.classList.remove('is-loading');
   } catch (err) {
     showToast('فشل تحميل بيانات المتجر', 'error');
+    document.body.classList.remove('is-loading');
   }
 
   setupSearch();

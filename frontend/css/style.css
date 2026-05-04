@@ -34,6 +34,47 @@
   --sidebar-w: 240px;
 }
 
+/* ── Shimmer Loading ────────────────────────────────── */
+.shimmer {
+  background: #f6f7f8;
+  background-image: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%);
+  background-repeat: no-repeat;
+  background-size: 800px 104px;
+  display: inline-block;
+  position: relative;
+  animation-duration: 1.2s;
+  animation-fill-mode: forwards;
+  animation-iteration-count: infinite;
+  animation-name: shimmer;
+  animation-timing-function: linear;
+  border-radius: 4px;
+}
+
+@keyframes shimmer {
+  0% { background-position: -468px 0; }
+  100% { background-position: 468px 0; }
+}
+
+.is-loading .loading-hide {
+  visibility: hidden;
+}
+
+.is-loading .loading-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.is-loading .loading-shimmer::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: #f6f7f8;
+  background-image: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%);
+  background-repeat: no-repeat;
+  animation: shimmer 1.2s linear infinite;
+  z-index: 10;
+}
+
 /* ── Reset ───────────────────────────────────────────── */
 *,
 *::before,
