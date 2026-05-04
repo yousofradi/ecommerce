@@ -27,6 +27,7 @@ function logout() {
 
 // Global UI Helpers
 document.addEventListener('DOMContentLoaded', () => {
+  // Sidebar Toggle
   const toggleBtn = document.querySelector('.sidebar-toggle');
   const sidebar = document.querySelector('.admin-sidebar');
   if (toggleBtn && sidebar) {
@@ -34,11 +35,167 @@ document.addEventListener('DOMContentLoaded', () => {
       sidebar.classList.toggle('open');
     });
 
-    // Close sidebar when clicking outside on mobile
     document.addEventListener('click', (e) => {
       if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
         sidebar.classList.remove('open');
       }
     });
   }
+
+  // Unsaved Changes Bar
+  initUnsavedChangesBar();
 });
+
+function initUnsavedChangesBar() {
+  // Inject CSS
+  const style = document.createElement('style');
+  style.textContent = `
+    .unsaved-bar {
+      position: fixed;
+      top: -100px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 600px;
+      background: #1e293b;
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
+      z-index: 2000;
+      transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      direction: rtl;
+    }
+    .unsaved-bar.visible {
+      top: 20px;
+    }
+    .unsaved-bar span {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    .unsaved-actions {
+      display: flex;
+      gap: 12px;
+    }
+    .unsaved-btn {
+      padding: 8px 24px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+    .btn-save-changes {
+      background: #10b981;
+      color: #fff;
+    }
+    .btn-save-changes:hover {
+      background: #059669;
+      transform: translateY(-1px);
+    }
+    .btn-discard-changes {
+      background: #475569;
+      color: #fff;
+    }
+    .btn-discard-changes:hover {
+      background: #334155;
+    }
+    @media (max-width: 600px) {
+      .unsaved-bar {
+        width: 95%;
+        padding: 10px 16px;
+        flex-direction: column;
+        gap: 12px;
+        border-radius: 16px;
+        top: -150px;
+      }
+      .unsaved-bar.visible {
+        top: 10px;
+      }
+      .unsaved-actions {
+        width: 100%;
+      }
+      .unsaved-btn {
+        flex: 1;
+        padding: 10px;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+
+  // Inject HTML
+  const bar = document.createElement('div');
+  bar.className = 'unsaved-bar';
+  bar.id = 'unsaved-changes-bar';
+  bar.innerHTML = `
+    <span>لديك تغييرات غير محفوظة</span>
+    <div class="unsaved-actions">
+      <button class="unsaved-btn btn-discard-changes" id="btn-global-discard">تجاهل</button>
+      <button class="unsaved-btn btn-save-changes" id="btn-global-save">احفظ التغييرات</button>
+    </div>
+  `;
+  document.body.appendChild(bar);
+
+  let hasChanges = false;
+
+  const showBar = () => {
+    if (!hasChanges) {
+      hasChanges = true;
+      bar.classList.add('visible');
+    }
+  };
+
+  const hideBar = () => {
+    hasChanges = false;
+    bar.classList.remove('visible');
+  };
+
+  // Detect changes
+  document.addEventListener('input', (e) => {
+    if (e.target.closest('form') || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+      showBar();
+    }
+  });
+
+  document.addEventListener('change', (e) => {
+    if (e.target.tagName === 'SELECT' || e.target.type === 'checkbox' || e.target.type === 'radio') {
+      showBar();
+    }
+  });
+
+  // Action: Discard
+  document.getElementById('btn-global-discard').addEventListener('click', () => {
+    if (confirm('هل أنت متأكد من تجاهل جميع التغييرات؟')) {
+      location.reload();
+    }
+  });
+
+  // Action: Save
+  document.getElementById('btn-global-save').addEventListener('click', async () => {
+    if (window.handleGlobalSave) {
+      const success = await window.handleGlobalSave();
+      if (success !== false) hideBar();
+    } else {
+      // Fallback: try to find a primary save button and click it
+      const primaryBtn = document.querySelector('button[type="submit"], .btn-primary, #save-btn');
+      if (primaryBtn) {
+        primaryBtn.click();
+        hideBar();
+      } else {
+        alert('لا يمكن العثور على وظيفة الحفظ لهذه الصفحة.');
+      }
+    }
+  });
+
+  // Warn before exit
+  window.addEventListener('beforeunload', (e) => {
+    if (hasChanges) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+}
