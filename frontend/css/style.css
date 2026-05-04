@@ -1527,19 +1527,19 @@ input[type=number] {
     pointer-events: none;
   }
 
-  /* Slide-in Drawer Menu (Right side for RTL) */
+  /* Slide-in Drawer Menu (Left side) */
   .admin-nav {
     position: fixed;
     top: 0;
-    right: -280px;
+    left: -280px;
     width: 260px;
     height: 100vh;
     background: #fff;
     flex-direction: column;
     flex-wrap: nowrap;
     padding: 20px;
-    box-shadow: -4px 0 15px rgba(0, 0, 0, 0.1);
-    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 2000;
     margin-top: 0;
     border-top: none;
@@ -1548,7 +1548,7 @@ input[type=number] {
 
   /* Drawer open state */
   .admin-sidebar.open .admin-nav {
-    right: 0;
+    left: 0;
   }
 
   /* Drawer overlay background */
