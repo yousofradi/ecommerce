@@ -129,12 +129,12 @@ function renderOrders(orders) {
           <div style="font-size:0.85rem; color:#64748b;">${o.customer?.government || ''}</div>
         </td>
         <td style="font-size:0.95rem; color:#475569;">${o.items?.length || 0} منتج</td>
+        <td>${statusBadge}</td>
+        <td>${payBadge}</td>
         <td>
           <div style="font-weight:700; color:#0ea5e9; white-space:nowrap;">${formatPrice(o.totalPrice)}</div>
           ${o.discount ? `<div style="font-size:0.8rem; color:#dc2626;">خصم: ${formatPrice(o.discount)}</div>` : ''}
         </td>
-        <td>${payBadge}</td>
-        <td>${statusBadge}</td>
         <td style="color:#64748b; font-size:0.85rem;">${dateStr}</td>
       </tr>
     `;
