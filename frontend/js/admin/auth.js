@@ -27,21 +27,21 @@ function logout() {
 
 // Global UI Helpers
 document.addEventListener('DOMContentLoaded', () => {
-  // Sidebar Toggle
-  const toggleBtn = document.querySelector('.sidebar-toggle');
-  const sidebar = document.querySelector('.admin-sidebar');
-  if (toggleBtn && sidebar) {
-    toggleBtn.addEventListener('click', (e) => {
+  // Sidebar Toggle (Delegated)
+  document.addEventListener('click', (e) => {
+    const toggleBtn = e.target.closest('.sidebar-toggle');
+    if (toggleBtn) {
       e.stopPropagation();
-      sidebar.classList.toggle('open');
-    });
-
-    document.addEventListener('click', (e) => {
-      if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
+      const sidebar = document.querySelector('.admin-sidebar');
+      if (sidebar) sidebar.classList.toggle('open');
+    } else {
+      // Close sidebar when clicking outside
+      const sidebar = document.querySelector('.admin-sidebar');
+      if (sidebar && sidebar.classList.contains('open') && !sidebar.contains(e.target)) {
         sidebar.classList.remove('open');
       }
-    });
-  }
+    }
+  });
 
   // Unsaved Changes Bar
   initUnsavedChangesBar();

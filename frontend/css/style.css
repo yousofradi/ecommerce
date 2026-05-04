@@ -1477,7 +1477,8 @@ input[type=number] {
   }
 
   .admin-brand-header {
-    width: 80%;
+    width: auto;
+    flex: 1;
     display: flex;
     justify-content: center;
     margin-bottom: 0;
@@ -1485,17 +1486,13 @@ input[type=number] {
   }
 
   .admin-store-preview {
-    width: 100%;
-    padding: 10px;
+    width: auto;
+    padding: 8px 16px;
     justify-content: center;
     margin: 0;
   }
 
-  .admin-brand-title {
-    display: none;
-  }
-
-  .admin-brand-sub {
+  .admin-brand-title, .admin-brand-sub {
     display: none;
   }
 
@@ -1508,23 +1505,23 @@ input[type=number] {
     color: var(--text-main);
     margin: 0;
     padding: 0;
-    z-index: 1001;
+    z-index: 10000; /* Very high to stay above everything */
     position: relative;
   }
 
-  /* Slide-in Drawer Menu */
+  /* Slide-in Drawer Menu (Left side to match toggle) */
   .admin-nav {
     position: fixed;
     top: 0;
-    right: -280px;
+    left: -280px;
     width: 260px;
     height: 100vh;
     background: #fff;
     flex-direction: column;
     flex-wrap: nowrap;
     padding: 20px;
-    box-shadow: -4px 0 15px rgba(0, 0, 0, 0.1);
-    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 2000;
     margin-top: 0;
     border-top: none;
@@ -1533,7 +1530,7 @@ input[type=number] {
 
   /* Drawer open state */
   .admin-sidebar.open .admin-nav {
-    right: 0;
+    left: 0;
   }
 
   /* Drawer overlay background */
