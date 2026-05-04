@@ -122,7 +122,7 @@ function renderOrders(orders) {
         <td style="text-align: center;" onclick="event.stopPropagation();">
           <input type="checkbox" class="order-checkbox" value="${o.orderId}" onchange="updateArchiveButton()" style="width:16px; height:16px; border-radius:4px; accent-color:#0f766e;">
         </td>
-        <td style="color:#0ea5e9; font-weight:600; font-size:0.95rem;" dir="ltr">#${displayId}</td>
+        <td style="color:#0ea5e9; font-weight:600; font-size:0.95rem; width:60px; text-align:center;" dir="ltr">#${displayId}</td>
         <td>
           <div style="font-weight:600; color:#1e293b;">${o.customer?.name || 'بدون اسم'}</div>
           <div style="font-size:0.85rem; color:#64748b;">${o.customer?.phone || ''}</div>
