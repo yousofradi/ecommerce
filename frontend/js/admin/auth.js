@@ -175,7 +175,7 @@ function initUnsavedChangesBar() {
   // Detect changes
   document.addEventListener('input', (e) => {
     // Ignore inputs inside modals (like product selection modal)
-    if (e.target.closest('.modal-overlay') || e.target.closest('.modal-box') || e.target.closest('.hp-modal')) return;
+    if (e.target.closest('.modal-overlay') || e.target.closest('.modal-box') || e.target.closest('.hp-modal') || e.target.closest('[id*="modal"]')) return;
     
     // Ignore selection controls
     if (isSelectionControl(e.target)) return;
@@ -186,7 +186,7 @@ function initUnsavedChangesBar() {
   });
 
   document.addEventListener('change', (e) => {
-    if (e.target.closest('.modal-overlay') || e.target.closest('.modal-box') || e.target.closest('.hp-modal')) return;
+    if (e.target.closest('.modal-overlay') || e.target.closest('.modal-box') || e.target.closest('.hp-modal') || e.target.closest('[id*="modal"]')) return;
 
     // Ignore selection controls
     if (isSelectionControl(e.target)) return;

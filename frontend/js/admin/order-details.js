@@ -635,11 +635,10 @@ window.renderModalProducts = function () {
       <div>
         <div class="product-list-item" style="display:flex; align-items:center; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border-color); cursor:pointer;" onclick="toggleProductVariants('${p._id}')">
           <div class="pli-info" style="display:flex; align-items:center; gap:12px;">
-            <div id="icon-${p._id}" style="transition:transform 0.2s; color:var(--text-muted);"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-top: -2px;"><path d="M6 9l6 6 6-6"/></svg></div>
             ${imgHtml}
             <div style="font-weight:600;font-size:0.95rem">${p.name}</div>
           </div>
-          <!-- Parent does not have a checkbox if it has variants -->
+          <div id="icon-${p._id}" style="transition:transform 0.2s; color:var(--text-muted);"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-top: -2px;"><path d="M6 9l6 6 6-6"/></svg></div>
         </div>
         <div id="variants-${p._id}" style="display:none;">
           ${variantsHtml}

@@ -132,6 +132,10 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      position: sticky;
+      top: 0;
+      background: #fff;
+      z-index: 10;
     }
 
     .modal-header h3 {
@@ -487,7 +491,7 @@
             <option value="">اختر مجموعة</option>
           </select>
           <input type="text" class="form-control" id="modal-search" placeholder="ابحث عن منتجات"
-            style="flex:2;min-width:200px" oninput="renderModalProducts()">
+            style="flex:2;min-width:200px" oninput="renderModalProducts()" autocomplete="off">
         </div>
         <div id="modal-products-list"></div>
       </div>
