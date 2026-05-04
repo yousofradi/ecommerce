@@ -14,7 +14,7 @@ async function loadOrders() {
   const selectAllCb = document.getElementById('select-all-orders');
   if (selectAllCb) selectAllCb.checked = false;
   updateArchiveButton();
-  
+
   tbody.innerHTML = '<tr><td colspan="10" class="text-center" style="padding:32px;"><div class="spinner"></div></td></tr>';
   try {
     allOrdersData = await api.getOrders(showingArchived);
@@ -25,7 +25,7 @@ async function loadOrders() {
   }
 }
 
-window.setFilter = function(filter) {
+window.setFilter = function (filter) {
   currentFilter = filter;
   document.querySelectorAll('.order-tab').forEach(el => el.classList.remove('active'));
   document.querySelector(`.order-tab[data-filter="${filter}"]`)?.classList.add('active');
@@ -46,34 +46,34 @@ window.setFilter = function(filter) {
   filterOrdersClient();
 };
 
-window.filterOrdersClient = function() {
+window.filterOrdersClient = function () {
   const searchInput = document.getElementById('order-search');
   const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
   let filtered = allOrdersData;
-  
+
   if (currentFilter === 'pending') {
-    filtered = filtered.filter(o => o.status !== 'cancelled'); 
+    filtered = filtered.filter(o => o.status !== 'cancelled');
   } else if (currentFilter === 'unpaid') {
     filtered = filtered.filter(o => !o.paid && (o.totalPrice > (o.paidAmount || 0)));
   }
-  
+
   if (query) {
-    filtered = filtered.filter(o => 
-      o.orderId.toLowerCase().includes(query) || 
+    filtered = filtered.filter(o =>
+      o.orderId.toLowerCase().includes(query) ||
       (o.customer && o.customer.name && o.customer.name.toLowerCase().includes(query)) ||
       (o.customer && o.customer.phone && o.customer.phone.includes(query))
     );
   }
-  
+
   renderOrders(filtered);
 };
 
-window.updateFilterCounts = function() {
+window.updateFilterCounts = function () {
   if (!showingArchived) {
     const elAll = document.getElementById('count-all');
     const elPending = document.getElementById('count-pending');
     const elUnpaid = document.getElementById('count-unpaid');
-    
+
     if (elAll) elAll.textContent = allOrdersData.length;
     if (elPending) elPending.textContent = allOrdersData.filter(o => o.status !== 'cancelled').length;
     if (elUnpaid) elUnpaid.textContent = allOrdersData.filter(o => !o.paid && (o.totalPrice > (o.paidAmount || 0))).length;
@@ -82,38 +82,39 @@ window.updateFilterCounts = function() {
 
 function renderOrders(orders) {
   const tbody = document.getElementById('orders-tbody');
-  
+
   if (!orders.length) {
     tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted" style="padding:40px">لا توجد طلبات هنا</td></tr>';
     return;
   }
-  
+
   tbody.innerHTML = orders.map(o => {
     // Format date as "27 أبريل 2026"
     const dateObj = new Date(o.createdAt);
     const dateStr = dateObj.toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' });
-    
-    // Payment Method Badge
-    let payBadge = '';
-    const payMethodLabels = {
-      'vodafone_cash': 'فودافون كاش',
-      'instapay': 'إنستاباي'
-    };
-    const methodLabel = payMethodLabels[o.paymentMethod] || o.paymentMethod || '—';
-    payBadge = `<span style="font-size:0.85rem; color:#64748b;">${methodLabel}</span>`;
 
-    // Status Badge (Payment & Fulfillment)
+    // Payment badge
+    let payBadge = '';
+    if (o.paymentMethod === 'vodafone_cash') {
+      payBadge = `<span style="display:inline-block; padding:4px 12px; border-radius:16px; background:#fce7f3; color:#9d174d; font-size:0.85rem; font-weight:600;">ف.كاش</span>`;
+    } else if (o.paymentMethod === 'instapay') {
+      payBadge = `<span style="display:inline-block; padding:4px 12px; border-radius:16px; background:#dcfce7; color:#16a34a; font-size:0.85rem; font-weight:600;">إنستاباي</span>`;
+    } else {
+      payBadge = o.paymentMethod;
+    }
+
+    // Status badge
     let statusBadge = '';
     if (o.status === 'cancelled') {
-      statusBadge = `<span class="status-badge-pill" style="background:#fee2e2; color:#dc2626; border:1px solid #fecaca;"><span style="width:6px; height:6px; border-radius:50%; background:#dc2626;"></span>ملغي</span>`;
+      statusBadge = `<span style="display:inline-block; padding:4px 12px; border-radius:16px; background:#fee2e2; color:#dc2626; font-size:0.85rem; font-weight:600;">ملغي</span>`;
     } else if (o.paid) {
-      statusBadge = `<span class="status-badge-pill" style="background:#dcfce7; color:#16a34a; border:1px solid #bbf7d0;"><span style="width:6px; height:6px; border-radius:50%; background:#16a34a;"></span>مدفوع</span>`;
+      statusBadge = `<span style="display:inline-block; padding:4px 12px; border-radius:16px; background:#dcfce7; color:#16a34a; font-size:0.85rem; font-weight:600;">مدفوع <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;"><polyline points="20 6 9 17 4 12"/></svg></span>`;
     } else if (o.paidAmount > 0) {
-      statusBadge = `<span class="status-badge-pill" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a;"><span style="width:6px; height:6px; border-radius:50%; background:#92400e;"></span>مدفوع جزئياً</span>`;
+      statusBadge = `<span style="display:inline-block; padding:4px 12px; border-radius:16px; background:#fef3c7; color:#92400e; font-size:0.85rem; font-weight:600; text-align:center; min-width:110px;">مدفوع جزئياً<div style="font-size:0.75rem; font-weight:normal; opacity:0.9; margin-top:2px;">المتبقي: ${formatPrice(o.totalPrice - o.paidAmount)}</div></span>`;
     } else {
-      statusBadge = `<span class="status-badge-pill" style="background:#f1f5f9; color:#475569; border:1px solid #e2e8f0;"><span style="width:6px; height:6px; border-radius:50%; background:#94a3b8;"></span>غير مدفوع</span>`;
+      statusBadge = `<span style="display:inline-block; padding:4px 12px; border-radius:16px; background:#f1f5f9; color:#475569; font-size:0.85rem; font-weight:600;">غير مدفوع</span>`;
     }
-    
+
     const displayId = o.orderId.replace('Order-', '').replace('Scoop-', '');
 
     return `
@@ -122,10 +123,10 @@ function renderOrders(orders) {
           <input type="checkbox" class="order-checkbox" value="${o.orderId}" onchange="updateArchiveButton()" style="width:16px; height:16px; border-radius:4px; accent-color:#0f766e;">
         </td>
         <td style="color:#0ea5e9; font-weight:600; font-size:0.95rem;" dir="ltr">#${displayId}</td>
-        <td style="text-align: right;">
+        <td>
           <div style="font-weight:600; color:#1e293b;">${o.customer?.name || 'بدون اسم'}</div>
-          <div style="font-size:0.85rem; color:#64748b;"><span style="color:#94a3b8; font-size:0.75rem;">الهاتف:</span> ${o.customer?.phone || '—'}</div>
-          <div style="font-size:0.85rem; color:#64748b;"><span style="color:#94a3b8; font-size:0.75rem;">المحافظة:</span> ${o.customer?.government || '—'}</div>
+          <div style="font-size:0.85rem; color:#64748b;">${o.customer?.phone || ''}</div>
+          <div style="font-size:0.85rem; color:#64748b;">${o.customer?.government || ''}</div>
         </td>
         <td style="font-size:0.95rem; color:#475569;">${o.items?.length || 0} منتج</td>
         <td>${statusBadge}</td>
@@ -141,19 +142,19 @@ function renderOrders(orders) {
 }
 
 // ── Selection & Archiving ────────────────────────────────
-window.toggleSelectAll = function() {
+window.toggleSelectAll = function () {
   const selectAll = document.getElementById('select-all-orders');
   const checkboxes = document.querySelectorAll('.order-checkbox');
   checkboxes.forEach(cb => cb.checked = selectAll.checked);
   updateArchiveButton();
 };
 
-window.updateArchiveButton = function() {
+window.updateArchiveButton = function () {
   const checkboxes = document.querySelectorAll('.order-checkbox:checked');
   const filterBar = document.getElementById('filter-bar');
   const bulkBar = document.getElementById('bulk-actions-bar');
   const countBadge = document.getElementById('selected-count-badge');
-  
+
   // Style rows
   document.querySelectorAll('.order-checkbox').forEach(cb => {
     const tr = cb.closest('tr');
@@ -176,7 +177,7 @@ window.updateArchiveButton = function() {
   }
 };
 
-window.toggleBulkMenu = function(event) {
+window.toggleBulkMenu = function (event) {
   event.stopPropagation();
   const menu = document.getElementById('bulk-menu');
   if (menu.style.display === 'block') {
@@ -187,21 +188,21 @@ window.toggleBulkMenu = function(event) {
 };
 
 // Close bulk menu when clicking outside
-document.addEventListener('click', function(e) {
+document.addEventListener('click', function (e) {
   const menu = document.getElementById('bulk-menu');
   if (menu && menu.style.display === 'block' && !e.target.closest('#bulk-actions-bar')) {
     menu.style.display = 'none';
   }
 });
 
-window.bulkAction = async function(action) {
+window.bulkAction = async function (action) {
   const menu = document.getElementById('bulk-menu');
   if (menu) menu.style.display = 'none';
-  
+
   const checkboxes = document.querySelectorAll('.order-checkbox:checked');
   const orderIds = Array.from(checkboxes).map(cb => cb.value);
   if (!orderIds.length) return;
-  
+
   if (action === 'archive') {
     if (showingArchived) {
       await unarchiveSelected();
@@ -233,14 +234,14 @@ window.bulkAction = async function(action) {
   }
 };
 
-window.unselectAll = function() {
+window.unselectAll = function () {
   document.querySelectorAll('.order-checkbox').forEach(cb => cb.checked = false);
   const selectAllCb = document.getElementById('select-all-orders');
   if (selectAllCb) selectAllCb.checked = false;
   updateArchiveButton();
 };
 
-window.archiveSelected = async function() {
+window.archiveSelected = async function () {
   const checkboxes = document.querySelectorAll('.order-checkbox:checked');
   const orderIds = Array.from(checkboxes).map(cb => cb.value);
   if (!orderIds.length) return;
@@ -257,7 +258,7 @@ window.archiveSelected = async function() {
   }
 };
 
-window.unarchiveSelected = async function() {
+window.unarchiveSelected = async function () {
   const checkboxes = document.querySelectorAll('.order-checkbox:checked');
   const orderIds = Array.from(checkboxes).map(cb => cb.value);
   if (!orderIds.length) return;
@@ -277,12 +278,12 @@ window.unarchiveSelected = async function() {
 // Removed toggleArchivedView as it's replaced by setFilter('archived')
 
 // ── View Order ───────────────────────────────────────────
-window.viewOrder = function(orderId) {
+window.viewOrder = function (orderId) {
   window.location.href = `order-details?id=${orderId}`;
 };
 
 // ── Delete Order ───────────────────────────────────────
-window.deleteOrder = async function(orderId) {
+window.deleteOrder = async function (orderId) {
   const confirmed = await window.showConfirmModal('تأكيد الحذف', 'هل أنت متأكد من حذف هذا الطلب؟');
   if (!confirmed) return;
   try {
@@ -295,7 +296,7 @@ window.deleteOrder = async function(orderId) {
 };
 
 // ── Print Invoices (Webhook) ───────────────────────────
-window.printInvoices = async function() {
+window.printInvoices = async function () {
   const btn = document.getElementById('print-invoices-btn');
   const originalText = btn.innerHTML;
   btn.innerHTML = '<div style="display:flex;align-items:center;gap:8px"><div class="spinner" style="width:16px;height:16px;border-width:2px;border-color:#fff;border-top-color:transparent;margin:0"></div> جاري التجهيز...</div>';
@@ -314,14 +315,14 @@ window.printInvoices = async function() {
 
     const blob = await response.blob();
     const fileName = `invoices-${new Date().toISOString().split('T')[0]}.pdf`;
-    
+
     // Check if device is mobile
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    
+
     if (isMobile) {
       // Mobile browsers handle base64 Data URIs better for forced downloads
       const reader = new FileReader();
-      reader.onloadend = function() {
+      reader.onloadend = function () {
         const a = document.createElement('a');
         a.href = reader.result;
         a.download = fileName;
@@ -341,7 +342,7 @@ window.printInvoices = async function() {
       document.body.removeChild(a);
       setTimeout(() => window.URL.revokeObjectURL(url), 1000);
     }
-    
+
     showToast('تم تجهيز الفواتير بنجاح');
   } catch (err) {
     console.error(err);
