@@ -69,6 +69,10 @@ const api = {
   cancelOrdersBatch(orderIds) { return this._request('/orders/cancel/batch', { method: 'POST', body: JSON.stringify({ orderIds }), admin: true }); },
   deleteOrdersBatch(orderIds) { return this._request('/orders/delete/batch', { method: 'POST', body: JSON.stringify({ orderIds }), admin: true }); },
 
+  // Customers
+  getCustomers() { return this._request('/customers', { admin: true }); },
+  getCustomer(phone) { return this._request(`/customers/${phone}`, { admin: true }); },
+
   // Shipping
   getShipping() { return this._request('/shipping'); },
   getShippingList() { return this._request('/shipping/list', { admin: true }); },

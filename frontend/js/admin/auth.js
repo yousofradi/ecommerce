@@ -24,3 +24,21 @@ function logout() {
   localStorage.removeItem('loginTimestamp');
   window.location.href = 'login';
 }
+
+// Global UI Helpers
+document.addEventListener('DOMContentLoaded', () => {
+  const toggleBtn = document.querySelector('.sidebar-toggle');
+  const sidebar = document.querySelector('.admin-sidebar');
+  if (toggleBtn && sidebar) {
+    toggleBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+    });
+
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', (e) => {
+      if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
+        sidebar.classList.remove('open');
+      }
+    });
+  }
+});

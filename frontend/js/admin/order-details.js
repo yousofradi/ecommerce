@@ -59,15 +59,30 @@ function renderOrder() {
     document.getElementById('page-order-id').innerHTML += ' <span class="badge badge-danger">ملغي</span>';
   }
 
-  // Customer Info
+  // Customer Info Consolidated
   document.getElementById('view-c-name').textContent = o.customer.name || '—';
   document.getElementById('view-c-phone').textContent = o.customer.phone || '—';
-  document.getElementById('view-c-phone2').textContent = o.customer.secondPhone || '—';
+  
+  const phone2El = document.getElementById('view-c-phone2');
+  if (o.customer.secondPhone) {
+    phone2El.textContent = o.customer.secondPhone;
+    phone2El.style.display = 'block';
+  } else {
+    phone2El.style.display = 'none';
+  }
 
   // Shipping Info
-  document.getElementById('view-c-address').textContent = o.customer.address || '—';
-  document.getElementById('view-c-gov').textContent = o.customer.government || '—';
-  document.getElementById('view-c-notes').textContent = o.customer.notes || 'لا يوجد ملاحظات';
+  document.getElementById('view-c-address').textContent = o.customer.address || 'لا يوجد عنوان';
+  document.getElementById('view-c-gov').textContent = o.customer.government || 'لا يوجد محافظة';
+  
+  const notesEl = document.getElementById('view-c-notes');
+  const notesContainer = document.getElementById('view-c-notes-container');
+  if (o.customer.notes) {
+    notesEl.textContent = o.customer.notes;
+    notesContainer.style.display = 'block';
+  } else {
+    notesContainer.style.display = 'none';
+  }
 
   // Payment
   const paymentLabels = {
@@ -221,31 +236,30 @@ window.openCustomerModal = function () {
   document.getElementById('modal-c-name').value = currentOrder.customer.name || '';
   document.getElementById('modal-c-phone').value = currentOrder.customer.phone || '';
   document.getElementById('modal-c-phone2').value = currentOrder.customer.secondPhone || '';
+  document.getElementById('modal-c-gov').value = currentOrder.customer.government || '';
+  document.getElementById('modal-c-address').value = currentOrder.customer.address || '';
+  document.getElementById('modal-c-notes').value = currentOrder.customer.notes || '';
   document.getElementById('customer-modal').style.display = 'flex';
 };
 
 window.applyCustomerChanges = function () {
-  currentOrder.customer.name = document.getElementById('modal-c-name').value.trim();
-  currentOrder.customer.phone = document.getElementById('modal-c-phone').value.trim();
+  const name = document.getElementById('modal-c-name').value.trim();
+  const phone = document.getElementById('modal-c-phone').value.trim();
+  
+  if (!name || !phone) {
+    showToast('الاسم ورقم الهاتف مطلوبان', 'error');
+    return;
+  }
+
+  currentOrder.customer.name = name;
+  currentOrder.customer.phone = phone;
   currentOrder.customer.secondPhone = document.getElementById('modal-c-phone2').value.trim();
+  currentOrder.customer.government = document.getElementById('modal-c-gov').value;
+  currentOrder.customer.address = document.getElementById('modal-c-address').value.trim();
+  currentOrder.customer.notes = document.getElementById('modal-c-notes').value.trim();
+  
   renderOrder();
   closeModal('customer-modal');
-  saveOrderChanges(true); // Silent save
-};
-
-window.openShippingModal = function () {
-  document.getElementById('modal-c-address').value = currentOrder.customer.address || '';
-  document.getElementById('modal-c-gov').value = currentOrder.customer.government || '';
-  document.getElementById('modal-c-notes').value = currentOrder.customer.notes || '';
-  document.getElementById('shipping-modal').style.display = 'flex';
-};
-
-window.applyShippingChanges = function () {
-  currentOrder.customer.address = document.getElementById('modal-c-address').value.trim();
-  currentOrder.customer.government = document.getElementById('modal-c-gov').value.trim();
-  currentOrder.customer.notes = document.getElementById('modal-c-notes').value.trim();
-  renderOrder();
-  closeModal('shipping-modal');
   saveOrderChanges(true); // Silent save
 };
 
