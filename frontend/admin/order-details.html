@@ -91,7 +91,13 @@
 
     /* ── Mobile ── */
     @media (max-width: 960px) {
-      .order-details-layout { grid-template-columns: 1fr !important; }
+      .order-details-layout { 
+        display: flex;
+        flex-direction: column;
+        grid-template-columns: 1fr !important; 
+      }
+      .order-details-layout > div:first-child { order: 2; }
+      .order-details-layout > div:last-child { order: 1; }
     }
     @media (max-width: 480px) {
       .product-card-item > div:last-child { flex-wrap: wrap !important; }
