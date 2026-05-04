@@ -325,7 +325,7 @@ function renderOptionSetup() {
             <div class="drag-handle" style="visibility:hidden">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
             </div>
-            <input type="text" class="form-control add-value-input" placeholder="إضافة قيمة أخرى" onclick="addOptionValue(${gi})">
+            <button type="button" class="form-control add-value-btn" style="text-align:center; border:1px dashed var(--border-color); background:#fff; cursor:pointer; color:var(--text-muted); font-size:0.9rem; padding:10px;" onclick="addOptionValue(${gi})">إضافة قيمة أخرى</button>
             <button type="button" class="btn-remove-value" style="visibility:hidden">
                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
             </button>
