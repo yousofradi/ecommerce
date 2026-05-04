@@ -222,6 +222,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 function removeImage(index) {
   productImages.splice(index, 1);
   renderImages();
+  if (window.markAsModified) window.markAsModified();
 }
 
 let draggedImageIndex = null;
@@ -410,6 +411,7 @@ function removeOptionGroup(gi) {
   optionEditModes.splice(gi, 1);
   renderOptionSetup();
   syncVariants();
+  if (window.markAsModified) window.markAsModified();
 }
 
 function addOptionValue(gi) {
@@ -481,6 +483,7 @@ function syncVariants() {
   });
 
   renderVariantsTable();
+  if (window.markAsModified) window.markAsModified();
 }
 
 // ── Variant Table Rendering (Hierarchical with Expansion) ──
@@ -627,11 +630,13 @@ window.updateVariantField = function(idx, field, val) {
   } else {
     variants[idx][field] = val;
   }
+  if (window.markAsModified) window.markAsModified();
 }
 
 window.removeVariant = function(idx) {
   variants.splice(idx, 1);
   renderVariantsTable();
+  if (window.markAsModified) window.markAsModified();
 }
 
 window.toggleVariantGroup = function(parentVal, active) {

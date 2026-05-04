@@ -142,7 +142,7 @@ function initUnsavedChangesBar() {
 
   let hasChanges = false;
 
-  const showBar = () => {
+  window.markAsModified = () => {
     if (!hasChanges) {
       hasChanges = true;
       bar.classList.add('visible');
@@ -157,21 +157,19 @@ function initUnsavedChangesBar() {
   // Detect changes
   document.addEventListener('input', (e) => {
     if (e.target.closest('form') || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
-      showBar();
+      window.markAsModified();
     }
   });
 
   document.addEventListener('change', (e) => {
     if (e.target.tagName === 'SELECT' || e.target.type === 'checkbox' || e.target.type === 'radio') {
-      showBar();
+      window.markAsModified();
     }
   });
 
   // Action: Discard
   document.getElementById('btn-global-discard').addEventListener('click', () => {
-    if (confirm('هل أنت متأكد من تجاهل جميع التغييرات؟')) {
-      location.reload();
-    }
+    location.reload();
   });
 
   // Action: Save
