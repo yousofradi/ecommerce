@@ -66,12 +66,12 @@ function renderOrders() {
       <td style="padding:16px; border-bottom:1px solid #f1f5f9; font-weight:600;">#${o.orderId}</td>
       <td style="padding:16px; border-bottom:1px solid #f1f5f9; color:#64748b;">${new Date(o.createdAt).toLocaleDateString('ar-EG')}</td>
       <td style="padding:16px; border-bottom:1px solid #f1f5f9; font-weight:600;">${formatPrice(o.totalPrice)}</td>
-      <td style="padding:16px; border-bottom:1px solid #f1f5f9;">
+      <td class="hide-mobile" style="padding:16px; border-bottom:1px solid #f1f5f9;">
         <span class="status-badge ${o.status === 'cancelled' ? 'badge-danger' : 'status-active'}">
           ${o.status === 'cancelled' ? 'ملغي' : 'جاهز'}
         </span>
       </td>
-      <td style="padding:16px; border-bottom:1px solid #f1f5f9; text-align:left;">
+      <td class="hide-mobile" style="padding:16px; border-bottom:1px solid #f1f5f9; text-align:left;">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
       </td>
     </tr>

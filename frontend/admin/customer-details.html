@@ -64,6 +64,35 @@
       width: 90%; max-width: 600px;
       display: flex; flex-direction: column; overflow: hidden;
     }
+
+    .stats-container {
+      display: flex; gap: 16px; margin-bottom: 24px;
+    }
+    
+    @media (max-width: 600px) {
+      .stats-container {
+        flex-direction: column;
+        gap: 12px;
+      }
+      .stat-box {
+        padding: 16px;
+      }
+      .hide-mobile {
+        display: none !important;
+      }
+      .customer-layout {
+        gap: 16px;
+      }
+      .info-card-body {
+        padding: 16px;
+      }
+    }
+
+    #view-c-address {
+      word-wrap: break-word;
+      white-space: pre-line;
+      line-height: 1.5;
+    }
   </style>
 </head>
 <body>
@@ -174,7 +203,7 @@
 
           <!-- RIGHT COLUMN: Stats & Orders -->
           <div>
-            <div style="display:flex; gap:16px; margin-bottom:24px;">
+            <div class="stats-container">
               <div class="stat-box">
                 <div class="stat-value" id="stat-total-spent">—</div>
                 <div class="stat-label">إجمالي الإنفاق</div>
@@ -200,8 +229,8 @@
                       <th style="padding:16px; font-size:0.85rem; color:#64748b; border-bottom:1px solid #f1f5f9;">رقم الطلب</th>
                       <th style="padding:16px; font-size:0.85rem; color:#64748b; border-bottom:1px solid #f1f5f9;">التاريخ</th>
                       <th style="padding:16px; font-size:0.85rem; color:#64748b; border-bottom:1px solid #f1f5f9;">الإجمالي</th>
-                      <th style="padding:16px; font-size:0.85rem; color:#64748b; border-bottom:1px solid #f1f5f9;">الحالة</th>
-                      <th style="padding:16px; font-size:0.85rem; color:#64748b; border-bottom:1px solid #f1f5f9;"></th>
+                      <th class="hide-mobile" style="padding:16px; font-size:0.85rem; color:#64748b; border-bottom:1px solid #f1f5f9;">الحالة</th>
+                      <th class="hide-mobile" style="padding:16px; font-size:0.85rem; color:#64748b; border-bottom:1px solid #f1f5f9;"></th>
                     </tr>
                   </thead>
                   <tbody id="orders-tbody">
