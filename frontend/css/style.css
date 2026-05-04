@@ -1485,7 +1485,8 @@ input[type=number] {
     border-left: none;
     border-bottom: 1px solid var(--border-color);
     padding: 0 16px;
-    position: relative;
+    position: sticky;
+    top: 0;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
