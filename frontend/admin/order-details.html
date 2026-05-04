@@ -138,6 +138,16 @@
       z-index: 10;
     }
 
+    .modal-filters {
+      position: sticky;
+      top: 56px; /* Header height is approx 56px */
+      background: #fff;
+      z-index: 9;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 0;
+    }
+
     .modal-header h3 {
       margin: 0;
       font-size: 1.1rem;
@@ -478,14 +488,14 @@
 
   <!-- Include Products Modal from order-form -->
   <div class="modal-overlay" id="products-modal" style="display: none;">
-    <div class="modal-box">
+    <div class="modal-box" style="max-height: 70vh;">
       <div class="modal-header">
         <button type="button" class="modal-close" onclick="closeProductsModal()">×</button>
         <h3>إضافة منتجات</h3>
         <div style="width:24px"></div>
       </div>
-      <div class="modal-body">
-        <div class="flex gap-8 mb-16" style="flex-wrap:wrap">
+      <div class="modal-filters">
+        <div class="flex gap-8" style="flex-wrap:wrap">
           <select class="form-control" id="modal-col-filter" style="flex:1;min-width:140px"
             onchange="renderModalProducts()">
             <option value="">اختر مجموعة</option>
@@ -493,6 +503,8 @@
           <input type="text" class="form-control" id="modal-search" placeholder="ابحث عن منتجات"
             style="flex:2;min-width:200px" oninput="renderModalProducts()" autocomplete="off">
         </div>
+      </div>
+      <div class="modal-body" style="padding-top:0">
         <div id="modal-products-list"></div>
       </div>
       <div class="modal-footer">

@@ -240,14 +240,48 @@
     .payment-method-label { font-weight: 600; font-size: 0.95rem; }
     .payment-method-desc { font-size: 0.8rem; color: var(--text-muted); }
 
-    /* ── Order discount row ── */
-    .order-discount-section {
+    /* ── Modal ── */
+    .modal-box {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      width: 95%;
+      max-width: 600px;
       display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+    }
+    .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 10px;
-      padding: 12px 0;
+      position: sticky;
+      top: 0;
+      background: #fff;
+      z-index: 10;
+    }
+    .modal-filters {
+      position: sticky;
+      top: 56px;
+      background: #fff;
+      z-index: 9;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .modal-body {
+      padding: 20px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .modal-footer {
+      padding: 16px 20px;
       border-top: 1px solid var(--border-color);
-      margin-top: 8px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      background: #f8fafc;
     }
     .order-discount-section label { font-size: 0.9rem; color: var(--text-muted); white-space: nowrap; }
     .order-discount-section input { flex: 1; padding: 6px 10px; font-size: 0.9rem; }
@@ -534,19 +568,21 @@
   </div>
 
   <div class="modal-overlay" id="products-modal">
-    <div class="modal-box">
+    <div class="modal-box" style="max-height: 70vh;">
       <div class="modal-header">
         <button type="button" class="modal-close" onclick="closeProductsModal()">×</button>
         <h3>إضافة منتجات</h3>
         <div style="width:24px"></div>
       </div>
-      <div class="modal-body">
-        <div class="flex gap-8 mb-16" style="flex-wrap:wrap">
+      <div class="modal-filters">
+        <div class="flex gap-8" style="flex-wrap:wrap">
           <select class="form-control" id="modal-col-filter" style="flex:1;min-width:140px" onchange="renderModalProducts()">
             <option value="">اختر مجموعة</option>
           </select>
-          <input type="text" class="form-control" id="modal-search" placeholder="ابحث عن منتجات" style="flex:2;min-width:200px" oninput="renderModalProducts()">
+          <input type="text" class="form-control" id="modal-search" placeholder="ابحث عن منتجات" style="flex:2;min-width:200px" oninput="renderModalProducts()" autocomplete="off">
         </div>
+      </div>
+      <div class="modal-body" style="padding-top:0">
         <div id="modal-products-list"></div>
       </div>
       <div class="modal-footer">
