@@ -44,6 +44,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch (err) {
     showToast('فشل تحميل بيانات الطلب', 'error');
   }
+
+  // Global Save Handler
+  window.handleGlobalSave = async () => {
+    await saveOrderChanges();
+    return true;
+  };
 });
 
 
@@ -260,7 +266,7 @@ window.applyCustomerChanges = function () {
   
   renderOrder();
   closeModal('customer-modal');
-  saveOrderChanges(true); // Silent save
+  if (window.markAsModified) window.markAsModified();
 };
 
 window.openPaymentModal = function () {
@@ -275,7 +281,7 @@ window.applyPaymentChanges = function () {
   currentOrder.forcePaymentWebhook = true; // Flag to force trigger webhook
   renderOrder();
   closeModal('payment-modal');
-  saveOrderChanges(true); // Silent save
+  if (window.markAsModified) window.markAsModified();
 };
 
 // ── Actions ────────────────────────────────────────────
@@ -306,6 +312,7 @@ window.onDrop = function (e) {
     items.splice(dropIdx, 0, moved);
     renderItems();
     updateTotals();
+    if (window.markAsModified) window.markAsModified();
   }
 };
 
@@ -325,6 +332,7 @@ window.moveItem = function (idx, direction) {
   [items[idx], items[newIdx]] = [items[newIdx], items[idx]];
   renderItems();
   updateTotals();
+  if (window.markAsModified) window.markAsModified();
 };
 
 window.updateItemQty = function (idx, val) {
@@ -333,6 +341,7 @@ window.updateItemQty = function (idx, val) {
     currentOrder.items[idx].quantity = qty;
     updateTotals();
     renderItems();
+    if (window.markAsModified) window.markAsModified();
   }
 };
 
@@ -350,6 +359,7 @@ window.applyItemQty = function () {
     currentOrder.items[idx].quantity = qty;
     updateTotals();
     renderItems();
+    if (window.markAsModified) window.markAsModified();
   }
   closeModal('item-qty-modal');
 };
@@ -386,6 +396,7 @@ window.confirmRemoveItem = function () {
     closeModal('delete-confirm-modal');
     updateTotals();
     renderItems();
+    if (window.markAsModified) window.markAsModified();
   }
 };
 
@@ -404,6 +415,7 @@ window.applyOrderDiscount = function () {
   currentOrder.discount = parseFloat(val) || 0;
   closeModal('order-discount-modal');
   updateTotals();
+  if (window.markAsModified) window.markAsModified();
 };
 
 window.openItemDiscountModal = function (idx) {
@@ -422,6 +434,7 @@ window.applyItemDiscount = function () {
     closeModal('item-discount-modal');
     updateTotals();
     renderItems();
+    if (window.markAsModified) window.markAsModified();
   }
 };
 
@@ -429,7 +442,7 @@ window.markFullyPaid = function () {
   currentOrder.paidAmount = currentOrder.totalPrice;
   currentOrder.forcePaymentWebhook = true;
   renderOrder();
-  saveOrderChanges(true);
+  if (window.markAsModified) window.markAsModified();
 };
 
 // ── Save ───────────────────────────────────────────────
@@ -666,4 +679,5 @@ window.addSelectedProducts = function () {
   closeProductsModal();
   updateTotals();
   renderItems();
+  if (window.markAsModified) window.markAsModified();
 };

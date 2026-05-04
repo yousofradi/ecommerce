@@ -38,6 +38,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   setupSearch();
   updatePaymentUI();
+
+  // Global Save Handler for the unsaved changes bar
+  window.handleGlobalSave = async () => {
+    await submitOrder();
+    return true;
+  };
 });
 
 // ── Products Modal ─────────────────────────────────────
@@ -211,11 +217,13 @@ window.addSelectedProducts = function () {
 
   closeProductsModal();
   renderCart();
+  if (window.markAsModified) window.markAsModified();
 };
 
 window.removeCartItem = function (index) {
   cartItems.splice(index, 1);
   renderCart();
+  if (window.markAsModified) window.markAsModified();
 };
 
 window.updateItemQty = function (idx, val) {
@@ -224,6 +232,7 @@ window.updateItemQty = function (idx, val) {
     cartItems[idx].quantity = qty;
     recalcSummary();
     renderCart();
+    if (window.markAsModified) window.markAsModified();
   }
 };
 
@@ -372,4 +381,5 @@ window.addToCart = function (id) {
   document.getElementById('search-results').innerHTML = '';
   document.getElementById('product-search-input').value = '';
   renderCart();
+  if (window.markAsModified) window.markAsModified();
 };

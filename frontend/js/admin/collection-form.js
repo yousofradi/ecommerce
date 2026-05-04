@@ -24,7 +24,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('products-search').addEventListener('input', filterCollectionProducts);
   document.getElementById('available-search').addEventListener('input', filterAvailableProducts);
 
-
+  // Global Save Handler
+  window.handleGlobalSave = async () => {
+    // Trigger form submit
+    const form = document.getElementById('collection-form');
+    if (form) {
+      const event = new Event('submit', { cancelable: true, bubbles: true });
+      form.dispatchEvent(event);
+    }
+    return true;
+  };
 });
 
 async function loadAllProducts() {
@@ -76,6 +85,7 @@ window.applyImageUrl = function () {
   if (url) {
     document.getElementById('c-image').value = url;
     updateImagePreview(url);
+    if (window.markAsModified) window.markAsModified();
   }
   closeImageModal();
 };
@@ -83,6 +93,7 @@ window.applyImageUrl = function () {
 window.removeImage = function () {
   document.getElementById('c-image').value = '';
   updateImagePreview('');
+  if (window.markAsModified) window.markAsModified();
 };
 
 window.uploadCollectionImage = function (files) {
@@ -102,6 +113,7 @@ window.uploadCollectionImage = function (files) {
     if (res && res.url) {
       document.getElementById('c-image').value = res.url;
       updateImagePreview(res.url);
+      if (window.markAsModified) window.markAsModified();
     }
   }).catch(err => {
     console.error('Upload failed', err);
@@ -143,6 +155,7 @@ function renderProductsList(productsToRender = collectionProducts) {
       const rows = Array.from(list.children);
       const newOrderIds = rows.map(r => r.getAttribute('data-id'));
       collectionProducts = newOrderIds.map(id => collectionProducts.find(p => p._id === id)).filter(Boolean);
+      if (window.markAsModified) window.markAsModified();
     }
   });
 }
@@ -156,6 +169,7 @@ function filterCollectionProducts(e) {
 window.removeProductFromCollection = function (id) {
   collectionProducts = collectionProducts.filter(p => p._id !== id);
   renderProductsList();
+  if (window.markAsModified) window.markAsModified();
 };
 
 /* --- Select Products Modal --- */
@@ -201,6 +215,7 @@ window.toggleProductSelect = function (id, add) {
     collectionProducts = collectionProducts.filter(p => p._id !== id);
   }
   renderSelectModalLists(document.getElementById('available-search').value.toLowerCase());
+  if (window.markAsModified) window.markAsModified();
 };
 
 function filterAvailableProducts(e) {
