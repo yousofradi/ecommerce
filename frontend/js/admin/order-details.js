@@ -479,7 +479,7 @@ window.markFullyPaid = async function () {
 
 window.saveOrderChanges = async function (silent = false) {
   const btn = document.getElementById('save-all-btn');
-  if (!silent) {
+  if (!silent && btn) {
     btn.disabled = true;
     btn.textContent = 'جارٍ الحفظ...';
   }
@@ -505,9 +505,9 @@ window.saveOrderChanges = async function (silent = false) {
       showToast('تم تحديث البيانات بنجاح', 'success');
     }
   } catch (err) {
-    if (!silent) {
+    if (!silent && btn) {
       btn.disabled = false;
-      btn.textContent = 'احفظ التغييرات';
+      btn.textContent = 'حفظ التغييرات';
     }
     showToast(err.message || 'فشل الحفظ', 'error');
   }
