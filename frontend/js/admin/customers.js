@@ -31,7 +31,7 @@ function renderCustomers(customers) {
 
     return `
       <tr onclick="location.href='customer-details?phone=${c.phone}'" style="cursor:pointer">
-        <td style="text-align: center;" onclick="event.stopPropagation()">
+        <td class="hide-mobile" style="text-align: center;" onclick="event.stopPropagation()">
           <input type="checkbox" style="width:16px; height:16px; accent-color:#0f766e;">
         </td>
         <td>
@@ -47,7 +47,7 @@ function renderCustomers(customers) {
           <div style="color:#1e293b;">${c.government || '—'}</div>
         </td>
         <td class="hide-mobile">${c.orderCount} طلب</td>
-        <td style="color:#64748b;">${lastOrderDate}</td>
+        <td class="hide-mobile" style="color:#64748b;">${lastOrderDate}</td>
       </tr>
     `;
   }).join('');
