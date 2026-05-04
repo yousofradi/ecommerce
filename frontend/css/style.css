@@ -51,8 +51,13 @@
 }
 
 @keyframes shimmer {
-  0% { background-position: -468px 0; }
-  100% { background-position: 468px 0; }
+  0% {
+    background-position: -468px 0;
+  }
+
+  100% {
+    background-position: 468px 0;
+  }
 }
 
 .is-loading .loading-hide {
@@ -67,7 +72,10 @@
 .is-loading .loading-shimmer::after {
   content: "";
   position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: #f6f7f8;
   background-image: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%);
   background-repeat: no-repeat;
@@ -1101,7 +1109,10 @@ input::-webkit-inner-spin-button {
 input[type=number] {
   -moz-appearance: textfield;
 }
-.no-animation { transition: none !important; }
+
+.no-animation {
+  transition: none !important;
+}
 
 
 /* ── Slide-Out Cart (Storefront) ─────────────────────── */
@@ -1492,36 +1503,43 @@ input[type=number] {
     margin: 0;
   }
 
-  .admin-brand-title, .admin-brand-sub {
+  .admin-brand-title,
+  .admin-brand-sub {
     display: none;
   }
 
   .sidebar-toggle {
-    display: block;
-    background: none;
-    border: none;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
     font-size: 1.8rem;
     cursor: pointer;
     color: var(--text-main);
-    margin: 0;
-    padding: 0;
-    z-index: 10000; /* Very high to stay above everything */
+    z-index: 10000;
     position: relative;
+    transition: opacity 0.2s;
   }
 
-  /* Slide-in Drawer Menu (Left side to match toggle) */
+  .admin-sidebar.open .sidebar-toggle {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* Slide-in Drawer Menu (Right side for RTL) */
   .admin-nav {
     position: fixed;
     top: 0;
-    left: -280px;
+    right: -280px;
     width: 260px;
     height: 100vh;
     background: #fff;
     flex-direction: column;
     flex-wrap: nowrap;
     padding: 20px;
-    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
-    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: -4px 0 15px rgba(0, 0, 0, 0.1);
+    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 2000;
     margin-top: 0;
     border-top: none;
@@ -1530,7 +1548,7 @@ input[type=number] {
 
   /* Drawer open state */
   .admin-sidebar.open .admin-nav {
-    left: 0;
+    right: 0;
   }
 
   /* Drawer overlay background */

@@ -144,11 +144,11 @@ window.renderModalProducts = function () {
       const comboObj = variant.combination instanceof Map ? Object.fromEntries(variant.combination) : variant.combination;
       const title = Object.values(comboObj).join(' / ');
       const finalPrice = (variant.salePrice !== null && variant.salePrice !== undefined) ? variant.salePrice : variant.price;
-      
+
       // Convert combo to the format expected by addSelectedProducts
       const comboForSelection = Object.entries(comboObj).map(([groupName, label]) => ({ groupName, label, price: 0 }));
       const comboStr = encodeURIComponent(JSON.stringify(comboForSelection));
-      
+
       return `
         <label class="product-variant-item" style="display:flex; align-items:center; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border-color); background:#fafafa; cursor:pointer; padding-right:48px;">
           <div style="display:flex; align-items:center; gap:12px;">
