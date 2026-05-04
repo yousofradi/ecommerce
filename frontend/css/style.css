@@ -1719,12 +1719,12 @@ input[type=number] {
 
   /* Modal footers */
   .modal-footer {
-    flex-direction: column !important;
+    flex-direction: row !important;
     gap: 10px !important;
   }
 
   .modal-footer .btn {
-    width: 100% !important;
+    flex: 1 !important;
     margin: 0 !important;
     justify-content: center;
   }
