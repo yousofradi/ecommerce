@@ -250,7 +250,7 @@ window.openCustomerModal = function () {
   document.getElementById('customer-modal').style.display = 'flex';
 };
 
-window.applyCustomerChanges = function () {
+window.applyCustomerChanges = async function () {
   const name = document.getElementById('modal-c-name').value.trim();
   const phone = document.getElementById('modal-c-phone').value.trim();
   
@@ -268,7 +268,13 @@ window.applyCustomerChanges = function () {
   
   renderOrder();
   closeModal('customer-modal');
-  if (window.markAsModified) window.markAsModified();
+  
+  // Save immediately
+  await saveOrderChanges(true);
+  
+  // Hide the unsaved changes bar
+  const bar = document.getElementById('unsaved-changes-bar');
+  if (bar) bar.classList.remove('visible');
 };
 
 window.openPaymentModal = function () {
@@ -277,13 +283,19 @@ window.openPaymentModal = function () {
   document.getElementById('payment-modal').style.display = 'flex';
 };
 
-window.applyPaymentChanges = function () {
+window.applyPaymentChanges = async function () {
   currentOrder.paymentMethod = document.getElementById('modal-payment-method').value;
   currentOrder.paidAmount = parseFloat(document.getElementById('modal-paid-amount').value) || 0;
   currentOrder.forcePaymentWebhook = true; // Flag to force trigger webhook
   renderOrder();
   closeModal('payment-modal');
-  if (window.markAsModified) window.markAsModified();
+  
+  // Save immediately
+  await saveOrderChanges(true);
+  
+  // Hide the unsaved changes bar
+  const bar = document.getElementById('unsaved-changes-bar');
+  if (bar) bar.classList.remove('visible');
 };
 
 // ── Actions ────────────────────────────────────────────
@@ -412,12 +424,18 @@ window.openOrderDiscountModal = function () {
   document.getElementById('modal-order-discount').value = currentOrder.discount || 0;
 };
 
-window.applyOrderDiscount = function () {
+window.applyOrderDiscount = async function () {
   const val = document.getElementById('modal-order-discount').value;
   currentOrder.discount = parseFloat(val) || 0;
   closeModal('order-discount-modal');
   updateTotals();
-  if (window.markAsModified) window.markAsModified();
+  
+  // Save immediately
+  await saveOrderChanges(true);
+  
+  // Hide the unsaved changes bar
+  const bar = document.getElementById('unsaved-changes-bar');
+  if (bar) bar.classList.remove('visible');
 };
 
 window.openItemDiscountModal = function (idx) {
@@ -427,7 +445,7 @@ window.openItemDiscountModal = function (idx) {
   openModal('item-discount-modal');
 };
 
-window.applyItemDiscount = function () {
+window.applyItemDiscount = async function () {
   const idx = parseInt(document.getElementById('modal-item-idx').value);
   const val = document.getElementById('modal-item-discount').value;
   const item = currentOrder.items[idx];
@@ -436,15 +454,27 @@ window.applyItemDiscount = function () {
     closeModal('item-discount-modal');
     updateTotals();
     renderItems();
-    if (window.markAsModified) window.markAsModified();
+    
+    // Save immediately
+    await saveOrderChanges(true);
+    
+    // Hide the unsaved changes bar
+    const bar = document.getElementById('unsaved-changes-bar');
+    if (bar) bar.classList.remove('visible');
   }
 };
 
-window.markFullyPaid = function () {
+window.markFullyPaid = async function () {
   currentOrder.paidAmount = currentOrder.totalPrice;
   currentOrder.forcePaymentWebhook = true;
   renderOrder();
-  if (window.markAsModified) window.markAsModified();
+  
+  // Save immediately
+  await saveOrderChanges(true);
+  
+  // Hide the unsaved changes bar
+  const bar = document.getElementById('unsaved-changes-bar');
+  if (bar) bar.classList.remove('visible');
 };
 
 // ── Save ───────────────────────────────────────────────
