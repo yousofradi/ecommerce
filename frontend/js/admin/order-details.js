@@ -638,7 +638,9 @@ window.renderModalProducts = function () {
             ${imgHtml}
             <div style="font-weight:600;font-size:0.95rem">${p.name}</div>
           </div>
-          <div id="icon-${p._id}" style="transition:transform 0.2s; color:var(--text-muted);"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-top: -2px;"><path d="M6 9l6 6 6-6"/></svg></div>
+          <div id="icon-${p._id}" style="transition:transform 0.2s; color:var(--text-muted); display:flex; align-items:center; justify-content:center; width:32px; height:32px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
         </div>
         <div id="variants-${p._id}" style="display:none;">
           ${variantsHtml}

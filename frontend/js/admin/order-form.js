@@ -144,8 +144,6 @@ window.renderModalProducts = function () {
       const comboObj = variant.combination instanceof Map ? Object.fromEntries(variant.combination) : variant.combination;
       const title = Object.values(comboObj).join(' / ');
       const finalPrice = (variant.salePrice !== null && variant.salePrice !== undefined) ? variant.salePrice : variant.price;
-
-      // Convert combo to the format expected by addSelectedProducts
       const comboForSelection = Object.entries(comboObj).map(([groupName, label]) => ({ groupName, label, price: 0 }));
       const comboStr = encodeURIComponent(JSON.stringify(comboForSelection));
 
@@ -153,6 +151,7 @@ window.renderModalProducts = function () {
         <label class="product-variant-item" style="display:flex; align-items:center; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border-color); background:#fafafa; cursor:pointer; padding-right:48px;">
           <div style="display:flex; align-items:center; gap:12px;">
             <div style="font-size:0.9rem;font-weight:500;">${title}</div>
+            <div style="background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:12px; font-size:0.75rem;">في المخزون</div>
             <div style="font-size:0.85rem;color:var(--primary)">${formatPrice(finalPrice)}</div>
           </div>
           <input type="checkbox" class="pli-checkbox product-variant-cb" data-pid="${p._id}" data-price="${finalPrice}" data-combo="${comboStr}" style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer;">
@@ -160,20 +159,18 @@ window.renderModalProducts = function () {
       `;
     }).join('');
 
-    const isSingleGroup = p.options && p.options.length === 1;
-    const displayStyle = isSingleGroup ? 'block' : 'none';
-    const iconStyle = isSingleGroup ? 'transform: rotate(180deg);' : '';
-
     return `
       <div>
         <div class="product-list-item" style="display:flex; align-items:center; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border-color); cursor:pointer;" onclick="toggleProductVariants('${p._id}')">
           <div class="pli-info" style="display:flex; align-items:center; gap:12px;">
-            <div id="icon-${p._id}" style="transition:transform 0.2s; color:var(--text-muted); ${iconStyle}">▼</div>
             ${imgHtml}
             <div style="font-weight:600;font-size:0.95rem">${p.name}</div>
           </div>
+          <div id="icon-${p._id}" style="transition:transform 0.2s; color:var(--text-muted); display:flex; align-items:center; justify-content:center; width:32px; height:32px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
         </div>
-        <div id="variants-${p._id}" style="display:${displayStyle};">
+        <div id="variants-${p._id}" style="display:none;">
           ${variantsHtml}
         </div>
       </div>
