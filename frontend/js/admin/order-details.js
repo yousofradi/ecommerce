@@ -98,7 +98,15 @@ function renderOrder() {
     'instapay': 'إنستاباي'
   };
   document.getElementById('view-payment-method').textContent = paymentLabels[o.paymentMethod] || o.paymentMethod;
-  document.getElementById('view-paid-amount').textContent = formatPrice(o.paidAmount || 0);
+  
+  const paidInput = document.getElementById('inline-paid-amount');
+  if (paidInput) paidInput.value = o.paidAmount || 0;
+  
+  const discInput = document.getElementById('inline-order-discount');
+  if (discInput) discInput.value = o.discount || 0;
+  
+  const methodSelect = document.getElementById('inline-payment-method');
+  if (methodSelect) methodSelect.value = o.paymentMethod || 'vodafone_cash';
 
   renderItems();
   updateTotals();
@@ -149,12 +157,14 @@ function renderItems() {
             <button class="btn btn-sm" onclick="moveItem(${idx}, 1)" style="background:#fff; border:1px solid #e2e8f0; color:#475569; padding:4px 8px; border-radius:6px; height:32px; ${idx === currentOrder.items.length - 1 ? 'opacity:0.3;cursor:not-allowed;' : ''}" ${idx === currentOrder.items.length - 1 ? 'disabled' : ''} title="تحريك لأسفل"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-top: -2px;"><path d="M6 9l6 6 6-6"/></svg></button>
           </div>
 
-          <button class="btn btn-sm" onclick="openItemDiscountModal(${idx})" style="background: #fff; border: 1px solid #e2e8f0; color: #475569; display: flex; align-items: center; gap: 6px; font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; height: 32px;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="2"></circle><circle cx="15" cy="15" r="2"></circle><path d="M19 5L5 19"></path></svg>
-            خصم / زيادة
-          </button>
+          <!-- Inline Discount -->
+          <div style="display: flex; align-items: center; gap: 8px; background: #f8fafc; padding: 4px 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+            <span style="font-size: 0.75rem; color: #64748b;">خصم:</span>
+            <input type="number" value="${item.discount || 0}" style="width: 60px; border: none; background: transparent; text-align: center; font-size: 0.85rem; font-weight: 600; outline: none;" onchange="updateInlineItemDiscount(${idx}, this.value)">
+            <span style="font-size: 0.75rem; color: #64748b;">ج.م.</span>
+          </div>
           
-          <!-- Quantity Stepper restored -->
+          <!-- Quantity Stepper -->
           <div class="qty-stepper" style="display:flex; align-items:center; border:1px solid #e2e8f0; border-radius:6px; overflow:hidden; background:#fff; height: 32px;">
             <button type="button" onclick="updateItemQty(${idx}, ${item.quantity + 1})" style="width:28px;height:32px;background:#fff;border:none;border-left:1px solid #e2e8f0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">+</button>
             <div style="width:32px;text-align:center;font-size:0.95rem;line-height:32px;font-weight:600;">${item.quantity}</div>
@@ -419,48 +429,31 @@ window.promptOrderDiscount = function () {
   document.getElementById('modal-order-discount').value = currentOrder.discount || 0;
 };
 
-window.openOrderDiscountModal = function () {
-  openModal('order-discount-modal');
-  document.getElementById('modal-order-discount').value = currentOrder.discount || 0;
-};
-
-window.applyOrderDiscount = async function () {
-  const val = document.getElementById('modal-order-discount').value;
-  currentOrder.discount = parseFloat(val) || 0;
-  closeModal('order-discount-modal');
+window.updateInlinePaidAmount = async function(val) {
+  currentOrder.paidAmount = parseFloat(val) || 0;
   updateTotals();
-  
-  // Save immediately
   await saveOrderChanges(true);
-  
-  // Hide the unsaved changes bar
-  const bar = document.getElementById('unsaved-changes-bar');
-  if (bar) bar.classList.remove('visible');
 };
 
-window.openItemDiscountModal = function (idx) {
-  const item = currentOrder.items[idx];
-  document.getElementById('modal-item-idx').value = idx;
-  document.getElementById('modal-item-discount').value = item.discount || 0;
-  openModal('item-discount-modal');
+window.updateInlineOrderDiscount = async function(val) {
+  currentOrder.discount = parseFloat(val) || 0;
+  updateTotals();
+  await saveOrderChanges(true);
 };
 
-window.applyItemDiscount = async function () {
-  const idx = parseInt(document.getElementById('modal-item-idx').value);
-  const val = document.getElementById('modal-item-discount').value;
+window.updateInlinePaymentMethod = async function(val) {
+  currentOrder.paymentMethod = val;
+  updateTotals();
+  await saveOrderChanges(true);
+};
+
+window.updateInlineItemDiscount = async function(idx, val) {
   const item = currentOrder.items[idx];
   if (item) {
     item.discount = parseFloat(val) || 0;
-    closeModal('item-discount-modal');
     updateTotals();
     renderItems();
-    
-    // Save immediately
     await saveOrderChanges(true);
-    
-    // Hide the unsaved changes bar
-    const bar = document.getElementById('unsaved-changes-bar');
-    if (bar) bar.classList.remove('visible');
   }
 };
 
@@ -468,13 +461,7 @@ window.markFullyPaid = async function () {
   currentOrder.paidAmount = currentOrder.totalPrice;
   currentOrder.forcePaymentWebhook = true;
   renderOrder();
-  
-  // Save immediately
   await saveOrderChanges(true);
-  
-  // Hide the unsaved changes bar
-  const bar = document.getElementById('unsaved-changes-bar');
-  if (bar) bar.classList.remove('visible');
 };
 
 // ── Save ───────────────────────────────────────────────
