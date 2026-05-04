@@ -120,50 +120,49 @@ function renderItems() {
     const unitPrice = item.basePrice + (item.selectedOptions || []).reduce((s, op) => s + (op.price || 0), 0);
 
     return `
-      <div style="padding: 18px 24px; border-bottom: 1px solid #f1f5f9; background: #fff; display: flex; flex-direction: column; gap: 14px;">
-        <!-- Top Info Row -->
-        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 52px;">
-          <!-- Right side: Image + Name -->
-          <div style="display: flex; align-items: center; gap: 14px; flex: 1;">
+      <div style="padding: 16px 20px; border-bottom: 1px solid #f1f5f9; background: #fff; display: flex; flex-direction: column; gap: 12px;">
+        <!-- Top Row -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
             ${imgHtml}
             <div style="text-align: right;">
-              <div style="font-weight: 700; font-size: 1.05rem; color: #1e293b;">${item.name}</div>
-              ${optText ? `<div style="font-size: 0.8rem; color: #94a3b8; margin-top: 2px;">${optText}</div>` : ''}
+              <div style="font-weight: 700; font-size: 1rem; color: #1e293b;">${item.name}</div>
+              ${optText ? `<div style="font-size: 0.85rem; color: #64748b; margin-top: 2px;">${optText}</div>` : ''}
               ${item.discount ? `<div style="font-size:0.75rem; color:#dc2626; margin-top:4px; font-weight:600;">خصم: ${formatPrice(item.discount)}</div>` : ''}
             </div>
           </div>
           
-          <!-- Left side: Unit Price Block and Total Price -->
-          <div style="display: flex; align-items: center; gap: 32px;">
-            <div style="font-size: 0.9rem; color: #94a3b8; white-space: nowrap; font-weight: 500;" dir="ltr">${formatPrice(unitPrice)} × ${item.quantity}</div>
-            <div style="font-weight: 700; font-size: 1.05rem; color: #1e293b; min-width: 90px; text-align: left;">${formatPrice(item.finalPrice)}</div>
+          <div style="display: flex; align-items: center; gap: 24px;">
+            <div style="font-size: 0.9rem; color: #64748b; white-space: nowrap;" dir="ltr">${formatPrice(unitPrice)} × ${item.quantity}</div>
+            <div style="font-weight: 700; font-size: 1.05rem; color: #1e293b; min-width: 80px; text-align: left;">${formatPrice(item.finalPrice)}</div>
           </div>
         </div>
 
-        <!-- Action Row -->
-        <div style="display: flex; align-items: center; justify-content: flex-start; height: 38px; gap: 12px;">
-          <!-- Left: Remove Button -->
-          <button onclick="removeItem(${idx})" style="background: #fff; border: 1px solid #f1f5f9; color: #ef4444; display: flex; align-items: center; gap: 8px; font-size: 0.85rem; padding: 0 16px; border-radius: 10px; height: 38px; cursor: pointer; font-weight: 600; min-width: 100px;">
+        <!-- Bottom Row -->
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <button class="btn btn-sm" onclick="openItemDiscountModal(${idx})" style="background: #fff; border: 1px solid #e2e8f0; color: #475569; display: flex; align-items: center; gap: 6px; font-size: 0.8rem; padding: 6px 14px; border-radius: 8px; height: 36px; font-weight: 600;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="16" r="3"/><line x1="16" y1="8" x2="8" y2="16"/></svg>
+              تطبيق خصم
+            </button>
+            
+            <div style="display: flex; align-items: center; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: #fff; height: 36px; min-width: 110px;">
+              <button onclick="updateItemQty(${idx}, ${item.quantity + 1})" style="flex: 1; height: 100%; border: none; background: transparent; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center;">+</button>
+              <div style="width: 40px; text-align: center; font-weight: 700; font-size: 0.95rem; border-left: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; height: 100%; line-height: 36px;">${item.quantity}</div>
+              <button onclick="${item.quantity > 1 ? `updateItemQty(${idx}, ${item.quantity - 1})` : ''}" style="flex: 1; height: 100%; border: none; background: ${item.quantity > 1 ? 'transparent' : '#f8fafc'}; cursor: ${item.quantity > 1 ? 'pointer' : 'not-allowed'}; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; color: ${item.quantity > 1 ? 'inherit' : '#cbd5e1'};" ${item.quantity <= 1 ? 'disabled' : ''}>-</button>
+            </div>
+          </div>
+
+          <button onclick="removeItem(${idx})" style="background: #fff; border: 1px solid #f1f5f9; color: #ef4444; display: flex; align-items: center; gap: 8px; font-size: 0.85rem; padding: 6px 14px; border-radius: 8px; height: 36px; cursor: pointer; font-weight: 500;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
             إزالة
           </button>
-
-          <!-- Middle: Discount Button -->
-          <button class="btn btn-sm" onclick="openItemDiscountModal(${idx})" style="background: #fff; border: 1px solid #e2e8f0; color: #475569; display: flex; align-items: center; gap: 8px; font-size: 0.85rem; padding: 0 16px; border-radius: 10px; height: 38px; font-weight: 600;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="16" r="3"/><line x1="16" y1="8" x2="8" y2="16"/></svg>
-            تطبيق خصم
-          </button>
-
-          <!-- Right: Stepper -->
-          <div style="display: flex; align-items: center; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; background: #fff; height: 38px; min-width: 120px;">
-            <button onclick="updateItemQty(${idx}, ${item.quantity + 1})" style="flex: 1; height: 100%; border: none; background: transparent; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center;">+</button>
-            <div style="width: 44px; text-align: center; font-weight: 700; font-size: 1rem; border-left: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; height: 100%; line-height: 38px;">${item.quantity}</div>
-            <button onclick="${item.quantity > 1 ? `updateItemQty(${idx}, ${item.quantity - 1})` : ''}" style="flex: 1; height: 100%; border: none; background: ${item.quantity > 1 ? 'transparent' : '#f8fafc'}; cursor: ${item.quantity > 1 ? 'pointer' : 'not-allowed'}; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; color: ${item.quantity > 1 ? 'inherit' : '#cbd5e1'};" ${item.quantity <= 1 ? 'disabled' : ''}>-</button>
-          </div>
         </div>
       </div>
     `;
   }).join('');
+}
+
 function updateTotals() {
   const o = currentOrder;
   let subtotal = 0;
