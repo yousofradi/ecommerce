@@ -156,12 +156,17 @@ function initUnsavedChangesBar() {
 
   // Detect changes
   document.addEventListener('input', (e) => {
+    // Ignore inputs inside modals (like product selection modal)
+    if (e.target.closest('.modal-overlay') || e.target.closest('.modal-box') || e.target.closest('.hp-modal')) return;
+    
     if (e.target.closest('form') || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
       window.markAsModified();
     }
   });
 
   document.addEventListener('change', (e) => {
+    if (e.target.closest('.modal-overlay') || e.target.closest('.modal-box') || e.target.closest('.hp-modal')) return;
+
     if (e.target.tagName === 'SELECT' || e.target.type === 'checkbox' || e.target.type === 'radio') {
       window.markAsModified();
     }
@@ -186,14 +191,6 @@ function initUnsavedChangesBar() {
       } else {
         console.warn('Global save handler not implemented for this page.');
       }
-    }
-  });
-
-  // Warn before exit
-  window.addEventListener('beforeunload', (e) => {
-    if (hasChanges) {
-      e.preventDefault();
-      e.returnValue = '';
     }
   });
 }
