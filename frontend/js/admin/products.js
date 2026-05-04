@@ -12,7 +12,7 @@ let searchQuery = '';
 
 async function loadProducts() {
   const tbody = document.getElementById('products-tbody');
-  tbody.innerHTML = '<tr><td colspan="8" class="text-center"><div class="spinner"></div></td></tr>';
+  tbody.innerHTML = '<tr><td colspan="5" class="text-center"><div class="spinner"></div></td></tr>';
   try {
     const [res, collections] = await Promise.all([
       api.getProducts(currentPage, currentLimit, true, '', searchQuery),
@@ -25,7 +25,7 @@ async function loadProducts() {
     totalPages = res.totalPages || 1;
 
     if (!products.length) {
-      tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted" style="padding:40px">لا توجد منتجات مطابقة للبحث</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted" style="padding:40px">لا توجد منتجات مطابقة للبحث</td></tr>';
       updatePaginationInfo(0);
       return;
     }
@@ -37,7 +37,7 @@ async function loadProducts() {
 
   } catch (err) {
     console.error('Failed to load products:', err);
-    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">فشل تحميل المنتجات</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">فشل تحميل المنتجات</td></tr>';
   }
 }
 
@@ -125,14 +125,6 @@ function renderProducts(collections) {
         <td><strong>${p.name || 'بدون اسم'}</strong></td>
         <td>${priceDisplay}</td>
         <td><span class="badge ${statusClass}">${statusLabel}</span></td>
-        <td style="text-align:center;font-weight:600">${qty}</td>
-        <td>${colDisplay}</td>
-        <td onclick="event.stopPropagation()">
-          <div class="flex gap-8">
-            <a href="product-form?id=${p._id}" class="btn btn-secondary btn-sm">تعديل</a>
-            <button class="btn btn-danger btn-sm" onclick="deleteProduct('${p._id}','${(p.name || '').replace(/'/g, "\\'")}')">حذف</button>
-          </div>
-        </td>
       </tr>
     `}).join('');
 
