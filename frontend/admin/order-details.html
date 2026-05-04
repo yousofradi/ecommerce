@@ -410,47 +410,47 @@
             <!-- Payment Summary -->
             <div class="info-card">
               <div class="info-card-header" style="background:#fff">
+                <h3 style="color:#000;font-weight:600;display:flex;align-items:center;gap:8px;">
+                  الدفع
+                  <span id="view-payment-status" style="font-size:0.75rem;padding:4px 8px;border-radius:12px;"></span>
+                </h3>
                 <div class="flex gap-8">
                   <button class="btn btn-secondary btn-sm" onclick="openOrderDiscountModal()"
                     style="background:#fff;border-color:var(--border-color)">تطبيق خصم</button>
                 </div>
-                <h3 style="color:#000;font-weight:600;display:flex;align-items:center;gap:8px;">
-                  <span id="view-payment-status" style="font-size:0.75rem;padding:4px 8px;border-radius:12px;"></span>
-                  الدفع
-                </h3>
               </div>
               <div class="info-card-body">
                 <div class="summary-row">
-                  <span id="sum-subtotal" class="loading-hide">0 ج.م</span>
                   <span style="color:var(--text-muted)"><span id="sum-items-count" class="loading-hide">0</span> عناصر
                     المجموع الجزئي</span>
+                  <span id="sum-subtotal" class="loading-hide">0 ج.م</span>
                 </div>
                 <div class="summary-row">
-                  <span id="sum-shipping" class="loading-hide">0 ج.م</span>
                   <span style="color:var(--text-muted)">الشحن</span>
+                  <span id="sum-shipping" class="loading-hide">0 ج.م</span>
                 </div>
                 <div class="summary-row" id="sum-discount-row" style="display:none;">
-                  <span id="sum-discount">0 ج.م</span>
                   <span id="sum-discount-label" style="color:var(--danger)">خصم الطلب</span>
+                  <span id="sum-discount">0 ج.م</span>
                 </div>
                 <div class="summary-row"
                   style="font-weight:700;margin-top:12px;border-top:1px solid var(--border-color);padding-top:12px">
-                  <span id="sum-total" class="loading-hide">0 ج.م</span>
                   <span>المجموع</span>
+                  <span id="sum-total" class="loading-hide">0 ج.م</span>
                 </div>
 
                 <div style="margin-top:24px;border-top:1px solid var(--border-color);padding-top:16px">
                   <div class="summary-row">
-                    <span id="view-payment-method"></span>
                     <span style="color:var(--text-muted)">وسيلة الدفع</span>
+                    <span id="view-payment-method"></span>
                   </div>
                   <div class="summary-row">
-                    <span id="view-paid-amount">0 ج.م</span>
                     <span style="color:var(--text-muted)">المدفوع</span>
+                    <span id="view-paid-amount">0 ج.م</span>
                   </div>
                   <div class="summary-row" style="font-weight:700">
-                    <span id="sum-remaining">0 ج.م</span>
                     <span>المتبقي</span>
+                    <span id="sum-remaining">0 ج.م</span>
                   </div>
 
                   <div class="flex gap-8 mt-16" style="justify-content:flex-start">
