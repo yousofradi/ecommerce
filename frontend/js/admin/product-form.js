@@ -80,9 +80,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // Common Event Listeners
   const productForm = document.getElementById('product-form');
-  if (productForm) productForm.addEventListener('submit', saveProduct);
+  if (productForm) {
+    productForm.addEventListener('submit', saveProduct);
+    
+    // Global Save Handler for the unsaved changes bar
+    window.handleGlobalSave = async () => {
+      // Trigger the form submit
+      const event = new Event('submit', { cancelable: true, bubbles: true });
+      productForm.dispatchEvent(event);
+      return true; // We assume success or toast will handle error
+    };
+  }
+
+  // Delete button logic
+  const deleteBtn = document.getElementById('delete-btn');
+  if (deleteBtn && editId) {
+    deleteBtn.style.display = 'block';
+    deleteBtn.addEventListener('click', deleteCurrentProduct);
+  }
   
   const addOptBtn = document.getElementById('add-option-group');
   if (addOptBtn) addOptBtn.addEventListener('click', addOptionGroup);
@@ -777,4 +793,27 @@ async function saveProduct(e) {
     }
   }
 }
+async function deleteCurrentProduct() {
+  if (!editId) return;
+  const name = document.getElementById('p-name').value;
+  const confirmed = await window.showConfirmModal('تأكيد الحذف', `هل أنت متأكد من حذف المنتج "${name}"؟ سيتم حذفه نهائياً.`);
+  if (!confirmed) return;
 
+  try {
+    const btn = document.getElementById('delete-btn');
+    if (btn) btn.disabled = true;
+    
+    await api.deleteProduct(editId);
+    showToast('تم حذف المنتج بنجاح');
+    
+    // Crucial: hide the unsaved bar before redirecting so no alert shows
+    const bar = document.getElementById('unsaved-changes-bar');
+    if (bar) bar.classList.remove('visible');
+    
+    setTimeout(() => window.location.href = 'products', 800);
+  } catch (err) {
+    showToast(err.message || 'فشل حذف المنتج', 'error');
+    const btn = document.getElementById('delete-btn');
+    if (btn) btn.disabled = false;
+  }
+}

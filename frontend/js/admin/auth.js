@@ -186,7 +186,7 @@ function initUnsavedChangesBar() {
         primaryBtn.click();
         hideBar();
       } else {
-        alert('لا يمكن العثور على وظيفة الحفظ لهذه الصفحة.');
+        console.warn('Global save handler not implemented for this page.');
       }
     }
   });
