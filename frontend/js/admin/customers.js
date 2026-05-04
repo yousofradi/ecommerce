@@ -20,7 +20,7 @@ async function loadCustomers() {
 function renderCustomers(customers) {
   const tbody = document.getElementById('customers-tbody');
   if (customers.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="padding:40px; text-align:center; color:#64748b;">لا يوجد عملاء بعد</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="padding:40px; text-align:center; color:#64748b;">لا يوجد عملاء بعد</td></tr>';
     return;
   }
 
@@ -43,12 +43,10 @@ function renderCustomers(customers) {
             </div>
           </div>
         </td>
-        <td>
+        <td class="hide-mobile">
           <div style="color:#1e293b;">${c.government || '—'}</div>
-          <div style="font-size:0.85rem; color:#64748b;">${c.address || 'لا يوجد عنوان'}</div>
         </td>
-        <td>${c.orderCount} طلب</td>
-        <td style="font-weight:600; color:#0f766e;">${totalSpent}</td>
+        <td class="hide-mobile">${c.orderCount} طلب</td>
         <td style="color:#64748b;">${lastOrderDate}</td>
       </tr>
     `;

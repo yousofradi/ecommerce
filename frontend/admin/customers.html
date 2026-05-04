@@ -36,6 +36,20 @@
       font-weight: 700;
       font-size: 0.85rem;
     }
+    @media (max-width: 600px) {
+      .hide-mobile {
+        display: none !important;
+      }
+      .customers-table-wrap table td, .customers-table-wrap table th {
+        padding: 12px 8px;
+        font-size: 0.85rem;
+      }
+      .avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 0.75rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -123,14 +137,13 @@
                     <input type="checkbox" id="select-all" style="width:16px; height:16px; border-radius:4px; accent-color:#0f766e;">
                   </th>
                   <th>بيانات العميل</th>
-                  <th>المكان</th>
-                  <th>الطلبات</th>
-                  <th>إجمالي الإنفاق</th>
+                  <th class="hide-mobile">المحافظة</th>
+                  <th class="hide-mobile">الطلبات</th>
                   <th>آخر طلب</th>
                 </tr>
               </thead>
               <tbody id="customers-tbody">
-                <tr><td colspan="6" class="text-center" style="padding:32px;"><div class="spinner"></div></td></tr>
+                <tr><td colspan="5" class="text-center" style="padding:32px;"><div class="spinner"></div></td></tr>
               </tbody>
             </table>
           </div>
