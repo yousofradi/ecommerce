@@ -495,7 +495,7 @@ window.saveOrderChanges = async function (silent = false) {
       forcePaymentWebhook: currentOrder.forcePaymentWebhook
     };
 
-    await api.updateOrder(currentOrder.orderId, updates);
+    await api.updateOrder(currentOrder._id, updates);
     currentOrder.forcePaymentWebhook = false; // Reset the flag
 
     if (!silent) {
@@ -522,7 +522,7 @@ window.cancelOrder = async function () {
     btn.disabled = true;
     btn.textContent = 'جارٍ الإلغاء...';
 
-    await api.cancelOrder(currentOrder.orderId);
+    await api.cancelOrder(currentOrder._id);
     showToast('تم إلغاء الطلب بنجاح');
     setTimeout(() => window.location.reload(), 1000);
   } catch (err) {
