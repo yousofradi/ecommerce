@@ -168,6 +168,17 @@ function initUnsavedChangesBar() {
   document.addEventListener('change', (e) => {
     if (e.target.closest('.modal-overlay') || e.target.closest('.modal-box') || e.target.closest('.hp-modal')) return;
 
+    // Ignore selection checkboxes in tables (Orders, Products, Collections, etc.)
+    const isSelectionCb = e.target.id === 'select-all' || 
+                          e.target.classList.contains('order-checkbox') || 
+                          e.target.classList.contains('product-checkbox') || 
+                          e.target.classList.contains('collection-checkbox') ||
+                          e.target.classList.contains('selection-checkbox') ||
+                          e.target.classList.contains('pli-checkbox') ||
+                          e.target.classList.contains('product-select-cb') ||
+                          e.target.classList.contains('product-variant-cb');
+    if (isSelectionCb) return;
+
     if (e.target.tagName === 'SELECT' || e.target.type === 'checkbox' || e.target.type === 'radio') {
       window.markAsModified();
     }
