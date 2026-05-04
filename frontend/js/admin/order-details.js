@@ -591,10 +591,10 @@ window.renderModalProducts = function () {
       return `
         <div style="width: 100%; display: block;">
           <label class="product-list-item" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border-color); width: 100%; box-sizing: border-box;">
-            <div class="pli-info" style="display:flex; align-items:center; gap:12px;">
+            <div class="pli-info" style="display:flex; align-items:center; gap:20px;">
               ${imgHtml}
               <div>
-                <div style="font-weight:600;font-size:0.95rem">${p.name}</div>
+                <div style="font-weight:600;font-size:0.875rem">${p.name}</div>
                 <div style="font-size:0.85rem;color:var(--primary)">${formatPrice(effectiveBase)}</div>
               </div>
             </div>
