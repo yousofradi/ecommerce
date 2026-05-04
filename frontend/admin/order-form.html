@@ -267,7 +267,7 @@
       top: 56px;
       background: #fff;
       z-index: 9;
-      padding: 16px 20px;
+      padding: 16px 20px 8px 20px;
       border-bottom: 1px solid var(--border-color);
     }
     .modal-body {
@@ -585,9 +585,9 @@
       <div class="modal-body" style="padding: 0 20px 20px 20px">
         <div id="modal-products-list"></div>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" onclick="addSelectedProducts()">أضف منتج</button>
-        <button type="button" class="btn btn-secondary" onclick="closeProductsModal()" style="background:#fff;color:#333;border:1px solid #ccc">إلغاء</button>
+      <div class="modal-footer" style="display:flex; gap:12px;">
+        <button type="button" class="btn btn-secondary" onclick="closeProductsModal()" style="background:#fff;color:#333;border:1px solid #ccc; flex:1; margin:0;">إلغاء</button>
+        <button type="button" class="btn btn-primary" onclick="addSelectedProducts()" style="flex:1; margin:0;">أضف منتج</button>
       </div>
     </div>
   </div>
