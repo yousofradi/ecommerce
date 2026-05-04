@@ -122,7 +122,10 @@ function renderProducts(collections) {
         ? `<img src="${mainImg}" alt="${p.name}" style="width:54px;height:54px;border-radius:8px;object-fit:cover;border:1px solid var(--border-color)">`
         : `<div style="width:54px;height:54px;border-radius:8px;background:var(--bg-body);display:flex;align-items:center;justify-content:center;font-size:1.4rem"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>`}
         </td>
-        <td><strong>${p.name || 'بدون اسم'}</strong></td>
+        <td>
+          <div style="font-weight:600; font-size:0.95rem; margin-bottom:4px">${p.name || 'بدون اسم'}</div>
+          <div class="mobile-price-show" style="display:none; font-size:0.85rem; color:var(--primary); font-weight:700">${priceDisplay}</div>
+        </td>
         <td>${priceDisplay}</td>
         <td><span class="badge ${statusClass}">${statusLabel}</span></td>
       </tr>
