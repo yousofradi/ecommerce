@@ -228,10 +228,16 @@ function updatePaymentStatusUI() {
 
 window.openModal = function (modalId) {
   document.getElementById(modalId).style.display = 'flex';
+  document.body.style.overflow = 'hidden';
 };
 
 window.closeModal = function (modalId) {
   document.getElementById(modalId).style.display = 'none';
+  // Only restore scroll if no other modals are open
+  const openModals = document.querySelectorAll('.modal-overlay[style*="display: flex"]');
+  if (openModals.length === 0) {
+    document.body.style.overflow = '';
+  }
 };
 
 window.openCustomerModal = function () {
@@ -241,7 +247,7 @@ window.openCustomerModal = function () {
   document.getElementById('modal-c-gov').value = currentOrder.customer.government || '';
   document.getElementById('modal-c-address').value = currentOrder.customer.address || '';
   document.getElementById('modal-c-notes').value = currentOrder.customer.notes || '';
-  document.getElementById('customer-modal').style.display = 'flex';
+  openModal('customer-modal');
 };
 
 window.applyCustomerChanges = async function () {
@@ -274,7 +280,7 @@ window.applyCustomerChanges = async function () {
 window.openPaymentModal = function () {
   document.getElementById('modal-payment-method').value = currentOrder.paymentMethod || 'vodafone_cash';
   document.getElementById('modal-paid-amount').value = currentOrder.paidAmount || 0;
-  document.getElementById('payment-modal').style.display = 'flex';
+  openModal('payment-modal');
 };
 
 window.applyPaymentChanges = async function () {
@@ -528,7 +534,7 @@ window.cancelOrder = async function () {
 
 // ── Modal Products ─────────────────────────────────────
 window.openProductsModal = async function () {
-  document.getElementById('products-modal').style.display = 'flex';
+  openModal('products-modal');
   if (Object.keys(collectionsMap).length === 0) {
     try {
       const cols = await api.getCollections();
@@ -543,7 +549,7 @@ window.openProductsModal = async function () {
 };
 
 window.closeProductsModal = function () {
-  document.getElementById('products-modal').style.display = 'none';
+  closeModal('products-modal');
 };
 
 window.toggleProductVariants = function (pid) {
