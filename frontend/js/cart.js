@@ -167,7 +167,14 @@ Cart.renderSlideCart = function() {
   if (totalEl) totalEl.textContent = formatPrice(this.getTotal());
 
   if (items.length === 0) {
-    body.innerHTML = '<div style="text-align:center; color:var(--text-muted); margin-top:60px; padding:20px;"><div style="font-size:3rem;margin-bottom:12px">🛒</div><p>سلة التسوق فارغة</p></div>';
+    body.innerHTML = `
+      <div style="text-align:center; color:var(--text-muted); margin-top:60px; padding:20px;">
+        <div style="margin-bottom:16px; opacity:0.6;">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block; margin:0 auto;"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+        </div>
+        <p style="font-weight:600; font-size:1.1rem; color:var(--text-main); margin-bottom:4px;">السلة فارغة</p>
+        <p style="font-size:0.9rem;">ابحث عن منتج أعلاه لإضافته</p>
+      </div>`;
     return;
   }
 

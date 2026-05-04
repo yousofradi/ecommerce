@@ -394,7 +394,7 @@ textarea.form-control {
 select.form-control {
   cursor: pointer;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: left 13px center;
   padding-left: 34px;
@@ -1508,6 +1508,8 @@ input[type=number] {
     color: var(--text-main);
     margin: 0;
     padding: 0;
+    z-index: 1001;
+    position: relative;
   }
 
   /* Slide-in Drawer Menu */

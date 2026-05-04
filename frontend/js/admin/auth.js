@@ -31,7 +31,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const toggleBtn = document.querySelector('.sidebar-toggle');
   const sidebar = document.querySelector('.admin-sidebar');
   if (toggleBtn && sidebar) {
-    toggleBtn.addEventListener('click', () => {
+    toggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
       sidebar.classList.toggle('open');
     });
 

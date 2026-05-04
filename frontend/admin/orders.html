@@ -235,9 +235,15 @@
               عدد الطلبات: <span id="pagination-info">0</span>
             </div>
             <div style="display:flex; align-items:center; gap:12px;">
-              <button onclick="changePage(-1)" id="prev-page" class="btn btn-sm">السابق</button>
-              <select id="page-dropdown" onchange="goToPage(this.value)" style="border:1px solid #e2e8f0; border-radius:6px; padding:4px 8px;"></select>
-              <button onclick="changePage(1)" id="next-page" class="btn btn-sm">التالي</button>
+              <button onclick="changePage(-1)" id="prev-page" class="btn btn-sm" style="display:flex; align-items:center; gap:6px;">
+                السابق
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </button>
+              <select id="page-dropdown" onchange="goToPage(this.value)" style="border:1px solid #e2e8f0; border-radius:6px; padding:4px 8px; appearance:none; text-align:center; min-width:50px;"></select>
+              <button onclick="changePage(1)" id="next-page" class="btn btn-sm" style="display:flex; align-items:center; gap:6px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                التالي
+              </button>
             </div>
           </div>
         </div>

@@ -26,7 +26,13 @@ async function loadProducts(page) {
 
     if (!products || products.length === 0) {
       if (page === 1) {
-        grid.innerHTML = '<div style="text-align:center;padding:60px 20px;color:#999;grid-column:1/-1"><p style="font-size:2rem;margin-bottom:8px">🛍️</p><p>لا توجد منتجات حالياً</p></div>';
+        grid.innerHTML = `
+          <div style="text-align:center; padding:60px 20px; color:var(--text-muted); grid-column:1/-1">
+            <div style="margin-bottom:16px; opacity:0.4;">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block; margin:0 auto;"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+            </div>
+            <p style="font-weight:600; font-size:1.1rem; color:var(--text-main);">لا توجد منتجات حالياً</p>
+          </div>`;
       }
       if (countSpan) countSpan.textContent = '0';
       return;
