@@ -299,8 +299,12 @@ window.applyPaymentChanges = async function () {
   renderOrder();
   closeModal('payment-modal');
 
-  // Trigger unsaved changes bar
-  if (window.markAsModified) window.markAsModified();
+  // Save immediately
+  await saveOrderChanges(true);
+
+  // Hide the unsaved changes bar
+  const bar = document.getElementById('unsaved-changes-bar');
+  if (bar) bar.classList.remove('visible');
 };
 
 // ── Actions ────────────────────────────────────────────
