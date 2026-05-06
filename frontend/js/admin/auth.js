@@ -1,5 +1,11 @@
-/** Admin auth helpers */
 function requireAdmin() {
+  // Security: Prevent admin access on storefront domains
+  const storefrontDomains = ['sundura-scoop.onrender.com'];
+  if (storefrontDomains.includes(window.location.hostname)) {
+    window.location.href = '/';
+    return false;
+  }
+
   const key = localStorage.getItem('adminKey');
   const timestamp = localStorage.getItem('loginTimestamp');
 
