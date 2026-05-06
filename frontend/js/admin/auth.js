@@ -179,6 +179,9 @@ function initUnsavedChangesBar() {
     // Ignore selection controls
     if (isSelectionControl(e.target)) return;
 
+    // Ignore search inputs
+    if (e.target.type === 'search' || e.target.id?.includes('search') || e.target.classList.contains('search-input') || e.target.placeholder?.includes('ابحث')) return;
+
     if (e.target.closest('form') || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
       window.markAsModified();
     }
@@ -189,6 +192,9 @@ function initUnsavedChangesBar() {
 
     // Ignore selection controls
     if (isSelectionControl(e.target)) return;
+
+    // Ignore search inputs
+    if (e.target.type === 'search' || e.target.id?.includes('search') || e.target.classList.contains('search-input') || e.target.placeholder?.includes('ابحث')) return;
 
     if (e.target.tagName === 'SELECT' || e.target.type === 'checkbox' || e.target.type === 'radio') {
       window.markAsModified();
