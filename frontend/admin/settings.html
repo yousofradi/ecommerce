@@ -131,6 +131,16 @@
           </div>
         </div>
       </div>
+
+      <div class="admin-card mt-24">
+        <div class="flex-between mb-16">
+          <h3 style="margin:0">طرق الدفع</h3>
+          <button class="btn btn-secondary btn-sm" onclick="addPaymentMethod()">+ أضف وسيلة دفع</button>
+        </div>
+        <div id="payment-methods-container" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:16px;">
+          <!-- Payment methods injected here -->
+        </div>
+      </div>
     </main>
   </div>
 

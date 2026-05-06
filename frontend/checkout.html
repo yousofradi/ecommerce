@@ -115,26 +115,8 @@
               <textarea class="form-control" id="cust-notes" placeholder="ملاحظات إضافية..."></textarea>
             </div>
             <h2 class="mb-24 mt-32">طريقة الدفع</h2>
-            <div class="radio-options mb-24" style="display: flex; gap: 8px;">
-              <div class="radio-option" style="flex: 1;">
-                <input type="radio" name="payment" id="pay-instapay" value="instapay">
-                <label for="pay-instapay">
-                  <div
-                    style="display: flex; align-items: center; line-height: 1; font-style: italic; font-weight: 900; font-size: 0.8rem; letter-spacing: -0.5px;">
-                    <span style="color:#f26522;">PAY</span><span style="color:#4a2c82;">INSTA</span>
-                  </div>
-                  <span dir="ltr" style="font-size: 0.85rem; font-weight: 800; color: #111827;">01016612519</span>
-                </label>
-              </div>
-              <div class="radio-option" style="flex: 1;">
-                <input type="radio" name="payment" id="pay-vodafone" value="vodafone_cash">
-                <label for="pay-vodafone">
-                  <div
-                    style="background: #e60000; color: #fff; padding: 2px 5px; border-radius: 4px; font-weight: bold; font-size: 0.6rem; display: flex; align-items: center; line-height: 1;">
-                    فودافون</div>
-                  <span dir="ltr" style="font-size: 0.85rem; font-weight: 800; color: #111827;">01016612519</span>
-                </label>
-              </div>
+            <div id="payment-methods-checkout" class="radio-options mb-24" style="display: grid; gap: 8px;">
+               <!-- Dynamic payment methods injected here -->
             </div>
             <button type="submit" class="btn btn-primary btn-block"
               style="padding:10px 20px;font-size:1rem;background:var(--sundura-brown,#916C4F);border-color:var(--sundura-brown,#916C4F); margin-bottom: 20px;">تأكيد
