@@ -30,7 +30,7 @@ router.post('/', async (req, res) => {
     if (!customer.name || !customer.phone || !customer.address || !customer.government) {
       return res.status(400).json({ error: 'Customer name, phone, address, and government are required' });
     }
-    if (!paymentMethod || !['instapay', 'vodafone_cash'].includes(paymentMethod)) {
+    if (!paymentMethod) {
       return res.status(400).json({ error: 'Valid payment method is required' });
     }
 
