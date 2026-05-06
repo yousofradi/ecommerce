@@ -1,4 +1,4 @@
-/** Admin product form — create/edit */
+﻿/** Admin product form — create/edit */
 let optionGroups = [];
 let variants = []; // New hierarchical variants
 let editId = null;
@@ -788,7 +788,7 @@ async function deleteCurrentProduct() {
 
 function populateProductForm(p) {
   if (!p) {
-    document.getElementById('form-title').textContent = '????? ???? ????';
+    document.getElementById('form-title').textContent = 'إضافة منتج جديد';
     document.getElementById('p-name').value = '';
     document.getElementById('p-price').value = '';
     document.getElementById('p-sale-price').value = '';
@@ -809,7 +809,7 @@ function populateProductForm(p) {
     return;
   }
 
-  document.getElementById('form-title').textContent = '????? ??????';
+  document.getElementById('form-title').textContent = 'تعديل المنتج';
   document.getElementById('p-name').value = p.name;
   document.getElementById('p-price').value = p.basePrice;
   document.getElementById('p-sale-price').value = p.salePrice || '';
@@ -827,7 +827,7 @@ function populateProductForm(p) {
     tagsContainer.innerHTML = selectedCollectionIds.map(id => {
       const col = allCollections.find(c => c._id === id);
       if (!col) return '';
-      return \<div class="tag">\<span class="tag-remove" onclick="removeCollectionTag('\')">�</span></div>\;
+      return \<div class="tag">\<span class="tag-remove" onclick="removeCollectionTag('\')">×</span></div>\;
     }).join('');
   }
   if (hiddenInput) hiddenInput.value = JSON.stringify(selectedCollectionIds);

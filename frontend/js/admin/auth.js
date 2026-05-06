@@ -209,15 +209,31 @@ function initUnsavedChangesBar() {
   document.getElementById('btn-global-save').addEventListener('click', async () => {
     if (window.handleGlobalSave) {
       const success = await window.handleGlobalSave();
-      if (success !== false) hideBar();
+      if (success !== false) window.hideBar();
     } else {
       // Fallback: try to find a primary save button and click it
       const primaryBtn = document.querySelector('button[type="submit"], .btn-primary, #save-btn');
       if (primaryBtn) {
         primaryBtn.click();
-        hideBar();
+        window.hideBar();
       } else {
         console.warn('Global save handler not implemented for this page.');
+      }
+    }
+  });
+
+  // Enforce numbers only on type="number" fields
+  document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT' && e.target.type === 'number') {
+      // Allow: backspace, delete, tab, escape, enter, . (190, 110)
+      if ([46, 8, 9, 27, 13, 110, 190].indexOf(e.keyCode) !== -1 ||
+         (e.keyCode === 65 && (e.ctrlKey === true || e.metaKey === true)) ||
+         (e.keyCode >= 35 && e.keyCode <= 40)) {
+             return;
+      }
+      // Stop the keypress if it's not a number
+      if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+          e.preventDefault();
       }
     }
   });
