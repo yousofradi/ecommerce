@@ -345,11 +345,40 @@ document.addEventListener('DOMContentLoaded', async () => {
         socialHtml += '</div>';
         footerNav.insertAdjacentHTML('afterend', socialHtml);
       }
+
+      // 6. Custom Color Palette
+      if (settings.primaryColor) {
+        applyColorPalette(settings.primaryColor);
+      }
     }
   } catch (err) {
     console.error('Failed to load global settings', err);
   }
 });
+
+function applyColorPalette(hex) {
+  if (!hex || hex.length < 7) return;
+  try {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+
+    document.documentElement.style.setProperty('--primary', hex);
+    
+    // Hover: 15% darker
+    const hr = Math.max(0, Math.floor(r * 0.85));
+    const hg = Math.max(0, Math.floor(g * 0.85));
+    const hb = Math.max(0, Math.floor(b * 0.85));
+    const hover = `rgb(${hr}, ${hg}, ${hb})`;
+    document.documentElement.style.setProperty('--primary-hover', hover);
+
+    // Light: very transparent
+    const light = `rgba(${r}, ${g}, ${b}, 0.08)`;
+    document.documentElement.style.setProperty('--primary-light', light);
+  } catch(e) {
+    console.error('Failed to apply color palette', e);
+  }
+}
 
 // --- Global Slide Menu Logic ---
 api.openMenu = function () {

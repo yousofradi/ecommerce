@@ -53,6 +53,7 @@ function populateSettingsForm(s) {
   document.getElementById('setting-social-tt').value = s.socialTt || '';
   document.getElementById('setting-social-wa').value = s.socialWa || '';
   document.getElementById('setting-payment-notes').value = s.paymentNotes || '';
+  document.getElementById('setting-primary-color').value = s.primaryColor || '#916C4F';
   
   paymentMethods = s.paymentMethods || [];
   renderPaymentMethods();
@@ -189,6 +190,7 @@ async function saveSettings() {
     socialTt: document.getElementById('setting-social-tt').value.trim(),
     socialWa: document.getElementById('setting-social-wa').value.trim(),
     paymentNotes: document.getElementById('setting-payment-notes').value.trim(),
+    primaryColor: document.getElementById('setting-primary-color').value,
     paymentMethods: paymentMethods
   };
   
