@@ -1568,6 +1568,8 @@ input[type=number] {
     z-index: 10000;
     position: absolute !important;
     left: 16px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
     transition: opacity 0.2s;
   }
 
