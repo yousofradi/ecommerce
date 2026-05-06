@@ -1525,19 +1525,19 @@ input[type=number] {
     padding: 0 16px;
     position: sticky;
     top: 0;
-    flex-direction: row;
-    justify-content: space-between;
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: center !important;
     align-items: center;
     overflow: visible;
     z-index: 1000;
-    display: flex;
     background: #fff;
     max-height: none !important;
   }
 
   .admin-brand-header {
     width: auto;
-    flex: 1;
+    flex: none !important;
     display: flex;
     justify-content: center;
     margin-bottom: 0;
@@ -1566,7 +1566,8 @@ input[type=number] {
     cursor: pointer;
     color: var(--text-main);
     z-index: 10000;
-    position: relative;
+    position: absolute !important;
+    left: 16px !important;
     transition: opacity 0.2s;
   }
 
