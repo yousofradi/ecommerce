@@ -7,19 +7,43 @@
   <title>إنشاء طلب — لوحة التحكم</title>
   <link rel="stylesheet" href="../css/style.css">
   <style>
-    /* ── Order Form Layout ── */
     .order-create-layout {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 380px;
-      gap: 28px;
+      grid-template-columns: 1fr 360px;
+      gap: 24px;
       align-items: start;
     }
 
-    .admin-card.mb-24 {
-      width: 100%;
-      max-width: 100%;
-      overflow-x: hidden;
-      box-sizing: border-box;
+    @media (max-width: 960px) {
+      .order-create-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+    .info-card {
+      background: #fff;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-color);
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+
+    .info-card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fafafa;
+    }
+
+    .info-card-header h3 {
+      margin: 0;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+    }
+
+    .info-card-body {
+      padding: 20px;
     }
 
     /* ── Product Search ── */
@@ -299,10 +323,6 @@
 
     /* ── Summary sticky card ── */
     .order-summary-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-lg);
-      padding: 24px;
       position: sticky;
       top: 24px;
     }
@@ -720,39 +740,41 @@
           <div>
 
             <!-- STEP 1: Products -->
-            <div class="admin-card mb-24">
-              <div class="section-header">
-                <div class="section-step">١</div>
+            <div class="info-card mb-24">
+              <div class="info-card-header">
                 <h3>المنتجات</h3>
               </div>
 
-              <button type="button" class="btn btn-secondary" onclick="openProductsModal()"
-                style="margin-bottom:16px;background:#fff;color:var(--primary);border:1px solid var(--primary);display:flex;align-items:center;gap:8px;padding:8px 16px;border-radius:8px">
-                <span style="font-size:1.2rem">+</span> إضافة منتجات
-              </button>
-
-              <div id="cart-items-container">
-                <div class="empty-cart" id="empty-cart-msg">
-                  <div class="empty-cart-icon">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-                      stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="9" cy="21" r="1"></circle>
-                      <circle cx="20" cy="21" r="1"></circle>
-                      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                    </svg>
+              <div class="info-card-body" style="padding:0">
+                <div style="padding: 16px 20px; border-bottom: 1px solid var(--border-color); background: #fff;">
+                  <button type="button" class="btn btn-secondary" onclick="openProductsModal()"
+                    style="background:#fff;color:var(--primary);border:1px solid var(--primary);display:flex;align-items:center;gap:8px;padding:6px 14px;border-radius:8px;font-size:0.85rem">
+                    <span style="font-size:1.1rem">+</span> إضافة منتجات
+                  </button>
+                </div>
+                <div id="cart-items-container">
+                  <div class="empty-cart" id="empty-cart-msg" style="padding: 40px 20px;">
+                    <div class="empty-cart-icon">
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="9" cy="21" r="1"></circle>
+                        <circle cx="20" cy="21" r="1"></circle>
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                      </svg>
+                    </div>
+                    <h3>السلة فارغة</h3>
+                    <p style="font-size:0.9rem">ابحث عن منتج أعلاه لإضافته</p>
                   </div>
-                  <h3>السلة فارغة</h3>
-                  <p style="font-size:0.9rem">ابحث عن منتج أعلاه لإضافته</p>
                 </div>
               </div>
             </div>
 
             <!-- STEP 2: Customer Info -->
-            <div class="admin-card">
-              <div class="section-header">
-                <div class="section-step">٢</div>
+            <div class="info-card">
+              <div class="info-card-header">
                 <h3>بيانات العميل</h3>
               </div>
+              <div class="info-card-body">
 
               <div class="form-group">
                 <label class="form-label">الاسم الكامل *</label>
@@ -785,13 +807,14 @@
               </div>
             </div>
           </div>
-
           <!-- ═══ RIGHT COLUMN: Summary + Payment ═══ -->
           <div>
-            <div class="order-summary-card">
-              <h3>ملخص الطلب</h3>
-
-              <!-- Items mini list -->
+            <div class="info-card order-summary-card">
+              <div class="info-card-header">
+                <h3>ملخص الطلب</h3>
+              </div>
+              <div class="info-card-body">
+                <!-- Items mini list -->
               <div id="summary-items-list" style="margin-bottom:16px"></div>
 
               <!-- Price breakdown -->
