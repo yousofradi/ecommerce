@@ -129,6 +129,10 @@ img {
   flex-direction: column;
 }
 
+.checkout-grid {
+  margin-bottom: 30px;
+}
+
 .page-content {
   flex: 1;
 }

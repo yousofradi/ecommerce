@@ -137,7 +137,13 @@
           <h3 style="margin:0">طرق الدفع</h3>
           <button class="btn btn-secondary btn-sm" onclick="addPaymentMethod()">+ أضف وسيلة دفع</button>
         </div>
-        <div id="payment-methods-container" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:16px;">
+
+        <div class="form-group mb-24">
+          <label class="form-label">تعليمات الدفع العامة (تظهر لجميع الوسائل)</label>
+          <textarea id="setting-payment-notes" class="form-control" placeholder="اكتب تعليمات الدفع هنا (مثال: يرجى إرسال صورة التحويل عبر الواتساب)..." style="height:80px;"></textarea>
+        </div>
+
+        <div id="payment-methods-container" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:16px;">
           <!-- Payment methods injected here -->
         </div>
       </div>
