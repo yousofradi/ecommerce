@@ -152,10 +152,10 @@ function renderPaymentMethods() {
     container.innerHTML = paymentMethods.map(m => `
         <div class="admin-card" style="margin:0; border:1px solid #e2e8f0; background:#f8fafc; padding:20px; border-radius:16px; position:relative;">
             <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:20px;">
-                <!-- Left: Delete Button (Red Square Shape) -->
-                <button class="btn-delete-shape" onclick="removePaymentMethod('${m.id}')" style="width:44px; height:44px; background:#fee2e2; border:1.5px solid #ef4444; border-radius:12px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s;" title="حذف">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                </button>
+                <!-- Right: Logo (Circular Shape) -->
+                <div style="width:70px; height:70px; background:#fff; border:2px solid #e2e8f0; border-radius:50%; display:flex; align-items:center; justify-content:center; overflow:hidden; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
+                    ${m.logo ? `<img src="${m.logo}" style="max-width:100%; max-height:100%; object-fit:contain;">` : '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'}
+                </div>
 
                 <!-- Middle: Change Button (Grey Rectangular Shape) -->
                 <button class="btn-change-shape" onclick="document.getElementById('pay-logo-${m.id}').click()" style="width:70px; height:44px; background:#f1f5f9; color:#475569; border:1.5px solid #e2e8f0; border-radius:10px; font-size:0.8rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s;">
@@ -163,10 +163,10 @@ function renderPaymentMethods() {
                 </button>
                 <input type="file" id="pay-logo-${m.id}" style="display:none" accept="image/*" onchange="handlePaymentLogoUpload(this, '${m.id}')">
 
-                <!-- Right: Logo (Circular Shape) -->
-                <div style="width:70px; height:70px; background:#fff; border:2px solid #e2e8f0; border-radius:50%; display:flex; align-items:center; justify-content:center; overflow:hidden; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
-                    ${m.logo ? `<img src="${m.logo}" style="max-width:100%; max-height:100%; object-fit:contain;">` : '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'}
-                </div>
+                <!-- Left: Delete Button (Red Square Shape) -->
+                <button class="btn-delete-shape" onclick="removePaymentMethod('${m.id}')" style="width:44px; height:44px; background:#fee2e2; border:1.5px solid #ef4444; border-radius:12px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s;" title="حذف">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                </button>
             </div>
 
             <div class="form-group mb-12">

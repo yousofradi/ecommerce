@@ -141,9 +141,8 @@
       </div>
 
       <div class="admin-card mt-24">
-        <div class="flex-between mb-16">
+        <div class="mb-16">
           <h3 style="margin:0">طرق الدفع</h3>
-          <button class="btn btn-secondary btn-sm" onclick="addPaymentMethod()">+ أضف وسيلة دفع</button>
         </div>
 
         <div class="form-group mb-24">
@@ -151,9 +150,11 @@
           <textarea id="setting-payment-notes" class="form-control" placeholder="اكتب تعليمات الدفع هنا (مثال: يرجى إرسال صورة التحويل عبر الواتساب)..." style="height:80px;"></textarea>
         </div>
 
-        <div id="payment-methods-container" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:16px;">
+        <div id="payment-methods-container" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:16px; margin-bottom: 24px;">
           <!-- Payment methods injected here -->
         </div>
+
+        <button class="btn btn-secondary" onclick="addPaymentMethod()" style="width:100%; border-style:dashed; border-width:2px; padding:12px; font-weight:700;">+ أضف وسيلة دفع</button>
       </div>
     </main>
   </div>
