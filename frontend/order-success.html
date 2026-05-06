@@ -155,63 +155,67 @@
       });
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      const orderId = sessionStorage.getItem('lastOrderId');
-      const orderDataStr = sessionStorage.getItem('lastOrderData');
+    document.addEventListener('DOMContentLoaded', async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const orderId = urlParams.get('id');
       const summaryOrderIdEl = document.getElementById('summary-order-id');
       const whatsappBtn = document.getElementById('whatsapp-btn');
 
-      if (orderId) {
-        const displayId = orderId.replace('Order-', '');
+      if (!orderId) { window.location.href = 'index'; return; }
+
+      try {
+        const order = await api.getOrder(orderId);
+        if (!order) { window.location.href = 'index'; return; }
+
+        const displayId = order.orderId.replace('Order-', '');
         if (summaryOrderIdEl) summaryOrderIdEl.textContent = displayId;
 
-        if (orderDataStr) {
-          try {
-            const order = JSON.parse(orderDataStr);
-            document.getElementById('order-details-container').style.display = 'block';
+        document.getElementById('order-details-container').style.display = 'block';
 
-            document.getElementById('summ-name').textContent = order.customer.name;
-            document.getElementById('summ-phone').textContent = order.customer.phone;
-            document.getElementById('summ-address').textContent = order.customer.address;
-            document.getElementById('summ-gov').textContent = order.customer.government;
+        document.getElementById('summ-name').textContent = order.customer.name;
+        document.getElementById('summ-phone').textContent = order.customer.phone;
+        document.getElementById('summ-address').textContent = order.customer.address;
+        document.getElementById('summ-gov').textContent = order.customer.government;
 
-            document.getElementById('summ-items').innerHTML = order.items.map(item =>
-              `<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                <span style="font-weight: 700; color: #1e293b;">${formatPrice(item.finalPrice)}</span>
-                <div style="flex: 1; text-align: right; padding: 0 12px;">
-                  <div style="font-weight: 700; font-size: 0.9rem;">${item.name} × ${item.quantity}</div>
-                  <div style="font-size: 0.8rem; color: #64748b;">${item.selectedOptions.map(o => `${o.groupName}: ${o.label}`).join(', ')}</div>
-                </div>
-                <div style="width: 48px; height: 48px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                  ${item.imageUrl ? `<img src="${item.imageUrl}" style="max-width: 100%; max-height: 100%; object-fit: cover;">` : `
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2">
-                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
-                    </svg>
-                  `}
-                </div>
-              </div>`
-            ).join('');
+        // Show payment method
+        const paymentDiv = document.createElement('div');
+        paymentDiv.style.cssText = 'margin-top:16px; padding:12px; background:#f8fafc; border-radius:10px; border:1.5px solid #e2e8f0; text-align:right;';
+        paymentDiv.innerHTML = `
+          <div style="font-weight:700; color:#1e293b; font-size:0.9rem; margin-bottom:4px;">طريقة الدفع:</div>
+          <div style="font-weight:800; color:var(--primary);">${order.paymentMethod}</div>
+        `;
+        document.getElementById('summ-gov').parentElement.appendChild(paymentDiv);
 
-            // Calculate subtotal from items if not provided at root level
-            const subtotal = order.items.reduce((s, i) => s + i.finalPrice, 0);
-            document.getElementById('summ-subtotal').textContent = formatPrice(subtotal);
-            document.getElementById('summ-shipping').textContent = formatPrice(order.shippingFee);
-            document.getElementById('summ-total').textContent = formatPrice(order.totalPrice);
+        document.getElementById('summ-items').innerHTML = order.items.map(item =>
+          `<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <span style="font-weight: 700; color: #1e293b;">${formatPrice(item.finalPrice)}</span>
+            <div style="flex: 1; text-align: right; padding: 0 12px;">
+              <div style="font-weight: 700; font-size: 0.9rem;">${item.name} × ${item.quantity}</div>
+              <div style="font-size: 0.8rem; color: #64748b;">${item.selectedOptions.map(o => `${o.groupName}: ${o.label}`).join(', ')}</div>
+            </div>
+            <div style="width: 48px; height: 48px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              ${item.imageUrl ? `<img src="${item.imageUrl}" style="max-width: 100%; max-height: 100%; object-fit: cover;">` : `
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+                </svg>
+              `}
+            </div>
+          </div>`
+        ).join('');
 
-            const waMessage = encodeURIComponent(`مرحباً، قمت بطلب من متجر سندورة.\nرقم الطلب الخاص بي هو: ${orderId}`);
-            whatsappBtn.href = `https://wa.me/201016612519?text=${waMessage}`;
-            whatsappBtn.style.display = 'flex';
-          } catch (e) {
-            console.error('Failed to parse order data', e);
-          }
-        } else {
-          const waMessage = encodeURIComponent(`مرحباً، قمت بطلب من متجر سندورة.\nرقم الطلب الخاص بي هو: ${orderId}`);
-          whatsappBtn.href = `https://wa.me/201016612519?text=${waMessage}`;
-          whatsappBtn.style.display = 'flex';
-        }
+        const subtotal = order.items.reduce((s, i) => s + i.finalPrice, 0);
+        document.getElementById('summ-subtotal').textContent = formatPrice(subtotal);
+        document.getElementById('summ-shipping').textContent = formatPrice(order.shippingFee);
+        document.getElementById('summ-total').textContent = formatPrice(order.totalPrice);
 
-        sessionStorage.removeItem('lastOrderId');
-        sessionStorage.removeItem('lastOrderData');
+        const settings = await api.getSetting('sundura_global_settings');
+        const waNumber = settings ? (settings.socialWa || '201016612519').replace(/[^0-9]/g, '') : '201016612519';
+        const waMessage = encodeURIComponent(`مرحباً، قمت بطلب من متجر سندورة.\nرقم الطلب الخاص بي هو: ${order.orderId}`);
+        whatsappBtn.href = `https://wa.me/${waNumber}?text=${waMessage}`;
+        whatsappBtn.style.display = 'flex';
+      } catch (e) {
+        console.error('Failed to load order', e);
+        window.location.href = 'index';
       }
       Cart.clear();
     });

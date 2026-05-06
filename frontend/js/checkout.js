@@ -178,9 +178,7 @@ function setupForm() {
     try {
       const order = await api.createOrder(orderData);
       Cart.clear();
-      sessionStorage.setItem('lastOrderId', order.orderId);
-      sessionStorage.setItem('lastOrderData', JSON.stringify(order));
-      window.location.href = 'order-success';
+      window.location.href = `payment?id=${order.orderId}`;
     } catch (err) {
       showToast(err.message || 'فشل في إتمام الطلب', 'error');
       btn.disabled = false; btn.textContent = 'تأكيد الطلب';
