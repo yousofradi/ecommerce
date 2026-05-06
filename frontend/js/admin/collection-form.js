@@ -266,7 +266,6 @@ async function saveCollection(e) {
   };
 
   try {
-    let savedCol;
     if (collectionId) {
       savedCol = await api.updateCollection(collectionId, data);
       showToast('تم التحديث بنجاح');
@@ -274,6 +273,12 @@ async function saveCollection(e) {
       savedCol = await api.createCollection(data);
       collectionId = savedCol._id;
       showToast('تم الإنشاء بنجاح');
+      
+      const formTitle = document.getElementById('form-page-title');
+      if (formTitle) formTitle.textContent = 'تعديل التصنيف';
+      document.title = 'تعديل التصنيف — Sundura Admin';
+      const newUrl = window.location.pathname + '?id=' + collectionId;
+      window.history.replaceState({ path: newUrl }, '', newUrl);
     }
 
     // Now update products collection bulk
@@ -288,7 +293,13 @@ async function saveCollection(e) {
       admin: true
     });
 
-    setTimeout(() => window.location.href = 'collections', 1000);
+    originalCollection = JSON.parse(JSON.stringify(savedCol));
+    if (window.hideBar) window.hideBar();
+
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'حفظ التصنيف';
+    }
   } catch (err) {
     showToast('حدث خطأ أثناء الحفظ', 'error');
     if (btn) {

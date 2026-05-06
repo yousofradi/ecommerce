@@ -804,9 +804,33 @@ async function saveProduct(e) {
   };
 
   try {
-    if (editId) { await api.updateProduct(editId, data); showToast('تم تحديث المنتج'); }
-    else { await api.createProduct(data); showToast('تم إضافة المنتج'); }
-    setTimeout(() => window.location.href = 'products', 800);
+    if (editId) { 
+      await api.updateProduct(editId, data); 
+      showToast('تم تحديث المنتج'); 
+    } else { 
+      const res = await api.createProduct(data); 
+      showToast('تم إضافة المنتج');
+      if (res && res._id) {
+        editId = res._id;
+        const formTitle = document.getElementById('form-title');
+        if (formTitle) formTitle.textContent = 'تعديل المنتج';
+        document.title = 'تعديل المنتج | لوحة التحكم';
+        const newUrl = window.location.pathname + '?id=' + editId;
+        window.history.replaceState({ path: newUrl }, '', newUrl);
+        const deleteBtn = document.getElementById('delete-btn');
+        if (deleteBtn) deleteBtn.style.display = 'block';
+      }
+    }
+    
+    hasUnsavedChanges = false;
+    originalProductData = JSON.parse(JSON.stringify(data));
+    if (window.hideBar) window.hideBar();
+    
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'حفظ المنتج';
+      btn.classList.remove('pulse');
+    }
   } catch (err) {
     showToast(err.message || 'حدث خطأ', 'error');
     if (btn) {

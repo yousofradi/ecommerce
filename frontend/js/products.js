@@ -78,6 +78,7 @@ async function renderProductSection(s, products, collections) {
     sectionProducts = products;
   }
   
+  sectionProducts = sectionProducts.filter(p => p.quantity === null || p.quantity === undefined || p.quantity > 0);
   sectionProducts = sectionProducts.slice(0, s.maxItems || 8);
   if (sectionProducts.length === 0) return '';
   

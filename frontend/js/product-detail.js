@@ -58,16 +58,23 @@ function renderProduct(p) {
 
   // Options HTML
   const optionsHTML = (p.options || []).map((group, gi) => {
-    const valuesHTML = group.values.map((v, vi) => {
-      // Logic for labels: If this specific option has a price, it's the absolute price.
-      // Since all options are now "Overrides", we show its sale price.
-      const optSaleTotal = v.salePrice !== null ? v.salePrice : (v.price || 0);
-      
+    const validValues = group.values.filter(v => {
+      if (!p.variants || p.variants.length === 0) return true;
+      return p.variants.some(varObj => 
+        varObj.combination[group.name] === v.label && 
+        (varObj.quantity === null || varObj.quantity === undefined || varObj.quantity > 0)
+      );
+    });
+
+    if (validValues.length === 0) return '';
+
+    const valuesHTML = validValues.map((v, vi) => {
       return `<div class="radio-option">
-        <input type="radio" name="opt_${gi}" id="opt_${gi}_${vi}" value="${vi}" ${vi === 0 ? 'checked' : ''} onchange="updateTotalPrice()">
+        <input type="radio" name="opt_${gi}" id="opt_${gi}_${vi}" value="${v.label}" ${vi === 0 ? 'checked' : ''} onchange="updateTotalPrice()">
         <label for="opt_${gi}_${vi}">${v.label}</label>
       </div>`;
     }).join('');
+
     return `<div class="option-group" style="margin-bottom:16px">
       <div class="option-group-title" style="margin-bottom:8px;font-weight:600">${group.name}</div>
       <div class="radio-options">${valuesHTML}</div>
@@ -134,13 +141,22 @@ window.updateTotalPrice = function() {
   
   const selectedOptionsMap = {};
   const selectedOptionsList = [];
+  let optionsOriginalTotal = 0;
+  let optionsSaleTotal = 0;
+  let hasOverride = false;
+
   (currentProduct.options || []).forEach((group, gi) => {
     const selected = document.querySelector(`input[name="opt_${gi}"]:checked`);
     if (selected) {
-      const vi = parseInt(selected.value);
-      const label = group.values[vi].label;
+      const label = selected.value;
+      const optVal = group.values.find(v => v.label === label) || { label };
+      
       selectedOptionsMap[group.name] = label;
       selectedOptionsList.push({ groupName: group.name, label });
+
+      hasOverride = true;
+      optionsOriginalTotal += (optVal.price || 0);
+      optionsSaleTotal += (optVal.salePrice !== null ? optVal.salePrice : (optVal.price || 0));
     }
   });
 
@@ -153,7 +169,10 @@ window.updateTotalPrice = function() {
     });
   }
 
-  let finalBasePrice, finalSalePrice, variantImg = null, isAvailable = true;
+  let finalBasePrice = currentProduct.basePrice;
+  let finalSalePrice = currentProduct.salePrice || currentProduct.basePrice;
+  let variantImg = null;
+  let isAvailable = true;
 
   if (matchingVariant) {
     finalBasePrice = matchingVariant.price;
@@ -162,21 +181,6 @@ window.updateTotalPrice = function() {
     isAvailable = matchingVariant.active !== false && (matchingVariant.quantity === null || matchingVariant.quantity > 0);
   } else {
     // Fallback to sum of options logic or base price
-    let optionsOriginalTotal = 0;
-    let optionsSaleTotal = 0;
-    let hasOverride = false;
-    
-    (currentProduct.options || []).forEach((group, gi) => {
-      const selected = document.querySelector(`input[name="opt_${gi}"]:checked`);
-      if (selected) {
-        const vi = parseInt(selected.value);
-        const optVal = group.values[vi];
-        hasOverride = true;
-        optionsOriginalTotal += (optVal.price || 0);
-        optionsSaleTotal += (optVal.salePrice !== null ? optVal.salePrice : (optVal.price || 0));
-      }
-    });
-
     finalBasePrice = optionsOriginalTotal > 0 ? optionsOriginalTotal : currentProduct.basePrice;
     finalSalePrice = optionsSaleTotal > 0 ? optionsSaleTotal : (currentProduct.salePrice || currentProduct.basePrice);
     isAvailable = currentProduct.quantity === null || currentProduct.quantity > 0;

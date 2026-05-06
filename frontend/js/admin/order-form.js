@@ -460,7 +460,23 @@ window.submitOrder = async function () {
   try {
     await api.createOrder(payload);
     showToast('تم إنشاء الطلب بنجاح!');
-    setTimeout(() => window.location.href = 'orders', 900);
+    
+    // Reset form instead of redirecting
+    cartItems = [];
+    renderCart();
+    const fields = ['c-name', 'c-phone', 'c-second-phone', 'c-gov', 'c-address', 'c-notes', 'order-discount', 'paid-amount'];
+    fields.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = (id === 'order-discount' ? '0' : '');
+    });
+    updatePaymentUI();
+    recalcSummary();
+    if (window.hideBar) window.hideBar();
+
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'حفظ الطلب';
+    }
   } catch (err) {
     showToast(err.message || 'حدث خطأ أثناء إنشاء الطلب', 'error');
     if (btn) {
