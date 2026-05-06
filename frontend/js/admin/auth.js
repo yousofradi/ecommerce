@@ -143,11 +143,6 @@ function initUnsavedChangesBar() {
   let hasChanges = false;
 
   window.markAsModified = () => {
-    // Disable bar on creation pages (forms without an 'id' parameter)
-    const params = new URLSearchParams(window.location.search);
-    const isCreatePage = window.location.pathname.includes('-form') && !params.get('id');
-    if (isCreatePage) return;
-
     if (!hasChanges) {
       hasChanges = true;
       bar.classList.add('visible');
