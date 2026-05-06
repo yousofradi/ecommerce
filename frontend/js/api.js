@@ -338,6 +338,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (settings.socialFb) socialHtml += `<a href="${settings.socialFb}" target="_blank" style="color:inherit"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg></a>`;
         if (settings.socialIg) socialHtml += `<a href="${settings.socialIg}" target="_blank" style="color:inherit"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></a>`;
         if (settings.socialTt) socialHtml += `<a href="${settings.socialTt}" target="_blank" style="color:inherit"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5v3a3 3 0 0 1-3-3v8a8 8 0 1 1-8-8 1 1 0 0 1 1 1z"></path></svg></a>`;
+        if (settings.socialTg) socialHtml += `<a href="${settings.socialTg}" target="_blank" style="color:inherit"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path></svg></a>`;
         if (settings.socialWa) {
             const waLink = `https://wa.me/${settings.socialWa.replace(/[^0-9]/g, '')}`;
             socialHtml += `<a href="${waLink}" target="_blank" style="color:inherit"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg></a>`;
@@ -346,7 +347,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         footerNav.insertAdjacentHTML('afterend', socialHtml);
       }
 
-      // 6. Custom Color Palette
+      // 6. Mobile Nav Update
+      const mobileNav = document.querySelector('.mobile-bottom-nav');
+      if (mobileNav) {
+          const navItems = mobileNav.querySelectorAll('.nav-item');
+          // WhatsApp item (usually 4th, index 3)
+          if (navItems[3] && settings.socialWa) {
+              const cleanNumber = settings.socialWa.replace(/[^0-9]/g, '');
+              navItems[3].href = `https://wa.me/${cleanNumber}`;
+              navItems[3].title = settings.socialWa; // Hover info
+              // Add a tooltip helper for mobile if they click and hold? 
+              // Standard title works for desktop hover.
+          }
+          // Last item: Telegram (index 4)
+          if (navItems[4]) {
+              navItems[4].href = settings.socialTg || '#';
+              const span = navItems[4].querySelector('span');
+              if (span) span.textContent = 'تليجرام';
+              const svg = navItems[4].querySelector('svg');
+              if (svg) svg.innerHTML = `<path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path>`;
+          }
+      }
+
+      // 7. Custom Color Palette
       if (settings.primaryColor) {
         applyColorPalette(settings.primaryColor);
       }

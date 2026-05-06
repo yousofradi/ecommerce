@@ -73,6 +73,7 @@ function populateSettingsForm(s) {
   document.getElementById('setting-social-fb').value = s.socialFb || '';
   document.getElementById('setting-social-ig').value = s.socialIg || '';
   document.getElementById('setting-social-tt').value = s.socialTt || '';
+  document.getElementById('setting-social-tg').value = s.socialTg || '';
   document.getElementById('setting-social-wa').value = s.socialWa || '';
   document.getElementById('setting-payment-notes').value = s.paymentNotes || '';
   document.getElementById('setting-primary-color').value = s.primaryColor || '#916C4F';
@@ -205,6 +206,7 @@ async function saveSettings() {
     socialFb: document.getElementById('setting-social-fb').value.trim(),
     socialIg: document.getElementById('setting-social-ig').value.trim(),
     socialTt: document.getElementById('setting-social-tt').value.trim(),
+    socialTg: document.getElementById('setting-social-tg').value.trim(),
     socialWa: document.getElementById('setting-social-wa').value.trim(),
     paymentNotes: document.getElementById('setting-payment-notes').value.trim(),
     primaryColor: document.getElementById('setting-primary-color').value,
