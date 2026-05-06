@@ -189,6 +189,7 @@ function showToast(msg, type = 'success') {
 // ── Global Confirm Modal ────────────────────────────────
 window.showConfirmModal = function (title, message) {
   return new Promise((resolve) => {
+    document.body.style.overflow = 'hidden';
     const modal = document.createElement('div');
     modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
     modal.innerHTML = `
@@ -208,19 +209,17 @@ window.showConfirmModal = function (title, message) {
     `;
     document.body.appendChild(modal);
 
-    modal.querySelector('#confirm-yes').onclick = () => {
+    const cleanup = (val) => {
       modal.remove();
-      resolve(true);
+      const anyOtherModal = document.querySelectorAll('.modal-overlay.open, .slide-menu.open, .search-overlay.open').length > 0;
+      if (!anyOtherModal) document.body.style.overflow = '';
+      resolve(val);
     };
-    modal.querySelector('#confirm-no').onclick = () => {
-      modal.remove();
-      resolve(false);
-    };
+
+    modal.querySelector('#confirm-yes').onclick = () => cleanup(true);
+    modal.querySelector('#confirm-no').onclick = () => cleanup(false);
     modal.onclick = (e) => {
-      if (e.target === modal) {
-        modal.remove();
-        resolve(false);
-      }
+      if (e.target === modal) cleanup(false);
     };
   });
 };
@@ -349,6 +348,7 @@ api.openMenu = function () {
 
   document.getElementById('slide-menu-overlay').classList.add('open');
   document.getElementById('slide-menu-container').classList.add('open');
+  document.body.style.overflow = 'hidden';
 };
 
 api.closeMenu = function () {
@@ -356,6 +356,27 @@ api.closeMenu = function () {
   const container = document.getElementById('slide-menu-container');
   if (overlay) overlay.classList.remove('open');
   if (container) container.classList.remove('open');
+  const anyOtherModal = document.querySelectorAll('.modal-overlay.open, .slide-menu.open, .search-overlay.open').length > 0;
+  if (!anyOtherModal) document.body.style.overflow = '';
+};
+
+window.openModal = function (modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.style.display = 'flex';
+    modal.classList.add('open');
+  }
+  document.body.style.overflow = 'hidden';
+};
+
+window.closeModal = function (modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.style.display = 'none';
+    modal.classList.remove('open');
+  }
+  const anyOtherModal = document.querySelectorAll('.modal-overlay.open, .slide-menu.open, .search-overlay.open, .search-overlay[style*="display: flex"]').length > 0;
+  if (!anyOtherModal) document.body.style.overflow = '';
 };
 
 // --- Global Search Logic ---

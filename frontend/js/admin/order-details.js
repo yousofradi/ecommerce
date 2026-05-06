@@ -226,20 +226,6 @@ function updatePaymentStatusUI() {
 
 // ── Modals & Editing ───────────────────────────────────
 
-window.openModal = function (modalId) {
-  document.getElementById(modalId).style.display = 'flex';
-  document.body.style.overflow = 'hidden';
-};
-
-window.closeModal = function (modalId) {
-  document.getElementById(modalId).style.display = 'none';
-  // Only restore scroll if no other modals are open
-  const openModals = document.querySelectorAll('.modal-overlay[style*="display: flex"]');
-  if (openModals.length === 0) {
-    document.body.style.overflow = '';
-  }
-};
-
 window.openCustomerModal = function () {
   document.getElementById('modal-c-name').value = currentOrder.customer.name || '';
   document.getElementById('modal-c-phone').value = currentOrder.customer.phone || '';

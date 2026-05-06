@@ -85,11 +85,11 @@ function openEditModal() {
   document.getElementById('modal-c-phone2').value = c.secondPhone || '';
   document.getElementById('modal-c-gov').value = c.government || '';
   document.getElementById('modal-c-address').value = c.address || '';
-  document.getElementById('edit-modal').classList.add('open');
+  openModal('edit-modal');
 }
 
 function closeEditModal() {
-  document.getElementById('edit-modal').classList.remove('open');
+  closeModal('edit-modal');
 }
 
 async function applyChanges() {
