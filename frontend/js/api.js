@@ -349,12 +349,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error('Failed to load global settings', err);
   }
 });
-      }
-    } catch (e) {
-      console.log('No global settings found or failed to load');
-    }
-  }
-});
 
 // --- Global Slide Menu Logic ---
 api.openMenu = function () {
