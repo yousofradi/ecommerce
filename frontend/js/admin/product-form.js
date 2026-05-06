@@ -1,4 +1,4 @@
-﻿/** Admin product form — create/edit */
+/** Admin product form — create/edit */
 let optionGroups = [];
 let variants = []; // New hierarchical variants
 let editId = null;
@@ -827,7 +827,7 @@ function populateProductForm(p) {
     tagsContainer.innerHTML = selectedCollectionIds.map(id => {
       const col = allCollections.find(c => c._id === id);
       if (!col) return '';
-      return \<div class="tag">\<span class="tag-remove" onclick="removeCollectionTag('\')">×</span></div>\;
+      return `<div class="tag">${col.name}<span class="tag-remove" onclick="removeCollectionTag('${id}')">×</span></div>`;
     }).join('');
   }
   if (hiddenInput) hiddenInput.value = JSON.stringify(selectedCollectionIds);
