@@ -6,25 +6,31 @@ let currentCollectionId = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   const params = new URLSearchParams(window.location.search);
-  currentCollectionId = params.get('id');
-  if (!currentCollectionId) {
+  const id = params.get('id');
+  const slug = params.get('u');
+  
+  if (!id && !slug) {
     document.getElementById('collection-products').innerHTML = '<p style="text-align:center;color:#999;grid-column:1/-1;padding:40px">لم يتم تحديد تصنيف</p>';
     return;
   }
-  loadCollectionProducts(1);
+
+  try {
+    const col = await api.getCollection(id || slug);
+    currentCollectionId = col._id;
+    document.title = `${col.name} | Sundura Shop`;
+    document.getElementById('collection-title').textContent = col.name;
+    document.getElementById('breadcrumb-name').textContent = col.name;
+    loadCollectionProducts(1);
+  } catch (err) {
+    document.getElementById('collection-products').innerHTML = '<p style="text-align:center;color:#ef4444;grid-column:1/-1;padding:40px">التصنيف غير موجود</p>';
+  }
 });
 
 async function loadCollectionProducts(page) {
   const grid = document.getElementById('collection-products');
   
   try {
-    // Fetch collection info (only once)
-    if (page === 1) {
-      const collection = await api._request(`/collections/${currentCollectionId}`);
-      document.title = `${collection.name} | Sundura Shop`;
-      document.getElementById('collection-title').textContent = collection.name;
-      document.getElementById('breadcrumb-name').textContent = collection.name;
-    }
+    // Fetching handled by DOMContentLoaded for slug support
 
     const res = await api._request(`/products?collectionId=${currentCollectionId}&page=${page}&limit=${LIMIT}`);
     

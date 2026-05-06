@@ -26,6 +26,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('products-search').addEventListener('input', filterCollectionProducts);
   document.getElementById('available-search').addEventListener('input', filterAvailableProducts);
 
+  // Auto-slugify
+  document.getElementById('c-name').addEventListener('input', (e) => {
+    if (!collectionId) {
+      const name = e.target.value;
+      const slug = name.trim().toLowerCase()
+        .replace(/[^\w\u0621-\u064A\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-');
+      document.getElementById('c-url').value = slug;
+    }
+  });
+
   window.handleGlobalSave = async () => {
     // Trigger form submit
     const form = document.getElementById('collection-form');
@@ -64,6 +76,7 @@ async function loadCollection(id) {
 function populateCollectionForm(col) {
   if (!col) {
     document.getElementById('c-name').value = '';
+    document.getElementById('c-url').value = '';
     document.getElementById('c-image').value = '';
     document.getElementById('c-desc').innerHTML = '';
     updateImagePreview('');
@@ -72,6 +85,7 @@ function populateCollectionForm(col) {
     return;
   }
   document.getElementById('c-name').value = col.name;
+  document.getElementById('c-url').value = col.urlName || '';
   document.getElementById('c-image').value = col.imageUrl || '';
   document.getElementById('c-desc').innerHTML = col.description || '';
   updateImagePreview(col.imageUrl || '');
@@ -261,6 +275,7 @@ async function saveCollection(e) {
   }
   const data = {
     name: document.getElementById('c-name').value.trim(),
+    urlName: document.getElementById('c-url').value.trim() || undefined,
     imageUrl: document.getElementById('c-image').value.trim(),
     description: document.getElementById('c-desc').innerHTML.trim()
   };

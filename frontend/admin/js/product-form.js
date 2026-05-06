@@ -101,6 +101,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  // Auto-slugify
+  const pNameInput = document.getElementById('p-name');
+  if (pNameInput) {
+    pNameInput.addEventListener('input', (e) => {
+      if (!editId) {
+        const name = e.target.value;
+        const slug = name.trim().toLowerCase()
+          .replace(/[^\w\u0621-\u064A\s-]/g, '')
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-');
+        document.getElementById('p-handle').value = slug;
+      }
+    });
+  }
+
   function handleFiles(files) {
     const progressContainer = document.getElementById('upload-progress');
     const progressBar = progressContainer ? progressContainer.querySelector('.upload-progress-bar-fill') : null;
@@ -792,6 +807,7 @@ async function saveProduct(e) {
     collectionId: selectedCollectionIds.length > 0 ? selectedCollectionIds[0] : null,
     status: document.getElementById('p-status').value,
     quantity: qtyVal !== '' ? Number(qtyVal) : null,
+    handle: document.getElementById('p-handle').value.trim() || undefined,
     options: optionGroups.filter(g => g.name && g.values.some(v => v)).map(g => ({
       name: g.name,
       required: true,
@@ -873,6 +889,7 @@ function populateProductForm(p) {
     document.getElementById('p-desc').value = '';
     document.getElementById('p-status').value = 'active';
     document.getElementById('p-quantity').value = '';
+    document.getElementById('p-handle').value = '';
     selectedCollectionIds = [];
     const tagsContainer = document.getElementById('selected-collections-tags');
     if (tagsContainer) tagsContainer.innerHTML = '';
@@ -894,6 +911,7 @@ function populateProductForm(p) {
   document.getElementById('p-desc').value = p.description || '';
   document.getElementById('p-status').value = p.status || 'active';
   document.getElementById('p-quantity').value = (p.quantity != null) ? p.quantity : '';
+  document.getElementById('p-handle').value = p.handle || '';
 
   const colIds = p.collectionIds || [];
   if (p.collectionId && !colIds.includes(p.collectionId)) colIds.push(p.collectionId);

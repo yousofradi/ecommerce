@@ -105,8 +105,9 @@
         
         grid.innerHTML = collections.map(c => {
           const img = c.imageUrl || 'https://assets.wuiltstore.com/cmo1fsgmc060f01lwhwpn6ga7__D8_B3_D9_86_D8_AF_D9_88_D8_B1.webp';
+          const link = c.urlName ? `collection?u=${encodeURIComponent(c.urlName)}` : `collection?id=${c._id}`;
           return `
-            <a href="collection?id=${c._id}" class="collection-card" style="margin-bottom:0">
+            <a href="${link}" class="collection-card" style="margin-bottom:0">
               <img src="${img}" alt="${c.name}" class="collection-card-img" style="height:140px; object-fit:cover; border-radius:12px;">
               <div class="collection-card-title" style="bottom:12px; right:12px; font-weight:700;">${c.name}</div>
             </a>
