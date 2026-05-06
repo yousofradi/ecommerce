@@ -107,7 +107,7 @@ async function saveSettings() {
   };
   
   try {
-    await api.setSetting(SETTINGS_KEY, settings);
+    await api.updateSetting(SETTINGS_KEY, settings);
     originalSettings = JSON.parse(JSON.stringify(settings));
     showToast('تم حفظ الإعدادات بنجاح', 'success');
     if (window.hideBar) window.hideBar();
