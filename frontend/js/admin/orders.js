@@ -55,7 +55,6 @@ window.setFilter = function (filter) {
       loadOrders();
       return;
     }
-    }
   }
   updateFilterCounts();
   filterOrdersClient();
