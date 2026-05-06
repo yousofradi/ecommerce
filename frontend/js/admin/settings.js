@@ -35,6 +35,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           updateBranding(input.value);
       }
     });
+  });
+
   initColorPicker();
 });
 
