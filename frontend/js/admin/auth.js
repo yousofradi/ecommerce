@@ -91,11 +91,11 @@ function initUnsavedChangesBar() {
       transition: all 0.2s;
     }
     .btn-save-changes {
-      background: var(--sundura-brown, #916C4F);
+      background: #10b981;
       color: #fff;
     }
     .btn-save-changes:hover {
-      background: #7a5a41;
+      background: #059669;
       transform: translateY(-1px);
     }
     .btn-discard-changes {
