@@ -765,3 +765,40 @@ window.addSelectedProducts = function () {
   renderItems();
   if (window.markAsModified) window.markAsModified();
 };
+
+window.toggleDetailsMenu = function(e) {
+  e.stopPropagation();
+  const menu = document.getElementById('details-menu');
+  const isVisible = menu.style.display === 'block';
+  menu.style.display = isVisible ? 'none' : 'block';
+  
+  if (!isVisible) {
+    const hideMenu = () => {
+      menu.style.display = 'none';
+      document.removeEventListener('click', hideMenu);
+    };
+    document.addEventListener('click', hideMenu);
+  }
+};
+
+window.archiveCurrentOrder = async function() {
+  if (!confirm('?? ??? ????? ?? ????? ??? ??????')) return;
+  try {
+    await api.archiveOrders([currentOrder.orderId]);
+    showToast('??? ????? ????? ?????');
+    window.location.href = 'orders';
+  } catch (err) {
+    showToast(err.message || '??? ????? ?????', 'error');
+  }
+};
+
+window.deleteCurrentOrder = async function() {
+  if (!confirm('???? ??? ????? ???????. ?? ??? ??????')) return;
+  try {
+    await api.deleteOrder(currentOrder.orderId);
+    showToast('?? ??? ????? ?????');
+    window.location.href = 'orders';
+  } catch (err) {
+    showToast(err.message || '??? ??? ?????', 'error');
+  }
+};
