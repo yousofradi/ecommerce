@@ -28,7 +28,7 @@ async function loadPaymentMethods() {
 
     container.innerHTML = methods.map((m, idx) => `
       <div class="radio-option">
-        <input type="radio" name="payment" id="pay-${m.id}" value="${m.label}" ${idx === 0 ? 'checked' : ''}>
+        <input type="radio" name="payment" id="pay-${m.id}" value="${m.label}" ${idx === 0 ? 'checked' : ''} data-note="${m.note || ''}">
         <label for="pay-${m.id}" style="justify-content: space-between; padding: 12px 16px; border-radius:12px; border-width:1.5px;">
           <div style="display:flex; align-items:center; gap:10px;">
             <div style="width:28px; height:28px; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0;">
@@ -40,6 +40,21 @@ async function loadPaymentMethods() {
         </label>
       </div>
     `).join('');
+
+    // Update instructions on change
+    const radios = document.querySelectorAll('input[name="payment"]');
+    const updateNote = () => {
+        const checked = document.querySelector('input[name="payment"]:checked');
+        const noteBox = document.getElementById('payment-instructions');
+        if (checked && checked.dataset.note) {
+            noteBox.innerHTML = checked.dataset.note.replace(/\n/g, '<br>');
+            noteBox.style.display = 'block';
+        } else {
+            noteBox.style.display = 'none';
+        }
+    };
+    radios.forEach(r => r.addEventListener('change', updateNote));
+    updateNote(); // Initial call
   } catch (err) {
     console.error('Failed to load payment methods', err);
     container.innerHTML = '<p class="text-muted">خطأ في تحميل طرق الدفع</p>';

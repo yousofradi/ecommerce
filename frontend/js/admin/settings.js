@@ -101,7 +101,7 @@ window.handleImageUpload = async function(input, targetId, previewId, placeholde
 // ── Payment Methods Logic ────────────────────────────
 window.addPaymentMethod = function() {
     const id = Date.now().toString();
-    paymentMethods.push({ id, logo: '', label: '', number: '' });
+    paymentMethods.push({ id, logo: '', label: '', number: '', note: '' });
     renderPaymentMethods();
     if (window.markAsModified) window.markAsModified();
 };
@@ -162,8 +162,11 @@ function renderPaymentMethods() {
             <div class="form-group mb-8">
                 <input type="text" class="form-control form-control-sm" value="${m.label}" placeholder="اسم الوسيلة (مثال: فودافون كاش)" oninput="updatePaymentField('${m.id}', 'label', this.value)">
             </div>
-            <div class="form-group mb-0">
+            <div class="form-group mb-8">
                 <input type="text" class="form-control form-control-sm" value="${m.number}" placeholder="الرقم أو الحساب" oninput="updatePaymentField('${m.id}', 'number', this.value)">
+            </div>
+            <div class="form-group mb-0">
+                <textarea class="form-control form-control-sm" placeholder="ملاحظات أو تعليمات الدفع للعميل..." style="height:50px; font-size:0.75rem;" oninput="updatePaymentField('${m.id}', 'note', this.value)">${m.note || ''}</textarea>
             </div>
         </div>
     `).join('');

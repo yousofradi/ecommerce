@@ -110,13 +110,15 @@
               <label class="form-label" for="cust-address">العنوان *</label>
               <textarea class="form-control" id="cust-address" required placeholder="العنوان بالتفصيل"></textarea>
             </div>
+            <div class="form-group">
+              <label class="form-label" for="cust-notes">ملاحظات</label>
+              <textarea class="form-control" id="cust-notes" placeholder="ملاحظات إضافية..."></textarea>
+            </div>
             <h2 class="mb-24 mt-32">طريقة الدفع</h2>
-            <div id="payment-methods-checkout" class="radio-options mb-16" style="display: grid; gap: 8px;">
+            <div id="payment-methods-checkout" class="radio-options mb-24" style="display: grid; gap: 8px;">
                <!-- Dynamic payment methods injected here -->
             </div>
-            <div class="form-group mb-32">
-              <label class="form-label" for="cust-notes">ملاحظات إضافية (اختياري)</label>
-              <textarea class="form-control" id="cust-notes" placeholder="ملاحظات حول الطلب أو الدفع..."></textarea>
+            <div id="payment-instructions" style="display:none; padding:16px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; margin-bottom:24px; font-size:0.85rem; color:var(--text-main); line-height:1.6;">
             </div>
             <button type="submit" class="btn btn-primary btn-block"
               style="padding:10px 20px;font-size:1rem;background:var(--sundura-brown,#916C4F);border-color:var(--sundura-brown,#916C4F); margin-bottom: 20px;">تأكيد
