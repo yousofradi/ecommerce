@@ -8,13 +8,18 @@
   <meta name="description" content="Sundura Shop — أدوات مكتبية، ألعاب، اكسسوارات وأكثر. شحن لجميع المحافظات.">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/store.css">
+  <script>
+    if (window.location.pathname.endsWith('/index') || window.location.pathname.endsWith('/index.html')) {
+      window.location.replace('/');
+    }
+  </script>
 </head>
 
 <body class="has-bottom-nav">
   <header class="store-header">
     <div class="container">
       <button class="header-icon hamburger-btn" onclick="api.openMenu()">☰</button>
-      <a href="index" class="store-logo-link"><img src="" alt="Logo" class="store-logo-img" style="opacity:0; transition: opacity 0.2s;"></a>
+      <a href="/" class="store-logo-link"><img src="" alt="Logo" class="store-logo-img" style="opacity:0; transition: opacity 0.2s;"></a>
       
       <div class="header-icons">
         <button class="header-icon search-icon-btn" onclick="api.openSearch()">
@@ -54,7 +59,7 @@
 
   <footer class="store-footer">
     <nav class="footer-nav">
-      <a href="index">الرئيسية</a>
+      <a href="/">الرئيسية</a>
       <a href="products">المتجر</a>
       <a href="https://wa.me/+201016612519" target="_blank">تواصل معنا</a>
     </nav>
@@ -64,7 +69,7 @@
   <!-- Bottom Mobile Nav -->
   <nav class="mobile-bottom-nav">
     <div class="nav-items">
-      <a href="index" class="nav-item">
+      <a href="/" class="nav-item">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         <span>الرئيسية</span>
       </a>
