@@ -38,10 +38,32 @@ async function loadPaymentMethods() {
             </div>
             <span style="font-weight:700; font-size:0.9rem; color:var(--text-main);">${m.label}</span>
           </div>
-          <span dir="ltr" style="font-size: 0.85rem; font-weight: 800; color: #111827;">${m.number}</span>
+          
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button type="button" class="btn-copy-payment" onclick="event.preventDefault(); copyToClipboard('${m.number}', this)" style="background:#1e293b; color:#fff; border:none; border-radius:6px; padding:4px 10px; font-size:0.75rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                <span>نسخ</span>
+            </button>
+            <span dir="ltr" style="font-size: 0.85rem; font-weight: 800; color: #111827;">${m.number}</span>
+          </div>
         </label>
       </div>
     `).join('');
+
+    // Add global copy function
+    window.copyToClipboard = (text, btn) => {
+        navigator.clipboard.writeText(text).then(() => {
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = 'تم النسخ';
+            btn.style.background = '#10b981';
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.style.background = '#1e293b';
+            }, 2000);
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+        });
+    };
 
     // Show global notes
     const noteBox = document.getElementById('payment-instructions');
