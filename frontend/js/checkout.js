@@ -82,12 +82,15 @@ async function loadPaymentMethods() {
 function renderOrderSummary(items) {
   const el = document.getElementById('order-items');
   el.innerHTML = items.map(item => `
-    <div class="cart-item" style="padding:12px">
-      <div class="cart-item-info">
-        <div class="cart-item-name">${item.name} × ${item.quantity}</div>
-        <div class="cart-item-options">${item.selectedOptions.map(o => `${o.groupName}: ${o.label}`).join(', ')}</div>
+    <div class="cart-item" style="padding:12px; display:flex; align-items:center; gap:12px; border:1px solid #f1f5f9; border-radius:12px; margin-bottom:8px; background:#fff;">
+      <div class="cart-item-price" style="flex-shrink:0; font-weight:700; color:var(--sundura-brown, #916C4F);">${formatPrice(item.unitPrice * item.quantity)}</div>
+      <div class="cart-item-info" style="flex:1; text-align:right;">
+        <div class="cart-item-name" style="font-weight:700; font-size:0.9rem;">${item.name} × ${item.quantity}</div>
+        <div class="cart-item-options" style="font-size:0.8rem; color:#64748b;">${item.selectedOptions.map(o => `${o.groupName}: ${o.label}`).join(', ')}</div>
       </div>
-      <div class="cart-item-price">${formatPrice(item.unitPrice * item.quantity)}</div>
+      <div style="width:50px; height:50px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+        <img src="${item.image || 'placeholder.png'}" style="max-width:100%; max-height:100%; object-fit:cover;">
+      </div>
     </div>
   `).join('');
   updatePriceSummary();
