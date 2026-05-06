@@ -2,7 +2,7 @@
 function requireAdmin() {
   const key = localStorage.getItem('adminKey');
   const timestamp = localStorage.getItem('loginTimestamp');
-  
+
   if (!key) {
     window.location.href = 'login';
     return false;
@@ -161,21 +161,21 @@ function initUnsavedChangesBar() {
 
   const isSelectionControl = (el) => {
     if (!el) return false;
-    return el.id && el.id.startsWith('select-all') || 
-           el.classList.contains('order-checkbox') || 
-           el.classList.contains('product-checkbox') || 
-           el.classList.contains('collection-checkbox') ||
-           el.classList.contains('selection-checkbox') ||
-           el.classList.contains('pli-checkbox') ||
-           el.classList.contains('product-select-cb') ||
-           el.classList.contains('product-variant-cb');
+    return el.id && el.id.startsWith('select-all') ||
+      el.classList.contains('order-checkbox') ||
+      el.classList.contains('product-checkbox') ||
+      el.classList.contains('collection-checkbox') ||
+      el.classList.contains('selection-checkbox') ||
+      el.classList.contains('pli-checkbox') ||
+      el.classList.contains('product-select-cb') ||
+      el.classList.contains('product-variant-cb');
   };
 
   // Detect changes
   document.addEventListener('input', (e) => {
     // Ignore inputs inside modals (like product selection modal)
     if (e.target.closest('.modal-overlay') || e.target.closest('.modal-box') || e.target.closest('.hp-modal') || e.target.closest('[id*="modal"]')) return;
-    
+
     // Ignore selection controls
     if (isSelectionControl(e.target)) return;
 
@@ -217,33 +217,3 @@ function initUnsavedChangesBar() {
     }
   });
 }
-
-// Global Modal Helpers with Scroll Lock
-window.openModal = function (modalId) {
-  const modal = document.getElementById(modalId);
-  if (modal) {
-    modal.classList.add('open');
-    modal.classList.remove('hidden');
-    modal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-  }
-};
-
-window.closeModal = function (modalId) {
-  const modal = document.getElementById(modalId);
-  if (modal) {
-    modal.classList.remove('open');
-    modal.style.display = 'none';
-    
-    // Check if any other modals are still open
-    const openModals = Array.from(document.querySelectorAll('.modal-overlay, .hp-modal, .modal-box, #select-modal, #image-url-modal')).filter(m => {
-      if (m.id === modalId) return false;
-      const style = window.getComputedStyle(m);
-      return (m.classList.contains('open') || (m.style.display && m.style.display !== 'none') || (style.display !== 'none' && !m.classList.contains('hidden')));
-    });
-    
-    if (openModals.length === 0) {
-      document.body.style.overflow = '';
-    }
-  }
-};

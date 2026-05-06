@@ -53,7 +53,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // ── Products Modal ─────────────────────────────────────
 let collectionsMap = {};
-// Replaced with global helpers in auth.js
+window.openModal = function (modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+};
+
+window.closeModal = function (modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) modal.style.display = 'none';
+  const openModals = document.querySelectorAll('.modal-overlay[style*="display: flex"]');
+  if (openModals.length === 0) {
+    document.body.style.overflow = '';
+  }
+};
 
 window.openProductsModal = async function () {
   openModal('products-modal');

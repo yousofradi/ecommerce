@@ -7,15 +7,15 @@ let sortableInstance = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   if (!requireAdmin()) return;
-  
+
   // Load data
   try {
     [allCollections, allProducts] = await Promise.all([
       api.getCollections().catch(() => []),
       api.getProducts(null, null, true).then(r => r.products || r).catch(() => [])
     ]);
-  } catch(e) {}
-  
+  } catch (e) { }
+
   await loadSections();
   renderSections();
 });
@@ -25,13 +25,13 @@ async function loadSections() {
     const saved = await api.getSetting(STORAGE_KEY);
     if (saved) sections = saved;
     else throw new Error('No saved settings');
-  } catch(e) {
+  } catch (e) {
     try {
       const savedLocal = localStorage.getItem(STORAGE_KEY);
       if (savedLocal) sections = JSON.parse(savedLocal);
-    } catch(err) { sections = []; }
+    } catch (err) { sections = []; }
   }
-  
+
   // Default sections removed as per user request
 }
 
@@ -77,12 +77,12 @@ function getSectionDescription(s) {
 
 function renderSections() {
   const list = document.getElementById('sections-list');
-  
+
   if (!sections.length) {
     list.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8">لا توجد أقسام بعد. أضف قسم جديد من الأسفل.</div>';
     return;
   }
-  
+
   list.innerHTML = sections.map((s, i) => `
     <div class="hp-section" data-id="${s.id}">
       <div class="hp-drag" title="اسحب لإعادة الترتيب">⠿</div>
@@ -99,7 +99,7 @@ function renderSections() {
       </div>
     </div>
   `).join('');
-  
+
   // Init drag
   if (sortableInstance) sortableInstance.destroy();
   sortableInstance = new Sortable(list, {
@@ -119,7 +119,7 @@ function showTypePicker() {
 
 function addSection(type) {
   const s = { id: genId(), type, title: '', showTitle: true };
-  
+
   if (type === 'products') {
     s.title = 'منتجات مميزة';
     s.collectionId = '';
@@ -137,17 +137,17 @@ function addSection(type) {
   } else if (type === 'text') {
     s.content = '';
   }
-  
+
   sections.push(s);
   saveSections();
   renderSections();
   document.getElementById('type-picker-area').classList.add('hidden');
-  
+
   // Open edit immediately
   editSection(s.id);
 }
 
-window.deleteSection = async function(id) {
+window.deleteSection = async function (id) {
   const ok = await window.showConfirmModal('حذف القسم', 'هل تريد حذف هذا القسم؟');
   if (!ok) return;
   sections = sections.filter(s => s.id !== id);
@@ -156,12 +156,12 @@ window.deleteSection = async function(id) {
   showToast('تم حذف القسم');
 };
 
-window.editSection = function(id) {
+window.editSection = function (id) {
   const s = sections.find(s => s.id === id);
   if (!s) return;
-  document.body.style.overflow = 'hidden';
+
   const modal = document.getElementById('section-modal');
-  
+
   if (s.type === 'products') {
     renderProductsEditor(s);
   } else if (s.type === 'collections') {
@@ -175,10 +175,10 @@ window.editSection = function(id) {
 
 function renderProductsEditor(s) {
   const modal = document.getElementById('section-modal');
-  const colOptions = allCollections.map(c => 
+  const colOptions = allCollections.map(c =>
     `<option value="${c._id}" ${s.collectionId === c._id ? 'selected' : ''}>${c.name}</option>`
   ).join('');
-  
+
   modal.innerHTML = `
     <div class="hp-modal-overlay" onclick="if(event.target===this) closeModal()">
       <div class="hp-modal">
@@ -236,7 +236,7 @@ function renderProductsEditor(s) {
 function renderCollectionsEditor(s) {
   const modal = document.getElementById('section-modal');
   const selectedIds = s.selectedCollections || [];
-  
+
   modal.innerHTML = `
     <div class="hp-modal-overlay" onclick="if(event.target===this) closeModal()">
       <div class="hp-modal">
@@ -279,15 +279,15 @@ function renderCollectionsEditor(s) {
             <button class="btn btn-secondary" style="margin-bottom:12px;border-radius:8px;border:1px solid #0f766e;color:#0f766e;padding:8px 16px;cursor:pointer;background:#fff;" onclick="openCollectionPicker('${s.id}')">+ أضف مجموعة</button>
             <div id="selected-cols-list">
               ${selectedIds.length ? selectedIds.map(cid => {
-                const c = allCollections.find(x => x._id === cid);
-                return c ? `<div class="col-picker-item selected" style="justify-content:space-between">
+    const c = allCollections.find(x => x._id === cid);
+    return c ? `<div class="col-picker-item selected" style="justify-content:space-between">
                   <div style="display:flex;align-items:center;gap:10px">
                     ${c.imageUrl ? `<img src="${c.imageUrl}" alt="">` : ''}
                     <span>${c.name}</span>
                   </div>
                   <button onclick="removeSelectedCol('${s.id}','${cid}')" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:1.2rem">×</button>
                 </div>` : '';
-              }).join('') : '<div style="text-align:center;padding:16px;color:#94a3b8;background:#f9fafb;border-radius:8px">لم يتم اختيار أي مجموعة بعد</div>'}
+  }).join('') : '<div style="text-align:center;padding:16px;color:#94a3b8;background:#f9fafb;border-radius:8px">لم يتم اختيار أي مجموعة بعد</div>'}
             </div>
           </div>
         </div>
@@ -373,7 +373,7 @@ function renderTextEditor(s) {
 }
 
 // Save handlers
-window.saveProductsSection = function(id) {
+window.saveProductsSection = function (id) {
   const s = sections.find(s => s.id === id);
   if (!s) return;
   s.title = document.getElementById('ed-title').value.trim();
@@ -387,7 +387,7 @@ window.saveProductsSection = function(id) {
   showToast('تم الحفظ');
 };
 
-window.saveCollectionsSection = function(id) {
+window.saveCollectionsSection = function (id) {
   const s = sections.find(s => s.id === id);
   if (!s) return;
   s.title = document.getElementById('ed-title').value.trim();
@@ -400,7 +400,7 @@ window.saveCollectionsSection = function(id) {
   showToast('تم الحفظ');
 };
 
-window.saveBannerSection = function(id) {
+window.saveBannerSection = function (id) {
   const s = sections.find(s => s.id === id);
   if (!s) return;
   s.title = document.getElementById('ed-title').value.trim();
@@ -413,7 +413,7 @@ window.saveBannerSection = function(id) {
   showToast('تم الحفظ');
 };
 
-window.saveTextSection = function(id) {
+window.saveTextSection = function (id) {
   const s = sections.find(s => s.id === id);
   if (!s) return;
   s.title = document.getElementById('ed-title').value.trim();
@@ -425,17 +425,16 @@ window.saveTextSection = function(id) {
   showToast('تم الحفظ');
 };
 
-window.closeModal = function() {
+window.closeModal = function () {
   document.getElementById('section-modal').innerHTML = '';
-  document.body.style.overflow = '';
 };
 
 // Collection picker modal
-window.openCollectionPicker = function(sectionId) {
+window.openCollectionPicker = function (sectionId) {
   const s = sections.find(s => s.id === sectionId);
   if (!s) return;
   const selectedIds = s.selectedCollections || [];
-  
+
   const pickerHTML = `
     <div class="hp-modal-overlay" id="col-picker-overlay" onclick="if(event.target===this) closeColPicker()">
       <div class="hp-modal" style="max-width:500px">
@@ -464,20 +463,19 @@ window.openCollectionPicker = function(sectionId) {
         </div>
       </div>
     </div>`;
-  
+
   // Insert picker as sibling
   const div = document.createElement('div');
   div.id = 'col-picker-container';
   div.innerHTML = pickerHTML;
   document.body.appendChild(div);
-  document.body.style.overflow = 'hidden';
 };
 
-window.toggleColSelection = function(sectionId, colId, el) {
+window.toggleColSelection = function (sectionId, colId, el) {
   const s = sections.find(s => s.id === sectionId);
   if (!s) return;
   if (!s.selectedCollections) s.selectedCollections = [];
-  
+
   const idx = s.selectedCollections.indexOf(colId);
   if (idx >= 0) {
     s.selectedCollections.splice(idx, 1);
@@ -491,10 +489,9 @@ window.toggleColSelection = function(sectionId, colId, el) {
   saveSections();
 };
 
-window.closeColPicker = function() {
+window.closeColPicker = function () {
   const el = document.getElementById('col-picker-container');
   if (el) el.remove();
-  document.body.style.overflow = '';
   // Re-render the collections editor to update selected list
   const openModal = document.querySelector('.hp-modal');
   if (openModal) {
@@ -504,14 +501,14 @@ window.closeColPicker = function() {
   }
 };
 
-window.filterColPicker = function() {
+window.filterColPicker = function () {
   const q = document.getElementById('col-picker-search').value.toLowerCase();
   document.querySelectorAll('#col-picker-list .col-picker-item').forEach(el => {
     el.style.display = el.textContent.toLowerCase().includes(q) ? '' : 'none';
   });
 };
 
-window.removeSelectedCol = function(sectionId, colId) {
+window.removeSelectedCol = function (sectionId, colId) {
   const s = sections.find(s => s.id === sectionId);
   if (!s || !s.selectedCollections) return;
   s.selectedCollections = s.selectedCollections.filter(id => id !== colId);

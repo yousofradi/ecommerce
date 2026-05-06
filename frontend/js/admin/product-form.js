@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       api.getCollections().catch(() => []),
       editId ? api.getProduct(editId) : Promise.resolve(null)
     ]);
-    
+
     allCollections = collections;
     initCollectionSelect();
 
@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const colIds = p.collectionIds || [];
       if (p.collectionId && !colIds.includes(p.collectionId)) colIds.push(p.collectionId);
       selectedCollectionIds = [...colIds];
-      
+
       // Re-run collection tags UI
       const tagsContainer = document.getElementById('selected-collections-tags');
       const hiddenInput = document.getElementById('p-collections-hidden');
@@ -81,16 +81,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       renderVariantsTable();
     }
     document.body.classList.remove('is-loading');
-  } catch (err) { 
+  } catch (err) {
     console.error('Error loading page data:', err);
-    showToast('فشل تحميل البيانات', 'error'); 
+    showToast('فشل تحميل البيانات', 'error');
     document.body.classList.remove('is-loading');
   }
 
   const productForm = document.getElementById('product-form');
   if (productForm) {
     productForm.addEventListener('submit', saveProduct);
-    
+
     // Global Save Handler for the unsaved changes bar
     window.handleGlobalSave = async () => {
       // Trigger the form submit
@@ -106,10 +106,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     deleteBtn.style.display = 'block';
     deleteBtn.addEventListener('click', deleteCurrentProduct);
   }
-  
+
   const addOptBtn = document.getElementById('add-option-group');
   if (addOptBtn) addOptBtn.addEventListener('click', addOptionGroup);
-  
+
   const enableVarCheck = document.getElementById('enable-variants');
   if (enableVarCheck) {
     enableVarCheck.addEventListener('change', (e) => {
@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const bulkBtn = document.getElementById('bulk-edit-btn');
   if (bulkBtn) bulkBtn.style.display = 'none';
-  
+
   const confirmBulkBtn = document.getElementById('confirm-bulk-edit');
   if (confirmBulkBtn) confirmBulkBtn.style.display = 'none';
 
@@ -287,13 +287,13 @@ function renderImages() {
 function renderOptionSetup() {
   const container = document.getElementById('option-groups-setup');
   container.innerHTML = '';
-  
+
   optionGroups.forEach((g, gi) => {
     if (optionEditModes[gi] === undefined) optionEditModes[gi] = !g.name;
 
     const card = document.createElement('div');
     card.className = `variant-group-card ${optionEditModes[gi] ? 'edit-mode' : 'display-mode'}`;
-    
+
     if (optionEditModes[gi]) {
       // Edit Mode
       card.innerHTML = `
@@ -384,23 +384,23 @@ function renderOptionSetup() {
       const [moved] = groups.splice(evt.oldIndex, 1);
       groups.splice(evt.newIndex, 0, moved);
       optionGroups = groups;
-      
+
       const modes = [...optionEditModes];
       const [movedMode] = modes.splice(evt.oldIndex, 1);
       modes.splice(evt.newIndex, 0, movedMode);
       optionEditModes = modes;
-      
+
       syncVariants();
     }
   });
 }
 
-window.editOptionGroup = function(gi) {
+window.editOptionGroup = function (gi) {
   optionEditModes[gi] = true;
   renderOptionSetup();
 }
 
-window.saveOptionGroup = function(gi) {
+window.saveOptionGroup = function (gi) {
   optionEditModes[gi] = false;
   renderOptionSetup();
 }
@@ -449,7 +449,7 @@ function updateValueName(gi, vi, val) {
 function syncVariants() {
   const oldVariants = [...variants];
   const validGroups = optionGroups.filter(g => g.name && g.values.some(v => v));
-  
+
   if (validGroups.length === 0) {
     variants = [];
     renderVariantsTable();
@@ -473,7 +473,7 @@ function syncVariants() {
 
   variants = combinations.map(combo => {
     // Check if we already have data for this combination
-    const existing = oldVariants.find(v => 
+    const existing = oldVariants.find(v =>
       Object.entries(combo).every(([key, val]) => v.combination[key] === val)
     );
     if (existing) return existing;
@@ -525,7 +525,7 @@ function renderVariantsTable() {
   let html = '';
   Object.entries(groups).forEach(([parentVal, children]) => {
     const isExpanded = expandedParents.has(parentVal);
-    
+
     // Price ranges
     const prices = children.map(c => c.price);
     const minPrice = Math.min(...prices);
@@ -621,7 +621,7 @@ function renderVariantsTable() {
   tbody.innerHTML = html;
 }
 
-window.toggleVariantChildren = function(parentVal) {
+window.toggleVariantChildren = function (parentVal) {
 
   if (expandedParents.has(parentVal)) {
     expandedParents.delete(parentVal);
@@ -631,7 +631,7 @@ window.toggleVariantChildren = function(parentVal) {
   renderVariantsTable();
 }
 
-window.updateVariantField = function(idx, field, val) {
+window.updateVariantField = function (idx, field, val) {
   if (field === 'price' || field === 'salePrice' || field === 'quantity' || field === 'cost') {
     variants[idx][field] = val === '' ? (field === 'quantity' || field === 'cost' ? null : 0) : Number(val);
   } else {
@@ -640,13 +640,13 @@ window.updateVariantField = function(idx, field, val) {
   if (window.markAsModified) window.markAsModified();
 }
 
-window.removeVariant = function(idx) {
+window.removeVariant = function (idx) {
   variants.splice(idx, 1);
   renderVariantsTable();
   if (window.markAsModified) window.markAsModified();
 }
 
-window.toggleVariantGroup = function(parentVal, active) {
+window.toggleVariantGroup = function (parentVal, active) {
   const firstGroupName = optionGroups[0].name;
   variants.forEach(v => {
     if (v.combination[firstGroupName] === parentVal) {
@@ -659,11 +659,11 @@ window.toggleVariantGroup = function(parentVal, active) {
 
 let currentPickingVariantIndex = null;
 
-window.openGalleryModal = function(idx) {
+window.openGalleryModal = function (idx) {
   currentPickingVariantIndex = idx;
   const grid = document.getElementById('gallery-modal-grid');
   const confirmBtn = document.getElementById('confirm-gallery-selection');
-  
+
   grid.innerHTML = productImages.map((img, i) => `
     <div class="gallery-item ${variants[idx].imageUrl === img ? 'selected' : ''}" onclick="selectGalleryImage('${img}')">
       <div class="gallery-item-check"></div>
@@ -675,22 +675,22 @@ window.openGalleryModal = function(idx) {
   if (confirmBtn) {
     confirmBtn.disabled = !variants[idx].imageUrl;
   }
-  
-  openModal('gallery-modal');
+
+  document.getElementById('gallery-modal').style.display = 'flex';
 }
 
-window.selectGalleryImage = function(url) {
+window.selectGalleryImage = function (url) {
   document.querySelectorAll('.gallery-item').forEach(el => {
     el.classList.toggle('selected', el.querySelector('img').src === url);
   });
   variants[currentPickingVariantIndex].imageUrl = url;
-  
+
   const confirmBtn = document.getElementById('confirm-gallery-selection');
   if (confirmBtn) confirmBtn.disabled = false;
 }
 
-window.closeGalleryModal = function() {
-  closeModal('gallery-modal');
+window.closeGalleryModal = function () {
+  document.getElementById('gallery-modal').style.display = 'none';
   renderVariantsTable();
 }
 
@@ -701,7 +701,7 @@ document.getElementById('confirm-gallery-selection').addEventListener('click', c
 function openBulkEditModal() {
   const tbody = document.getElementById('bulk-edit-list');
   const modal = document.getElementById('bulk-edit-modal');
-  
+
   // Update subtitle with count
   const oldSubtitle = modal.querySelector('.bulk-edit-subtitle');
   if (oldSubtitle) oldSubtitle.remove();
@@ -741,16 +741,16 @@ function openBulkEditModal() {
       </tr>
     `;
   }).join('');
-  openModal('bulk-edit-modal');
+  modal.style.display = 'flex';
 }
 
 
-window.updateBulkField = function(idx, field, val) {
+window.updateBulkField = function (idx, field, val) {
   updateVariantField(idx, field, val);
 }
 
 function closeBulkEditModal() {
-  closeModal('bulk-edit-modal');
+  document.getElementById('bulk-edit-modal').style.display = 'none';
   renderVariantsTable();
 }
 
@@ -789,7 +789,7 @@ async function saveProduct(e) {
     })),
     variants: document.getElementById('enable-variants').checked ? variants.map(v => ({
       ...v,
-      combination: v.combination 
+      combination: v.combination
     })) : []
   };
 
@@ -814,14 +814,14 @@ async function deleteCurrentProduct() {
   try {
     const btn = document.getElementById('delete-btn');
     if (btn) btn.disabled = true;
-    
+
     await api.deleteProduct(editId);
     showToast('تم حذف المنتج بنجاح');
-    
+
     // Crucial: hide the unsaved bar before redirecting so no alert shows
     const bar = document.getElementById('unsaved-changes-bar');
     if (bar) bar.classList.remove('visible');
-    
+
     setTimeout(() => window.location.href = 'products', 800);
   } catch (err) {
     showToast(err.message || 'فشل حذف المنتج', 'error');

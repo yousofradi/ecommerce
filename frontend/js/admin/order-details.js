@@ -226,7 +226,19 @@ function updatePaymentStatusUI() {
 
 // ── Modals & Editing ───────────────────────────────────
 
-// Replaced with global helpers in auth.js
+window.openModal = function (modalId) {
+  document.getElementById(modalId).style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+};
+
+window.closeModal = function (modalId) {
+  document.getElementById(modalId).style.display = 'none';
+  // Only restore scroll if no other modals are open
+  const openModals = document.querySelectorAll('.modal-overlay[style*="display: flex"]');
+  if (openModals.length === 0) {
+    document.body.style.overflow = '';
+  }
+};
 
 window.openCustomerModal = function () {
   document.getElementById('modal-c-name').value = currentOrder.customer.name || '';
@@ -314,9 +326,7 @@ window.onDrop = function (e) {
     items.splice(dropIdx, 0, moved);
     renderItems();
     updateTotals();
-    await saveOrderChanges(true);
-    const bar = document.getElementById('unsaved-changes-bar');
-    if (bar) bar.classList.remove('visible');
+    if (window.markAsModified) window.markAsModified();
   }
 };
 
@@ -336,9 +346,7 @@ window.moveItem = function (idx, direction) {
   [items[idx], items[newIdx]] = [items[newIdx], items[idx]];
   renderItems();
   updateTotals();
-  await saveOrderChanges(true);
-  const bar = document.getElementById('unsaved-changes-bar');
-  if (bar) bar.classList.remove('visible');
+  if (window.markAsModified) window.markAsModified();
 };
 
 window.updateItemQty = function (idx, val) {
@@ -347,9 +355,7 @@ window.updateItemQty = function (idx, val) {
     currentOrder.items[idx].quantity = qty;
     updateTotals();
     renderItems();
-    await saveOrderChanges(true);
-    const bar = document.getElementById('unsaved-changes-bar');
-    if (bar) bar.classList.remove('visible');
+    if (window.markAsModified) window.markAsModified();
   }
 };
 
@@ -367,9 +373,7 @@ window.applyItemQty = function () {
     currentOrder.items[idx].quantity = qty;
     updateTotals();
     renderItems();
-    await saveOrderChanges(true);
-    const bar = document.getElementById('unsaved-changes-bar');
-    if (bar) bar.classList.remove('visible');
+    if (window.markAsModified) window.markAsModified();
   }
   closeModal('item-qty-modal');
 };
@@ -406,9 +410,7 @@ window.confirmRemoveItem = function () {
     closeModal('delete-confirm-modal');
     updateTotals();
     renderItems();
-    await saveOrderChanges(true);
-    const bar = document.getElementById('unsaved-changes-bar');
-    if (bar) bar.classList.remove('visible');
+    if (window.markAsModified) window.markAsModified();
   }
 };
 
@@ -732,7 +734,5 @@ window.addSelectedProducts = function () {
   closeProductsModal();
   updateTotals();
   renderItems();
-  await saveOrderChanges(true);
-  const bar = document.getElementById('unsaved-changes-bar');
-  if (bar) bar.classList.remove('visible');
+  if (window.markAsModified) window.markAsModified();
 };
