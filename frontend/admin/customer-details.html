@@ -96,6 +96,24 @@
       white-space: pre-line;
       line-height: 1.5;
     }
+
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-body {
+      padding: 24px;
+    }
+    .modal-footer {
+      padding: 20px 24px;
+      border-top: 1px solid var(--border-color);
+    }
+    .mb-16 {
+      margin-bottom: 16px !important;
+    }
   </style>
 </head>
 <body>
@@ -261,12 +279,12 @@
       <div class="modal-body">
         <div class="form-group mb-16">
           <label class="form-label">الاسم</label>
-          <input type="text" id="modal-c-name" class="form-control" placeholder="اسم العميل">
+          <input type="text" id="modal-c-name" class="form-control" placeholder="اسم العميل" disabled style="background:#f8fafc; cursor:not-allowed;">
         </div>
         <div class="grid-2" style="gap:16px; margin-bottom:16px;">
           <div class="form-group" style="margin-bottom:0">
             <label class="form-label">رقم الهاتف</label>
-            <input type="tel" id="modal-c-phone" class="form-control" placeholder="01xxxxxxxxx">
+            <input type="tel" id="modal-c-phone" class="form-control" placeholder="01xxxxxxxxx" disabled style="background:#f8fafc; cursor:not-allowed;">
           </div>
           <div class="form-group" style="margin-bottom:0">
             <label class="form-label">هاتف آخر</label>
