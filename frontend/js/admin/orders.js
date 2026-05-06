@@ -25,6 +25,19 @@ async function loadOrders() {
   }
 }
 
+async function loadOrdersSilently() {
+  try {
+    allOrdersData = await api.getOrders(showingArchived);
+    updateFilterCounts();
+    filterOrdersClient();
+  } catch (err) {
+    console.error('Auto-refresh failed', err);
+  }
+}
+
+// Auto refresh every 30 seconds
+setInterval(loadOrdersSilently, 30000);
+
 window.setFilter = function (filter) {
   currentFilter = filter;
   document.querySelectorAll('.order-tab').forEach(el => el.classList.remove('active'));
@@ -42,7 +55,9 @@ window.setFilter = function (filter) {
       loadOrders();
       return;
     }
+    }
   }
+  updateFilterCounts();
   filterOrdersClient();
 };
 
@@ -78,6 +93,14 @@ window.updateFilterCounts = function () {
     if (elPending) elPending.textContent = allOrdersData.filter(o => o.status !== 'cancelled').length;
     if (elUnpaid) elUnpaid.textContent = allOrdersData.filter(o => !o.paid && (o.totalPrice > (o.paidAmount || 0))).length;
   }
+
+  // Show number only for active tab
+  document.querySelectorAll('.order-tab').forEach(tab => {
+    const badge = tab.querySelector('.tab-badge');
+    if (badge) {
+      badge.style.display = tab.classList.contains('active') ? 'inline-block' : 'none';
+    }
+  });
 };
 
 function renderOrders(orders) {
