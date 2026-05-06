@@ -182,23 +182,41 @@ window.renderModalProducts = function () {
       `;
     }
 
-    const combinations = getProductCombinations(p.options);
-    const variantsHtml = combinations.map((combo, idx) => {
-      const title = combo.map(c => c.label).join(' / ');
-      const extraPrice = combo.reduce((sum, c) => sum + (c.price || 0), 0);
-      const finalPrice = effectiveBase + extraPrice;
-      const comboStr = encodeURIComponent(JSON.stringify(combo));
-      return `
-        <label class="product-variant-item" style="display:flex; align-items:center; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border-color); background:#fafafa; cursor:pointer; padding-right:48px;">
-          <div style="display:flex; align-items:center; gap:12px;">
-            <div style="font-size:0.9rem;font-weight:500;">${title}</div>
-
-            <div style="font-size:0.85rem;color:var(--primary)">${formatPrice(finalPrice)}</div>
-          </div>
-          <input type="checkbox" class="pli-checkbox product-variant-cb" data-pid="${p._id}" data-combo="${comboStr}">
-        </label>
-      `;
-    }).join('');
+    let variantsHtml = '';
+    if (p.variants && p.variants.length > 0) {
+      variantsHtml = p.variants.map((v, idx) => {
+        const comboList = Object.entries(v.combination).map(([g, l]) => ({ groupName: g, label: l }));
+        const title = comboList.map(c => c.label).join(' / ');
+        const finalPrice = (v.salePrice !== null && v.salePrice !== undefined) ? v.salePrice : v.price;
+        const comboStr = encodeURIComponent(JSON.stringify(comboList));
+        return `
+          <label class="product-variant-item" style="display:flex; align-items:center; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border-color); background:#fafafa; cursor:pointer; padding-right:48px;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div style="font-size:0.9rem;font-weight:500;">${title}</div>
+              <div style="font-size:0.85rem;color:var(--primary)">${formatPrice(finalPrice)}</div>
+            </div>
+            <input type="checkbox" class="pli-checkbox product-variant-cb" data-pid="${p._id}" data-combo="${comboStr}">
+          </label>
+        `;
+      }).join('');
+    } else {
+      const combinations = getProductCombinations(p.options);
+      variantsHtml = combinations.map((combo, idx) => {
+        const title = combo.map(c => c.label).join(' / ');
+        const extraPrice = combo.reduce((sum, c) => sum + (c.price || 0), 0);
+        const finalPrice = effectiveBase + extraPrice;
+        const comboStr = encodeURIComponent(JSON.stringify(combo));
+        return `
+          <label class="product-variant-item" style="display:flex; align-items:center; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border-color); background:#fafafa; cursor:pointer; padding-right:48px;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div style="font-size:0.9rem;font-weight:500;">${title}</div>
+              <div style="font-size:0.85rem;color:var(--primary)">${formatPrice(finalPrice)}</div>
+            </div>
+            <input type="checkbox" class="pli-checkbox product-variant-cb" data-pid="${p._id}" data-combo="${comboStr}">
+          </label>
+        `;
+      }).join('');
+    }
 
     return `
       <div>

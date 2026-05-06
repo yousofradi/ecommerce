@@ -177,8 +177,8 @@ window.updateTotalPrice = function() {
       }
     });
 
-    finalBasePrice = hasOverride ? optionsOriginalTotal : currentProduct.basePrice;
-    finalSalePrice = hasOverride ? optionsSaleTotal : (currentProduct.salePrice || currentProduct.basePrice);
+    finalBasePrice = currentProduct.basePrice + optionsOriginalTotal;
+    finalSalePrice = (currentProduct.salePrice || currentProduct.basePrice) + optionsSaleTotal;
     isAvailable = currentProduct.quantity === null || currentProduct.quantity > 0;
   }
   

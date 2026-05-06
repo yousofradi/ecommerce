@@ -149,6 +149,29 @@ document.addEventListener('DOMContentLoaded', async () => {
       renderOptions();
     };
 
+    // Auto-sync variants price when base price changes
+    const pPrice = document.getElementById('p-price');
+    const pSalePrice = document.getElementById('p-sale-price');
+
+    if (pPrice) {
+      pPrice.addEventListener('change', () => {
+        const val = Number(pPrice.value) || 0;
+        if (variants.length > 0) {
+          variants.forEach(v => { v.price = val; });
+          renderVariantsTable();
+        }
+      });
+    }
+    if (pSalePrice) {
+      pSalePrice.addEventListener('change', () => {
+        const val = pSalePrice.value ? Number(pSalePrice.value) : null;
+        if (variants.length > 0) {
+          variants.forEach(v => { v.salePrice = val; });
+          renderVariantsTable();
+        }
+      });
+    }
+
     function renderOptions(filter = '') {
       const filtered = allCollections.filter(c => c.name.toLowerCase().includes(filter.toLowerCase()));
       if (filtered.length === 0) { dropdown.innerHTML = '<div class="no-results">لا توجد نتائج</div>'; return; }
