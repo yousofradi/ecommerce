@@ -54,24 +54,38 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ── Products Modal ─────────────────────────────────────
 let collectionsMap = {};
 window.openProductsModal = async function () {
-  document.getElementById('products-modal').classList.add('open');
-  if (Object.keys(collectionsMap).length === 0) {
+  const modal = document.getElementById('products-modal');
+  if (modal) modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+
+  if (allProducts.length === 0) {
+    const listEl = document.getElementById('modal-products-list');
+    if (listEl) listEl.innerHTML = '<div style="padding:20px; text-align:center;">جاري تحميل المنتجات...</div>';
     try {
-      const cols = await api.getCollections();
-      const sel = document.getElementById('modal-col-filter');
-      cols.forEach(c => {
-        collectionsMap[c._id] = c.name;
-        sel.add(new Option(c.name, c._id));
-      });
-    } catch (e) { }
+      const [productsRes, collections] = await Promise.all([
+        api.getProducts(1, 1000, true).catch(() => []),
+        api.getCollections()
+      ]);
+      allProducts = (productsRes.products || productsRes).filter(p => p.status !== 'draft');
+      const colFilter = document.getElementById('modal-col-filter');
+      if (colFilter) {
+        colFilter.innerHTML = '<option value="">جميع المنتجات</option>';
+        collections.forEach(c => {
+          collectionsMap[c._id] = c.name;
+          colFilter.add(new Option(c.name, c._id));
+        });
+      }
+    } catch (err) {
+      console.error('Failed to load products for modal', err);
+    }
   }
-  document.getElementById('modal-search').value = '';
-  document.getElementById('modal-col-filter').value = '';
   renderModalProducts();
 };
 
 window.closeProductsModal = function () {
-  document.getElementById('products-modal').classList.remove('open');
+  const modal = document.getElementById('products-modal');
+  if (modal) modal.style.display = 'none';
+  document.body.style.overflow = '';
 };
 
 window.toggleProductVariants = function (pid) {
@@ -104,9 +118,13 @@ function getProductCombinations(options) {
 }
 
 window.renderModalProducts = function () {
-  const q = document.getElementById('modal-search').value.toLowerCase().trim();
-  const col = document.getElementById('modal-col-filter').value;
+  const qEl = document.getElementById('modal-search');
+  const colEl = document.getElementById('modal-col-filter');
   const listEl = document.getElementById('modal-products-list');
+  if (!listEl) return;
+
+  const q = qEl ? qEl.value.toLowerCase().trim() : '';
+  const col = colEl ? colEl.value : '';
 
   let filtered = allProducts;
   if (q) filtered = filtered.filter(p => p.name.toLowerCase().includes(q));
@@ -118,7 +136,7 @@ window.renderModalProducts = function () {
   }
 
   listEl.innerHTML = filtered.map(p => {
-    const imgHtml = p.imageUrl ? `<img src="${p.imageUrl}" class="pli-img">` : `<div class="pli-img">📦</div>`;
+    const imgHtml = p.imageUrl ? `<img src="${p.imageUrl}" class="pli-img">` : `<div class="pli-img"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>`;
     const hasOptions = p.options && p.options.length > 0;
     const effectiveBase = (p.salePrice && p.salePrice < p.basePrice) ? p.salePrice : p.basePrice;
 
@@ -126,10 +144,10 @@ window.renderModalProducts = function () {
       return `
         <div style="width: 100%; display: block;">
           <label class="product-list-item" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border-color); width: 100%; box-sizing: border-box;">
-            <div class="pli-info" style="display:flex; align-items:center; gap:12px;">
+            <div class="pli-info" style="display:flex; align-items:center; gap:20px;">
               ${imgHtml}
               <div>
-                <div style="font-weight:600;font-size:0.95rem">${p.name}</div>
+                <div style="font-weight:600;font-size:0.875rem">${p.name}</div>
                 <div style="font-size:0.85rem;color:var(--primary)">${formatPrice(effectiveBase)}</div>
               </div>
             </div>
@@ -139,14 +157,12 @@ window.renderModalProducts = function () {
       `;
     }
 
-    const combinations = (p.variants && p.variants.length > 0) ? p.variants : [];
-    const variantsHtml = combinations.map((variant, idx) => {
-      const comboObj = variant.combination instanceof Map ? Object.fromEntries(variant.combination) : variant.combination;
-      const title = Object.values(comboObj).join(' / ');
-      const finalPrice = (variant.salePrice !== null && variant.salePrice !== undefined) ? variant.salePrice : variant.price;
-      const comboForSelection = Object.entries(comboObj).map(([groupName, label]) => ({ groupName, label, price: 0 }));
-      const comboStr = encodeURIComponent(JSON.stringify(comboForSelection));
-
+    const combinations = getProductCombinations(p.options);
+    const variantsHtml = combinations.map((combo, idx) => {
+      const title = combo.map(c => c.label).join(' / ');
+      const extraPrice = combo.reduce((sum, c) => sum + (c.price || 0), 0);
+      const finalPrice = effectiveBase + extraPrice;
+      const comboStr = encodeURIComponent(JSON.stringify(combo));
       return `
         <label class="product-variant-item" style="display:flex; align-items:center; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border-color); background:#fafafa; cursor:pointer; padding-right:48px;">
           <div style="display:flex; align-items:center; gap:12px;">
@@ -154,7 +170,7 @@ window.renderModalProducts = function () {
             <div style="background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:12px; font-size:0.75rem;">في المخزون</div>
             <div style="font-size:0.85rem;color:var(--primary)">${formatPrice(finalPrice)}</div>
           </div>
-          <input type="checkbox" class="pli-checkbox product-variant-cb" data-pid="${p._id}" data-price="${finalPrice}" data-combo="${comboStr}" style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer;">
+          <input type="checkbox" class="pli-checkbox product-variant-cb" data-pid="${p._id}" data-combo="${comboStr}">
         </label>
       `;
     }).join('');
@@ -186,9 +202,11 @@ window.addSelectedProducts = function () {
     return showToast('اختر منتجاً واحداً على الأقل', 'error');
   }
 
+  // 1. Add simple products
   checkedSimple.forEach(cb => {
     const p = allProducts.find(x => x._id === cb.value);
     if (p) {
+      const effectiveBase = (p.salePrice && p.salePrice < p.basePrice) ? p.salePrice : p.basePrice;
       const existing = cartItems.find(c => c.product._id === p._id && (!c.selectedOptions || c.selectedOptions.length === 0));
       if (existing) {
         existing.quantity++;
@@ -198,21 +216,32 @@ window.addSelectedProducts = function () {
     }
   });
 
+  // 2. Add variants
   checkedVariants.forEach(cb => {
     const p = allProducts.find(x => x._id === cb.dataset.pid);
     if (p) {
+      const effectiveBase = (p.salePrice && p.salePrice < p.basePrice) ? p.salePrice : p.basePrice;
       const combo = JSON.parse(decodeURIComponent(cb.dataset.combo));
-      const price = parseFloat(cb.dataset.price);
+      const extraPrice = combo.reduce((sum, c) => sum + (c.price || 0), 0);
+      const finalPrice = effectiveBase + extraPrice;
+
       const existing = cartItems.find(c => {
         if (c.product._id !== p._id) return false;
         if (!c.selectedOptions || c.selectedOptions.length !== combo.length) return false;
-        if (c.price !== price) return false; // Different price means different variant/deal
+        // Check if options match
         return combo.every(cv => c.selectedOptions.some(so => so.groupName === cv.groupName && so.label === cv.label));
       });
+
       if (existing) {
         existing.quantity++;
       } else {
-        cartItems.push({ product: p, quantity: 1, selectedOptions: combo, discount: 0, price: price });
+        cartItems.push({
+          product: p,
+          quantity: 1,
+          selectedOptions: combo,
+          discount: 0,
+          price: finalPrice
+        });
       }
     }
   });
@@ -221,6 +250,7 @@ window.addSelectedProducts = function () {
   renderCart();
   if (window.markAsModified) window.markAsModified();
 };
+
 
 window.removeCartItem = function (index) {
   cartItems.splice(index, 1);

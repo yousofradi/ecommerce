@@ -391,53 +391,6 @@
     }
 
     /* ── Modal ── */
-    .modal-box {
-      background: var(--bg-card);
-      border-radius: var(--radius-lg);
-      width: 95%;
-      max-width: 600px;
-      display: flex;
-      flex-direction: column;
-
-      overflow: hidden;
-      box-shadow: var(--shadow-lg);
-    }
-
-    .modal-header {
-      padding: 12px 20px;
-      border-bottom: 1px solid var(--border-color);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: sticky;
-      top: 0;
-      background: #fff;
-      z-index: 10;
-    }
-
-    .modal-filters {
-      position: sticky;
-      top: 48px;
-      background: #fff;
-      z-index: 9;
-      padding: 12px 20px 0 20px;
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    .modal-body {
-      padding: 20px;
-      overflow-y: auto;
-      flex: 1;
-    }
-
-    .modal-footer {
-      padding: 16px 20px;
-      border-top: 1px solid var(--border-color);
-      display: flex;
-      justify-content: flex-end;
-      gap: 12px;
-      background: #f8fafc;
-    }
 
     .order-discount-section label {
       font-size: 0.9rem;
@@ -508,11 +461,26 @@
     }
 
     .modal-header {
-      padding: 16px 20px;
+      padding: 12px 20px;
       border-bottom: 1px solid var(--border-color);
       display: flex;
       justify-content: space-between;
       align-items: center;
+      position: sticky;
+      top: 0;
+      background: #fff;
+      z-index: 10;
+    }
+
+    .modal-filters {
+      position: sticky;
+      top: 48px;
+      /* Header height is approx 48px */
+      background: #fff;
+      z-index: 9;
+      padding: 12px 20px 0 20px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 0;
     }
 
     .modal-header h3 {
