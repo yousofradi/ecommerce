@@ -623,7 +623,7 @@ window.renderModalProducts = function () {
         <label class="product-variant-item" style="display:flex; align-items:center; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border-color); background:#fafafa; cursor:pointer; padding-right:48px;">
           <div style="display:flex; align-items:center; gap:12px;">
             <div style="font-size:0.9rem;font-weight:500;">${title}</div>
-            <div style="background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:12px; font-size:0.75rem;">في المخزون</div>
+
             <div style="font-size:0.85rem;color:var(--primary)">${formatPrice(finalPrice)}</div>
           </div>
           <input type="checkbox" class="pli-checkbox product-variant-cb" data-pid="${p._id}" data-combo="${comboStr}">
