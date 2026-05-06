@@ -76,6 +76,7 @@ function setupForm() {
       return {
         productId: item.productId,
         name: item.name,
+        imageUrl: item.imageUrl || '',
         basePrice: effectiveBase,
         selectedOptions: item.selectedOptions,
         finalPrice: item.unitPrice * item.quantity,

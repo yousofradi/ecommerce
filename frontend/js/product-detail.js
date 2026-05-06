@@ -291,11 +291,11 @@ window.addProductToCart = function() {
 
   const selectedOptionsMap = {};
   const selectedOptionsList = [];
+  
   (currentProduct.options || []).forEach((group, gi) => {
     const selected = document.querySelector(`input[name="opt_${gi}"]:checked`);
     if (selected) {
-      const vi = parseInt(selected.value);
-      const label = group.values[vi].label;
+      const label = selected.value;
       selectedOptionsMap[group.name] = label;
       selectedOptionsList.push({ groupName: group.name, label });
     }
@@ -313,6 +313,21 @@ window.addProductToCart = function() {
   const itemToSave = { ...currentProduct };
   
   // Calculate prices using the same logic as updateTotalPrice
+  let optionsOriginalTotal = 0;
+  let optionsSaleTotal = 0;
+  let hasOverride = false;
+
+  (currentProduct.options || []).forEach((group, gi) => {
+    const selected = document.querySelector(`input[name="opt_${gi}"]:checked`);
+    if (selected) {
+      const label = selected.value;
+      const optVal = group.values.find(v => v.label === label) || { label };
+      hasOverride = true;
+      optionsOriginalTotal += (optVal.price || 0);
+      optionsSaleTotal += (optVal.salePrice !== null ? optVal.salePrice : (optVal.price || 0));
+    }
+  });
+
   let finalBasePrice, finalSalePrice;
 
   if (matchingVariant) {
@@ -320,29 +335,17 @@ window.addProductToCart = function() {
     finalSalePrice = matchingVariant.salePrice !== null ? matchingVariant.salePrice : matchingVariant.price;
     if (matchingVariant.imageUrl) itemToSave.imageUrl = matchingVariant.imageUrl;
   } else {
-    let optionsOriginalTotal = 0;
-    let optionsSaleTotal = 0;
-    let hasOverride = false;
-    
-    (currentProduct.options || []).forEach((group, gi) => {
-      const selected = document.querySelector(`input[name="opt_${gi}"]:checked`);
-      if (selected) {
-        const vi = parseInt(selected.value);
-        const optVal = group.values[vi];
-        hasOverride = true;
-        optionsOriginalTotal += (optVal.price || 0);
-        optionsSaleTotal += (optVal.salePrice !== null ? optVal.salePrice : (optVal.price || 0));
-      }
-    });
-
-    finalBasePrice = hasOverride ? (optionsOriginalTotal || currentProduct.basePrice) : currentProduct.basePrice;
-    finalSalePrice = hasOverride ? (optionsSaleTotal || (currentProduct.salePrice || currentProduct.basePrice)) : (currentProduct.salePrice || currentProduct.basePrice);
+    finalBasePrice = optionsOriginalTotal > 0 ? optionsOriginalTotal : currentProduct.basePrice;
+    finalSalePrice = optionsSaleTotal > 0 ? optionsSaleTotal : (currentProduct.salePrice || currentProduct.basePrice);
   }
 
   itemToSave.basePrice = finalBasePrice;
   itemToSave.salePrice = finalSalePrice;
 
-  for (let i = 0; i < selectedQty; i++) {
+  const qtyInput = document.getElementById('qty-input');
+  const qty = qtyInput ? parseInt(qtyInput.value) || 1 : 1;
+
+  for (let i = 0; i < qty; i++) {
     Cart.addItem(itemToSave, selectedOptionsList);
   }
   Cart.openCart();
