@@ -304,8 +304,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         return `https://wa.me/${clean}`;
       };
 
+      const waLink = settings.socialWa ? formatWaLink(settings.socialWa) : '';
+
       if (settings.socialWa) {
-        const waLink = formatWaLink(settings.socialWa);
         
         document.querySelectorAll('a[href*="wa.me"]').forEach(link => {
           link.href = waLink;
