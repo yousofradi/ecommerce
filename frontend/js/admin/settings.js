@@ -148,18 +148,18 @@ window.handlePaymentLogoUpload = async function(input, id) {
 function renderPaymentMethods() {
     const container = document.getElementById('payment-methods-container');
     container.innerHTML = paymentMethods.map(m => `
-        <div class="admin-card" style="margin:0; border:1px solid #e2e8f0; background:#f8fafc; padding:16px; border-radius:12px;">
-            <div class="flex-between mb-12">
-                <div style="display:flex; gap:12px; align-items:center;">
+        <div class="admin-card" style="margin:0; border:1px solid #e2e8f0; background:#f8fafc; padding:16px; border-radius:12px; position:relative;">
+            <button class="btn btn-text text-danger" onclick="removePaymentMethod('${m.id}')" style="position:absolute; top:8px; left:8px; padding:4px; border:none; background:none; cursor:pointer; opacity:0.6;" title="حذف">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+            </button>
+            <div class="flex-between mb-12" style="justify-content: flex-end;">
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <button class="btn btn-secondary btn-sm" onclick="document.getElementById('pay-logo-${m.id}').click()" style="padding:2px 8px; font-size:0.7rem; min-width:auto; height:24px;">تغيير</button>
+                    <input type="file" id="pay-logo-${m.id}" style="display:none" accept="image/*" onchange="handlePaymentLogoUpload(this, '${m.id}')">
                     <div style="width:40px; height:40px; background:#fff; border:1px solid #e2e8f0; border-radius:8px; display:flex; align-items:center; justify-content:center; overflow:hidden;">
                         ${m.logo ? `<img src="${m.logo}" style="max-width:100%; max-height:100%;">` : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'}
                     </div>
-                    <button class="btn btn-secondary btn-sm" onclick="document.getElementById('pay-logo-${m.id}').click()" style="padding:4px 8px; font-size:0.75rem;">تغيير</button>
-                    <input type="file" id="pay-logo-${m.id}" style="display:none" accept="image/*" onchange="handlePaymentLogoUpload(this, '${m.id}')">
                 </div>
-                <button class="btn btn-text text-danger" onclick="removePaymentMethod('${m.id}')" style="padding:4px; border:none; background:none; cursor:pointer;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                </button>
             </div>
             <div class="form-group mb-8">
                 <input type="text" class="form-control form-control-sm" value="${m.label}" placeholder="اسم الوسيلة (مثال: فودافون كاش)" oninput="updatePaymentField('${m.id}', 'label', this.value)">
