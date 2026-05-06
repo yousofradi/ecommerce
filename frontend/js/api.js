@@ -259,13 +259,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ── Apply Global Settings ──────────────────────────────
 // ── Apply Global Settings ──────────────────────────────
+// ── Apply Global Settings ──────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     const settings = await api.getSetting('sundura_global_settings');
     if (settings) {
       // 1. Logo
       if (settings.storeLogo) {
-        document.querySelectorAll('.store-logo-img').forEach(img => {
+        // Target specific class AND any image with the old hardcoded URL
+        document.querySelectorAll('.store-logo-img, img[src*="cmo1fsgmc060f01lwhwpn6ga7"]').forEach(img => {
           img.src = settings.storeLogo;
         });
       }
@@ -283,30 +285,35 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       // 3. Store Name & Titles
       if (settings.storeName) {
-        // Update document title
         document.title = document.title.replace('Sundura Shop', settings.storeName).replace('Sundura', settings.storeName);
         
-        // Update Admin Sidebar
         const adminBrand = document.querySelector('.admin-brand-title');
         if (adminBrand) adminBrand.textContent = settings.storeName;
 
-        // Update Footer Copyright
         const footerCopy = document.querySelector('.footer-bottom-bar');
         if (footerCopy) {
           footerCopy.innerHTML = `© ${new Date().getFullYear()} ${settings.storeName}. جميع الحقوق محفوظة.`;
         }
       }
 
-      // 4. WhatsApp Links
-      let waLink = '';
+      // 4. Contact Numbers (WhatsApp & Payment)
       if (settings.socialWa) {
-        waLink = settings.socialWa.startsWith('http') ? settings.socialWa : `https://wa.me/${settings.socialWa.replace(/[^0-9+]/g, '')}`;
+        const cleanNumber = settings.socialWa.replace(/[^0-9]/g, '');
+        const waLink = `https://wa.me/${cleanNumber}`;
+        
         document.querySelectorAll('a[href*="wa.me"]').forEach(link => {
           link.href = waLink;
         });
+
+        // Also update hardcoded number text in checkout (Vodafone/InstaPay)
+        document.querySelectorAll('span, div, p').forEach(el => {
+            if (el.children.length === 0 && el.textContent.includes('01016612519')) {
+                el.textContent = el.textContent.replace('01016612519', settings.socialWa);
+            }
+        });
       }
 
-      // 5. Social Links (Update existing and Inject if needed)
+      // 5. Social Links
       if (settings.socialFb) {
         document.querySelectorAll('a[href*="facebook.com"]').forEach(link => {
             if (!link.classList.contains('no-brand-sync')) link.href = settings.socialFb;
@@ -323,14 +330,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
       }
 
-      // Inject Social Row in Footer if nav exists
+      // Inject Social Row in Footer
       const footerNav = document.querySelector('.footer-nav');
       if (footerNav && !document.querySelector('.footer-socials')) {
         let socialHtml = '<div class="footer-socials" style="display:flex;gap:16px;justify-content:center;margin-top:16px;">';
         if (settings.socialFb) socialHtml += `<a href="${settings.socialFb}" target="_blank" style="color:inherit"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg></a>`;
         if (settings.socialIg) socialHtml += `<a href="${settings.socialIg}" target="_blank" style="color:inherit"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></a>`;
         if (settings.socialTt) socialHtml += `<a href="${settings.socialTt}" target="_blank" style="color:inherit"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5v3a3 3 0 0 1-3-3v8a8 8 0 1 1-8-8 1 1 0 0 1 1 1z"></path></svg></a>`;
-        if (waLink) socialHtml += `<a href="${waLink}" target="_blank" style="color:inherit"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg></a>`;
+        if (settings.socialWa) {
+            const waLink = `https://wa.me/${settings.socialWa.replace(/[^0-9]/g, '')}`;
+            socialHtml += `<a href="${waLink}" target="_blank" style="color:inherit"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg></a>`;
+        }
         socialHtml += '</div>';
         footerNav.insertAdjacentHTML('afterend', socialHtml);
       }
