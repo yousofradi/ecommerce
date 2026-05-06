@@ -2,6 +2,7 @@ let collectionId = new URLSearchParams(window.location.search).get('id');
 let collectionProducts = [];
 let allProducts = [];
 let sortableList = null;
+let originalCollection = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   if (!requireAdmin()) return;
@@ -17,14 +18,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.title = 'إضافة تصنيف — Sundura Admin';
     const formTitle = document.getElementById('form-page-title');
     if (formTitle) formTitle.textContent = 'إضافة تصنيف';
-    renderProductsList();
+    originalCollection = null;
+    populateCollectionForm(null);
   }
 
   document.getElementById('collection-form').addEventListener('submit', saveCollection);
   document.getElementById('products-search').addEventListener('input', filterCollectionProducts);
   document.getElementById('available-search').addEventListener('input', filterAvailableProducts);
 
-  // Global Save Handler
   window.handleGlobalSave = async () => {
     // Trigger form submit
     const form = document.getElementById('collection-form');
@@ -33,6 +34,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       form.dispatchEvent(event);
     }
     return true;
+  };
+
+  window.handleGlobalDiscard = () => {
+    populateCollectionForm(originalCollection ? JSON.parse(JSON.stringify(originalCollection)) : null);
+    if (window.hideBar) window.hideBar();
   };
 });
 
@@ -48,18 +54,31 @@ async function loadAllProducts() {
 async function loadCollection(id) {
   try {
     const col = await api.getCollection(id);
-    document.getElementById('c-name').value = col.name;
-    document.getElementById('c-image').value = col.imageUrl || '';
-    document.getElementById('c-desc').innerHTML = col.description || '';
-    if (col.imageUrl) updateImagePreview(col.imageUrl);
-
-    // Get products for this collection
-    collectionProducts = allProducts.filter(p => p.collectionId === id || (p.collectionIds && p.collectionIds.includes(id)));
-    // Sort them if needed, here we just use their order
-    renderProductsList();
+    originalCollection = JSON.parse(JSON.stringify(col));
+    populateCollectionForm(col);
   } catch (e) {
     showToast('فشل تحميل المجموعة', 'error');
   }
+}
+
+function populateCollectionForm(col) {
+  if (!col) {
+    document.getElementById('c-name').value = '';
+    document.getElementById('c-image').value = '';
+    document.getElementById('c-desc').innerHTML = '';
+    updateImagePreview('');
+    collectionProducts = [];
+    renderProductsList();
+    return;
+  }
+  document.getElementById('c-name').value = col.name;
+  document.getElementById('c-image').value = col.imageUrl || '';
+  document.getElementById('c-desc').innerHTML = col.description || '';
+  updateImagePreview(col.imageUrl || '');
+
+  // Get products for this collection
+  collectionProducts = allProducts.filter(p => p.collectionId === col._id || (p.collectionIds && p.collectionIds.includes(col._id)));
+  renderProductsList();
 }
 
 function updateImagePreview(url) {

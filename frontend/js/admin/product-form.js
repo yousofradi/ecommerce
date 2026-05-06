@@ -6,6 +6,7 @@ let productImages = [];
 let allCollections = [];
 let selectedCollectionIds = [];
 let optionEditModes = [];
+let originalProductData = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   if (!requireAdmin()) return;
@@ -24,61 +25,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     initCollectionSelect();
 
     if (product) {
-      const p = product;
-      document.getElementById('form-title').textContent = 'تعديل المنتج';
-      document.getElementById('p-name').value = p.name;
-      document.getElementById('p-price').value = p.basePrice;
-      document.getElementById('p-sale-price').value = p.salePrice || '';
-      document.getElementById('p-desc').value = p.description || '';
-      document.getElementById('p-status').value = p.status || 'active';
-      document.getElementById('p-quantity').value = (p.quantity != null) ? p.quantity : '';
-
-      const colIds = p.collectionIds || [];
-      if (p.collectionId && !colIds.includes(p.collectionId)) colIds.push(p.collectionId);
-      selectedCollectionIds = [...colIds];
-
-      // Re-run collection tags UI
-      const tagsContainer = document.getElementById('selected-collections-tags');
-      const hiddenInput = document.getElementById('p-collections-hidden');
-      if (tagsContainer) {
-        tagsContainer.innerHTML = selectedCollectionIds.map(id => {
-          const col = allCollections.find(c => c._id === id);
-          if (!col) return '';
-          return `<div class="tag">${col.name}<span class="tag-remove" onclick="removeCollectionTag('${id}')">×</span></div>`;
-        }).join('');
-      }
-      if (hiddenInput) hiddenInput.value = JSON.stringify(selectedCollectionIds);
-
-      // Images
-      productImages = p.images && p.images.length > 0 ? [...p.images] : (p.imageUrl ? [p.imageUrl] : []);
-      renderImages();
-
-      // Variants
-      optionGroups = (p.options || []).map(g => ({
-        name: g.name,
-        values: g.values.map(v => v.label)
-      }));
-      optionEditModes = optionGroups.map(() => false);
-
-      variants = (p.variants || []).map(v => ({
-        combination: v.combination instanceof Map ? Object.fromEntries(v.combination) : v.combination,
-        price: v.price,
-        salePrice: v.salePrice,
-        cost: v.cost || null,
-        quantity: v.quantity,
-        imageUrl: v.imageUrl,
-        active: v.active !== false
-      }));
-
-      if (optionGroups.length > 0) {
-        document.getElementById('enable-variants').checked = true;
-        document.getElementById('variant-setup-container').style.display = 'block';
-        if (variants.length === 0) {
-          syncVariants();
-        }
-      }
-      renderOptionSetup();
-      renderVariantsTable();
+      originalProductData = JSON.parse(JSON.stringify(product));
+      populateProductForm(product);
+    } else {
+      originalProductData = null;
+      populateProductForm(null);
     }
     document.body.classList.remove('is-loading');
   } catch (err) {
@@ -97,6 +48,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       const event = new Event('submit', { cancelable: true, bubbles: true });
       productForm.dispatchEvent(event);
       return true; // We assume success or toast will handle error
+    };
+
+    window.handleGlobalDiscard = () => {
+      populateProductForm(originalProductData ? JSON.parse(JSON.stringify(originalProductData)) : null);
+      if (window.hideBar) window.hideBar();
     };
   }
 
@@ -828,4 +784,83 @@ async function deleteCurrentProduct() {
     const btn = document.getElementById('delete-btn');
     if (btn) btn.disabled = false;
   }
+}
+
+function populateProductForm(p) {
+  if (!p) {
+    document.getElementById('form-title').textContent = '????? ???? ????';
+    document.getElementById('p-name').value = '';
+    document.getElementById('p-price').value = '';
+    document.getElementById('p-sale-price').value = '';
+    document.getElementById('p-desc').value = '';
+    document.getElementById('p-status').value = 'active';
+    document.getElementById('p-quantity').value = '';
+    selectedCollectionIds = [];
+    const tagsContainer = document.getElementById('selected-collections-tags');
+    if (tagsContainer) tagsContainer.innerHTML = '';
+    productImages = [];
+    renderImages();
+    optionGroups = [];
+    variants = [];
+    document.getElementById('enable-variants').checked = false;
+    document.getElementById('variant-setup-container').style.display = 'none';
+    renderOptionSetup();
+    renderVariantsTable();
+    return;
+  }
+
+  document.getElementById('form-title').textContent = '????? ??????';
+  document.getElementById('p-name').value = p.name;
+  document.getElementById('p-price').value = p.basePrice;
+  document.getElementById('p-sale-price').value = p.salePrice || '';
+  document.getElementById('p-desc').value = p.description || '';
+  document.getElementById('p-status').value = p.status || 'active';
+  document.getElementById('p-quantity').value = (p.quantity != null) ? p.quantity : '';
+
+  const colIds = p.collectionIds || [];
+  if (p.collectionId && !colIds.includes(p.collectionId)) colIds.push(p.collectionId);
+  selectedCollectionIds = [...colIds];
+
+  const tagsContainer = document.getElementById('selected-collections-tags');
+  const hiddenInput = document.getElementById('p-collections-hidden');
+  if (tagsContainer) {
+    tagsContainer.innerHTML = selectedCollectionIds.map(id => {
+      const col = allCollections.find(c => c._id === id);
+      if (!col) return '';
+      return \<div class="tag">\<span class="tag-remove" onclick="removeCollectionTag('\')">�</span></div>\;
+    }).join('');
+  }
+  if (hiddenInput) hiddenInput.value = JSON.stringify(selectedCollectionIds);
+
+  productImages = p.images && p.images.length > 0 ? [...p.images] : (p.imageUrl ? [p.imageUrl] : []);
+  renderImages();
+
+  optionGroups = (p.options || []).map(g => ({
+    name: g.name,
+    values: g.values.map(v => v.label)
+  }));
+  optionEditModes = optionGroups.map(() => false);
+
+  variants = (p.variants || []).map(v => ({
+    combination: v.combination instanceof Map ? Object.fromEntries(v.combination) : v.combination,
+    price: v.price,
+    salePrice: v.salePrice,
+    cost: v.cost || null,
+    quantity: v.quantity,
+    imageUrl: v.imageUrl,
+    active: v.active !== false
+  }));
+
+  if (optionGroups.length > 0) {
+    document.getElementById('enable-variants').checked = true;
+    document.getElementById('variant-setup-container').style.display = 'block';
+    if (variants.length === 0) {
+      syncVariants();
+    }
+  } else {
+    document.getElementById('enable-variants').checked = false;
+    document.getElementById('variant-setup-container').style.display = 'none';
+  }
+  renderOptionSetup();
+  renderVariantsTable();
 }

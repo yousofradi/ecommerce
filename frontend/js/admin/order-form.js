@@ -49,6 +49,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     await submitOrder();
     return true;
   };
+
+  // Global Discard Handler
+  window.handleGlobalDiscard = () => {
+    cartItems = [];
+    renderCart();
+    const fields = ['c-name', 'c-phone', 'c-second-phone', 'c-gov', 'c-address', 'c-notes', 'order-discount', 'paid-amount'];
+    fields.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = (id === 'order-discount' ? '0' : '');
+    });
+    updatePaymentUI();
+    recalcSummary();
+    if (window.hideBar) window.hideBar();
+  };
 });
 
 // ── Products Modal ─────────────────────────────────────
