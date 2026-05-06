@@ -19,10 +19,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.body.classList.add('is-loading');
 
   try {
-    const [order, shipping] = await Promise.all([
+    const [order, shipping, settings] = await Promise.all([
       api.getOrder(orderId),
-      api.getShipping().catch(() => ({}))
+      api.getShipping().catch(() => ({})),
+      api.getSetting('sundura_global_settings').catch(() => ({}))
     ]);
+
     currentOrder = order;
     originalOrder = JSON.parse(JSON.stringify(order));
     shippingMap = shipping;
@@ -41,6 +43,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         govSelect.add(new Option(gov, gov));
       });
     }
+
+    // Populate Payment Methods select
+    const paymentSelect = document.getElementById('modal-payment-method');
+    if (paymentSelect && settings.paymentMethods) {
+      paymentSelect.innerHTML = settings.paymentMethods.map(m => `
+        <option value="${m.label}">${m.label} (${m.number})</option>
+      `).join('');
+    }
+
 
     renderOrder();
     document.body.classList.remove('is-loading');

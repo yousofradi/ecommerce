@@ -11,9 +11,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.body.classList.add('is-loading');
 
   try {
-    const [productsRes, shippingRes] = await Promise.all([
+    const [productsRes, shippingRes, settings] = await Promise.all([
       api.getProducts(1, 1000, true).catch(() => []),
-      api.getShipping().catch(() => ({}))
+      api.getShipping().catch(() => ({})),
+      api.getSetting('sundura_global_settings').catch(() => ({}))
     ]);
 
     const products = (productsRes.products || productsRes).filter(p => p.status !== 'draft');
@@ -34,6 +35,21 @@ document.addEventListener('DOMContentLoaded', async () => {
       Object.keys(shippingMap).forEach(gov => {
         govSelect.add(new Option(gov, gov));
       });
+    }
+
+    // Populate Payment Methods
+    const paymentMethodsContainer = document.getElementById('payment-methods');
+    if (paymentMethodsContainer && settings.paymentMethods) {
+      paymentMethodsContainer.innerHTML = settings.paymentMethods.map((m, idx) => `
+        <label class="payment-method-card ${idx === 0 ? 'selected' : ''}">
+          <input type="radio" name="payment" value="${m.label}" ${idx === 0 ? 'checked' : ''} onchange="updatePaymentUI()">
+          <span class="payment-method-icon">
+            ${m.logo ? `<img src="${m.logo}" style="width:24px; height:24px; object-fit:contain; margin-bottom:4px;">` : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>`}
+            <div class="payment-method-label">${m.label}</div>
+            <div class="payment-method-desc">${m.number}</div>
+          </span>
+        </label>
+      `).join('');
     }
     document.body.classList.remove('is-loading');
   } catch (err) {
