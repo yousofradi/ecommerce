@@ -177,15 +177,6 @@
         document.getElementById('summ-address').textContent = order.customer.address;
         document.getElementById('summ-gov').textContent = order.customer.government;
 
-        // Show payment method
-        const paymentDiv = document.createElement('div');
-        paymentDiv.style.cssText = 'margin-top:16px; padding:12px; background:#f8fafc; border-radius:10px; border:1.5px solid #e2e8f0; text-align:right;';
-        paymentDiv.innerHTML = `
-          <div style="font-weight:700; color:#1e293b; font-size:0.9rem; margin-bottom:4px;">طريقة الدفع:</div>
-          <div style="font-weight:800; color:var(--primary);">${order.paymentMethod}</div>
-        `;
-        document.getElementById('summ-gov').parentElement.appendChild(paymentDiv);
-
         document.getElementById('summ-items').innerHTML = order.items.map(item =>
           `<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
             <span style="font-weight: 700; color: #1e293b;">${formatPrice(item.finalPrice)}</span>
