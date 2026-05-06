@@ -298,9 +298,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       // 4. Contact Numbers (WhatsApp & Payment)
+      const formatWaLink = (num) => {
+        let clean = num.replace(/[^0-9]/g, '');
+        if (clean.startsWith('01')) clean = '2' + clean;
+        return `https://wa.me/${clean}`;
+      };
+
       if (settings.socialWa) {
-        const cleanNumber = settings.socialWa.replace(/[^0-9]/g, '');
-        const waLink = `https://wa.me/${cleanNumber}`;
+        const waLink = formatWaLink(settings.socialWa);
         
         document.querySelectorAll('a[href*="wa.me"]').forEach(link => {
           link.href = waLink;
@@ -340,7 +345,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (settings.socialTt) socialHtml += `<a href="${settings.socialTt}" target="_blank" style="color:inherit"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5v3a3 3 0 0 1-3-3v8a8 8 0 1 1-8-8 1 1 0 0 1 1 1z"></path></svg></a>`;
         if (settings.socialTg) socialHtml += `<a href="${settings.socialTg}" target="_blank" style="color:inherit"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path></svg></a>`;
         if (settings.socialWa) {
-            const waLink = `https://wa.me/${settings.socialWa.replace(/[^0-9]/g, '')}`;
             socialHtml += `<a href="${waLink}" target="_blank" style="color:inherit"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg></a>`;
         }
         socialHtml += '</div>';
@@ -353,8 +357,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           const navItems = mobileNav.querySelectorAll('.nav-item');
           // WhatsApp item (usually 4th, index 3)
           if (navItems[3] && settings.socialWa) {
-              const cleanNumber = settings.socialWa.replace(/[^0-9]/g, '');
-              navItems[3].href = `https://wa.me/${cleanNumber}`;
+              navItems[3].href = waLink;
               navItems[3].title = settings.socialWa; // Hover info
               // Add a tooltip helper for mobile if they click and hold? 
               // Standard title works for desktop hover.

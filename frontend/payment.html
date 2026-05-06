@@ -138,7 +138,8 @@
         if (notes) waMessage += `ملاحظات التحويل: ${notes}\n`;
         waMessage += `يرجى مراجعة التحويل وتأكيد الطلب.`;
         
-        const waNumber = storeSettings.socialWa.replace(/[^0-9]/g, '');
+        let waNumber = storeSettings.socialWa.replace(/[^0-9]/g, '');
+        if (waNumber.startsWith('01')) waNumber = '2' + waNumber;
         const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(waMessage)}`;
         
         window.open(waUrl, '_blank');

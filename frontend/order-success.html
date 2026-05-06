@@ -209,7 +209,8 @@
         document.getElementById('summ-total').textContent = formatPrice(order.totalPrice);
 
         const settings = await api.getSetting('sundura_global_settings');
-        const waNumber = settings ? (settings.socialWa || '201016612519').replace(/[^0-9]/g, '') : '201016612519';
+        let waNumber = settings ? (settings.socialWa || '01016612519').replace(/[^0-9]/g, '') : '201016612519';
+        if (waNumber.startsWith('01')) waNumber = '2' + waNumber;
         const waMessage = encodeURIComponent(`مرحباً، قمت بطلب من متجر سندورة.\nرقم الطلب الخاص بي هو: ${order.orderId}`);
         whatsappBtn.href = `https://wa.me/${waNumber}?text=${waMessage}`;
         whatsappBtn.style.display = 'flex';
