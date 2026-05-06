@@ -287,35 +287,47 @@ function renderCart() {
     const p = c.product;
     const imgSrc = p.imageUrl || '';
     const imgHtml = imgSrc
-      ? `<img src="${imgSrc}" style="width:56px;height:56px;border-radius:8px;object-fit:cover;border:1px solid #e2e8f0;" alt="${p.name}">`
-      : `<div style="width:56px;height:56px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.5rem">📦</div>`;
+      ? `<img src="${imgSrc}" style="width:52px; height:52px; border-radius:8px; object-fit:cover; border:1px solid #f1f5f9;" alt="${p.name}">`
+      : `<div style="width:52px; height:52px; border-radius:8px; background:#f8fafc; display:flex; align-items:center; justify-content:center; color:#94a3b8; border:1px solid #f1f5f9;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>`;
 
     const optText = (c.selectedOptions || []).map(op => op.label).join(' / ');
     const effectiveUnitPrice = c.price !== undefined ? c.price : ((p.salePrice && p.salePrice < p.basePrice) ? p.salePrice : p.basePrice);
 
     return `
-      <div class="product-card-item" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin-bottom: 12px; background: #fff;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
-          <div style="display: flex; align-items: center; gap: 12px;">
-            <div style="text-align: right;">
-              <div style="font-weight: 600; font-size: 1rem; color: #1e293b;">${p.name}</div>
-              ${optText ? `<div style="font-size: 0.85rem; color: #64748b; margin-top: 4px;">${optText}</div>` : ''}
-            </div>
+      <div style="padding: 16px 20px; border-bottom: 1px solid #f1f5f9; background: #fff; display: flex; flex-direction: column; gap: 14px;">
+        <!-- Top Row -->
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 52px;">
+          <!-- Right side: Image + Name -->
+          <div style="display: flex; align-items: center; gap: 12px; flex: 1.5;">
             ${imgHtml}
+            <div style="text-align: right; display: flex; flex-direction: column; justify-content: center;">
+              <div style="font-weight: 700; font-size: 0.95rem; color: #1e293b; line-height: 1.2;">${p.name}</div>
+              ${optText ? `<div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">${optText}</div>` : ''}
+              ${c.discount ? `<div style="font-size:0.75rem; color:#dc2626; margin-top:4px; font-weight:600;">خصم: ${formatPrice(c.discount)}</div>` : ''}
+            </div>
           </div>
-          <div style="display: flex; align-items: center; gap: 16px; flex-direction: row-reverse;">
-            <div style="font-size: 0.9rem; color: #64748b;" dir="ltr">${c.quantity} x ${formatPrice(effectiveUnitPrice)}</div>
-            <div style="font-weight: 700; font-size: 1.1rem; color: #1e293b;">${formatPrice(itemTotal(c))}</div>
+          
+          <!-- Left side: Unit Price Block and Total Price -->
+          <div style="display: flex; align-items: center; gap: 16px; flex: 1; justify-content: space-between;">
+            <div style="font-size: 0.85rem; color: #64748b; white-space: nowrap; font-weight: 500; text-align: center; flex: 1;" dir="ltr">${formatPrice(effectiveUnitPrice)} × ${c.quantity}</div>
+            <div style="font-weight: 700; font-size: 1rem; color: #1e293b; min-width: 80px; text-align: left; flex: 1;">${formatPrice(itemTotal(c))}</div>
           </div>
         </div>
 
-        <div style="display: flex; gap: 8px; justify-content: flex-start; flex-direction: row-reverse; align-items: center;">
-          <div style="display:flex; align-items:center; border:1px solid #e2e8f0; border-radius:6px; overflow:hidden; background:#fff; height: 32px;">
-            <button type="button" onclick="updateItemQty(${i}, ${c.quantity + 1})" style="width:28px;height:32px;background:#fff;border:none;border-left:1px solid #e2e8f0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">+</button>
-            <div style="width:32px;text-align:center;font-size:0.95rem;line-height:32px;font-weight:600;">${c.quantity}</div>
-            <button type="button" onclick="${c.quantity > 1 ? `updateItemQty(${i}, ${c.quantity - 1})` : ''}" style="width:28px;height:32px;background:${c.quantity > 1 ? '#fff' : '#f8fafc'};border:none;border-right:1px solid #e2e8f0;cursor:${c.quantity > 1 ? 'pointer' : 'not-allowed'};display:flex;align-items:center;justify-content:center;color:${c.quantity > 1 ? 'inherit' : '#cbd5e1'};font-size:1.1rem;" ${c.quantity <= 1 ? 'disabled' : ''}>-</button>
+        <!-- Bottom Row -->
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="display: flex; align-items: center; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: #fff; height: 36px; min-width: 110px;">
+              <button type="button" onclick="updateItemQty(${i}, ${c.quantity + 1})" style="flex: 1; height: 100%; border: none; background: transparent; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center;">+</button>
+              <div style="width: 40px; text-align: center; font-weight: 700; font-size: 0.95rem; border-left: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; height: 100%; line-height: 36px;">${c.quantity}</div>
+              <button type="button" onclick="${c.quantity > 1 ? `updateItemQty(${i}, ${c.quantity - 1})` : ''}" style="flex: 1; height: 100%; border: none; background: ${c.quantity > 1 ? 'transparent' : '#f8fafc'}; cursor: ${c.quantity > 1 ? 'pointer' : 'not-allowed'}; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; color: ${c.quantity > 1 ? 'inherit' : '#cbd5e1'};" ${c.quantity <= 1 ? 'disabled' : ''}>-</button>
+            </div>
           </div>
-          <button type="button" class="btn btn-sm" onclick="removeCartItem(${i})" style="background: #fff; border: 1px solid #fee2e2; color: #ef4444; display: flex; align-items: center; gap: 6px; font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; height: 32px;">إزالة</button>
+
+          <button type="button" onclick="removeCartItem(${i})" style="background: #fff; border: 1px solid #f1f5f9; color: #ef4444; display: flex; align-items: center; gap: 8px; font-size: 0.85rem; padding: 6px 14px; border-radius: 8px; height: 36px; cursor: pointer; font-weight: 500;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            إزالة
+          </button>
         </div>
       </div>`;
   }).join('');
