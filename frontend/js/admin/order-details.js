@@ -282,12 +282,8 @@ window.applyCustomerChanges = async function () {
   renderOrder();
   closeModal('customer-modal');
 
-  // Save immediately
-  await saveOrderChanges(true);
-
-  // Hide the unsaved changes bar
-  const bar = document.getElementById('unsaved-changes-bar');
-  if (bar) bar.classList.remove('visible');
+  // Trigger unsaved changes bar
+  if (window.markAsModified) window.markAsModified();
 };
 
 window.openPaymentModal = function () {
@@ -303,12 +299,8 @@ window.applyPaymentChanges = async function () {
   renderOrder();
   closeModal('payment-modal');
 
-  // Save immediately
-  await saveOrderChanges(true);
-
-  // Hide the unsaved changes bar
-  const bar = document.getElementById('unsaved-changes-bar');
-  if (bar) bar.classList.remove('visible');
+  // Trigger unsaved changes bar
+  if (window.markAsModified) window.markAsModified();
 };
 
 // ── Actions ────────────────────────────────────────────
