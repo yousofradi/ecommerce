@@ -1,6 +1,7 @@
 /** Admin — Order Details JS */
 
 let currentOrder = null;
+let originalOrder = null;
 let allProducts = [];
 let collectionsMap = {};
 let shippingMap = {};
@@ -23,6 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       api.getShipping().catch(() => ({}))
     ]);
     currentOrder = order;
+    originalOrder = JSON.parse(JSON.stringify(order));
     shippingMap = shipping;
 
     // Fallback if DB is empty
@@ -47,10 +49,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.body.classList.remove('is-loading');
   }
 
+  // Global Discard Handler
+  window.handleGlobalDiscard = () => {
+    if (!originalOrder) return;
+    currentOrder = JSON.parse(JSON.stringify(originalOrder));
+    renderOrder();
+    if (window.hideBar) window.hideBar();
+  };
+
   // Global Save Handler
   window.handleGlobalSave = async () => {
-    await saveOrderChanges();
-    return true;
+    const success = await saveOrderChanges();
+    if (success !== false) {
+      originalOrder = JSON.parse(JSON.stringify(currentOrder));
+    }
+    return success;
   };
 });
 
@@ -500,16 +513,25 @@ window.saveOrderChanges = async function (silent = false) {
 
     if (!silent) {
       showToast('تم حفظ التغييرات <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;"><polyline points="20 6 9 17 4 12"/></svg>');
-      setTimeout(() => window.location.reload(), 1000);
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'حفظ التغييرات';
+      }
     } else {
       showToast('تم تحديث البيانات بنجاح', 'success');
     }
+    
+    // Update baseline for discard
+    originalOrder = JSON.parse(JSON.stringify(currentOrder));
+    renderOrder();
+    return true;
   } catch (err) {
     if (!silent && btn) {
       btn.disabled = false;
       btn.textContent = 'حفظ التغييرات';
     }
     showToast(err.message || 'فشل الحفظ', 'error');
+    return false;
   }
 };
 

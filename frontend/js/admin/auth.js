@@ -154,7 +154,7 @@ function initUnsavedChangesBar() {
     }
   };
 
-  const hideBar = () => {
+  window.hideBar = () => {
     hasChanges = false;
     bar.classList.remove('visible');
   };
@@ -197,7 +197,11 @@ function initUnsavedChangesBar() {
 
   // Action: Discard
   document.getElementById('btn-global-discard').addEventListener('click', () => {
-    location.reload();
+    if (window.handleGlobalDiscard) {
+      window.handleGlobalDiscard();
+    } else {
+      location.reload();
+    }
   });
 
   // Action: Save
