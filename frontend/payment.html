@@ -140,7 +140,9 @@
         // Prepare WhatsApp message
         let waMessage = `لقد قمت بطلب اوردر برقم : ${currentOrder.orderId}\n`;
         waMessage += `المبلغ المطلوب : ${currentOrder.totalPrice} ج.م\n`;
-        waMessage += `ملاحظات التحويل : ${notes || 'لا يوجد'}\n`;
+        if (notes) {
+          waMessage += `ملاحظات التحويل : ${notes}\n`;
+        }
         waMessage += `يرجى مراجعة التحويل وتأكيد الطلب`;
         
         let waNumber = storeSettings.socialWa.replace(/[^0-9]/g, '');
