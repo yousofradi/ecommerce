@@ -131,7 +131,7 @@ function getProductCombinations(options) {
   let results = [[]];
   for (const group of options) {
     const currentResults = [];
-    const values = group.required ? group.values : [{ label: 'بدون ' + group.name, price: 0 }, ...group.values];
+    const values = group.values;
     for (const res of results) {
       for (const val of values) {
         currentResults.push([...res, { groupName: group.name, label: val.label, price: val.price }]);
@@ -204,7 +204,7 @@ window.renderModalProducts = function () {
       variantsHtml = combinations.map((combo, idx) => {
         const title = combo.map(c => c.label).join(' / ');
         const extraPrice = combo.reduce((sum, c) => sum + (c.price || 0), 0);
-        const finalPrice = effectiveBase + extraPrice;
+        const finalPrice = extraPrice > 0 ? extraPrice : effectiveBase;
         const comboStr = encodeURIComponent(JSON.stringify(combo));
         return `
           <label class="product-variant-item" style="display:flex; align-items:center; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border-color); background:#fafafa; cursor:pointer; padding-right:48px;">
