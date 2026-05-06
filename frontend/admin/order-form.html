@@ -10,9 +10,16 @@
     /* ── Order Form Layout ── */
     .order-create-layout {
       display: grid;
-      grid-template-columns: 1fr 380px;
+      grid-template-columns: minmax(0, 1fr) 380px;
       gap: 28px;
       align-items: start;
+    }
+
+    .admin-card.mb-24 {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
+      box-sizing: border-box;
     }
 
     /* ── Product Search ── */

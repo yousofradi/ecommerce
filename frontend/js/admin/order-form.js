@@ -328,17 +328,17 @@ function renderCart() {
         <!-- Top Row -->
         <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 52px;">
           <!-- Right side: Image + Name -->
-          <div style="display: flex; align-items: center; gap: 12px; flex: 1.5;">
+          <div style="display: flex; align-items: center; gap: 12px; flex: 1.5; min-width: 0;">
             ${imgHtml}
-            <div style="text-align: right; display: flex; flex-direction: column; justify-content: center;">
-              <div style="font-weight: 700; font-size: 0.95rem; color: #1e293b; line-height: 1.2;">${p.name}</div>
+            <div style="text-align: right; display: flex; flex-direction: column; justify-content: center; min-width: 0;">
+              <div style="font-weight: 700; font-size: 0.95rem; color: #1e293b; line-height: 1.2; word-break: break-word;">${p.name}</div>
               ${optText ? `<div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">${optText}</div>` : ''}
               ${c.discount ? `<div style="font-size:0.75rem; color:#dc2626; margin-top:4px; font-weight:600;">خصم: ${formatPrice(c.discount)}</div>` : ''}
             </div>
           </div>
           
           <!-- Left side: Unit Price Block and Total Price -->
-          <div style="display: flex; align-items: center; gap: 16px; flex: 1; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 16px; flex: 1; justify-content: space-between; min-width: 0;">
             <div style="font-size: 0.85rem; color: #64748b; white-space: nowrap; font-weight: 500; text-align: center; flex: 1;" dir="ltr">${formatPrice(effectiveUnitPrice)} × ${c.quantity}</div>
             <div style="font-weight: 700; font-size: 1rem; color: #1e293b; min-width: 80px; text-align: left; flex: 1;">${formatPrice(itemTotal(c))}</div>
           </div>
