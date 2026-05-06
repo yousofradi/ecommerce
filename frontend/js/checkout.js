@@ -84,7 +84,11 @@ function renderOrderSummary(items) {
   el.innerHTML = items.map(item => `
     <div class="cart-item" style="padding:12px; display:flex; align-items:center; gap:12px; border:1px solid #f1f5f9; border-radius:12px; margin-bottom:8px; background:#fff;">
       <div style="width:50px; height:50px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-        <img src="${item.imageUrl || 'placeholder.png'}" style="max-width:100%; max-height:100%; object-fit:cover;">
+        ${item.imageUrl ? `<img src="${item.imageUrl}" style="max-width:100%; max-height:100%; object-fit:cover;">` : `
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+          </svg>
+        `}
       </div>
       <div class="cart-item-info" style="flex:1; text-align:right;">
         <div class="cart-item-name" style="font-weight:700; font-size:0.9rem;">${item.name} × ${item.quantity}</div>
