@@ -53,10 +53,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // ── Products Modal ─────────────────────────────────────
 let collectionsMap = {};
-window.openProductsModal = async function () {
-  const modal = document.getElementById('products-modal');
+window.openModal = function (modalId) {
+  const modal = document.getElementById(modalId);
   if (modal) modal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
+};
+
+window.closeModal = function (modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) modal.style.display = 'none';
+  const openModals = document.querySelectorAll('.modal-overlay[style*="display: flex"]');
+  if (openModals.length === 0) {
+    document.body.style.overflow = '';
+  }
+};
+
+window.openProductsModal = async function () {
+  openModal('products-modal');
 
   if (allProducts.length === 0) {
     const listEl = document.getElementById('modal-products-list');
@@ -83,9 +96,7 @@ window.openProductsModal = async function () {
 };
 
 window.closeProductsModal = function () {
-  const modal = document.getElementById('products-modal');
-  if (modal) modal.style.display = 'none';
-  document.body.style.overflow = '';
+  closeModal('products-modal');
 };
 
 window.toggleProductVariants = function (pid) {
@@ -268,6 +279,25 @@ window.updateItemQty = function (idx, val) {
   }
 };
 
+window.openItemDiscountModal = function (idx) {
+  const item = cartItems[idx];
+  document.getElementById('modal-item-idx').value = idx;
+  document.getElementById('modal-item-discount').value = item.discount || 0;
+  openModal('item-discount-modal');
+};
+
+window.applyItemDiscount = function () {
+  const idx = parseInt(document.getElementById('modal-item-idx').value);
+  const val = document.getElementById('modal-item-discount').value;
+  const item = cartItems[idx];
+  if (item) {
+    item.discount = parseFloat(val) || 0;
+    closeModal('item-discount-modal');
+    recalcSummary();
+    renderCart();
+  }
+};
+
 function renderCart() {
   const container = document.getElementById('cart-items-container');
   if (cartItems.length === 0) {
@@ -317,6 +347,11 @@ function renderCart() {
         <!-- Bottom Row -->
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <div style="display: flex; align-items: center; gap: 12px;">
+            <button type="button" class="btn btn-sm" onclick="openItemDiscountModal(${i})" style="background: #fff; border: 1px solid #e2e8f0; color: #475569; display: flex; align-items: center; gap: 6px; font-size: 0.8rem; padding: 6px 14px; border-radius: 8px; height: 36px; font-weight: 600;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="16" r="3"/><line x1="16" y1="8" x2="8" y2="16"/></svg>
+              تطبيق خصم
+            </button>
+            
             <div style="display: flex; align-items: center; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: #fff; height: 36px; min-width: 110px;">
               <button type="button" onclick="updateItemQty(${i}, ${c.quantity + 1})" style="flex: 1; height: 100%; border: none; background: transparent; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center;">+</button>
               <div style="width: 40px; text-align: center; font-weight: 700; font-size: 0.95rem; border-left: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; height: 100%; line-height: 36px;">${c.quantity}</div>
