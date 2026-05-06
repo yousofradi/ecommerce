@@ -443,12 +443,8 @@ window.applyOrderDiscount = async function () {
   closeModal('order-discount-modal');
   updateTotals();
 
-  // Save immediately
-  await saveOrderChanges(true);
-
-  // Hide the unsaved changes bar
-  const bar = document.getElementById('unsaved-changes-bar');
-  if (bar) bar.classList.remove('visible');
+  // Trigger unsaved changes bar
+  if (window.markAsModified) window.markAsModified();
 };
 
 window.openItemDiscountModal = function (idx) {
@@ -467,12 +463,10 @@ window.applyItemDiscount = async function () {
     closeModal('item-discount-modal');
     updateTotals();
     renderItems();
-    await saveOrderChanges(true);
+    
+    // Trigger unsaved changes bar
+    if (window.markAsModified) window.markAsModified();
   }
-
-  // Hide the unsaved changes bar
-  const bar = document.getElementById('unsaved-changes-bar');
-  if (bar) bar.classList.remove('visible');
 };
 
 window.markFullyPaid = async function () {
