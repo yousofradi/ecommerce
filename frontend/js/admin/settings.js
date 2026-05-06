@@ -1,29 +1,45 @@
 const SETTINGS_KEY = 'sundura_global_settings';
+let originalSettings = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   if (!requireAdmin()) return;
   
-  // Load settings
   try {
     const settings = await api.getSetting(SETTINGS_KEY);
     if (settings) {
-      document.getElementById('setting-store-name').value = settings.storeName || '';
-      document.getElementById('setting-store-logo').value = settings.storeLogo || '';
-      document.getElementById('setting-store-favicon').value = settings.storeFavicon || '';
-      document.getElementById('setting-social-fb').value = settings.socialFb || '';
-      document.getElementById('setting-social-ig').value = settings.socialIg || '';
-      document.getElementById('setting-social-tt').value = settings.socialTt || '';
-      document.getElementById('setting-social-wa').value = settings.socialWa || '';
-      
-      updateLogoPreview();
+      originalSettings = JSON.parse(JSON.stringify(settings));
+      populateSettingsForm(settings);
     }
   } catch (err) {
     showToast('فشل تحميل الإعدادات', 'error');
   }
+
+  window.handleGlobalSave = async () => {
+    await saveSettings();
+    return true;
+  };
+
+  window.handleGlobalDiscard = () => {
+    if (originalSettings) {
+      populateSettingsForm(JSON.parse(JSON.stringify(originalSettings)));
+      if (window.hideBar) window.hideBar();
+    }
+  };
   
   // Preview handlers
   document.getElementById('setting-store-logo').addEventListener('input', updateLogoPreview);
 });
+
+function populateSettingsForm(s) {
+  document.getElementById('setting-store-name').value = s.storeName || '';
+  document.getElementById('setting-store-logo').value = s.storeLogo || '';
+  document.getElementById('setting-store-favicon').value = s.storeFavicon || '';
+  document.getElementById('setting-social-fb').value = s.socialFb || '';
+  document.getElementById('setting-social-ig').value = s.socialIg || '';
+  document.getElementById('setting-social-tt').value = s.socialTt || '';
+  document.getElementById('setting-social-wa').value = s.socialWa || '';
+  updateLogoPreview();
+}
 
 function updateLogoPreview() {
   const url = document.getElementById('setting-store-logo').value;

@@ -111,11 +111,25 @@
   <script src="../js/admin/auth.js"></script>
   <script>
     let shippingList = [];
+    let originalShipping = null;
 
     document.addEventListener('DOMContentLoaded', async () => {
       if (!requireAdmin()) return;
       loadShipping();
     });
+
+    window.handleGlobalDiscard = () => {
+      hideAddForm();
+      if (window.hideBar) window.hideBar();
+    };
+
+    window.handleGlobalSave = async () => {
+      if (document.getElementById('add-form').style.display === 'block') {
+        saveShipping();
+        return true;
+      }
+      return false;
+    };
 
     async function loadShipping() {
       const tbody = document.getElementById('shipping-tbody');

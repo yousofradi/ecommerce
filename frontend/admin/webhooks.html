@@ -125,6 +125,21 @@
       loadWebhooks();
     });
 
+    window.handleGlobalDiscard = () => {
+      document.getElementById('w-url').value = '';
+      document.getElementById('w-desc').value = '';
+      document.getElementById('ev-created').checked = true;
+      document.getElementById('ev-paid').checked = false;
+      document.getElementById('ev-updated').checked = false;
+      document.getElementById('w-active').checked = true;
+      if (window.hideBar) window.hideBar();
+    };
+
+    window.handleGlobalSave = async () => {
+      createWebhook();
+      return true;
+    };
+
     async function loadWebhooks() {
       const tbody = document.getElementById('webhooks-tbody');
       try {

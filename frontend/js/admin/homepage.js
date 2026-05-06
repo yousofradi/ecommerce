@@ -4,6 +4,7 @@ let sections = [];
 let allCollections = [];
 let allProducts = [];
 let sortableInstance = null;
+let originalSections = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   if (!requireAdmin()) return;
@@ -33,12 +34,27 @@ async function loadSections() {
   }
 
   // Default sections removed as per user request
+  originalSections = JSON.parse(JSON.stringify(sections));
+
+  window.handleGlobalSave = async () => {
+    await saveSections();
+    return true;
+  };
+
+  window.handleGlobalDiscard = () => {
+    if (originalSections) {
+      sections = JSON.parse(JSON.stringify(originalSections));
+      renderSections();
+      if (window.hideBar) window.hideBar();
+    }
+  };
 }
 
 async function saveSections() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(sections));
   try {
     await api.updateSetting(STORAGE_KEY, sections);
+    originalSections = JSON.parse(JSON.stringify(sections));
   } catch (err) {
     console.error('Failed to save to API', err);
   }
