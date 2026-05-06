@@ -98,46 +98,7 @@
     }
 
     /* ── Products Modal ── */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      z-index: 1000;
-      display: none;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .modal-overlay.open {
-      display: flex;
-    }
-
-    .modal-box {
-      background: #fff;
-      border-radius: var(--radius-lg);
-      width: 90%;
-      max-width: 600px;
-      max-height: 600px;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    .modal-header {
-      padding: 12px 20px;
-      border-bottom: 1px solid var(--border-color);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: sticky;
-      top: 0;
-      background: #fff;
-      z-index: 10;
-    }
-
+    /* Global modal styles from style.css are used */
     .modal-filters {
       position: sticky;
       top: 48px;
@@ -147,33 +108,6 @@
       padding: 12px 20px 0 20px;
       border-bottom: 1px solid var(--border-color);
       margin-bottom: 0;
-    }
-
-    .modal-header h3 {
-      margin: 0;
-      font-size: 1.1rem;
-    }
-
-    .modal-close {
-      background: none;
-      border: none;
-      font-size: 1.5rem;
-      cursor: pointer;
-      color: var(--text-muted);
-    }
-
-    .modal-body {
-      padding: 20px;
-      overflow-y: auto;
-      flex: 1;
-    }
-
-    .modal-footer {
-      padding: 16px 20px;
-      border-top: 1px solid var(--border-color);
-      display: flex;
-      justify-content: flex-start;
-      gap: 12px;
     }
 
     .product-list-item {
@@ -530,12 +464,12 @@
       <div class="modal-body">
         <div class="form-group mb-16">
           <label class="form-label">الاسم</label>
-          <input type="text" id="modal-c-name" class="form-control" placeholder="اسم العميل">
+          <input type="text" id="modal-c-name" class="form-control" placeholder="اسم العميل" readonly style="background-color: #f8fafc; cursor: not-allowed; border-color: #e2e8f0; color: #64748b;">
         </div>
         <div class="grid-2" style="gap:16px; margin-bottom:16px;">
           <div class="form-group" style="margin-bottom:0">
             <label class="form-label">رقم الهاتف</label>
-            <input type="tel" id="modal-c-phone" class="form-control" placeholder="01xxxxxxxxx">
+            <input type="tel" id="modal-c-phone" class="form-control" placeholder="01xxxxxxxxx" readonly style="background-color: #f8fafc; cursor: not-allowed; border-color: #e2e8f0; color: #64748b;">
           </div>
           <div class="form-group" style="margin-bottom:0">
             <label class="form-label">هاتف آخر</label>
