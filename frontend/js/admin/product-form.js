@@ -391,12 +391,30 @@ function removeOptionValue(gi, vi) {
 }
 
 function updateGroupName(gi, val) {
+  const oldName = optionGroups[gi].name;
   optionGroups[gi].name = val;
+  if (oldName && oldName !== val) {
+    variants.forEach(v => {
+      if (v.combination.hasOwnProperty(oldName)) {
+        v.combination[val] = v.combination[oldName];
+        delete v.combination[oldName];
+      }
+    });
+  }
   syncVariants();
 }
 
 function updateValueName(gi, vi, val) {
+  const groupName = optionGroups[gi].name;
+  const oldVal = optionGroups[gi].values[vi];
   optionGroups[gi].values[vi] = val;
+  if (oldVal && oldVal !== val && groupName) {
+    variants.forEach(v => {
+      if (v.combination[groupName] === oldVal) {
+        v.combination[groupName] = val;
+      }
+    });
+  }
   syncVariants();
 }
 
@@ -428,11 +446,24 @@ function syncVariants() {
   const defaultSalePrice = document.getElementById('p-sale-price').value ? Number(document.getElementById('p-sale-price').value) : null;
 
   variants = combinations.map(combo => {
-    // Check if we already have data for this combination
-    const existing = oldVariants.find(v =>
-      Object.entries(combo).every(([key, val]) => v.combination[key] === val)
+    // 1. Exact match
+    let existing = oldVariants.find(v =>
+      Object.entries(combo).every(([key, val]) => v.combination[key] === val) &&
+      Object.keys(combo).length === Object.keys(v.combination).length
     );
     if (existing) return existing;
+
+    // 2. Partial match (inheriting prices when a new option group is added)
+    existing = oldVariants.find(v =>
+      Object.entries(v.combination).every(([key, val]) => combo[key] === val)
+    );
+
+    if (existing) {
+      return {
+        ...existing,
+        combination: combo
+      };
+    }
 
     return {
       combination: combo,
