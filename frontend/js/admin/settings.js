@@ -35,8 +35,28 @@ document.addEventListener('DOMContentLoaded', async () => {
           updateBranding(input.value);
       }
     });
-  });
+  initColorPicker();
 });
+
+function initColorPicker() {
+  const picker = document.getElementById('setting-primary-color');
+  const hexInput = document.getElementById('setting-primary-color-hex');
+  
+  if (picker && hexInput) {
+    picker.addEventListener('input', () => {
+      hexInput.value = picker.value.toUpperCase();
+      if (window.markAsModified) window.markAsModified();
+    });
+    hexInput.addEventListener('input', () => {
+      let val = hexInput.value.trim();
+      if (!val.startsWith('#')) val = '#' + val;
+      if (val.length === 7) {
+        picker.value = val;
+        if (window.markAsModified) window.markAsModified();
+      }
+    });
+  }
+}
 
 function updateBranding(name) {
     const sidebarTitle = document.querySelector('.admin-brand-title');
@@ -54,6 +74,7 @@ function populateSettingsForm(s) {
   document.getElementById('setting-social-wa').value = s.socialWa || '';
   document.getElementById('setting-payment-notes').value = s.paymentNotes || '';
   document.getElementById('setting-primary-color').value = s.primaryColor || '#916C4F';
+  document.getElementById('setting-primary-color-hex').value = (s.primaryColor || '#916C4F').toUpperCase();
   
   paymentMethods = s.paymentMethods || [];
   renderPaymentMethods();
