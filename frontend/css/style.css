@@ -818,6 +818,14 @@ select.form-control {
   padding: 22px;
 }
 
+.admin-card.mb-24 {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
 .table-wrapper {
   background: var(--bg-card);
   border: 1px solid var(--border-color);

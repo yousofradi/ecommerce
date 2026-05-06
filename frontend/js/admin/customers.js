@@ -25,7 +25,6 @@ function renderCustomers(customers) {
   }
 
   tbody.innerHTML = customers.map(c => {
-    const initials = (c.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
     const lastOrderDate = c.lastOrderDate ? new Date(c.lastOrderDate).toLocaleDateString('ar-EG') : '—';
     const totalSpent = formatPrice(c.totalSpent || 0);
 
@@ -35,12 +34,9 @@ function renderCustomers(customers) {
           <input type="checkbox" style="width:16px; height:16px; accent-color:#0f766e;">
         </td>
         <td>
-          <div style="display:flex; align-items:center; gap:12px;">
-            <div class="avatar">${initials}</div>
-            <div>
-              <div style="font-weight:600; color:#1e293b;">${c.name}</div>
-              <div style="font-size:0.85rem; color:#64748b;">${c.phone}</div>
-            </div>
+          <div>
+            <div style="font-weight:600; color:#1e293b;">${c.name}</div>
+            <div style="font-size:0.85rem; color:#64748b;">${c.phone}</div>
           </div>
         </td>
         <td class="hide-mobile">

@@ -64,7 +64,7 @@ function initUnsavedChangesBar() {
       border-radius: 40px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: center;
       box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
       z-index: 2000;
       transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -133,7 +133,6 @@ function initUnsavedChangesBar() {
   bar.className = 'unsaved-bar';
   bar.id = 'unsaved-changes-bar';
   bar.innerHTML = `
-    <span>لديك تغييرات غير محفوظة</span>
     <div class="unsaved-actions">
       <button class="unsaved-btn btn-discard-changes" id="btn-global-discard">تجاهل</button>
       <button class="unsaved-btn btn-save-changes" id="btn-global-save">احفظ التغييرات</button>
@@ -218,3 +217,33 @@ function initUnsavedChangesBar() {
     }
   });
 }
+
+// Global Modal Helpers with Scroll Lock
+window.openModal = function (modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.classList.add('open');
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+};
+
+window.closeModal = function (modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.classList.remove('open');
+    modal.style.display = 'none';
+    
+    // Check if any other modals are still open
+    const openModals = Array.from(document.querySelectorAll('.modal-overlay, .hp-modal, .modal-box, #select-modal, #image-url-modal')).filter(m => {
+      if (m.id === modalId) return false;
+      const style = window.getComputedStyle(m);
+      return (m.classList.contains('open') || (m.style.display && m.style.display !== 'none') || (style.display !== 'none' && !m.classList.contains('hidden')));
+    });
+    
+    if (openModals.length === 0) {
+      document.body.style.overflow = '';
+    }
+  }
+};

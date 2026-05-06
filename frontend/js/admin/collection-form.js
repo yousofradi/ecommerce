@@ -73,11 +73,11 @@ function updateImagePreview(url) {
 
 window.promptImage = function () {
   document.getElementById('modal-image-url').value = document.getElementById('c-image').value || '';
-  document.getElementById('image-url-modal').classList.remove('hidden');
+  openModal('image-url-modal');
 };
 
 window.closeImageModal = function () {
-  document.getElementById('image-url-modal').classList.add('hidden');
+  closeModal('image-url-modal');
 };
 
 window.applyImageUrl = function () {
@@ -175,12 +175,12 @@ window.removeProductFromCollection = function (id) {
 /* --- Select Products Modal --- */
 
 window.openSelectModal = function () {
-  document.getElementById('select-modal').classList.remove('hidden');
+  openModal('select-modal');
   renderSelectModalLists();
 };
 
 window.closeSelectModal = function () {
-  document.getElementById('select-modal').classList.add('hidden');
+  closeModal('select-modal');
 };
 
 function renderSelectModalLists(query = '') {

@@ -53,6 +53,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // ── Products Modal ─────────────────────────────────────
 let collectionsMap = {};
+// Replaced with global helpers in auth.js
 
 window.openProductsModal = async function () {
   openModal('products-modal');

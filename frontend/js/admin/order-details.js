@@ -226,6 +226,8 @@ function updatePaymentStatusUI() {
 
 // ── Modals & Editing ───────────────────────────────────
 
+// Replaced with global helpers in auth.js
+
 window.openCustomerModal = function () {
   document.getElementById('modal-c-name').value = currentOrder.customer.name || '';
   document.getElementById('modal-c-phone').value = currentOrder.customer.phone || '';
@@ -312,7 +314,9 @@ window.onDrop = function (e) {
     items.splice(dropIdx, 0, moved);
     renderItems();
     updateTotals();
-    if (window.markAsModified) window.markAsModified();
+    await saveOrderChanges(true);
+    const bar = document.getElementById('unsaved-changes-bar');
+    if (bar) bar.classList.remove('visible');
   }
 };
 
@@ -332,7 +336,9 @@ window.moveItem = function (idx, direction) {
   [items[idx], items[newIdx]] = [items[newIdx], items[idx]];
   renderItems();
   updateTotals();
-  if (window.markAsModified) window.markAsModified();
+  await saveOrderChanges(true);
+  const bar = document.getElementById('unsaved-changes-bar');
+  if (bar) bar.classList.remove('visible');
 };
 
 window.updateItemQty = function (idx, val) {
@@ -341,7 +347,9 @@ window.updateItemQty = function (idx, val) {
     currentOrder.items[idx].quantity = qty;
     updateTotals();
     renderItems();
-    if (window.markAsModified) window.markAsModified();
+    await saveOrderChanges(true);
+    const bar = document.getElementById('unsaved-changes-bar');
+    if (bar) bar.classList.remove('visible');
   }
 };
 
@@ -359,7 +367,9 @@ window.applyItemQty = function () {
     currentOrder.items[idx].quantity = qty;
     updateTotals();
     renderItems();
-    if (window.markAsModified) window.markAsModified();
+    await saveOrderChanges(true);
+    const bar = document.getElementById('unsaved-changes-bar');
+    if (bar) bar.classList.remove('visible');
   }
   closeModal('item-qty-modal');
 };
@@ -396,7 +406,9 @@ window.confirmRemoveItem = function () {
     closeModal('delete-confirm-modal');
     updateTotals();
     renderItems();
-    if (window.markAsModified) window.markAsModified();
+    await saveOrderChanges(true);
+    const bar = document.getElementById('unsaved-changes-bar');
+    if (bar) bar.classList.remove('visible');
   }
 };
 
@@ -720,5 +732,7 @@ window.addSelectedProducts = function () {
   closeProductsModal();
   updateTotals();
   renderItems();
-  if (window.markAsModified) window.markAsModified();
+  await saveOrderChanges(true);
+  const bar = document.getElementById('unsaved-changes-bar');
+  if (bar) bar.classList.remove('visible');
 };

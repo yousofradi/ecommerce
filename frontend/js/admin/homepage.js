@@ -159,7 +159,7 @@ window.deleteSection = async function(id) {
 window.editSection = function(id) {
   const s = sections.find(s => s.id === id);
   if (!s) return;
-  
+  document.body.style.overflow = 'hidden';
   const modal = document.getElementById('section-modal');
   
   if (s.type === 'products') {
@@ -427,6 +427,7 @@ window.saveTextSection = function(id) {
 
 window.closeModal = function() {
   document.getElementById('section-modal').innerHTML = '';
+  document.body.style.overflow = '';
 };
 
 // Collection picker modal
@@ -469,6 +470,7 @@ window.openCollectionPicker = function(sectionId) {
   div.id = 'col-picker-container';
   div.innerHTML = pickerHTML;
   document.body.appendChild(div);
+  document.body.style.overflow = 'hidden';
 };
 
 window.toggleColSelection = function(sectionId, colId, el) {
@@ -492,6 +494,7 @@ window.toggleColSelection = function(sectionId, colId, el) {
 window.closeColPicker = function() {
   const el = document.getElementById('col-picker-container');
   if (el) el.remove();
+  document.body.style.overflow = '';
   // Re-render the collections editor to update selected list
   const openModal = document.querySelector('.hp-modal');
   if (openModal) {

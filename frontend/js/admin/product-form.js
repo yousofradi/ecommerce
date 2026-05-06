@@ -676,7 +676,7 @@ window.openGalleryModal = function(idx) {
     confirmBtn.disabled = !variants[idx].imageUrl;
   }
   
-  document.getElementById('gallery-modal').style.display = 'flex';
+  openModal('gallery-modal');
 }
 
 window.selectGalleryImage = function(url) {
@@ -690,7 +690,7 @@ window.selectGalleryImage = function(url) {
 }
 
 window.closeGalleryModal = function() {
-  document.getElementById('gallery-modal').style.display = 'none';
+  closeModal('gallery-modal');
   renderVariantsTable();
 }
 
@@ -741,7 +741,7 @@ function openBulkEditModal() {
       </tr>
     `;
   }).join('');
-  modal.style.display = 'flex';
+  openModal('bulk-edit-modal');
 }
 
 
@@ -750,7 +750,7 @@ window.updateBulkField = function(idx, field, val) {
 }
 
 function closeBulkEditModal() {
-  document.getElementById('bulk-edit-modal').style.display = 'none';
+  closeModal('bulk-edit-modal');
   renderVariantsTable();
 }
 

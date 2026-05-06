@@ -43,11 +43,11 @@ function renderCustomer() {
   document.getElementById('view-c-phone2').textContent = c.secondPhone || 'لا يوجد هاتف آخر';
   document.getElementById('view-c-address').textContent = c.address || 'لا يوجد عنوان';
   document.getElementById('view-c-gov').textContent = c.government || 'لا يوجد محافظة';
-  
+
   const initials = c.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   const avatar = document.getElementById('view-c-avatar');
   avatar.textContent = initials;
-  
+
   const registeredDate = new Date(c.firstOrderDate).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
   document.getElementById('view-c-registered').textContent = `عميل منذ ${registeredDate}`;
 
@@ -108,7 +108,7 @@ async function applyChanges() {
   // In a real app, we would have a Customer model.
   // For now, we'll let the user know this is for UI demonstration or we could theoretically update orders via batch.
   // However, the requirement says "save + update UI without reload".
-  
+
   // Update local state
   currentCustomer.name = name;
   currentCustomer.phone = phone;
@@ -119,6 +119,6 @@ async function applyChanges() {
   renderCustomer();
   closeEditModal();
   showToast('تم تحديث البيانات بنجاح (سيتم تطبيقها على الطلبات القادمة)');
-  
+
   // Optional: In a real implementation with this schema, you'd need an endpoint like /api/customers/update-all
 }
