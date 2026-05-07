@@ -7,6 +7,12 @@ let allCollections = [];
 let selectedCollectionIds = [];
 let optionEditModes = [];
 let originalProductData = null;
+let isPopulating = false;
+
+function safeMarkAsModified() {
+  if (isPopulating) return;
+  if (window.markAsModified) safeMarkAsModified();
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
   if (!requireAdmin()) return;
@@ -24,6 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     allCollections = collections;
     initCollectionSelect();
 
+    isPopulating = true;
     if (product) {
       originalProductData = JSON.parse(JSON.stringify(product));
       populateProductForm(product);
@@ -31,6 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       originalProductData = null;
       populateProductForm(null);
     }
+    isPopulating = false;
     document.body.classList.remove('is-loading');
   } catch (err) {
     console.error('Error loading page data:', err);
@@ -220,24 +228,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // ── Image Management ────────────────────────────────────
 
+let sortableImages = null;
+
 function removeImage(index) {
   productImages.splice(index, 1);
   renderImages();
-  if (window.markAsModified) window.markAsModified();
+  safeMarkAsModified();
 }
-
-function moveImage(index, direction) {
-  const newIndex = index + direction;
-  if (newIndex < 0 || newIndex >= productImages.length) return;
-  
-  const img = productImages[index];
-  productImages.splice(index, 1);
-  productImages.splice(newIndex, 0, img);
-  renderImages();
-  if (window.markAsModified) window.markAsModified();
-}
-
-let draggedImageIndex = null;
 
 function renderImages() {
   const container = document.getElementById('images-list');
@@ -245,55 +242,39 @@ function renderImages() {
 
   if (!container || !addBtn) return;
 
+  // Clear existing image items
   container.querySelectorAll('.image-item').forEach(el => el.remove());
+
   productImages.forEach((url, idx) => {
     const item = document.createElement('div');
     item.className = 'image-item';
-    item.draggable = true;
-    item.dataset.index = idx;
+    item.dataset.url = url;
     item.style.cursor = 'grab';
-
-    // Drag-and-drop reordering logic
-    item.addEventListener('dragstart', (e) => {
-      draggedImageIndex = idx;
-      e.dataTransfer.effectAllowed = 'move';
-      setTimeout(() => item.style.opacity = '0.5', 0);
-    });
-    item.addEventListener('dragend', () => {
-      item.style.opacity = '1';
-      draggedImageIndex = null;
-    });
-    item.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-    });
-    item.addEventListener('drop', (e) => {
-      e.preventDefault();
-      if (draggedImageIndex !== null && draggedImageIndex !== idx) {
-        const draggedImage = productImages[draggedImageIndex];
-        productImages.splice(draggedImageIndex, 1);
-        productImages.splice(idx, 0, draggedImage);
-        renderImages();
-      }
-    });
 
     item.innerHTML = `
       <img src="${url}" alt="صورة ${idx + 1}" style="pointer-events: none;" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTEwIiBoZWlnaHQ9IjExMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTEwIiBoZWlnaHQ9IjExMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzk0YTNiOCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuKdjCBFcnJvcjwvdGV4dD48L3N2Zz4='">
       <button type="button" class="remove-img" onclick="removeImage(${idx})">×</button>
-      
-      <div class="image-move-controls">
-        <button type="button" class="move-btn" onclick="moveImage(${idx}, 1)" ${idx === productImages.length - 1 ? 'disabled' : ''}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
-        </button>
-        <button type="button" class="move-btn" onclick="moveImage(${idx}, -1)" ${idx === 0 ? 'disabled' : ''}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
-        </button>
-      </div>
-
       ${idx === 0 ? '<span class="primary-badge">رئيسية</span>' : ''}
     `;
     container.insertBefore(item, addBtn);
   });
+
+  // Initialize or Update Sortable
+  if (!sortableImages && window.Sortable) {
+    sortableImages = new Sortable(container, {
+      animation: 150,
+      filter: '#add-image-dropzone',
+      onEnd: () => {
+        const newUrls = [];
+        container.querySelectorAll('.image-item').forEach(el => {
+          newUrls.push(el.dataset.url);
+        });
+        productImages = newUrls;
+        renderImages();
+        safeMarkAsModified();
+      }
+    });
+  }
 }
 
 // ── Variant Setup (Option Groups) ───────────────────────
@@ -433,7 +414,7 @@ function removeOptionGroup(gi) {
   optionEditModes.splice(gi, 1);
   renderOptionSetup();
   syncVariants();
-  if (window.markAsModified) window.markAsModified();
+  if (window.markAsModified) safeMarkAsModified();
 }
 
 function addOptionValue(gi) {
@@ -536,7 +517,7 @@ function syncVariants() {
   });
 
   renderVariantsTable();
-  if (window.markAsModified) window.markAsModified();
+  if (window.markAsModified) safeMarkAsModified();
 }
 
 // ── Variant Table Rendering (Hierarchical with Expansion) ──
@@ -683,13 +664,13 @@ window.updateVariantField = function (idx, field, val) {
   } else {
     variants[idx][field] = val;
   }
-  if (window.markAsModified) window.markAsModified();
+  if (window.markAsModified) safeMarkAsModified();
 }
 
 window.removeVariant = function (idx) {
   variants.splice(idx, 1);
   renderVariantsTable();
-  if (window.markAsModified) window.markAsModified();
+  if (window.markAsModified) safeMarkAsModified();
 }
 
 window.toggleVariantGroup = function (parentVal, active) {

@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>نموذج المنتج — Sundura Admin</title>
   <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <style>
     .images-list {
       display: flex;
@@ -52,53 +53,6 @@
       background: #dc2626;
     }
 
-    .image-move-controls {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      display: flex;
-      background: rgba(0, 0, 0, 0.4);
-      padding: 4px;
-      gap: 4px;
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
-
-    .image-item:hover .image-move-controls,
-    .image-item:active .image-move-controls {
-      opacity: 1;
-    }
-
-    /* Always show on touch devices */
-    @media (hover: none) {
-      .image-move-controls {
-        opacity: 1;
-      }
-    }
-
-    .move-btn {
-      flex: 1;
-      height: 24px;
-      background: rgba(255, 255, 255, 0.2);
-      border: none;
-      border-radius: 4px;
-      color: #fff;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .move-btn:hover:not(:disabled) {
-      background: rgba(255, 255, 255, 0.4);
-    }
-
-    .move-btn:disabled {
-      opacity: 0.3;
-      cursor: not-allowed;
-    }
-
     .primary-badge {
       position: absolute;
       top: 4px;
@@ -111,6 +65,7 @@
       pointer-events: none;
       font-weight: 600;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      z-index: 5;
     }
 
     .add-image-btn {
