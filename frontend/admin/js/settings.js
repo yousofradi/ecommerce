@@ -220,6 +220,7 @@ async function saveSettings() {
     
     // Immediately update preview links in the current page
     if (settings.storeUrl) {
+      localStorage.setItem('sundura_store_url', settings.storeUrl);
       document.querySelectorAll('.admin-store-preview').forEach(a => {
         a.href = settings.storeUrl;
       });

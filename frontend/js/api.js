@@ -268,8 +268,16 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ── Apply Global Settings ──────────────────────────────
-// ── Apply Global Settings ──────────────────────────────
-// ── Apply Global Settings ──────────────────────────────
+// Immediately apply cached store URL if exists
+(function() {
+  const cachedUrl = localStorage.getItem('sundura_store_url');
+  if (cachedUrl) {
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.admin-store-preview').forEach(a => a.href = cachedUrl);
+    });
+  }
+})();
+
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     const settings = await api.getSetting('sundura_global_settings');
@@ -285,6 +293,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       // 1.1 Store URL (Preview Button)
       if (settings.storeUrl) {
+        localStorage.setItem('sundura_store_url', settings.storeUrl);
         document.querySelectorAll('.admin-store-preview').forEach(a => {
           a.href = settings.storeUrl;
         });
