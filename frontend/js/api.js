@@ -276,10 +276,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (settings) {
       // 1. Logo
       if (settings.storeLogo) {
-        // Target specific class AND any image with the old hardcoded URL
         document.querySelectorAll('.store-logo-img, img[src*="cmo1fsgmc060f01lwhwpn6ga7"]').forEach(img => {
           img.src = settings.storeLogo;
           img.style.opacity = '1';
+        });
+      }
+
+      // 1.1 Store URL (Preview Button)
+      if (settings.storeUrl) {
+        document.querySelectorAll('.admin-store-preview').forEach(a => {
+          a.href = settings.storeUrl;
         });
       }
 

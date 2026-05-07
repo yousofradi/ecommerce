@@ -70,6 +70,7 @@ function populateSettingsForm(s) {
   document.getElementById('setting-store-logo').value = s.storeLogo || '';
   document.getElementById('setting-store-favicon').value = s.storeFavicon || '';
   document.getElementById('setting-store-preview').value = s.storePreview || '';
+  document.getElementById('setting-store-url').value = s.storeUrl || '';
   document.getElementById('setting-invoice-prefix').value = s.invoicePrefix || '';
   document.getElementById('setting-social-fb').value = s.socialFb || '';
   document.getElementById('setting-social-ig').value = s.socialIg || '';
@@ -197,6 +198,7 @@ async function saveSettings() {
     storeLogo: document.getElementById('setting-store-logo').value.trim(),
     storeFavicon: document.getElementById('setting-store-favicon').value.trim(),
     storePreview: document.getElementById('setting-store-preview').value.trim(),
+    storeUrl: document.getElementById('setting-store-url').value.trim(),
     invoicePrefix: document.getElementById('setting-invoice-prefix').value.trim(),
     socialFb: document.getElementById('setting-social-fb').value.trim(),
     socialIg: document.getElementById('setting-social-ig').value.trim(),
