@@ -11,7 +11,7 @@ let isPopulating = false;
 
 function safeMarkAsModified() {
   if (isPopulating) return;
-  if (window.markAsModified) safeMarkAsModified();
+  if (window.markAsModified) window.markAsModified();
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
