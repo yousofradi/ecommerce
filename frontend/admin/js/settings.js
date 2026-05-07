@@ -107,13 +107,7 @@ async function handleImageUpload(input, targetId, previewId, placeholderId) {
     if (!file) return;
 
     try {
-        const formData = new FormData();
-        formData.append('image', file);
-        
-        const res = await api._request('/api/upload', {
-            method: 'POST',
-            body: formData
-        }, true);
+        const res = await api.uploadFile(file);
 
         document.getElementById(targetId).value = res.url;
         updateImagePreview(targetId, previewId, placeholderId);
@@ -145,9 +139,7 @@ async function handlePaymentLogoUpload(input, id) {
     const file = input.files[0];
     if (!file) return;
     try {
-        const formData = new FormData();
-        formData.append('image', file);
-        const res = await api._request('/api/upload', { method: 'POST', body: formData }, true);
+        const res = await api.uploadFile(file);
         const method = paymentMethods.find(m => m.id === id);
         if (method) method.logo = res.url;
         renderPaymentMethods();
