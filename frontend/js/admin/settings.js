@@ -121,8 +121,8 @@ function addPaymentMethod() {
     const id = Date.now().toString();
     paymentMethods.push({
         id,
-        label: 'وسيلة دفع جديدة',
-        number: '010XXXXXXXX',
+        label: '',
+        number: '',
         logo: ''
     });
     renderPaymentMethods();

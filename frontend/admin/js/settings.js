@@ -69,6 +69,7 @@ function populateSettingsForm(s) {
   document.getElementById('setting-store-name').value = s.storeName || '';
   document.getElementById('setting-store-logo').value = s.storeLogo || '';
   document.getElementById('setting-store-favicon').value = s.storeFavicon || '';
+  document.getElementById('setting-store-preview').value = s.storePreview || '';
   document.getElementById('setting-invoice-prefix').value = s.invoicePrefix || '';
   document.getElementById('setting-social-fb').value = s.socialFb || '';
   document.getElementById('setting-social-ig').value = s.socialIg || '';
@@ -84,6 +85,7 @@ function populateSettingsForm(s) {
 
   updateImagePreview('setting-store-logo', 'setting-logo-preview', 'logo-placeholder');
   updateImagePreview('setting-store-favicon', 'setting-favicon-preview', 'favicon-placeholder');
+  updateImagePreview('setting-store-preview', 'setting-preview-preview', 'preview-placeholder');
   updateBranding(s.storeName);
 }
 
@@ -121,8 +123,8 @@ function addPaymentMethod() {
   const id = Date.now().toString();
   paymentMethods.push({
     id,
-    label: 'وسيلة دفع جديدة',
-    number: '01XXXXXXXXX',
+    label: '',
+    number: '',
     logo: ''
   });
   renderPaymentMethods();
@@ -194,6 +196,7 @@ async function saveSettings() {
     storeName: document.getElementById('setting-store-name').value.trim(),
     storeLogo: document.getElementById('setting-store-logo').value.trim(),
     storeFavicon: document.getElementById('setting-store-favicon').value.trim(),
+    storePreview: document.getElementById('setting-store-preview').value.trim(),
     invoicePrefix: document.getElementById('setting-invoice-prefix').value.trim(),
     socialFb: document.getElementById('setting-social-fb').value.trim(),
     socialIg: document.getElementById('setting-social-ig').value.trim(),

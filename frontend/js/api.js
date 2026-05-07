@@ -389,10 +389,22 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       
       // Update specific dynamic messages
-      const waMsgEl = document.getElementById('wa-dynamic-msg');
-      if (waMsgEl && settings.storeName) {
-         // This is for order-success.html specifically
          window.storeNameForWA = settings.storeName;
+      }
+
+      // 8. Site Preview Image (OG Image)
+      if (settings.storePreview) {
+        const updateMeta = (attr, val, content) => {
+          let el = document.querySelector(`meta[${attr}="${val}"]`);
+          if (!el) {
+            el = document.createElement('meta');
+            el.setAttribute(attr, val);
+            document.head.appendChild(el);
+          }
+          el.content = content;
+        };
+        updateMeta('property', 'og:image', settings.storePreview);
+        updateMeta('name', 'twitter:image', settings.storePreview);
       }
     }
   } catch (err) {
