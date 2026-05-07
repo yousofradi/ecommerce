@@ -518,7 +518,7 @@ api.openSearch = function () {
             return;
           }
           results.innerHTML = filtered.map(p => `
-            <a href="product?id=${p._id}" class="search-result-item">
+            <a href="${p.handle ? `product/${p.handle}` : `product?id=${p._id}`}" class="search-result-item">
               <img src="${p.imageUrl}" class="search-result-img" onerror="this.style.display='none'">
               <div class="search-result-info">
                 <div class="search-result-name">${p.name}</div>

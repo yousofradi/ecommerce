@@ -76,9 +76,9 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21"/><path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1"/></svg>
         <span>واتساب</span>
       </a>
-      <a href="collections" class="nav-item active">
+      <a href="#" target="_blank" class="nav-item" id="nav-tg-link">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path></svg>
-        <span>القائمة</span>
+        <span>تليجرام</span>
       </a>
     </div>
   </nav>
@@ -105,7 +105,7 @@
         
         grid.innerHTML = collections.map(c => {
           const img = c.imageUrl || 'https://assets.wuiltstore.com/cmo1fsgmc060f01lwhwpn6ga7__D8_B3_D9_86_D8_AF_D9_88_D8_B1.webp';
-          const link = c.urlName ? `collection?u=${encodeURIComponent(c.urlName)}` : `collection?id=${c._id}`;
+          const link = c.urlName ? `collection/${c.urlName}` : `collection?id=${c._id}`;
           return `
             <a href="${link}" class="collection-card" style="margin-bottom:0">
               <img src="${img}" alt="${c.name}" class="collection-card-img" style="height:140px; object-fit:cover; border-radius:12px;">
