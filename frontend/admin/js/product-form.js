@@ -266,10 +266,12 @@ function renderImages() {
   if (!sortableImages && window.Sortable) {
     sortableImages = new Sortable(container, {
       animation: 150,
-      handle: '.drag-handle-img', // ONLY drag by the handle
+      handle: '.drag-handle-img',
       filter: '#add-image-dropzone',
       ghostClass: 'sortable-ghost',
-      forceFallback: true,
+      forceFallback: false,
+      fallbackTolerance: 5,
+      bubbleScroll: true,
       onEnd: () => {
         const newUrls = [];
         container.querySelectorAll('.image-item').forEach(el => {
