@@ -372,24 +372,19 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       // 6. Mobile Nav Update
-      const mobileNav = document.querySelector('.mobile-bottom-nav');
-      if (mobileNav) {
-          const navItems = mobileNav.querySelectorAll('.nav-item');
-          // WhatsApp item (usually 4th, index 3)
-          if (navItems[3] && settings.socialWa) {
-              navItems[3].href = waLink;
-              navItems[3].title = settings.socialWa; // Hover info
-              // Add a tooltip helper for mobile if they click and hold? 
-              // Standard title works for desktop hover.
-          }
-          // Last item: Telegram (index 4)
-          if (navItems[4]) {
-              navItems[4].href = settings.socialTg || '#';
-              const span = navItems[4].querySelector('span');
-              if (span) span.textContent = 'تليجرام';
-              const svg = navItems[4].querySelector('svg');
-              if (svg) svg.innerHTML = `<path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path>`;
-          }
+      const navWaLink = document.getElementById('nav-wa-link');
+      if (navWaLink && settings.socialWa) {
+          navWaLink.href = waLink;
+          navWaLink.title = settings.socialWa;
+      }
+      
+      const navTgLink = document.getElementById('nav-tg-link');
+      if (navTgLink && settings.socialTg) {
+          navTgLink.href = settings.socialTg;
+          const span = navTgLink.querySelector('span');
+          if (span) span.textContent = 'تليجرام';
+          const svg = navTgLink.querySelector('svg');
+          if (svg) svg.innerHTML = `<path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path>`;
       }
 
       // 7. Custom Color Palette
