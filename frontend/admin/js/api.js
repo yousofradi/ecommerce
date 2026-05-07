@@ -312,12 +312,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           link.href = waLink;
         });
 
-        // Also update hardcoded number text in checkout (Vodafone/InstaPay)
-        document.querySelectorAll('span, div, p').forEach(el => {
-            if (el.children.length === 0 && el.textContent.includes('01016612519')) {
-                el.textContent = el.textContent.replace('01016612519', settings.socialWa);
-            }
-        });
       }
 
       // 5. Social Links
