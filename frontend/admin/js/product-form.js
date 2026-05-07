@@ -748,7 +748,7 @@ function openBulkEditModal() {
         <td>
           <div class="input-group-rtl">
             <span class="addon">ج.م</span>
-            <input type="number" value="${v.price}" onchange="updateVariantField(${idx}, 'price', this.value)">
+            <input type="number" value="${v.price || ''}" onchange="updateVariantField(${idx}, 'price', this.value)">
           </div>
         </td>
         <td>
@@ -906,7 +906,7 @@ function populateProductForm(p) {
 
   document.getElementById('form-title').textContent = 'تعديل المنتج';
   document.getElementById('p-name').value = p.name;
-  document.getElementById('p-price').value = p.basePrice;
+  document.getElementById('p-price').value = p.basePrice || '';
   document.getElementById('p-sale-price').value = p.salePrice || '';
   document.getElementById('p-desc').value = p.description || '';
   document.getElementById('p-status').value = p.status || 'active';

@@ -299,13 +299,15 @@ window.applyCustomerChanges = async function () {
 
 window.openPaymentModal = function () {
   document.getElementById('modal-payment-method').value = currentOrder.paymentMethod || 'vodafone_cash';
-  document.getElementById('modal-paid-amount').value = currentOrder.paidAmount || 0;
+  document.getElementById('modal-paid-amount').value = currentOrder.paidAmount || '';
+
   openModal('payment-modal');
 };
 
 window.applyPaymentChanges = async function () {
   currentOrder.paymentMethod = document.getElementById('modal-payment-method').value;
   currentOrder.paidAmount = parseFloat(document.getElementById('modal-paid-amount').value) || 0;
+
   currentOrder.forcePaymentWebhook = true; // Flag to force trigger webhook
   renderOrder();
   closeModal('payment-modal');
@@ -401,7 +403,7 @@ window.applyItemQty = function () {
 window.openItemDiscountModal = function (idx) {
   const item = currentOrder.items[idx];
   document.getElementById('modal-item-idx').value = idx;
-  document.getElementById('modal-item-discount').value = item.discount || 0;
+  document.getElementById('modal-item-discount').value = item.discount || '';
   openModal('item-discount-modal');
 };
 
@@ -436,12 +438,12 @@ window.confirmRemoveItem = function () {
 
 window.promptOrderDiscount = function () {
   openModal('order-discount-modal');
-  document.getElementById('modal-order-discount').value = currentOrder.discount || 0;
+  document.getElementById('modal-order-discount').value = currentOrder.discount || '';
 };
 
 window.openOrderDiscountModal = function () {
   openModal('order-discount-modal');
-  document.getElementById('modal-order-discount').value = currentOrder.discount || 0;
+  document.getElementById('modal-order-discount').value = currentOrder.discount || '';
 };
 
 window.applyOrderDiscount = async function () {
@@ -457,7 +459,7 @@ window.applyOrderDiscount = async function () {
 window.openItemDiscountModal = function (idx) {
   const item = currentOrder.items[idx];
   document.getElementById('modal-item-idx').value = idx;
-  document.getElementById('modal-item-discount').value = item.discount || 0;
+  document.getElementById('modal-item-discount').value = item.discount || '';
   openModal('item-discount-modal');
 };
 

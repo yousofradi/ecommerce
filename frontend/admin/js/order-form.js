@@ -334,7 +334,7 @@ window.updateItemQty = function (idx, val) {
 window.openItemDiscountModal = function (idx) {
   const item = cartItems[idx];
   document.getElementById('modal-item-idx').value = idx;
-  document.getElementById('modal-item-discount').value = item.discount || 0;
+  document.getElementById('modal-item-discount').value = item.discount || '';
   openModal('item-discount-modal');
 };
 
