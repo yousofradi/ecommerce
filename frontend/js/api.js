@@ -295,10 +295,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       // 3. Store Name & Titles
       if (settings.storeName) {
-        document.title = document.title.replace('Sundura Shop', settings.storeName).replace('Sundura', settings.storeName);
+        // If title is just " | Page", replace first part. If it has a pipe, keep the page name.
+        if (document.title.includes('|')) {
+          const parts = document.title.split('|');
+          document.title = parts[0].trim() + ' | ' + settings.storeName;
+        } else {
+          document.title = settings.storeName;
+        }
         
-        const adminBrand = document.querySelector('.admin-brand-title');
         if (adminBrand) adminBrand.textContent = settings.storeName;
+        
+        // Update any generic placeholders in the DOM
+        document.querySelectorAll('.store-name-text').forEach(el => {
+          el.textContent = settings.storeName;
+        });
 
         const footerCopy = document.querySelector('.footer-bottom-bar');
         if (footerCopy) {
@@ -323,8 +333,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Also update hardcoded number text in checkout (Vodafone/InstaPay)
         document.querySelectorAll('span, div, p').forEach(el => {
-            if (el.children.length === 0 && el.textContent.includes('01016612519')) {
-                el.textContent = el.textContent.replace('01016612519', settings.socialWa);
+            if (el.children.length === 0 && el.textContent.includes('')) {
+                el.textContent = el.textContent.replace('', settings.socialWa);
             }
         });
       }
@@ -386,6 +396,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (settings.primaryColor) {
         applyColorPalette(settings.primaryColor);
       }
+      
+      // Update specific dynamic messages
+      const waMsgEl = document.getElementById('wa-dynamic-msg');
+      if (waMsgEl && settings.storeName) {
+         // This is for order-success.html specifically
+         window.storeNameForWA = settings.storeName;
+      }
     }
   } catch (err) {
     console.error('Failed to load global settings', err);
@@ -399,18 +416,23 @@ function applyColorPalette(hex) {
     const g = parseInt(hex.slice(3, 5), 16);
     const b = parseInt(hex.slice(5, 7), 16);
 
-    document.documentElement.style.setProperty('--primary', hex);
+    const root = document.documentElement;
+    root.style.setProperty('--primary', hex);
     
     // Hover: 15% darker
     const hr = Math.max(0, Math.floor(r * 0.85));
     const hg = Math.max(0, Math.floor(g * 0.85));
     const hb = Math.max(0, Math.floor(b * 0.85));
     const hover = `rgb(${hr}, ${hg}, ${hb})`;
-    document.documentElement.style.setProperty('--primary-hover', hover);
+    root.style.setProperty('--primary-hover', hover);
 
     // Light: very transparent
     const light = `rgba(${r}, ${g}, ${b}, 0.08)`;
-    document.documentElement.style.setProperty('--primary-light', light);
+    root.style.setProperty('--primary-light', light);
+
+    // Legacy support for older css var names
+    root.style.setProperty('--primary', hex);
+    root.style.setProperty('--primary-dark', hover);
   } catch(e) {
     console.error('Failed to apply color palette', e);
   }

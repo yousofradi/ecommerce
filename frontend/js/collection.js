@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     const col = await api.getCollection(id || slug);
     currentCollectionId = col._id;
-    document.title = `${col.name} | Sundura Shop`;
+    document.title = `${col.name} | `;
     document.getElementById('collection-title').textContent = col.name;
     document.getElementById('breadcrumb-name').textContent = col.name;
     loadCollectionProducts(1);

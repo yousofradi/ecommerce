@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       currentProduct = await api.getProduct(productId);
     }
     
-    document.title = `${currentProduct.name} | Sundura Shop`;
+    document.title = `${currentProduct.name} | `;
     document.getElementById('breadcrumb-name').textContent = currentProduct.name;
     document.getElementById('breadcrumb-container').classList.remove('hidden');
     loading.classList.add('hidden');

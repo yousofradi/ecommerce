@@ -13,9 +13,9 @@
   <div class="page-wrapper">
     <header class="store-header">
       <div class="container">
-        <a href="/" class="header-icon back-btn"
-          onclick="if(history.length > 1) { history.back(); return false; }"><svg viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" style="width: 24px; height: 24px; color: var(--text-muted);">
+        <a href="/" class="header-icon back-btn" onclick="if(history.length > 1) { history.back(); return false; }"><svg
+            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            style="width: 24px; height: 24px; color: var(--text-muted);">
             <path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6" />
           </svg></a>
         <a href="/" class="store-logo-link"><img src="" alt="Logo" class="store-logo-img"
@@ -103,8 +103,10 @@
   <script src="js/api.js"></script>
   <script src="js/cart.js"></script>
   <script>
-    function copyNumber() {
-      navigator.clipboard.writeText('01016612519').then(() => {
+    async function copyNumber() {
+      const settings = await api.getSetting('sundura_global_settings');
+      const num = settings ? settings.socialWa : '';
+      navigator.clipboard.writeText(num).then(() => {
         const modal = document.createElement('div');
         modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:9999;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s ease;';
         modal.innerHTML = `
@@ -176,9 +178,10 @@
         document.getElementById('summ-total').textContent = formatPrice(order.totalPrice);
 
         const settings = await api.getSetting('sundura_global_settings');
-        let waNumber = settings ? (settings.socialWa || '01016612519').replace(/[^0-9]/g, '') : '201016612519';
+        let waNumber = (settings.socialWa).replace(/[^0-9]/g, '');
         if (waNumber.startsWith('01')) waNumber = '2' + waNumber;
-        const waMessage = encodeURIComponent(`مرحباً، قمت بطلب من متجر سندورة.\nرقم الطلب الخاص بي هو: ${order.orderId}`);
+        const storeName = settings.storeName || 'المتجر';
+        const waMessage = encodeURIComponent(`مرحباً، قمت بطلب من متجر ${storeName}.\nرقم الطلب الخاص بي هو: ${order.orderId}`);
         whatsappBtn.href = `https://wa.me/${waNumber}?text=${waMessage}`;
         whatsappBtn.style.display = 'flex';
       } catch (e) {

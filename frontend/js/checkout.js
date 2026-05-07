@@ -40,7 +40,7 @@ async function loadPaymentMethods() {
           </div>
           
           <div style="display:flex; align-items:center; gap:8px;">
-            <button type="button" class="btn-copy-payment" onclick="event.preventDefault(); copyToClipboard('${m.number}', this)" style="background:var(--sundura-brown, #916C4F); color:#fff; border:none; border-radius:6px; padding:4px 10px; font-size:0.75rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;">
+            <button type="button" class="btn-copy-payment" onclick="event.preventDefault(); copyToClipboard('${m.number}', this)" style="background:var(--primary, #916C4F); color:#fff; border:none; border-radius:6px; padding:4px 10px; font-size:0.75rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                 <span>نسخ</span>
             </button>
@@ -58,7 +58,7 @@ async function loadPaymentMethods() {
             btn.style.background = '#10b981';
             setTimeout(() => {
                 btn.innerHTML = originalHTML;
-                btn.style.background = 'var(--sundura-brown, #916C4F)';
+                btn.style.background = 'var(--primary, #916C4F)';
             }, 2000);
         }).catch(err => {
             console.error('Failed to copy: ', err);
@@ -94,7 +94,7 @@ function renderOrderSummary(items) {
         <div class="cart-item-name" style="font-weight:700; font-size:0.9rem;">${item.name} × ${item.quantity}</div>
         <div class="cart-item-options" style="font-size:0.8rem; color:#64748b;">${item.selectedOptions.map(o => `${o.groupName}: ${o.label}`).join(', ')}</div>
       </div>
-      <div class="cart-item-price" style="flex-shrink:0; font-weight:700; color:var(--sundura-brown, #916C4F);">${formatPrice(item.unitPrice * item.quantity)}</div>
+      <div class="cart-item-price" style="flex-shrink:0; font-weight:700; color:var(--primary, #916C4F);">${formatPrice(item.unitPrice * item.quantity)}</div>
     </div>
   `).join('');
   updatePriceSummary();
