@@ -7,7 +7,7 @@
   --bg-surface: #ffffff;
   --bg-hover: #f1f5f9;
   --border-color: #e2e8f0;
-  --border-focus: #3b82f6;
+  --border-focus: var(--primary);
 
   --text-main: #1e293b;
   --text-muted: #64748b;
