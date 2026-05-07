@@ -273,6 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     const settings = await api.getSetting('sundura_global_settings');
+    console.log('Settings loaded:', settings ? 'success' : 'empty');
     if (settings) {
       // 1. Logo
       if (settings.storeLogo) {
