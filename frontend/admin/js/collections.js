@@ -41,14 +41,15 @@ async function loadCollections() {
     }
 
     list.innerHTML = cols.map(c => `
-      <div class="collection-row" data-name="${c.name.toLowerCase()}" style="grid-template-columns: 40px 60px 1fr 100px 100px;" onclick="if(!event.target.closest('.action-menu') && !event.target.closest('.action-dropdown') && !event.target.closest('input[type=checkbox]')) window.location.href='collection-form?id=${c._id}'">
+      <div class="collection-row" data-name="${c.name.toLowerCase()}" style="grid-template-columns: 50px 80px 1fr 80px;" onclick="if(!event.target.closest('.action-menu') && !event.target.closest('.action-dropdown') && !event.target.closest('input[type=checkbox]')) window.location.href='collection-form?id=${c._id}'">
         <div style="text-align: center;"><input type="checkbox" class="collection-checkbox" data-id="${c._id}" onchange="updateBulkBar()"></div>
-        ${c.imageUrl 
-          ? `<img src="${c.imageUrl}" class="collection-img" alt="${c.name}">`
-          : `<div class="collection-img-placeholder">بدون صورة</div>`
-        }
-        <div style="font-weight:500">${c.name}</div>
-        <div style="text-align:center;color:#666" class="col-products">${counts[c._id] || 0}</div>
+        <div style="display:flex; justify-content:center;">
+          ${c.imageUrl 
+            ? `<img src="${c.imageUrl}" class="collection-img" alt="${c.name}">`
+            : `<div class="collection-img-placeholder">بدون صورة</div>`
+          }
+        </div>
+        <div style="font-weight:600; text-align:center; font-size:1rem;">${c.name}</div>
         <div style="text-align:center;position:relative">
           <div class="action-menu" onclick="event.stopPropagation(); toggleMenu('${c._id}')">⋮</div>
           <div id="menu-${c._id}" class="action-dropdown hidden" style="position:absolute;left:50%;transform:translateX(-50%);background:#fff;border:1px solid #ddd;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.12);z-index:100;padding:4px;min-width:120px;">
