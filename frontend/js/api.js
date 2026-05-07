@@ -405,7 +405,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       
       // Update specific dynamic messages
-         window.storeNameForWA = settings.storeName;
+      if (settings.storeName) {
+        window.storeNameForWA = settings.storeName;
       }
 
       // 8. Site Preview Image (OG Image)
