@@ -292,8 +292,8 @@ async function saveCollection(e) {
       const formTitle = document.getElementById('form-page-title');
       if (formTitle) formTitle.textContent = 'تعديل التصنيف';
       document.title = 'تعديل التصنيف — Sundura Admin';
-      const newUrl = window.location.pathname + '?id=' + collectionId;
-      window.history.replaceState({ path: newUrl }, '', newUrl);
+      const newUrl = 'collection-form.html?id=' + collectionId;
+      setTimeout(() => window.location.href = newUrl, 1000);
     }
 
     // Now update products collection bulk

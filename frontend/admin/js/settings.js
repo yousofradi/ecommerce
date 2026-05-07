@@ -4,7 +4,7 @@ let paymentMethods = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
   if (!requireAdmin()) return;
-  
+
   try {
     const settings = await api.getSetting(SETTINGS_KEY);
     if (settings) {
@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     input.addEventListener('input', () => {
       if (window.markAsModified) window.markAsModified();
       if (input.id === 'setting-store-name') {
-          updateBranding(input.value);
+        updateBranding(input.value);
       }
     });
   });
@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 function initColorPicker() {
   const picker = document.getElementById('setting-primary-color');
   const hexInput = document.getElementById('setting-primary-color-hex');
-  
+
   if (picker && hexInput) {
     picker.addEventListener('input', () => {
       hexInput.value = picker.value.toUpperCase();
@@ -61,8 +61,8 @@ function initColorPicker() {
 }
 
 function updateBranding(name) {
-    const sidebarTitle = document.querySelector('.admin-brand-title');
-    if (sidebarTitle) sidebarTitle.textContent = name || 'Sundura Shop';
+  const sidebarTitle = document.querySelector('.admin-brand-title');
+  if (sidebarTitle) sidebarTitle.textContent = name || 'Sundura Shop';
 }
 
 function populateSettingsForm(s) {
@@ -78,7 +78,7 @@ function populateSettingsForm(s) {
   document.getElementById('setting-payment-notes').value = s.paymentNotes || '';
   document.getElementById('setting-primary-color').value = s.primaryColor || '#916C4F';
   document.getElementById('setting-primary-color-hex').value = (s.primaryColor || '#916C4F').toUpperCase();
-  
+
   paymentMethods = s.paymentMethods || [];
   renderPaymentMethods();
 
@@ -88,78 +88,78 @@ function populateSettingsForm(s) {
 }
 
 function updateImagePreview(targetId, previewId, placeholderId) {
-    const url = document.getElementById(targetId).value;
-    const preview = document.getElementById(previewId);
-    const placeholder = document.getElementById(placeholderId);
-    
-    if (url) {
-        preview.src = url;
-        preview.style.display = 'block';
-        if (placeholder) placeholder.style.display = 'none';
-    } else {
-        preview.style.display = 'none';
-        if (placeholder) placeholder.style.display = 'block';
-    }
+  const url = document.getElementById(targetId).value;
+  const preview = document.getElementById(previewId);
+  const placeholder = document.getElementById(placeholderId);
+
+  if (url) {
+    preview.src = url;
+    preview.style.display = 'block';
+    if (placeholder) placeholder.style.display = 'none';
+  } else {
+    preview.style.display = 'none';
+    if (placeholder) placeholder.style.display = 'block';
+  }
 }
 
 async function handleImageUpload(input, targetId, previewId, placeholderId) {
-    const file = input.files[0];
-    if (!file) return;
+  const file = input.files[0];
+  if (!file) return;
 
-    try {
-        const res = await api.uploadFile(file);
+  try {
+    const res = await api.uploadFile(file);
 
-        document.getElementById(targetId).value = res.url;
-        updateImagePreview(targetId, previewId, placeholderId);
-        if (window.markAsModified) window.markAsModified();
-    } catch (err) {
-        showToast('فشل رفع الصورة', 'error');
-    }
+    document.getElementById(targetId).value = res.url;
+    updateImagePreview(targetId, previewId, placeholderId);
+    if (window.markAsModified) window.markAsModified();
+  } catch (err) {
+    showToast('فشل رفع الصورة', 'error');
+  }
 }
 
 function addPaymentMethod() {
-    const id = Date.now().toString();
-    paymentMethods.push({
-        id,
-        label: 'وسيلة دفع جديدة',
-        number: '010XXXXXXXX',
-        logo: ''
-    });
-    renderPaymentMethods();
-    if (window.markAsModified) window.markAsModified();
+  const id = Date.now().toString();
+  paymentMethods.push({
+    id,
+    label: 'وسيلة دفع جديدة',
+    number: '01XXXXXXXXX',
+    logo: ''
+  });
+  renderPaymentMethods();
+  if (window.markAsModified) window.markAsModified();
 }
 
 function removePaymentMethod(id) {
-    paymentMethods = paymentMethods.filter(m => m.id !== id);
-    renderPaymentMethods();
-    if (window.markAsModified) window.markAsModified();
+  paymentMethods = paymentMethods.filter(m => m.id !== id);
+  renderPaymentMethods();
+  if (window.markAsModified) window.markAsModified();
 }
 
 async function handlePaymentLogoUpload(input, id) {
-    const file = input.files[0];
-    if (!file) return;
-    try {
-        const res = await api.uploadFile(file);
-        const method = paymentMethods.find(m => m.id === id);
-        if (method) method.logo = res.url;
-        renderPaymentMethods();
-        if (window.markAsModified) window.markAsModified();
-    } catch (err) {
-        showToast('فشل رفع الشعار', 'error');
-    }
+  const file = input.files[0];
+  if (!file) return;
+  try {
+    const res = await api.uploadFile(file);
+    const method = paymentMethods.find(m => m.id === id);
+    if (method) method.logo = res.url;
+    renderPaymentMethods();
+    if (window.markAsModified) window.markAsModified();
+  } catch (err) {
+    showToast('فشل رفع الشعار', 'error');
+  }
 }
 
 function updatePaymentMethod(id, field, value) {
-    const method = paymentMethods.find(m => m.id === id);
-    if (method) method[field] = value;
-    if (window.markAsModified) window.markAsModified();
+  const method = paymentMethods.find(m => m.id === id);
+  if (method) method[field] = value;
+  if (window.markAsModified) window.markAsModified();
 }
 
 function renderPaymentMethods() {
-    const container = document.getElementById('payment-methods-container');
-    if (!container) return;
-    
-    container.innerHTML = paymentMethods.map(m => `
+  const container = document.getElementById('payment-methods-container');
+  if (!container) return;
+
+  container.innerHTML = paymentMethods.map(m => `
         <div class="admin-card" style="margin:0; border:1px solid #e2e8f0; background:#f8fafc; padding:20px; border-radius:16px; position:relative;">
             <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:20px;">
                 <!-- Right: Logo (Circular Shape) -->
@@ -204,7 +204,7 @@ async function saveSettings() {
     primaryColor: document.getElementById('setting-primary-color').value,
     paymentMethods: paymentMethods
   };
-  
+
   try {
     await api.updateSetting(SETTINGS_KEY, settings);
     originalSettings = JSON.parse(JSON.stringify(settings));

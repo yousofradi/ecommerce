@@ -41,13 +41,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     const paymentMethodsContainer = document.getElementById('payment-methods');
     if (paymentMethodsContainer && settings.paymentMethods) {
       paymentMethodsContainer.innerHTML = settings.paymentMethods.map((m, idx) => `
-        <label class="payment-method-card ${idx === 0 ? 'selected' : ''}">
-          <input type="radio" name="payment" value="${m.label}" ${idx === 0 ? 'checked' : ''} onchange="updatePaymentUI()">
-          <span class="payment-method-icon">
-            ${m.logo ? `<img src="${m.logo}" style="width:24px; height:24px; object-fit:contain; margin-bottom:4px;">` : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>`}
-            <div class="payment-method-label">${m.label}</div>
-            <div class="payment-method-desc">${m.number}</div>
-          </span>
+        <label class="payment-method-card ${idx === 0 ? 'selected' : ''}" style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px;">
+          <div style="display: flex; align-items: center; gap: 14px;">
+            <input type="radio" name="payment" value="${m.label}" ${idx === 0 ? 'checked' : ''} onchange="updatePaymentUI()" style="margin:0; width: 20px; height: 20px; accent-color: var(--primary);">
+            <div style="text-align: right;">
+              <div style="font-weight: 700; font-size: 1rem; color: #1e293b; margin-bottom: 2px;">${m.label}</div>
+              <div style="font-size: 0.85rem; color: #64748b; font-family: monospace; letter-spacing: 0.5px;">${m.number}</div>
+            </div>
+          </div>
+          <div style="width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; background: #fff; border: 1px solid #f1f5f9; border-radius: 12px; overflow: hidden; padding: 4px;">
+            ${m.logo ? `<img src="${m.logo}" style="max-width:100%; max-height:100%; object-fit:contain;">` : `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>`}
+          </div>
         </label>
       `).join('');
     }
@@ -73,7 +77,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const fields = ['c-name', 'c-phone', 'c-second-phone', 'c-gov', 'c-address', 'c-notes', 'order-discount', 'paid-amount'];
     fields.forEach(id => {
       const el = document.getElementById(id);
-      if (el) el.value = (id === 'order-discount' ? '0' : '');
+      if (el) el.value = '';
     });
     updatePaymentUI();
     recalcSummary();
@@ -474,17 +478,12 @@ window.submitOrder = async function () {
   };
 
   try {
-    await api.createOrder(payload);
+    const res = await api.createOrder(payload);
     showToast('تم إنشاء الطلب بنجاح!');
     
-    // Reset form instead of redirecting
-    cartItems = [];
-    renderCart();
-    const fields = ['c-name', 'c-phone', 'c-second-phone', 'c-gov', 'c-address', 'c-notes', 'order-discount', 'paid-amount'];
-    fields.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.value = (id === 'order-discount' ? '0' : '');
-    });
+    if (res && res._id) {
+      setTimeout(() => window.location.href = `order-details.html?id=${res._id}`, 1000);
+    }
     updatePaymentUI();
     recalcSummary();
     if (window.hideBar) window.hideBar();

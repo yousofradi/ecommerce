@@ -831,8 +831,8 @@ async function saveProduct(e) {
         const formTitle = document.getElementById('form-title');
         if (formTitle) formTitle.textContent = 'تعديل المنتج';
         document.title = 'تعديل المنتج | لوحة التحكم';
-        const newUrl = window.location.pathname + '?id=' + editId;
-        window.history.replaceState({ path: newUrl }, '', newUrl);
+        const newUrl = 'product-form.html?id=' + editId;
+        setTimeout(() => window.location.href = newUrl, 1000);
         const deleteBtn = document.getElementById('delete-btn');
         if (deleteBtn) deleteBtn.style.display = 'block';
       }
