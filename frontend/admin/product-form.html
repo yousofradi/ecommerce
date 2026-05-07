@@ -53,6 +53,25 @@
       background: #dc2626;
     }
 
+    .drag-handle-img {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 32px;
+      background: rgba(0, 0, 0, 0.5);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+      z-index: 10;
+    }
+
+    .drag-handle-img:active {
+      cursor: grabbing;
+    }
+
     .primary-badge {
       position: absolute;
       top: 4px;

@@ -252,6 +252,9 @@ function renderImages() {
     item.style.cursor = 'grab';
 
     item.innerHTML = `
+      <div class="drag-handle-img">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+      </div>
       <img src="${url}" alt="صورة ${idx + 1}" style="pointer-events: none;" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTEwIiBoZWlnaHQ9IjExMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTEwIiBoZWlnaHQ9IjExMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzk0YTNiOCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuKdjCBFcnJvcjwvdGV4dD48L3N2Zz4='">
       <button type="button" class="remove-img" onclick="removeImage(${idx})">×</button>
       ${idx === 0 ? '<span class="primary-badge">رئيسية</span>' : ''}
@@ -263,12 +266,10 @@ function renderImages() {
   if (!sortableImages && window.Sortable) {
     sortableImages = new Sortable(container, {
       animation: 150,
-      delay: 200, // 200ms delay to allow scrolling
-      delayOnTouchOnly: true,
-      touchStartThreshold: 5, // Allow 5px of movement before dragging
+      handle: '.drag-handle-img', // ONLY drag by the handle
       filter: '#add-image-dropzone',
       ghostClass: 'sortable-ghost',
-      forceFallback: true, // Better cross-browser touch support
+      forceFallback: true,
       onEnd: () => {
         const newUrls = [];
         container.querySelectorAll('.image-item').forEach(el => {
