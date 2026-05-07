@@ -226,6 +226,17 @@ function removeImage(index) {
   if (window.markAsModified) window.markAsModified();
 }
 
+function moveImage(index, direction) {
+  const newIndex = index + direction;
+  if (newIndex < 0 || newIndex >= productImages.length) return;
+  
+  const img = productImages[index];
+  productImages.splice(index, 1);
+  productImages.splice(newIndex, 0, img);
+  renderImages();
+  if (window.markAsModified) window.markAsModified();
+}
+
 let draggedImageIndex = null;
 
 function renderImages() {
@@ -269,7 +280,17 @@ function renderImages() {
     item.innerHTML = `
       <img src="${url}" alt="صورة ${idx + 1}" style="pointer-events: none;" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTEwIiBoZWlnaHQ9IjExMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTEwIiBoZWlnaHQ9IjExMCIgZmlsbD0iI2YxZjVmOSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzk0YTNiOCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuKdjCBFcnJvcjwvdGV4dD48L3N2Zz4='">
       <button type="button" class="remove-img" onclick="removeImage(${idx})">×</button>
-      ${idx === 0 ? '<span style="position:absolute;bottom:4px;right:4px;background:var(--primary);color:#fff;font-size:0.65rem;padding:2px 6px;border-radius:8px;pointer-events:none;">رئيسية</span>' : ''}
+      
+      <div class="image-move-controls">
+        <button type="button" class="move-btn" onclick="moveImage(${idx}, 1)" ${idx === productImages.length - 1 ? 'disabled' : ''}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <button type="button" class="move-btn" onclick="moveImage(${idx}, -1)" ${idx === 0 ? 'disabled' : ''}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </div>
+
+      ${idx === 0 ? '<span class="primary-badge">رئيسية</span>' : ''}
     `;
     container.insertBefore(item, addBtn);
   });
