@@ -142,7 +142,7 @@
       if (!orderId) { window.location.href = 'index'; return; }
 
       try {
-        const order = await api.getOrder(orderId);
+        const order = await api.getPublicOrder(orderId);
         if (!order) { window.location.href = 'index'; return; }
 
         const displayId = order.orderId.replace('Order-', '');
@@ -178,7 +178,7 @@
         document.getElementById('summ-total').textContent = formatPrice(order.totalPrice);
 
         const settings = await api.getSetting('sundura_global_settings');
-        let waNumber = (settings.socialWa).replace(/[^0-9]/g, '');
+        let waNumber = (settings.socialWa || '').replace(/[^0-9]/g, '');
         if (waNumber.startsWith('01')) waNumber = '2' + waNumber;
         const brandName = settings.invoicePrefix || 'المتجر';
         const waMessage = encodeURIComponent(`مرحباً، قمت بطلب من متجر ${brandName}.\nرقم الطلب الخاص بي هو: ${order.orderId}`);

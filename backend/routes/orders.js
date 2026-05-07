@@ -86,6 +86,18 @@ router.post('/', async (req, res) => {
   }
 });
 
+// GET /api/orders/public/:orderId — single order (public for storefront)
+router.get('/public/:orderId', async (req, res) => {
+  try {
+    const order = await Order.findOne({ orderId: req.params.orderId });
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    // Strip sensitive fields if any (currently none obvious, but good practice)
+    res.json(order);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch order' });
+  }
+});
+
 // ── Admin ───────────────────────────────────────────────
 
 // GET /api/orders — list all

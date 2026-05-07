@@ -70,6 +70,7 @@ const api = {
   createOrder(d) { return this._request('/orders', { method: 'POST', body: JSON.stringify(d) }); },
   getOrders(archived = false) { return this._request(`/orders?archived=${archived}`, { admin: true }); },
   getOrder(id) { return this._request(`/orders/${id}`, { admin: true }); },
+  getPublicOrder(id) { return this._request(`/orders/public/${id}`); },
   updateOrder(id, d) { return this._request(`/orders/${id}`, { method: 'PUT', body: JSON.stringify(d), admin: true }); },
   deleteOrder(id) { return this._request(`/orders/${id}`, { method: 'DELETE', admin: true }); },
   archiveOrders(orderIds) { return this._request('/orders/archive/batch', { method: 'POST', body: JSON.stringify({ orderIds }), admin: true }); },
@@ -303,6 +304,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           document.title = settings.storeName;
         }
         
+        const adminBrand = document.querySelector('.admin-brand-title');
         if (adminBrand) adminBrand.textContent = settings.storeName;
         
         // Update any generic placeholders in the DOM

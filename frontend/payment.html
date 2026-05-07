@@ -63,7 +63,7 @@
 
       try {
         [currentOrder, storeSettings] = await Promise.all([
-          api.getOrder(orderId),
+          api.getPublicOrder(orderId),
           api.getSetting('sundura_global_settings')
         ]);
 
@@ -145,7 +145,7 @@
         }
         waMessage += `يرجى مراجعة التحويل وتأكيد الطلب`;
         
-        let waNumber = storeSettings.socialWa.replace(/[^0-9]/g, '');
+        let waNumber = (storeSettings.socialWa || '').replace(/[^0-9]/g, '');
         if (waNumber.startsWith('01')) waNumber = '2' + waNumber;
         const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(waMessage)}`;
         
