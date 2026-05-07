@@ -258,18 +258,33 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ── Apply Global Settings ──────────────────────────────
-// ── Apply Global Settings ──────────────────────────────
-// ── Apply Global Settings ──────────────────────────────
+// Immediately apply cached store URL if exists
+(function() {
+  const cachedUrl = localStorage.getItem('sundura_store_url');
+  if (cachedUrl) {
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.admin-store-preview').forEach(a => a.href = cachedUrl);
+    });
+  }
+})();
+
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     const settings = await api.getSetting('sundura_global_settings');
     if (settings) {
       // 1. Logo
       if (settings.storeLogo) {
-        // Target specific class AND any image with the old hardcoded URL
         document.querySelectorAll('.store-logo-img, img[src*="cmo1fsgmc060f01lwhwpn6ga7"]').forEach(img => {
           img.src = settings.storeLogo;
           img.style.opacity = '1';
+        });
+      }
+
+      // 1.1 Store URL (Preview Button)
+      if (settings.storeUrl) {
+        localStorage.setItem('sundura_store_url', settings.storeUrl);
+        document.querySelectorAll('.admin-store-preview').forEach(a => {
+          a.href = settings.storeUrl;
         });
       }
 
@@ -370,6 +385,21 @@ document.addEventListener('DOMContentLoaded', async () => {
       // 7. Custom Color Palette
       if (settings.primaryColor) {
         applyColorPalette(settings.primaryColor);
+      }
+
+      // 8. Site Preview Image (OG Image)
+      if (settings.storePreview) {
+        const updateMeta = (attr, val, content) => {
+          let el = document.querySelector(`meta[${attr}="${val}"]`);
+          if (!el) {
+            el = document.createElement('meta');
+            el.setAttribute(attr, val);
+            document.head.appendChild(el);
+          }
+          el.content = content;
+        };
+        updateMeta('property', 'og:image', settings.storePreview);
+        updateMeta('name', 'twitter:image', settings.storePreview);
       }
     }
   } catch (err) {
