@@ -67,9 +67,19 @@ router.get('/', async (req, res) => {
       }
     }
 
-    const sortObj = { createdAt: -1 };
+    let sortObj = { createdAt: -1 };
     
-    // Optimization: Don't fetch description for listings (it's only needed for details page)
+    // Support manual sorting if collectionId is provided
+    let manualOrder = null;
+    if (collectionId) {
+      const Collection = require('../models/Collection');
+      const col = await Collection.findById(collectionId).select('productOrder');
+      if (col && col.productOrder && col.productOrder.length > 0) {
+        manualOrder = col.productOrder.map(id => id.toString());
+      }
+    }
+
+    // Optimization: Don't fetch description for listings
     const fieldsToSelect = admin === 'true' ? '' : '-description';
 
     if (page || limit) {
@@ -77,10 +87,30 @@ router.get('/', async (req, res) => {
       const limitNum = parseInt(limit) || 20;
       const skip = (pageNum - 1) * limitNum;
       
-      const [products, total] = await Promise.all([
-        Product.find(query).select(fieldsToSelect).sort(sortObj).skip(skip).limit(limitNum),
-        Product.countDocuments(query)
-      ]);
+      let products, total;
+      if (manualOrder && !search) {
+        // Fetch all matching products then sort and paginate manually or via $in
+        // But $in doesn't guarantee order. 
+        // Best for small/medium collections: fetch all matching IDs, then paginate.
+        const allMatching = await Product.find(query).select(fieldsToSelect);
+        total = allMatching.length;
+        
+        // Sort
+        const orderMap = {};
+        manualOrder.forEach((id, idx) => orderMap[id] = idx);
+        allMatching.sort((a, b) => {
+          const idxA = orderMap[a._id.toString()] !== undefined ? orderMap[a._id.toString()] : 9999;
+          const idxB = orderMap[b._id.toString()] !== undefined ? orderMap[b._id.toString()] : 9999;
+          return idxA - idxB;
+        });
+        
+        products = allMatching.slice(skip, skip + limitNum);
+      } else {
+        [products, total] = await Promise.all([
+          Product.find(query).select(fieldsToSelect).sort(sortObj).skip(skip).limit(limitNum),
+          Product.countDocuments(query)
+        ]);
+      }
       
       const result = {
         products,

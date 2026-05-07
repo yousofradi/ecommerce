@@ -72,9 +72,11 @@ router.post('/', adminAuth, upload.single('image'), (req, res) => {
     let imageUrl = req.file.path;
     
     if (!isCloudinaryConfigured) {
-      const protocol = req.protocol;
       const host = req.get('host');
-      imageUrl = `${protocol}://${host}/uploads/${req.file.filename}`;
+      // Force https if we are on render or if the host suggests it
+      const protocol = (req.headers['x-forwarded-proto'] || req.protocol || 'http').split(',')[0];
+      const finalProtocol = (host.includes('render.com') || host.includes('onrender.com')) ? 'https' : protocol;
+      imageUrl = `${finalProtocol}://${host}/uploads/${req.file.filename}`;
     }
     
     res.json({ 

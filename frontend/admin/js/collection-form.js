@@ -91,7 +91,21 @@ function populateCollectionForm(col) {
   updateImagePreview(col.imageUrl || '');
 
   // Get products for this collection
-  collectionProducts = allProducts.filter(p => p.collectionId === col._id || (p.collectionIds && p.collectionIds.includes(col._id)));
+  const associatedProducts = allProducts.filter(p => p.collectionId === col._id || (p.collectionIds && p.collectionIds.includes(col._id)));
+  
+  if (col.productOrder && col.productOrder.length > 0) {
+    // Sort based on saved productOrder
+    const orderMap = {};
+    col.productOrder.forEach((id, idx) => orderMap[id] = idx);
+    collectionProducts = associatedProducts.sort((a, b) => {
+      const idxA = orderMap[a._id] !== undefined ? orderMap[a._id] : 9999;
+      const idxB = orderMap[b._id] !== undefined ? orderMap[b._id] : 9999;
+      return idxA - idxB;
+    });
+  } else {
+    collectionProducts = associatedProducts;
+  }
+  
   renderProductsList();
 }
 
@@ -276,8 +290,9 @@ async function saveCollection(e) {
   const data = {
     name: document.getElementById('c-name').value.trim(),
     urlName: document.getElementById('c-url').value.trim() || undefined,
-    imageUrl: document.getElementById('c-image').value.trim(),
-    description: document.getElementById('c-desc').innerHTML.trim()
+    imageUrl: document.getElementById('c-image').value,
+    description: document.getElementById('c-desc').innerHTML.trim(),
+    productOrder: collectionProducts.map(p => p._id)
   };
 
   try {
