@@ -68,7 +68,7 @@ async function loadPaymentMethods() {
     // Show global notes
     const noteBox = document.getElementById('payment-instructions');
     if (paymentNotes) {
-        noteBox.innerHTML = paymentNotes.replace(/\n/g, '<br>');
+        noteBox.textContent = paymentNotes;
         noteBox.style.display = 'block';
     } else {
         noteBox.style.display = 'none';
