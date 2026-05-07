@@ -263,7 +263,12 @@ function renderImages() {
   if (!sortableImages && window.Sortable) {
     sortableImages = new Sortable(container, {
       animation: 150,
+      delay: 200, // 200ms delay to allow scrolling
+      delayOnTouchOnly: true,
+      touchStartThreshold: 5, // Allow 5px of movement before dragging
       filter: '#add-image-dropzone',
+      ghostClass: 'sortable-ghost',
+      forceFallback: true, // Better cross-browser touch support
       onEnd: () => {
         const newUrls = [];
         container.querySelectorAll('.image-item').forEach(el => {
