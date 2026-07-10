@@ -41,20 +41,22 @@ async function refreshShippingCache() {
       };
     });
 
-    if (bostaOption && bostaOption.cities) {
-      bostaOption.cities.forEach(c => {
-        const exists = finalFees.find(f => isCityEqual(f.city, c.city) || isCityEqual(f.cityOtherName, c.city));
-        if (!exists) {
-          finalFees.push({
-            _id: new mongoose.Types.ObjectId(),
-            city: c.city,
-            cityOtherName: '',
-            fee: Number(c.fee) || bostaOption.cost || 0,
-            zones: c.zones || []
-          });
-        }
-      });
-    }
+    shippingOptions.forEach(opt => {
+      if (opt && opt.cities) {
+        opt.cities.forEach(c => {
+          const exists = finalFees.find(f => isCityEqual(f.city, c.city) || isCityEqual(f.cityOtherName, c.city));
+          if (!exists) {
+            finalFees.push({
+              _id: new mongoose.Types.ObjectId(),
+              city: c.city,
+              cityOtherName: '',
+              fee: Number(c.fee) || opt.cost || 0,
+              zones: c.zones || []
+            });
+          }
+        });
+      }
+    });
 
     await redis.set(SHIPPING_CACHE_KEY, JSON.stringify(finalFees));
 
@@ -116,20 +118,22 @@ router.get('/', async (req, res) => {
       };
     });
 
-    if (bostaOption && bostaOption.cities) {
-      bostaOption.cities.forEach(c => {
-        const exists = finalFees.find(f => isCityEqual(f.city, c.city) || isCityEqual(f.cityOtherName, c.city));
-        if (!exists) {
-          finalFees.push({
-            _id: new mongoose.Types.ObjectId(),
-            city: c.city,
-            cityOtherName: '',
-            fee: Number(c.fee) || bostaOption.cost || 0,
-            zones: c.zones || []
-          });
-        }
-      });
-    }
+    shippingOptions.forEach(opt => {
+      if (opt && opt.cities) {
+        opt.cities.forEach(c => {
+          const exists = finalFees.find(f => isCityEqual(f.city, c.city) || isCityEqual(f.cityOtherName, c.city));
+          if (!exists) {
+            finalFees.push({
+              _id: new mongoose.Types.ObjectId(),
+              city: c.city,
+              cityOtherName: '',
+              fee: Number(c.fee) || opt.cost || 0,
+              zones: c.zones || []
+            });
+          }
+        });
+      }
+    });
     
     // 4. Set Cache (24 hour TTL for persistent feel)
     try {
