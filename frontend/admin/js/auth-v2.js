@@ -274,7 +274,9 @@ function initUnsavedChangesBar() {
       el.classList.contains('selection-checkbox') ||
       el.classList.contains('pli-checkbox') ||
       el.classList.contains('product-select-cb') ||
-      el.classList.contains('product-variant-cb');
+      el.classList.contains('product-variant-cb') ||
+      el.id === 'page-dropdown' ||
+      el.id === 'items-per-page';
   };
 
   // Detect changes

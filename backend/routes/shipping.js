@@ -21,7 +21,7 @@ async function refreshShippingCache() {
 
     const isCityEqual = (a, b) => {
       if (!a || !b) return false;
-      const norm = (s) => s.replace(/[أإآا]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/\s+/g, '').toLowerCase().trim();
+      const norm = (s) => String(s).replace(/[أإآا]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/\s+/g, '').toLowerCase().trim();
       return norm(a) === norm(b);
     };
 
@@ -40,6 +40,21 @@ async function refreshShippingCache() {
         zones: record.zones || []
       };
     });
+
+    if (bostaOption && bostaOption.cities) {
+      bostaOption.cities.forEach(c => {
+        const exists = finalFees.find(f => isCityEqual(f.city, c.city) || isCityEqual(f.cityOtherName, c.city));
+        if (!exists) {
+          finalFees.push({
+            _id: new mongoose.Types.ObjectId(),
+            city: c.city,
+            cityOtherName: '',
+            fee: Number(c.fee) || bostaOption.cost || 0,
+            zones: c.zones || []
+          });
+        }
+      });
+    }
 
     await redis.set(SHIPPING_CACHE_KEY, JSON.stringify(finalFees));
 
@@ -81,7 +96,7 @@ router.get('/', async (req, res) => {
 
     const isCityEqual = (a, b) => {
       if (!a || !b) return false;
-      const norm = (s) => s.replace(/[أإآا]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/\s+/g, '').toLowerCase().trim();
+      const norm = (s) => String(s).replace(/[أإآا]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/\s+/g, '').toLowerCase().trim();
       return norm(a) === norm(b);
     };
 
@@ -100,6 +115,21 @@ router.get('/', async (req, res) => {
         zones: record.zones || []
       };
     });
+
+    if (bostaOption && bostaOption.cities) {
+      bostaOption.cities.forEach(c => {
+        const exists = finalFees.find(f => isCityEqual(f.city, c.city) || isCityEqual(f.cityOtherName, c.city));
+        if (!exists) {
+          finalFees.push({
+            _id: new mongoose.Types.ObjectId(),
+            city: c.city,
+            cityOtherName: '',
+            fee: Number(c.fee) || bostaOption.cost || 0,
+            zones: c.zones || []
+          });
+        }
+      });
+    }
     
     // 4. Set Cache (24 hour TTL for persistent feel)
     try {
@@ -132,7 +162,7 @@ router.get('/egyptpost', async (req, res) => {
 
     const isCityEqual = (a, b) => {
       if (!a || !b) return false;
-      const norm = (s) => s.replace(/[أإآا]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/\s+/g, '').toLowerCase().trim();
+      const norm = (s) => String(s).replace(/[أإآا]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/\s+/g, '').toLowerCase().trim();
       return norm(a) === norm(b);
     };
 
@@ -150,6 +180,20 @@ router.get('/egyptpost', async (req, res) => {
         fee: isNaN(resolvedFee) ? 80 : resolvedFee
       };
     });
+
+    if (postOption && postOption.cities) {
+      postOption.cities.forEach(c => {
+        const exists = egyptPostFees.find(f => isCityEqual(f.city, c.city) || isCityEqual(f.cityOtherName, c.city));
+        if (!exists) {
+          egyptPostFees.push({
+            _id: new mongoose.Types.ObjectId(),
+            city: c.city,
+            cityOtherName: '',
+            fee: Number(c.fee) || postOption.cost || 80
+          });
+        }
+      });
+    }
 
     res.json(egyptPostFees);
   } catch (error) {
