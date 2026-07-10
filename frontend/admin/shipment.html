@@ -803,6 +803,17 @@
           await api.updateSetting('shipping_options', options);
         }
         shippingOptions = options;
+
+        shippingOptions.forEach(opt => {
+          if (opt.cities) {
+            opt.cities.forEach(c => {
+              if (c.city && !EGYPT_GOVERNORATES.includes(c.city)) {
+                EGYPT_GOVERNORATES.push(c.city);
+              }
+            });
+          }
+        });
+
         renderShippingOptions();
         renderTabsHeader();
         renderActiveTabContent();
