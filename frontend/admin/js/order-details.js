@@ -1041,8 +1041,9 @@ window.saveOrderChanges = async function (silent = false) {
       updatedAt: currentOrder.updatedAt
     };
 
-    await api.updateOrder(currentOrder.orderId, updates);
+    const updatedOrderResponse = await api.updateOrder(currentOrder.orderId, updates);
     currentOrder.forcePaymentWebhook = false; // Reset the flag
+    currentOrder.updatedAt = updatedOrderResponse.updatedAt;
 
     if (!silent) {
       showToast('تم حفظ التغييرات بنجاح <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;"><polyline points="20 6 9 17 4 12"/></svg>');
