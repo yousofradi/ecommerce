@@ -17,6 +17,15 @@ router.post('/', async (req, res) => {
       return res.json({ success: true, message: 'Abandoned cart removed since it is now empty' });
     }
 
+    const hasName = customer && customer.name && customer.name.trim() !== '';
+    const hasPhone = customer && customer.phone && customer.phone.trim() !== '';
+
+    // Do not save the cart if both name and phone are missing
+    if (!hasName && !hasPhone) {
+      await AbandonedCart.findOneAndDelete({ checkoutToken });
+      return res.json({ success: true, message: 'Abandoned cart removed/not saved since it lacks both name and phone' });
+    }
+
     const updatedCart = await AbandonedCart.findOneAndUpdate(
       { checkoutToken },
       { customer, items },
@@ -33,10 +42,13 @@ router.post('/', async (req, res) => {
 // ── 2. Get All Abandoned Carts (Admin) ────────────────────────
 router.get('/', adminAuth, async (req, res) => {
   try {
+    // To handle whitespace, we can use a regex pattern that ensures there's at least one non-whitespace character
+    const nonWhitespaceRegex = /\\S/;
+    
     const carts = await AbandonedCart.find({
       $or: [
-        { 'customer.name': { $exists: true, $ne: '', $ne: null } },
-        { 'customer.phone': { $exists: true, $ne: '', $ne: null } }
+        { 'customer.name': { $exists: true, $ne: null, $regex: nonWhitespaceRegex } },
+        { 'customer.phone': { $exists: true, $ne: null, $regex: nonWhitespaceRegex } }
       ]
     }).sort({ updatedAt: -1 });
     res.json(carts);

@@ -939,10 +939,14 @@ router.put('/:orderId', adminAuth, async (req, res) => {
             console.log(`[Webhook] Force triggering webhooks and WhatsApp for ${event} - order ${updatedOrder.orderId}`);
             await sendWebhook(event, updatedOrder.toObject());
           } else {
-            // Normal update: Always send HTTP Webhook for the update
+            // Normal update: Always send HTTP Webhook for the update unless skipped
             // Also if it just became paid, trigger the order.paid event for both WhatsApp and Webhook
-            console.log(`[Webhook] Triggering update webhook for order ${updatedOrder.orderId}`);
-            await sendWebhook('order.updated', updatedOrder.toObject(), { webhookOnly: true });
+            if (!updates.skipWebhook) {
+              console.log(`[Webhook] Triggering update webhook for order ${updatedOrder.orderId}`);
+              await sendWebhook('order.updated', updatedOrder.toObject(), { webhookOnly: true });
+            } else {
+              console.log(`[Webhook] Skipped update webhook for order ${updatedOrder.orderId} due to skipWebhook flag`);
+            }
 
             if (isNewlyPaid) {
               console.log(`[Webhook] Triggering order.paid for order ${updatedOrder.orderId}`);
