@@ -68,9 +68,15 @@ function optimizeCloudinaryUrl(url) {
     // 1. Force the URL to explicitly end in .webp
     url = url.replace(/\.(png|jpe?g|gif)$/i, '.webp');
     
-    // 2. Add f_auto,q_85 if not present (high quality instead of auto)
-    if (!url.includes('f_auto') && url.includes('/upload/')) {
-      url = url.replace('/upload/', '/upload/f_auto,q_85/');
+    if (url.includes('/upload/')) {
+      // 2. Remove any existing transformation strings like f_auto, q_85, etc to avoid duplication
+      url = url.replace(/\/upload\/(?:f_auto,?)?(?:q_[a-zA-Z0-9]+,?)?(?:c_limit,?)?(?:w_[0-9]+,?)?\/?/, '/upload/');
+      
+      // 3. Inject bandwidth-saving transformations
+      // c_limit,w_800: Scales large images down to max 800px width (huge bandwidth savings)
+      // q_85: Explicit quality prevents dynamic quality transformations
+      // We removed f_auto to stop Cloudinary from generating 3+ versions (WebP/AVIF/JPG) per image
+      url = url.replace('/upload/', '/upload/c_limit,w_800,q_85/');
     }
   }
   
