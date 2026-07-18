@@ -540,14 +540,6 @@ document.addEventListener('DOMContentLoaded', () => {
     api.getCollections().then(cols => {
       const track = document.getElementById('global-cat-track');
       if (cols && cols.length > 0) {
-        let repeatedCols = [];
-        let itemsNeededForScreen = 20; 
-        let repeats = Math.ceil(itemsNeededForScreen / cols.length) || 1;
-        
-        for(let i=0; i<repeats; i++) {
-          repeatedCols = repeatedCols.concat(cols);
-        }
-        
         const renderBlock = (list) => list.map(c => `
           <a href="collection/${c.urlName || c._id}" class="cat-badge">
             <div class="cat-badge-img-wrapper">
@@ -557,9 +549,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </a>
         `).join('');
 
-        const blockHTML = renderBlock(repeatedCols);
-        
-        track.innerHTML = blockHTML + blockHTML;
+        track.innerHTML = renderBlock(cols);
 
         // JS Auto-scroll logic (allows manual scrolling + fixes mobile stickiness)
         let isHovered = false;
@@ -568,14 +558,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const autoScroll = () => {
           if (!isHovered && !isTouching) {
-            const prevScroll = catBar.scrollLeft;
             catBar.scrollBy({ left: -1 });
-
-            if (Math.abs(catBar.scrollLeft) >= (track.scrollWidth / 2)) {
-              catBar.scrollLeft = 0;
-            } else if (catBar.scrollLeft === prevScroll && catBar.scrollLeft !== 0) {
-              catBar.scrollLeft = 0;
-            }
           }
           requestAnimationFrame(autoScroll);
         };
