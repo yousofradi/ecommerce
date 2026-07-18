@@ -512,4 +512,18 @@ document.addEventListener('DOMContentLoaded', () => {
       localStorage.setItem(visitKey, 'true');
     }).catch(err => console.error('Failed to track visitor', err));
   }
+
+  // Populate WhatsApp link globally
+  const waLink = document.getElementById('nav-wa-link');
+  if (waLink) {
+    api.getSetting('sundura_global_settings').then(settings => {
+      if (settings && settings.socialWa) {
+        let waNumber = settings.socialWa.replace(/[^0-9]/g, '');
+        if (waNumber.startsWith('01')) waNumber = '2' + waNumber;
+        waLink.href = `https://wa.me/${waNumber}`;
+      } else {
+        waLink.style.display = 'none';
+      }
+    }).catch(err => console.error('Failed to load WhatsApp link', err));
+  }
 });
