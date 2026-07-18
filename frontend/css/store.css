@@ -1092,10 +1092,13 @@ button:active,
 }
 
 /* ── Sticky Category Bar ── */
-.sticky-cat-bar {
+.sticky-cat-bar-wrapper {
+  width: 100%;
   background: #fff;
   border-top: 1px solid #f1f5f9;
-  padding: 8px 0 4px;
+}
+.sticky-cat-bar {
+  padding: 8px 0 12px; /* Increased bottom padding to prevent text clipping */
   width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;

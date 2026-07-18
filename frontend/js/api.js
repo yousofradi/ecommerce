@@ -532,13 +532,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const isExcluded = excludedPaths.some(p => window.location.pathname.includes(p));
   const header = document.querySelector('.store-header');
   if (header && !isExcluded) {
-    const catBar = document.createElement('div');
-    catBar.className = 'sticky-cat-bar';
-    catBar.innerHTML = '<div class="sticky-cat-track" id="global-cat-track"></div>';
-    header.appendChild(catBar);
+    const catBarWrapper = document.createElement('div');
+    catBarWrapper.className = 'sticky-cat-bar-wrapper';
+    catBarWrapper.innerHTML = '<div class="container"><div class="sticky-cat-bar"><div class="sticky-cat-track" id="global-cat-track"></div></div></div>';
+    header.appendChild(catBarWrapper);
 
     api.getCollections().then(cols => {
       const track = document.getElementById('global-cat-track');
+      const catBar = catBarWrapper.querySelector('.sticky-cat-bar');
       if (cols && cols.length > 0) {
         const renderBlock = (list) => list.map(c => `
           <a href="collection/${c.urlName || c._id}" class="cat-badge">
