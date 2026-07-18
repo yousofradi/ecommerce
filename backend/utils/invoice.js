@@ -221,11 +221,11 @@ async function generateInvoiceInnerHtml(order, settings, options = {}) {
 <tbody>
 
 <tr>
-<td colspan="2" style="padding: 0 8px 0 8px !important;">
-  <div style="display: flex; justify-content: space-between; align-items: center; font-weight: bold; border-bottom: 1px dashed #ccc; padding-bottom: 0px; font-size: 13px;">
+<td colspan="2" style="padding: 0 8px !important;">
+  <div style="display: flex; justify-content: space-between; align-items: center; font-weight: bold; padding: 4px 0; font-size: 13px;">
     <span style="width: 100px; text-align: right;">#${safe(order.orderId)}</span>
-    <span style="flex: 1; text-align: center;">
-      <img src="https://res.cloudinary.com/sundura/image/upload/f_png,q_100/v1779328561/ecommerce-uploads/1779328561151-334345189.png" style="height: 28px; width: auto; display: inline-block;" alt="Logo" crossorigin="anonymous" />
+    <span style="flex: 1; text-align: center; display: flex; justify-content: center; align-items: center;">
+      <img src="https://res.cloudinary.com/sundura/image/upload/f_png,q_100/v1779328561/ecommerce-uploads/1779328561151-334345189.png" style="height: 28px; width: auto; display: block;" alt="Logo" crossorigin="anonymous" />
     </span>
     <span style="width: 100px; text-align: left;">${dateStr}</span>
   </div>
