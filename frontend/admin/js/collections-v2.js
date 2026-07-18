@@ -108,7 +108,7 @@ async function loadCollections() {
       animation: 150,
       handle: '.drag-handle',
       onEnd: () => {
-        if (window.showUnsavedBar) window.showUnsavedBar();
+        if (window.markAsModified) window.markAsModified();
       }
     });
 
