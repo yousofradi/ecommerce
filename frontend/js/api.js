@@ -528,8 +528,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Inject sticky category bar globally
+  const excludedPaths = ['/cart', '/checkout', '/order-success'];
+  const isExcluded = excludedPaths.some(p => window.location.pathname.includes(p));
   const header = document.querySelector('.store-header');
-  if (header) {
+  if (header && !isExcluded) {
     const catBar = document.createElement('div');
     catBar.className = 'sticky-cat-bar';
     catBar.innerHTML = '<div class="sticky-cat-track" id="global-cat-track"></div>';
