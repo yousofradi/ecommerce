@@ -261,7 +261,7 @@ function renderOrders(orders) {
       if (rem > 0) {
         cFee = Math.max(10, Math.ceil((rem * 0.01) / 5) * 5);
       }
-      statusBadge = `<span style="display:inline-block; padding:4px 8px; border-radius:16px; background:#fef3c7; color:#92400e; font-size:0.8rem; font-weight:600; text-align:center;">مدفوع جزئياً<div style="font-size:0.7rem; font-weight:normal; opacity:0.9; margin-top:2px;">المتبقي: ${formatPrice(rem + cFee)}</div></span>${waLinkEmpty}`;
+      statusBadge = `<span style="display:inline-block; padding:4px 8px; border-radius:16px; background:#fef3c7; color:#92400e; font-size:0.8rem; font-weight:600; text-align:center;">مدفوع جزئياً<div style="font-size:0.7rem; font-weight:normal; opacity:0.9; margin-top:2px;">المتبقي: ${(rem + cFee)} ج</div></span>${waLinkEmpty}`;
     } else {
       statusBadge = `<span style="display:inline-block; padding:4px 12px; border-radius:16px; background:#f1f5f9; color:#475569; font-size:0.85rem; font-weight:600; vertical-align: middle;">غير مدفوع</span>${waLinkFull}`;
     }
