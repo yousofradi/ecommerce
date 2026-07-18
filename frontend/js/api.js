@@ -538,7 +538,15 @@ document.addEventListener('DOMContentLoaded', () => {
     api.getCollections().then(cols => {
       const track = document.getElementById('global-cat-track');
       if (cols && cols.length > 0) {
-        track.innerHTML = cols.map(c => `
+        let repeatedCols = [];
+        let itemsNeededForScreen = 20; 
+        let repeats = Math.ceil(itemsNeededForScreen / cols.length) || 1;
+        
+        for(let i=0; i<repeats; i++) {
+          repeatedCols = repeatedCols.concat(cols);
+        }
+        
+        const renderBlock = (list) => list.map(c => `
           <a href="collection/${c.urlName || c._id}" class="cat-badge">
             <div class="cat-badge-img-wrapper">
               <img src="${api.optimizeImageUrl(c.imageUrl, 100)}" alt="${c.name}" onerror="this.src='https://res.cloudinary.com/sundura/image/upload/v1778758433/ecommerce-uploads/1778758432917-917399313.png'">
@@ -546,6 +554,13 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="cat-badge-name">${c.name}</span>
           </a>
         `).join('');
+
+        const blockHTML = renderBlock(repeatedCols);
+        
+        track.innerHTML = `
+          <div class="marquee-content">${blockHTML}</div>
+          <div class="marquee-content">${blockHTML}</div>
+        `;
       } else {
         catBar.style.display = 'none';
       }
