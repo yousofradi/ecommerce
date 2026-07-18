@@ -221,7 +221,7 @@ async function generateInvoiceInnerHtml(order, settings, options = {}) {
 <tbody>
 
 <tr>
-<td colspan="2" style="padding: 0 !important; padding-bottom: 2px !important;">
+<td colspan="2" style="padding: 0 8px 0 8px !important;">
   <div style="display: flex; justify-content: space-between; align-items: center; font-weight: bold; border-bottom: 1px dashed #ccc; padding-bottom: 2px; font-size: 13px;">
     <span style="width: 100px; text-align: right;">#${safe(order.orderId)}</span>
     <span style="flex: 1; text-align: center;">
