@@ -112,7 +112,8 @@ async function sendWebhookInner(event, data, options = {}) {
 
         for (const conf of configs) {
           const triggers = Array.isArray(conf.triggers) ? conf.triggers : (conf.trigger ? [conf.trigger] : []);
-          const shouldSend = triggers.includes(event);
+          const isActive = conf.isActive !== false; // true by default
+          const shouldSend = isActive && triggers.includes(event);
 
           if (shouldSend && conf.baseUrl && conf.instance && conf.apikey && conf.number) {
 

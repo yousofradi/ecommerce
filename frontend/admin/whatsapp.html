@@ -174,13 +174,69 @@
                  <span>طلب جديد (New Order)</span>
                </label>
                <label class="trigger-item">
+        <a href="#" onclick="logout()" class="logout">
+          <svg viewBox="0 0 24 24">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          خروج
+        </a></nav>
+    </aside>
+
+    <main class="admin-main">
+      <div style="max-width:900px">
+        <!-- Local Spinner -->
+        <div id="page-content-spinner">
+          <div class="spinner"></div>
+        </div>
+
+        <div id="main-content-layout">
+          <h1 class="page-title" style="margin-bottom:4px">إعدادات WhatsApp</h1>
+        <p class="page-subtitle">ربط متجرك بـ WhatsApp لإرسال إشعارات فورية عند كل طلب جديد أو عملية دفع</p>
+
+        <!-- Add Form -->
+        <div class="admin-card mb-24">
+          <h3 class="mb-16">إضافة إعدادات WhatsApp</h3>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+              <label class="form-label">رابط الـ API (Base URL) *</label>
+              <input type="url" id="w-base-url" class="form-control" placeholder="https://evolution-api.com" dir="ltr">
+            </div>
+            <div class="form-group">
+              <label class="form-label">اسم النسخة (Instance) *</label>
+              <input type="text" id="w-instance" class="form-control" placeholder="Instance01" dir="ltr">
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+              <label class="form-label">مفتاح الـ API Key *</label>
+              <input type="text" id="w-apikey" class="form-control" placeholder="API Key" dir="ltr">
+            </div>
+            <div class="form-group">
+              <label class="form-label">رقم المستلم (التاجر) *</label>
+              <input type="text" id="w-number" class="form-control" placeholder="201012345678" dir="ltr">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">يتم الإرسال عند (Triggers) *</label>
+            <div style="display:flex; gap:16px; align-items:center; padding: 12px; background: #f8fafc; border-radius: 8px;">
+               <label class="trigger-item">
+                 <input type="checkbox" class="w-trigger-check" value="order.created" style="accent-color:#0f766e">
+                 <span>طلب جديد (New Order)</span>
+               </label>
+               <label class="trigger-item">
                  <input type="checkbox" class="w-trigger-check" value="order.paid" style="accent-color:#0f766e">
                  <span>تم الدفع (Paid)</span>
                </label>
             </div>
           </div>
 
-          <button class="btn btn-primary" onclick="addConfig()" style="padding:10px 24px; font-weight:600; border-radius:30px">+ إضافة الإعدادات</button>
+          <div style="display:flex; gap:12px;">
+            <button class="btn btn-primary" onclick="addConfig()" id="w-submit-btn" style="padding:10px 24px; font-weight:600; border-radius:30px">+ إضافة الإعدادات</button>
+            <button class="btn btn-secondary" onclick="cancelEdit()" id="w-cancel-btn" style="padding:10px 24px; font-weight:600; border-radius:30px; display:none;">إلغاء التعديل</button>
+          </div>
         </div>
 
         <!-- List -->
@@ -208,6 +264,7 @@
   <script src="js/auth-v2.js?v=20260515_v2"></script>
   <script>
     const CONFIG_KEY = 'whatsapp_configs';
+    let editingIdx = -1;
 
     document.addEventListener('DOMContentLoaded', async () => {
       if (!requireAdmin()) return;
@@ -227,8 +284,10 @@
           return;
         }
 
-        tbody.innerHTML = configs.map((c, idx) => `
-          <tr style="border-bottom:1px solid #f1f5f9">
+        tbody.innerHTML = configs.map((c, idx) => {
+          const isActive = c.isActive !== false;
+          return `
+          <tr style="border-bottom:1px solid #f1f5f9; opacity: ${isActive ? '1' : '0.6'}">
             <td style="padding:16px">
               <div style="font-weight:600; color:#1e293b">${c.instance}</div>
               <div style="font-size:0.8rem; color:#64748b">${c.number}</div>
@@ -243,10 +302,16 @@
               </div>
             </td>
             <td style="padding:16px">
-              <button class="btn btn-danger btn-sm" onclick="deleteConfig(${idx})" style="padding:6px 12px; border-radius:6px; font-size:0.8rem">حذف</button>
+              <div style="display:flex; gap:8px;">
+                <button class="btn ${isActive ? 'btn-secondary' : 'btn-primary'} btn-sm" onclick="toggleActive(${idx})" style="padding:6px 12px; border-radius:6px; font-size:0.8rem">
+                  ${isActive ? 'تعطيل' : 'تفعيل'}
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="editConfig(${idx})" style="padding:6px 12px; border-radius:6px; font-size:0.8rem">تعديل</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteConfig(${idx})" style="padding:6px 12px; border-radius:6px; font-size:0.8rem">حذف</button>
+              </div>
             </td>
           </tr>
-        `).join('');
+        `}).join('');
       } catch (e) {
         tbody.innerHTML = '<tr><td colspan="3" class="text-center text-danger" style="padding:32px">فشل تحميل البيانات</td></tr>';
       }
@@ -273,19 +338,20 @@
         console.log('[WhatsApp] Loaded configs:', rawConfigs);
         let configs = Array.isArray(rawConfigs) ? rawConfigs : [];
         
-        configs.push({ baseUrl, instance, apikey, number, triggers });
+        const newConfig = { baseUrl, instance, apikey, number, triggers };
+        if (editingIdx !== -1) {
+          newConfig.isActive = configs[editingIdx].isActive; // Preserve active state
+          configs[editingIdx] = newConfig;
+        } else {
+          newConfig.isActive = true;
+          configs.push(newConfig);
+        }
         console.log('[WhatsApp] Saving updated configs:', configs);
         
         await api.updateSetting(CONFIG_KEY, configs);
         
-        showToast('تمت إضافة الإعدادات بنجاح');
-        // Clear fields
-        document.getElementById('w-base-url').value = '';
-        document.getElementById('w-instance').value = '';
-        document.getElementById('w-apikey').value = '';
-        document.getElementById('w-number').value = '';
-        triggerChecks.forEach(cb => cb.checked = false);
-        
+        showToast(editingIdx !== -1 ? 'تم تحديث الإعدادات بنجاح' : 'تمت إضافة الإعدادات بنجاح');
+        cancelEdit();
         await loadConfigs();
       } catch (e) {
         console.error('[WhatsApp] Add config failed:', e);
@@ -294,6 +360,7 @@
     }
 
     async function deleteConfig(idx) {
+      if (!confirm('هل أنت متأكد من حذف هذه الإعدادات؟')) return;
       try {
         const rawConfigs = await api.getSetting(CONFIG_KEY, false);
         let configs = Array.isArray(rawConfigs) ? rawConfigs : [];
@@ -306,6 +373,62 @@
         console.error('[WhatsApp] Delete config failed:', e);
         showToast(e.message, 'error');
       }
+    }
+
+    async function toggleActive(idx) {
+      try {
+        const rawConfigs = await api.getSetting(CONFIG_KEY, false);
+        let configs = Array.isArray(rawConfigs) ? rawConfigs : [];
+        
+        if (configs[idx]) {
+          configs[idx].isActive = configs[idx].isActive === false ? true : false;
+          await api.updateSetting(CONFIG_KEY, configs);
+          showToast(configs[idx].isActive ? 'تم تفعيل النسخة' : 'تم تعطيل النسخة');
+          await loadConfigs();
+        }
+      } catch (e) {
+        console.error('[WhatsApp] Toggle active failed:', e);
+        showToast(e.message, 'error');
+      }
+    }
+
+    async function editConfig(idx) {
+      try {
+        const rawConfigs = await api.getSetting(CONFIG_KEY, false);
+        let configs = Array.isArray(rawConfigs) ? rawConfigs : [];
+        const conf = configs[idx];
+        if (!conf) return;
+
+        document.getElementById('w-base-url').value = conf.baseUrl || '';
+        document.getElementById('w-instance').value = conf.instance || '';
+        document.getElementById('w-apikey').value = conf.apikey || '';
+        document.getElementById('w-number').value = conf.number || '';
+        
+        document.querySelectorAll('.w-trigger-check').forEach(cb => cb.checked = false);
+        (conf.triggers || []).forEach(t => {
+          const cb = document.querySelector(`.w-trigger-check[value="${t}"]`);
+          if (cb) cb.checked = true;
+        });
+
+        editingIdx = idx;
+        document.getElementById('w-submit-btn').textContent = 'تحديث الإعدادات';
+        document.getElementById('w-cancel-btn').style.display = 'inline-block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch (e) {
+        console.error('[WhatsApp] Edit config failed:', e);
+      }
+    }
+
+    function cancelEdit() {
+      editingIdx = -1;
+      document.getElementById('w-base-url').value = '';
+      document.getElementById('w-instance').value = '';
+      document.getElementById('w-apikey').value = '';
+      document.getElementById('w-number').value = '';
+      document.querySelectorAll('.w-trigger-check').forEach(cb => cb.checked = false);
+      
+      document.getElementById('w-submit-btn').textContent = '+ إضافة الإعدادات';
+      document.getElementById('w-cancel-btn').style.display = 'none';
     }
   </script>
 </body>
