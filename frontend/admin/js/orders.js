@@ -213,6 +213,40 @@ function renderOrders(orders) {
       payBadge = o.paymentMethod;
     }
 
+    // WhatsApp Link Generation
+    let waLinkFull = '';
+    let waLinkEmpty = '';
+    if (o.customer && o.customer.phone) {
+      let cleanPhone = o.customer.phone.replace(/[^0-9]/g, '');
+      if (cleanPhone.startsWith('01')) cleanPhone = '2' + cleanPhone;
+
+      const waIconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>`;
+      
+      waLinkEmpty = `<a href="https://wa.me/${cleanPhone}" target="_blank" onclick="event.stopPropagation()" style="display:inline-block; margin-right:8px; color:#10b981; text-decoration:none;" title="مراسلة العميل عبر واتساب">${waIconSvg}</a>`;
+
+      let pmAr = o.paymentMethod === 'vodafone_cash' ? 'فودافون كاش' : (o.paymentMethod === 'instapay' ? 'إنستاباي' : o.paymentMethod);
+      let paymentNumberStr = '';
+      if (paymentMethodsCache && Array.isArray(paymentMethodsCache)) {
+        const matchedPM = paymentMethodsCache.find(m => m.label === o.paymentMethod || m.label === pmAr);
+        if (matchedPM && matchedPM.number) {
+          paymentNumberStr = `\r\nرقم الدفع: ${matchedPM.number}`;
+        }
+      }
+      let safeNotes = paymentNotesCache ? paymentNotesCache.replace(/\r?\n/g, '\r\n') : '';
+      const pnStr = safeNotes ? `\r\n\r\n${safeNotes}` : '';
+      const rawMsg = [
+        `مرحباً ${o.customer.name || ''}`,
+        '',
+        `رقم الطلب: ${o.orderId}`,
+        `إجمالي المبلغ: ${o.totalPrice} EGP`,
+        `طريقة الدفع: ${pmAr}${paymentNumberStr}${pnStr}`,
+        '',
+        `شكراً لثقتك بنا ♡`
+      ].join('\r\n');
+      const msg = encodeURIComponent(rawMsg);
+      waLinkFull = `<a href="https://wa.me/${cleanPhone}?text=${msg}" target="_blank" onclick="event.stopPropagation()" style="display:inline-block; margin-right:8px; color:#10b981; text-decoration:none;" title="مراسلة العميل عبر واتساب">${waIconSvg}</a>`;
+    }
+
     // Status badge
     let statusBadge = '';
     if (o.status === 'cancelled') {
@@ -220,49 +254,16 @@ function renderOrders(orders) {
     } else if (o.status === 'shipped') {
       statusBadge = `<span style="display:inline-block; padding:4px 12px; border-radius:16px; background:#e0e7ff; color:#4338ca; font-size:0.85rem; font-weight:600;">تم الشحن</span>`;
     } else if (o.paid) {
-      statusBadge = `<span style="display:inline-block; padding:4px 12px; border-radius:16px; background:#dcfce7; color:#16a34a; font-size:0.85rem; font-weight:600;">مدفوع <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;"><polyline points="20 6 9 17 4 12"/></svg></span>`;
+      statusBadge = `<span style="display:inline-block; padding:4px 12px; border-radius:16px; background:#dcfce7; color:#16a34a; font-size:0.85rem; font-weight:600;">مدفوع <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;"><polyline points="20 6 9 17 4 12"/></svg></span>${waLinkEmpty}`;
     } else if (o.paidAmount > 0) {
       let rem = Math.max(0, o.totalPrice - o.paidAmount);
       let cFee = 0;
       if (rem > 0) {
         cFee = Math.max(10, Math.ceil((rem * 0.01) / 5) * 5);
       }
-      statusBadge = `<span style="display:inline-block; padding:4px 8px; border-radius:16px; background:#fef3c7; color:#92400e; font-size:0.8rem; font-weight:600; text-align:center;">مدفوع جزئياً<div style="font-size:0.7rem; font-weight:normal; opacity:0.9; margin-top:2px;">المتبقي: ${formatPrice(rem + cFee)}</div></span>`;
+      statusBadge = `<span style="display:inline-block; padding:4px 8px; border-radius:16px; background:#fef3c7; color:#92400e; font-size:0.8rem; font-weight:600; text-align:center;">مدفوع جزئياً<div style="font-size:0.7rem; font-weight:normal; opacity:0.9; margin-top:2px;">المتبقي: ${formatPrice(rem + cFee)}</div></span>${waLinkEmpty}`;
     } else {
-      let waLink = '';
-      if (o.customer && o.customer.phone) {
-        let cleanPhone = o.customer.phone.replace(/[^0-9]/g, '');
-        if (cleanPhone.startsWith('01')) cleanPhone = '2' + cleanPhone;
-        
-        let pmAr = o.paymentMethod === 'vodafone_cash' ? 'فودافون كاش' : (o.paymentMethod === 'instapay' ? 'إنستاباي' : o.paymentMethod);
-        
-        let paymentNumberStr = '';
-        if (paymentMethodsCache && Array.isArray(paymentMethodsCache)) {
-          const matchedPM = paymentMethodsCache.find(m => m.label === o.paymentMethod || m.label === pmAr);
-          if (matchedPM && matchedPM.number) {
-            paymentNumberStr = `\r\nرقم الدفع: ${matchedPM.number}`;
-          }
-        }
-
-        let safeNotes = paymentNotesCache ? paymentNotesCache.replace(/\r?\n/g, '\r\n') : '';
-        const pnStr = safeNotes ? `\r\n\r\n${safeNotes}` : '';
-
-        const rawMsg = [
-          `مرحباً ${o.customer.name || ''}`,
-          '',
-          `رقم الطلب: ${o.orderId}`,
-          `إجمالي المبلغ: ${o.totalPrice} EGP`,
-          `طريقة الدفع: ${pmAr}${paymentNumberStr}${pnStr}`,
-          '',
-          `شكراً لثقتك بنا ♡`
-        ].join('\r\n');
-
-        const msg = encodeURIComponent(rawMsg);
-        waLink = `<a href="https://wa.me/${cleanPhone}?text=${msg}" target="_blank" onclick="event.stopPropagation()" style="display:inline-block; margin-right:8px; color:#10b981; text-decoration:none;" title="مراسلة العميل عبر واتساب">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
-        </a>`;
-      }
-      statusBadge = `<span style="display:inline-block; padding:4px 12px; border-radius:16px; background:#f1f5f9; color:#475569; font-size:0.85rem; font-weight:600; vertical-align: middle;">غير مدفوع</span>${waLink}`;
+      statusBadge = `<span style="display:inline-block; padding:4px 12px; border-radius:16px; background:#f1f5f9; color:#475569; font-size:0.85rem; font-weight:600; vertical-align: middle;">غير مدفوع</span>${waLinkFull}`;
     }
 
     const displayId = o.orderId.replace('Order-', '').replace('Scoop-', '');

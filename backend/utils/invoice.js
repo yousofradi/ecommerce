@@ -61,7 +61,7 @@ async function generateInvoiceInnerHtml(order, settings, options = {}) {
     if (includeImages) {
       // 1. Try selected option's image url
       let finalImageUrl = getVariantImageUrl(product, p.selectedOptions);
-      
+
       // 2. If not found, use base product image url
       if (!finalImageUrl && product) {
         finalImageUrl = product.imageUrl;
@@ -71,7 +71,7 @@ async function generateInvoiceInnerHtml(order, settings, options = {}) {
       if (!finalImageUrl) {
         finalImageUrl = p.imageUrl;
       }
-      
+
       imgHtml = finalImageUrl ? `<img src="${finalImageUrl}" style="width: ${imgSize}px; height: ${imgSize}px; object-fit: cover; border-radius: 4px; flex-shrink: 0;" />` : `
         <div style="width: ${imgSize}px; height: ${imgSize}px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
           <svg width="${svgSize}" height="${svgSize}" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2">
@@ -131,6 +131,9 @@ async function generateInvoiceInnerHtml(order, settings, options = {}) {
     remtext = 'مدفوع بالكامل';
   }
 
+  const orderDate = new Date(order.paidAt || order.createdAt || Date.now());
+  const dateStr = `${orderDate.getDate()}-${orderDate.getMonth() + 1}-${orderDate.getFullYear()}`;
+
   return `
 <style>
   /* General invoice optimization to remove whitespace */
@@ -141,6 +144,7 @@ async function generateInvoiceInnerHtml(order, settings, options = {}) {
   }
   .customer-table {
     margin-bottom: 4px !important;
+    width: 100%;
   }
   .customer-table td {
     padding: 3px 4px !important;
@@ -217,7 +221,16 @@ async function generateInvoiceInnerHtml(order, settings, options = {}) {
 <tbody>
 
 <tr>
-<td class="label-column">الاسم</td>
+<td colspan="2" style="padding-bottom: 8px !important;">
+  <div style="display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px dashed #ccc; padding-bottom: 4px; font-size: 12px;">
+    <span>طلب #${safe(order.orderId)}</span>
+    <span>${dateStr}</span>
+  </div>
+</td>
+</tr>
+
+<tr>
+<td class="label-column" style="width: 60px;">الاسم</td>
 <td class="value-column">${safe(order.customer.name)}</td>
 </tr>
 
@@ -227,13 +240,8 @@ async function generateInvoiceInnerHtml(order, settings, options = {}) {
 </tr>
 
 <tr>
-<td class="label-column">المحافظة</td>
-<td class="value-column">${safe(order.customer.government)}${order.customer.zone ? ` - ${safe(order.customer.zone)}` : ''}</td>
-</tr>
-
-<tr>
 <td class="label-column">العنوان</td>
-<td class="value-column">${safe(order.customer.address)}</td>
+<td class="value-column">${safe(order.customer.government)}${order.customer.zone ? ` - ${safe(order.customer.zone)}` : ''} - ${safe(order.customer.address)}</td>
 </tr>
 
 </tbody>

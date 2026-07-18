@@ -170,6 +170,7 @@ router.post('/', async (req, res) => {
       carrier,
       paidAmount: Number(paidAmount) || 0,
       paid: (Number(paidAmount) || 0) >= totalPrice,
+      paidAt: (Number(paidAmount) || 0) > 0 ? new Date() : undefined,
       processingStatus: 'pending'
     });
 
@@ -923,7 +924,13 @@ router.put('/:orderId', adminAuth, async (req, res) => {
 
     const { totalPrice } = calcTotals(items, shippingFee, discount);
     updates.totalPrice = totalPrice;
-    updates.paid = (Number(updates.paidAmount || order.paidAmount) >= totalPrice);
+    
+    const newPaidAmount = updates.paidAmount !== undefined ? updates.paidAmount : order.paidAmount;
+    updates.paid = (Number(newPaidAmount) >= totalPrice);
+    
+    if (!order.paidAt && (Number(newPaidAmount) > 0 || updates.paid)) {
+      updates.paidAt = new Date();
+    }
 
     const updatedOrder = await Order.findOneAndUpdate(query, { $set: updates }, { new: true, runValidators: true });
     res.json(updatedOrder);
