@@ -60,7 +60,10 @@ async function loadCollections() {
     }
 
     list.innerHTML = cols.map(c => `
-      <div class="collection-row" data-id="${c._id}" data-name="${c.name.toLowerCase()}" style="grid-template-columns: 40px 60px 1fr 60px; gap: 8px;" onclick="if(!event.target.closest('.action-menu') && !event.target.closest('.action-dropdown') && !event.target.closest('input[type=checkbox]')) window.location.href='collection-form?id=${c._id}'">
+      <div class="collection-row" data-id="${c._id}" data-name="${c.name.toLowerCase()}" style="grid-template-columns: 30px 40px 60px 1fr 60px; gap: 8px;" onclick="if(!event.target.closest('.action-menu') && !event.target.closest('.action-dropdown') && !event.target.closest('input[type=checkbox]') && !event.target.closest('.drag-handle')) window.location.href='collection-form?id=${c._id}'">
+        <div class="drag-handle" style="cursor: grab; color: #cbd5e1; display: flex; align-items: center; justify-content: center;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+        </div>
         <div style="display: flex; align-items: center; justify-content: center;"><input type="checkbox" class="collection-checkbox" data-id="${c._id}" onchange="updateBulkBar()"></div>
         <div style="display:flex; justify-content:center; margin-left: 4px;">
           ${c.imageUrl 
@@ -85,9 +88,10 @@ async function loadCollections() {
     // Update header to match columns
     const header = document.querySelector('.collection-row.header');
     if (header) {
-      header.style.gridTemplateColumns = '40px 60px 1fr 60px';
+      header.style.gridTemplateColumns = '30px 40px 60px 1fr 60px';
       header.style.gap = '8px';
       header.innerHTML = `
+        <div></div>
         <div style="display: flex; align-items: center; justify-content: center;"><input type="checkbox" id="select-all-collections" onchange="toggleSelectAll()" class="collection-checkbox"></div>
         <div style="text-align: center; margin-left: 4px;">الصورة</div>
         <div style="text-align: right; padding-right: 8px;">الاسم</div>
@@ -99,6 +103,14 @@ async function loadCollections() {
       collectionsSortable.destroy();
       collectionsSortable = null;
     }
+    
+    collectionsSortable = new Sortable(list, {
+      animation: 150,
+      handle: '.drag-handle',
+      onEnd: () => {
+        if (window.showUnsavedBar) window.showUnsavedBar();
+      }
+    });
 
     unselectAll();
   } finally {
