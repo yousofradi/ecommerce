@@ -325,7 +325,10 @@ function renderOrder() {
 
   const phone2El = document.getElementById('view-c-phone2');
   if (o.customer.secondPhone) {
-    phone2El.textContent = o.customer.secondPhone;
+    let cleanPhone2 = o.customer.secondPhone.replace(/[^0-9]/g, '');
+    if (cleanPhone2.startsWith('01')) cleanPhone2 = '2' + cleanPhone2;
+    const waIconSvg2 = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle; margin-right: 6px;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>`;
+    phone2El.innerHTML = `<span dir="ltr">${o.customer.secondPhone}</span> <a href="https://wa.me/${cleanPhone2}" target="_blank" onclick="event.stopPropagation()" style="color:#10b981; text-decoration:none;" title="مراسلة العميل عبر واتساب">${waIconSvg2}</a>`;
     phone2El.style.display = 'block';
   } else {
     phone2El.style.display = 'none';
