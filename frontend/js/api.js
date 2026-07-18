@@ -526,4 +526,29 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }).catch(err => console.error('Failed to load WhatsApp link', err));
   }
+
+  // Inject sticky category bar globally
+  const header = document.querySelector('.store-header');
+  if (header) {
+    const catBar = document.createElement('div');
+    catBar.className = 'sticky-cat-bar';
+    catBar.innerHTML = '<div class="sticky-cat-track" id="global-cat-track"></div>';
+    header.appendChild(catBar);
+
+    api.getCollections().then(cols => {
+      const track = document.getElementById('global-cat-track');
+      if (cols && cols.length > 0) {
+        track.innerHTML = cols.map(c => `
+          <a href="collection/${c.urlName || c._id}" class="cat-badge">
+            <div class="cat-badge-img-wrapper">
+              <img src="${api.optimizeImageUrl(c.imageUrl, 100)}" alt="${c.name}" onerror="this.src='https://res.cloudinary.com/sundura/image/upload/v1778758433/ecommerce-uploads/1778758432917-917399313.png'">
+            </div>
+            <span class="cat-badge-name">${c.name}</span>
+          </a>
+        `).join('');
+      } else {
+        catBar.style.display = 'none';
+      }
+    }).catch(err => console.error('Failed to load categories', err));
+  }
 });
