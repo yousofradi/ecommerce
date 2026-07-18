@@ -558,7 +558,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const autoScroll = () => {
           if (!isHovered && !isTouching) {
+            const prevScroll = catBar.scrollLeft;
             catBar.scrollBy({ left: -1 });
+
+            // If it hits the end, start from the beginning
+            if (catBar.scrollLeft === prevScroll) {
+              catBar.scrollLeft = 0;
+            }
           }
           requestAnimationFrame(autoScroll);
         };
