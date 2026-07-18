@@ -1097,24 +1097,18 @@ button:active,
   border-top: 1px solid #f1f5f9;
   padding: 8px 0 4px;
   width: 100%;
-  overflow: hidden; /* Hide scrollbar completely for marquee */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+}
+.sticky-cat-bar::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
 }
 .sticky-cat-track {
   display: flex;
   width: max-content;
-  animation: scrollMarquee 25s linear infinite;
-}
-.sticky-cat-track:hover {
-  animation-play-state: paused;
-}
-.marquee-content {
-  display: flex;
   gap: 12px;
   padding: 0 6px;
-}
-@keyframes scrollMarquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(50%); } /* RTL: move right by 50% of the total width */
 }
 .cat-badge {
   display: flex;

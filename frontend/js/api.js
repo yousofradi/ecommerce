@@ -559,10 +559,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const blockHTML = renderBlock(repeatedCols);
         
-        track.innerHTML = `
-          <div class="marquee-content">${blockHTML}</div>
-          <div class="marquee-content">${blockHTML}</div>
-        `;
+        track.innerHTML = blockHTML + blockHTML;
+
+        // JS Auto-scroll logic (allows manual scrolling + fixes mobile stickiness)
+        let isHovered = false;
+        let isTouching = false;
+        let pauseTimeout = null;
+
+        const autoScroll = () => {
+          if (!isHovered && !isTouching) {
+            const prevScroll = catBar.scrollLeft;
+            catBar.scrollBy({ left: -1 });
+
+            if (Math.abs(catBar.scrollLeft) >= (track.scrollWidth / 2)) {
+              catBar.scrollLeft = 0;
+            } else if (catBar.scrollLeft === prevScroll && catBar.scrollLeft !== 0) {
+              catBar.scrollLeft = 0;
+            }
+          }
+          requestAnimationFrame(autoScroll);
+        };
+
+        catBar.addEventListener('mouseenter', () => isHovered = true);
+        catBar.addEventListener('mouseleave', () => isHovered = false);
+
+        catBar.addEventListener('touchstart', () => {
+          isTouching = true;
+          if (pauseTimeout) clearTimeout(pauseTimeout);
+        }, { passive: true });
+        
+        catBar.addEventListener('touchend', () => {
+          if (pauseTimeout) clearTimeout(pauseTimeout);
+          pauseTimeout = setTimeout(() => { isTouching = false; }, 300);
+        }, { passive: true });
+
+        requestAnimationFrame(autoScroll);
       } else {
         catBar.style.display = 'none';
       }
