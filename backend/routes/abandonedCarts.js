@@ -42,13 +42,10 @@ router.post('/', async (req, res) => {
 // ── 2. Get All Abandoned Carts (Admin) ────────────────────────
 router.get('/', adminAuth, async (req, res) => {
   try {
-    // To handle whitespace, we can use a regex pattern that ensures there's at least one non-whitespace character
-    const nonWhitespaceRegex = /\\S/;
-    
     const carts = await AbandonedCart.find({
       $or: [
-        { 'customer.name': { $exists: true, $ne: null, $regex: nonWhitespaceRegex } },
-        { 'customer.phone': { $exists: true, $ne: null, $regex: nonWhitespaceRegex } }
+        { 'customer.name': { $exists: true, $ne: null, $ne: '' } },
+        { 'customer.phone': { $exists: true, $ne: null, $ne: '' } }
       ]
     }).sort({ updatedAt: -1 });
     res.json(carts);
