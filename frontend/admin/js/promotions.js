@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function loadPromotions() {
   try {
-    const res = await api._request('/api/promotions', { admin: true });
+    const res = await api._request('/promotions', { admin: true });
     promotions = res;
     renderPromotions();
   } catch (err) {
@@ -26,7 +26,7 @@ async function loadPromotions() {
 
 async function loadProducts() {
   try {
-    const res = await api._request('/api/products?admin=true', { admin: true });
+    const res = await api._request('/products?admin=true', { admin: true });
     allProducts = res.products || res;
   } catch (err) {
     console.error(err);
@@ -35,7 +35,7 @@ async function loadProducts() {
 
 async function loadGiftCollections() {
   try {
-    const res = await api._request('/api/gift-collections', { admin: true });
+    const res = await api._request('/gift-collections', { admin: true });
     giftCollections = res;
     const select = document.getElementById('promo-gift-collection');
     select.innerHTML = '<option value="">-- اختر مجموعة --</option>' + 
@@ -242,13 +242,13 @@ async function savePromotion() {
   try {
     let res;
     if (editId) {
-      res = await api._request(`/api/promotions/${editId}`, {
+      res = await api._request(`/promotions/${editId}`, {
         method: 'PUT',
         body: JSON.stringify(payload),
         admin: true
       });
     } else {
-      res = await api._request('/api/promotions', {
+      res = await api._request('/promotions', {
         method: 'POST',
         body: JSON.stringify(payload),
         admin: true
@@ -267,7 +267,7 @@ async function deletePromotion(id) {
   if (!confirm('هل أنت متأكد من حذف هذا العرض؟')) return;
   
   try {
-    await api._request(`/api/promotions/${id}`, { method: 'DELETE', admin: true });
+    await api._request(`/promotions/${id}`, { method: 'DELETE', admin: true });
     await loadPromotions();
   } catch (err) {
     console.error(err);
@@ -290,7 +290,7 @@ async function runSimulator() {
   
   try {
     const baseUrl = typeof API_BASE !== 'undefined' ? API_BASE : '';
-    const res = await fetch(`${baseUrl}/api/promotions/evaluate`, {
+    const res = await fetch(`${baseUrl}/promotions/evaluate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ cartItems: mockCart })

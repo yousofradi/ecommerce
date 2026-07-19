@@ -15,8 +15,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function loadCollections() {
   try {
-    const res = await api.fetchWithAuth('/api/gift-collections');
-    if (res.ok) collections = await res.json();
+    const res = await api._request('/gift-collections', { admin: true });
+    collections = res;
     renderCollections();
   } catch (err) {
     console.error(err);
@@ -25,12 +25,8 @@ async function loadCollections() {
 
 async function loadProducts() {
   try {
-    // Only fetch active products for simplicity
-    const res = await fetch(`${api.baseURL}/api/products`);
-    if (res.ok) {
-      const data = await res.json();
-      allProducts = data.products || data;
-    }
+    const res = await api._request('/products?admin=true', { admin: true });
+    allProducts = res.products || res;
   } catch (err) {
     console.error(err);
   }
@@ -154,26 +150,22 @@ async function saveGiftCollection() {
   };
   
   try {
-    let res;
     if (editId) {
-      res = await api.fetchWithAuth(`/api/gift-collections/${editId}`, {
+      await api._request(`/gift-collections/${editId}`, {
         method: 'PUT',
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        admin: true
       });
     } else {
-      res = await api.fetchWithAuth('/api/gift-collections', {
+      await api._request('/gift-collections', {
         method: 'POST',
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        admin: true
       });
     }
     
-    if (res.ok) {
-      closeGiftModal();
-      await loadCollections();
-    } else {
-      const data = await res.json();
-      alert(data.error || 'حدث خطأ أثناء الحفظ');
-    }
+    closeGiftModal();
+    await loadCollections();
   } catch (err) {
     console.error(err);
     alert('حدث خطأ في الاتصال');
@@ -184,14 +176,8 @@ async function deleteGift(id) {
   if (!confirm('هل أنت متأكد من حذف هذه المجموعة؟')) return;
   
   try {
-    const res = await api.fetchWithAuth(`/api/gift-collections/${id}`, {
-      method: 'DELETE'
-    });
-    if (res.ok) {
-      await loadCollections();
-    } else {
-      alert('حدث خطأ أثناء الحذف');
-    }
+    await api._request(`/gift-collections/${id}`, { method: 'DELETE', admin: true });
+    await loadCollections();
   } catch (err) {
     console.error(err);
   }

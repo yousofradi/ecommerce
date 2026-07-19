@@ -284,7 +284,7 @@ Cart.evaluatePromotions = async function() {
 
   try {
     const baseUrl = typeof API_BASE !== 'undefined' ? API_BASE : '';
-    const res = await fetch(`${baseUrl}/api/promotions/evaluate`, {
+    const res = await fetch(`${baseUrl}/promotions/evaluate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ cartItems: items })
