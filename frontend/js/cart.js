@@ -405,17 +405,7 @@ Cart._renderPromotions = function (data) {
     }
   }
 
-  // 2. Manual Gifts
-  const manualGifts = unlockedGifts.filter(g => g.type === 'MANUAL');
-  if (manualGifts.length > 0) {
-    manualGifts.forEach(g => {
-      html += `
-        <div style="background: #fef3c7; border: 1px dashed #f59e0b; border-radius: 8px; padding: 10px; margin-bottom: 16px; font-size: 0.85rem; color: #b45309; text-align: center;">
-          ${g.message}
-        </div>
-      `;
-    });
-  }
+  // 2. Manual Gifts (Removed because they are already displayed in the main green banner)
 
   // 3. Choice Gifts Button & Modal
   if (pendingGiftChoice) {
@@ -429,11 +419,11 @@ Cart._renderPromotions = function (data) {
 
     // Create the modal HTML
     let modalHtml = `
-      <div id="slide-cart-gift-modal" class="modal-overlay" style="display: none; z-index: 100000; align-items: center; justify-content: center; position: fixed; inset: 0; background: rgba(0,0,0,0.5);">
-        <div class="modal" style="position: relative; max-width: 90%; width: 400px; padding: 20px; background: #fff; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
-          <button class="modal-close" onclick="document.getElementById('slide-cart-gift-modal').style.display='none'" style="position: absolute; top: 16px; left: 16px; width: 32px; height: 32px; border-radius: 50%; background: #f1f5f9; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">×</button>
-          <div class="modal-header" style="margin-bottom: 20px;">
-            <h3 class="modal-title" style="font-size: 1.2rem; font-weight: bold; margin: 0;">🎁 اختر هديتك المجانية</h3>
+      <div id="slide-cart-gift-modal" class="modal-overlay" style="display: none; z-index: 100000; align-items: center; justify-content: center; position: fixed; inset: 0; background: rgba(0,0,0,0.5); padding: 16px;">
+        <div class="modal" style="width: 100%; max-width: 400px; padding: 20px; background: #fff; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+          <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 class="modal-title" style="font-size: 1.1rem; font-weight: bold; margin: 0; color: #0f172a;">🎁 اختر هديتك المجانية</h3>
+            <button class="modal-close" onclick="document.getElementById('slide-cart-gift-modal').style.display='none'" style="width: 28px; height: 28px; border-radius: 50%; background: #f1f5f9; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: #64748b; padding: 0;">×</button>
           </div>
           <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; max-height: 60vh; overflow-y: auto; padding-bottom: 8px; direction: rtl;">
     `;
@@ -477,7 +467,7 @@ Cart._renderPromotions = function (data) {
     let totalHtml = '';
     if (totalDiscount > 0) {
       totalHtml += `<div style="text-decoration: line-through; color: #94a3b8; font-size: 0.85rem;">${formatPrice(rawTotal)}</div>`;
-      totalHtml += `<div style="color: #ef4444; font-size: 0.85rem; font-weight: bold; margin-bottom: 4px;">خصم: -${formatPrice(totalDiscount)}</div>`;
+      totalHtml += `<div style="color: #ef4444; font-size: 0.85rem; font-weight: bold; margin-bottom: 4px;">خصم: ${formatPrice(totalDiscount)}</div>`;
     }
     if (freeShipping) {
       totalHtml += `<div style="color: #10b981; font-size: 0.85rem; font-weight: bold; margin-bottom: 4px;">شحن مجاني!</div>`;
