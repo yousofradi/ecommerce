@@ -228,12 +228,18 @@ Cart.renderSlideCart = function () {
             
             <!-- Bottom row: Price & Qty count button -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-              <div class="sc-item-total" style="font-weight: 700; font-size: 14px; color: #111827;">${formatPrice(item.unitPrice * item.quantity)}</div>
+              <div class="sc-item-total" style="font-weight: 700; font-size: 14px; color: #111827;">${item.isFreeGift ? 'مجاني' : formatPrice(item.unitPrice * item.quantity)}</div>
               
               <div class="sc-qty-control">
-                <button class="sc-qty-btn" onclick="Cart.updateQty('${item.key}', ${item.quantity + 1}); Cart.renderSlideCart()">+</button>
-                <span class="sc-qty-value">${item.quantity}</span>
-                <button class="sc-qty-btn" onclick="Cart.updateQty('${item.key}', ${item.quantity - 1}); Cart.renderSlideCart()" ${item.quantity <= 1 ? 'disabled style="opacity:0.35;cursor:not-allowed"' : ''}>−</button>
+                ${item.isFreeGift ? `
+                  <button class="sc-qty-btn" disabled style="opacity:0.35;cursor:not-allowed">+</button>
+                  <span class="sc-qty-value">${item.quantity}</span>
+                  <button class="sc-qty-btn" disabled style="opacity:0.35;cursor:not-allowed">−</button>
+                ` : `
+                  <button class="sc-qty-btn" onclick="Cart.updateQty('${item.key}', ${item.quantity + 1}); Cart.renderSlideCart()">+</button>
+                  <span class="sc-qty-value">${item.quantity}</span>
+                  <button class="sc-qty-btn" onclick="Cart.updateQty('${item.key}', ${item.quantity - 1}); Cart.renderSlideCart()" ${item.quantity <= 1 ? 'disabled style="opacity:0.35;cursor:not-allowed"' : ''}>−</button>
+                `}
               </div>
             </div>
 
@@ -334,39 +340,48 @@ Cart._renderPromotions = function (data) {
   const hasFreeGift = items.some(i => i.isFreeGift);
   const pendingGiftChoice = choiceGifts.length > 0 && !hasFreeGift;
 
-  // 2. Progress Bar
+  // 2. Applied Promotion & Progress Bar
+  // Show applied promotion message if they earned one
+  if (appliedPromotion) {
+    let rewardTexts = [];
+    if (appliedPromotion.discountType === 'PERCENTAGE') rewardTexts.push(`خصم ${appliedPromotion.discountValue}%`);
+    if (appliedPromotion.discountType === 'FIXED') rewardTexts.push(`خصم ${appliedPromotion.discountValue} ج.م`);
+    if (appliedPromotion.isFreeShipping) rewardTexts.push('شحن مجاني');
+    if (appliedPromotion.isFreeGift) rewardTexts.push('هدية مجانية');
+    
+    html += `
+      <div style="background: #dcfce7; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px; margin-bottom: 12px; color: #166534; font-size: 0.9rem; font-weight: bold; text-align: center;">
+        🎉 مبروك! لقد حصلت علي <strong>${rewardTexts.join(' و ')}</strong>
+      </div>
+    `;
+  }
+
   // If they have a pending gift choice, hide the progress banner because the button will be shown instead
   if (progress && !pendingGiftChoice) {
     let msg = '';
     if (progress.percentage < 100) {
       msg = `أضف بـ <strong>${progress.remaining} ج.م</strong> للحصول على <strong>${progress.nextRewardName}</strong>`;
-    } else {
-      if (progress.nextRewardName === 'MAX' && appliedPromotion) {
-        let rewardTexts = [];
-        if (appliedPromotion.discountType === 'PERCENTAGE') rewardTexts.push(`خصم ${appliedPromotion.discountValue}%`);
-        if (appliedPromotion.discountType === 'FIXED') rewardTexts.push(`خصم ${appliedPromotion.discountValue} ج.م`);
-        if (appliedPromotion.isFreeShipping) rewardTexts.push('شحن مجاني');
-        if (appliedPromotion.isFreeGift) rewardTexts.push('هدية مجانية');
-        msg = `🎉 مبروك! لقد حصلت علي <strong>${rewardTexts.join(' و ')}</strong>`;
-      } else {
-        msg = `🎉 مبروك! وصلت لأعلى عرض: <strong>${progress.nextRewardName}</strong>`;
-      }
-    }
-
-    html += `
-      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 16px;">
-        <div style="font-size: 0.9rem; margin-bottom: 8px; color: #334155;">${msg}</div>
-        <div style="height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; width: 100%;">
-          <div style="height: 100%; background: var(--primary); width: ${progress.percentage}%; transition: width 0.3s ease;"></div>
+      
+      html += `
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+          <div style="font-size: 0.9rem; margin-bottom: 8px; color: #334155;">${msg}</div>
+          <div style="height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; width: 100%;">
+            <div style="height: 100%; background: var(--primary); width: ${progress.percentage}%; transition: width 0.3s ease;"></div>
+          </div>
         </div>
-      </div>
-    `;
-  } else if (appliedPromotion && !pendingGiftChoice) {
-    html += `
-      <div style="background: #dcfce7; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px; margin-bottom: 16px; color: #166534; font-size: 0.9rem; font-weight: bold; text-align: center;">
-        🎉 مبروك! تم تفعيل عرض: ${appliedPromotion.name}
-      </div>
-    `;
+      `;
+    } else if (!appliedPromotion) {
+      // Reached MAX but no applied promotion (edge case)
+      msg = `🎉 مبروك! وصلت لأعلى عرض: <strong>${progress.nextRewardName}</strong>`;
+      html += `
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+          <div style="font-size: 0.9rem; margin-bottom: 8px; color: #334155;">${msg}</div>
+          <div style="height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; width: 100%;">
+            <div style="height: 100%; background: var(--primary); width: 100%; transition: width 0.3s ease;"></div>
+          </div>
+        </div>
+      `;
+    }
   }
 
   // 2. Manual Gifts
