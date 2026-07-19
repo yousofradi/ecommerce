@@ -267,6 +267,158 @@ Cart.renderSlideCart = function() {
       checkoutBtn.title = '';
     }
   }
+
+  // Evaluate promotions asynchronously
+  Cart.evaluatePromotions();
+};
+
+Cart.evaluatePromotions = async function() {
+  const items = this.getItems();
+  if (items.length === 0) return;
+
+  const totalEl = document.getElementById('slide-cart-total');
+  if (totalEl) {
+    // Show a loading state briefly
+    totalEl.style.opacity = '0.5';
+  }
+
+  try {
+    const res = await fetch(`${window.api?.baseURL || ''}/api/promotions/evaluate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cartItems: items })
+    });
+    
+    if (res.ok) {
+      const data = await res.json();
+      this._renderPromotions(data);
+    }
+  } catch (err) {
+    console.error('Failed to evaluate promotions', err);
+  } finally {
+    if (totalEl) totalEl.style.opacity = '1';
+  }
+};
+
+Cart._renderPromotions = function(data) {
+  const body = document.getElementById('slide-cart-body');
+  if (!body) return;
+
+  // Remove existing promo wrapper if any
+  let promoWrapper = document.getElementById('slide-cart-promo-wrapper');
+  if (!promoWrapper) {
+    promoWrapper = document.createElement('div');
+    promoWrapper.id = 'slide-cart-promo-wrapper';
+    body.insertBefore(promoWrapper, body.firstChild);
+  }
+
+  const { appliedPromotion, totalDiscount, freeShipping, unlockedGifts, progress } = data;
+  let html = '';
+
+  // 1. Progress Bar
+  if (progress) {
+    let msg = '';
+    if (progress.percentage < 100) {
+      msg = `أضف بـ <strong>${progress.remaining} ج.م</strong> للحصول على <strong>${progress.nextRewardName}</strong>`;
+    } else {
+      msg = `🎉 مبروك! وصلت لأعلى عرض: <strong>${progress.nextRewardName}</strong>`;
+    }
+    
+    html += `
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+        <div style="font-size: 0.9rem; margin-bottom: 8px; color: #334155;">${msg}</div>
+        <div style="height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; width: 100%;">
+          <div style="height: 100%; background: var(--primary); width: ${progress.percentage}%; transition: width 0.3s ease;"></div>
+        </div>
+      </div>
+    `;
+  } else if (appliedPromotion) {
+    html += `
+      <div style="background: #dcfce7; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px; margin-bottom: 16px; color: #166534; font-size: 0.9rem; font-weight: bold; text-align: center;">
+        🎉 مبروك! تم تفعيل عرض: ${appliedPromotion.name}
+      </div>
+    `;
+  }
+
+  // 2. Manual Gifts
+  const manualGifts = unlockedGifts.filter(g => g.type === 'MANUAL');
+  if (manualGifts.length > 0) {
+    manualGifts.forEach(g => {
+      html += `
+        <div style="background: #fef3c7; border: 1px dashed #f59e0b; border-radius: 8px; padding: 10px; margin-bottom: 16px; font-size: 0.85rem; color: #b45309; text-align: center;">
+          ${g.message}
+        </div>
+      `;
+    });
+  }
+
+  // 3. Choice Gifts
+  const choiceGifts = unlockedGifts.filter(g => g.type === 'CHOICE');
+  // Check if they already added a free gift to cart
+  const items = this.getItems();
+  const hasFreeGift = items.some(i => i.isFreeGift);
+  
+  if (choiceGifts.length > 0 && !hasFreeGift) {
+    html += `<div style="font-weight: bold; margin-bottom: 8px; font-size: 0.95rem;">🎁 اختر هديتك المجانية:</div>`;
+    html += `<div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 12px; margin-bottom: 8px; scrollbar-width: none;">`;
+    
+    choiceGifts.forEach(cg => {
+      cg.products.forEach(p => {
+        html += `
+          <div style="min-width: 100px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px; text-align: center; cursor: pointer;" onclick="Cart.addFreeGift('${p.id}', '${p.name}', '${p.image}')">
+            <img src="${window.api?.optimizeImageUrl(p.image, 80) || p.image}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; margin: 0 auto 8px auto; display: block;">
+            <div style="font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 6px;">${p.name}</div>
+            <button class="btn btn-sm btn-primary" style="width: 100%; padding: 4px; font-size: 0.75rem;">اختيار</button>
+          </div>
+        `;
+      });
+    });
+    
+    html += `</div>`;
+  }
+
+  promoWrapper.innerHTML = html;
+
+  // Update Footer Totals
+  const totalEl = document.getElementById('slide-cart-total');
+  if (totalEl) {
+    const rawTotal = this.getTotal(); // note: this includes isFreeGift = 0 because we will set its unitPrice to 0
+    const finalTotal = Math.max(0, rawTotal - totalDiscount);
+    
+    let totalHtml = '';
+    if (totalDiscount > 0) {
+      totalHtml += `<div style="text-decoration: line-through; color: #94a3b8; font-size: 0.85rem;">${formatPrice(rawTotal)}</div>`;
+      totalHtml += `<div style="color: #ef4444; font-size: 0.85rem; font-weight: bold; margin-bottom: 4px;">خصم: -${formatPrice(totalDiscount)}</div>`;
+    }
+    if (freeShipping) {
+      totalHtml += `<div style="color: #10b981; font-size: 0.85rem; font-weight: bold; margin-bottom: 4px;">شحن مجاني!</div>`;
+    }
+    totalHtml += `<div>${formatPrice(finalTotal)}</div>`;
+    
+    totalEl.innerHTML = totalHtml;
+    totalEl.style.textAlign = 'left';
+    totalEl.style.display = 'flex';
+    totalEl.style.flexDirection = 'column';
+    totalEl.style.alignItems = 'flex-end';
+  }
+};
+
+Cart.addFreeGift = function(productId, name, image) {
+  const items = this._load();
+  items.push({
+    key: productId + '_free_gift',
+    productId,
+    name: name + ' (هدية مجانية)',
+    imageUrl: image,
+    basePrice: 0,
+    salePrice: null,
+    selectedOptions: [],
+    unitPrice: 0,
+    quantity: 1,
+    isFreeGift: true
+  });
+  this._save(items);
+  this.renderSlideCart();
 };
 
 

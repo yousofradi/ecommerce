@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>العروض والخصومات — Admin</title>
+  <link rel="stylesheet" href="css/style.css?v=20260515_v2">
+  <style>
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .modal { background: #fff; width: 95%; max-width: 800px; border-radius: 12px; padding: 24px; max-height: 90vh; overflow-y: auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .modal-title { font-size: 1.25rem; font-weight: bold; margin: 0; }
+    .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b; }
+    
+    .form-row { display: flex; gap: 16px; margin-bottom: 16px; }
+    .form-row > .form-group { flex: 1; margin-bottom: 0; }
+    
+    .section-title { font-size: 1.1rem; font-weight: bold; margin: 24px 0 12px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; color: var(--primary); }
+    
+    /* Search UI */
+    .product-search-results { border: 1px solid #e2e8f0; border-radius: 8px; max-height: 200px; overflow-y: auto; margin-top: 4px; display: none; }
+    .product-search-item { padding: 8px 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+    .product-search-item:hover { background: #f8fafc; }
+    .product-search-item img { width: 32px; height: 32px; object-fit: cover; border-radius: 4px; }
+    .selected-product-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 8px; }
+    .selected-product-item img { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; margin-left: 12px; }
+
+    /* Simulator */
+    .simulator-box { background: #f8fafc; border: 1px dashed #cbd5e1; padding: 16px; border-radius: 8px; margin-bottom: 24px; }
+  </style>
+</head>
+<body class="is-loading">
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <div class="admin-brand-header">
+        <div class="admin-brand-title store-name-text">Store Admin</div>
+      </div>
+      <nav class="admin-nav">
+        <a href="/">الرئيسية</a>
+        <a href="orders">الطلبات</a>
+        <a href="products">المنتجات</a>
+        <a href="collections">المجموعات</a>
+        <a href="promotions" class="active">العروض والخصومات</a>
+        <a href="gift-collections">مجموعات الهدايا</a>
+      </nav>
+    </aside>
+    
+    <main class="admin-main">
+      <div style="max-width:1200px; margin: 0 auto;">
+        
+        <div class="flex-between mb-24" style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <h1 class="page-title" style="margin-bottom:4px">العروض والخصومات</h1>
+            <p class="page-subtitle" style="margin-bottom:0">إدارة قواعد الخصومات والهدايا. يتم تطبيق العرض ذو الحد الأدنى الأعلى تلقائياً.</p>
+          </div>
+          <button class="btn btn-primary" onclick="openPromoModal()">+ عرض جديد</button>
+        </div>
+
+        <div class="simulator-box">
+          <h3 style="margin-top: 0; font-size: 1.05rem;">محاكي العروض (Live Preview)</h3>
+          <p class="text-muted" style="font-size: 0.9rem; margin-bottom: 12px;">أدخل قيمة السلة لاختبار أي العروض سيتم تطبيقه حالياً.</p>
+          <div style="display: flex; gap: 12px; align-items: center;">
+            <input type="number" id="sim-subtotal" class="form-control" placeholder="قيمة السلة بالجنيه" style="max-width: 200px;">
+            <button class="btn btn-secondary" onclick="runSimulator()">اختبار</button>
+          </div>
+          <div id="sim-result" style="margin-top: 12px; font-weight: bold; color: var(--primary);"></div>
+          <div id="sim-progress" style="margin-top: 8px; font-size: 0.9rem;"></div>
+        </div>
+
+        <div id="page-content-spinner">
+          <div class="spinner"></div>
+        </div>
+
+        <div id="main-content-layout" style="display: none;">
+          <div class="table-wrapper" style="background:#fff; border:1px solid #e2e8f0; border-radius:12px;">
+            <table class="products-table" style="width:100%; border-collapse:collapse; text-align:right;">
+              <thead>
+                <tr>
+                  <th style="padding: 16px;">اسم العرض</th>
+                  <th style="padding: 16px;">الحد الأدنى للسلة</th>
+                  <th style="padding: 16px;">نوع المكافأة</th>
+                  <th style="padding: 16px;">الحالة</th>
+                  <th style="padding: 16px; text-align: left;">إجراءات</th>
+                </tr>
+              </thead>
+              <tbody id="promotions-tbody">
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Promotion Modal -->
+  <div id="promo-modal" class="modal-overlay" style="display:none">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="promo-modal-title">إضافة عرض جديد</h3>
+        <button class="modal-close" onclick="closePromoModal()">×</button>
+      </div>
+      
+      <div class="form-group mb-16">
+        <label class="form-label">اسم العرض (يظهر للعميل)</label>
+        <input type="text" id="promo-name" class="form-control" placeholder="مثال: خصم 10% للطلبات فوق 1000 جنيه">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">الحالة</label>
+          <select id="promo-active" class="form-control">
+            <option value="true">نشط</option>
+            <option value="false">غير نشط</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="section-title">شروط العرض</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">الحد الأدنى لقيمة السلة (ج.م)</label>
+          <input type="number" id="promo-min-subtotal" class="form-control" value="0" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">الحد الأدنى لعدد المنتجات</label>
+          <input type="number" id="promo-min-qty" class="form-control" value="0" min="0">
+        </div>
+      </div>
+      
+      <div class="section-title">المكافأة (الخصم / الهدية)</div>
+      <div class="form-group mb-16">
+        <label class="form-label">نوع المكافأة</label>
+        <select id="promo-reward-type" class="form-control" onchange="toggleRewardFields()">
+          <option value="PERCENTAGE">نسبة مئوية (%)</option>
+          <option value="FIXED">مبلغ ثابت (ج.م)</option>
+          <option value="FREE_SHIPPING">شحن مجاني</option>
+          <option value="FREE_GIFT">هدية مجانية</option>
+        </select>
+      </div>
+      
+      <div class="form-group mb-16" id="field-reward-value">
+        <label class="form-label" id="label-reward-value">قيمة الخصم</label>
+        <input type="number" id="promo-reward-value" class="form-control" value="0" min="0">
+      </div>
+      
+      <div id="field-gift-settings" style="display: none;">
+        <div class="form-group mb-16">
+          <label class="form-label">نظام الهدية</label>
+          <select id="promo-gift-mode" class="form-control" onchange="toggleGiftCollection()">
+            <option value="MANUAL">إضافة يدوية (تظهر رسالة فقط)</option>
+            <option value="CHOICE">العميل يختار من مجموعة هدايا</option>
+          </select>
+        </div>
+        <div class="form-group mb-16" id="field-gift-collection" style="display: none;">
+          <label class="form-label">اختر مجموعة الهدايا</label>
+          <select id="promo-gift-collection" class="form-control">
+            <option value="">-- اختر مجموعة --</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="section-title">المنتجات المستثناة</div>
+      <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 12px;">هذه المنتجات لن يتم احتسابها ضمن الحد الأدنى للسلة ولن يطبق عليها الخصم.</p>
+      <div class="form-group mb-16">
+        <input type="text" id="promo-product-search" class="form-control" placeholder="ابحث عن منتج لاستثنائه..." oninput="searchProducts(this.value)">
+        <div id="promo-search-results" class="product-search-results"></div>
+      </div>
+      <div id="selected-products-container" style="margin-bottom: 24px; max-height: 200px; overflow-y: auto;"></div>
+
+      <div style="display:flex; justify-content:flex-end; gap: 12px; margin-top: 24px;">
+        <button class="btn btn-secondary" onclick="closePromoModal()">إلغاء</button>
+        <button class="btn btn-primary" onclick="savePromotion()">حفظ العرض</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api-v2.js?v=20260515_v2"></script>
+  <script src="js/auth-v2.js?v=20260515_v2"></script>
+  <script src="js/promotions.js"></script>
+</body>
+</html>

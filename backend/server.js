@@ -57,6 +57,8 @@ app.use('/api/settings', require('./routes/settings'));
 app.use('/api/seed', require('./routes/seed'));
 app.use('/api/upload', require('./routes/upload'));
 app.use('/api/customers', require('./routes/customerRoutes'));
+app.use('/api/promotions', require('./routes/promotions').router);
+app.use('/api/gift-collections', require('./routes/giftCollections'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/abandoned-carts', require('./routes/abandonedCarts'));
 app.use('/api/visitors', require('./routes/visitors'));

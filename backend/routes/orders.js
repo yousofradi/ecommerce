@@ -9,7 +9,7 @@ const { adjustStock } = require('../utils/inventory');
 const { createBostaDelivery } = require('../utils/bosta');
 const { orderQueue } = require('../utils/queue');
 const { generateInvoiceInnerHtml } = require('../utils/invoice');
-
+const { evaluateCartPromotions } = require('./promotions');
 
 // Helper: recalculate totals from items + shipping + discount
 function calcTotals(items, shippingFee, orderDiscount = 0) {
@@ -149,7 +149,48 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: `Unknown government: ${customer.government}` });
     }
 
-    const { totalPrice } = calcTotals(items, shippingFee, discount);
+    // Evaluate promotions server-side to prevent spoofing
+    let finalDiscount = discount; // fallback to frontend provided discount (e.g. coupons if we have them)
+    try {
+      const promoResult = await evaluateCartPromotions(items);
+      
+      // If promotion gives a higher discount, use it
+      if (promoResult.totalDiscount > finalDiscount) {
+        finalDiscount = promoResult.totalDiscount;
+      }
+      // If promotion gives free shipping, override shipping fee
+      if (promoResult.freeShipping) {
+        shippingFee = 0;
+      }
+
+      // Validate free gifts in the cart
+      for (const item of items) {
+        if (item.isFreeGift) {
+          let isValidGift = false;
+          promoResult.unlockedGifts.forEach(g => {
+            if (g.type === 'CHOICE' && g.products.some(p => p.id.toString() === item.productId.toString())) {
+              isValidGift = true;
+            }
+          });
+          
+          if (isValidGift) {
+            item.unitPrice = 0;
+            item.price = 0;
+            item.basePrice = 0;
+            item.discount = 0;
+          } else {
+            throw new Error(`The free gift "${item.name}" is no longer eligible. Please review your cart.`);
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Error evaluating promotions during checkout:', e);
+      if (e.message.includes('free gift')) {
+        return res.status(400).json({ error: e.message });
+      }
+    }
+
+    const { totalPrice } = calcTotals(items, shippingFee, finalDiscount);
 
     const Counter = require('../models/Counter');
     const counter = await Counter.findByIdAndUpdate(
@@ -163,7 +204,7 @@ router.post('/', async (req, res) => {
       orderId: generatedOrderId,
       customer,
       items,
-      discount,
+      discount: finalDiscount,
       totalPrice,
       shippingFee,
       paymentMethod,

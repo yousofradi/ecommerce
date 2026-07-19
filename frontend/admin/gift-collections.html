@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>مجموعات الهدايا — Admin</title>
+  <link rel="stylesheet" href="css/style.css?v=20260515_v2">
+  <style>
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+      z-index: 1000;
+    }
+    .modal {
+      background: #fff; width: 90%; max-width: 600px; border-radius: 12px; padding: 24px;
+      max-height: 90vh; overflow-y: auto;
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .modal-title { font-size: 1.25rem; font-weight: bold; margin: 0; }
+    .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b; }
+    
+    .product-search-results {
+      border: 1px solid #e2e8f0; border-radius: 8px; max-height: 200px; overflow-y: auto;
+      margin-top: 4px; display: none;
+    }
+    .product-search-item {
+      padding: 8px 12px; cursor: pointer; display: flex; align-items: center; gap: 8px;
+    }
+    .product-search-item:hover { background: #f8fafc; }
+    .product-search-item img { width: 32px; height: 32px; object-fit: cover; border-radius: 4px; }
+    
+    .selected-product-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 8px;
+    }
+    .selected-product-item img { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; margin-left: 12px; }
+  </style>
+</head>
+<body class="is-loading">
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <!-- Standard sidebar nav, for brevity leaving simplified or requiring the JS to inject it, but I'll add the necessary links -->
+      <div class="admin-brand-header">
+        <div class="admin-brand-title store-name-text">Store Admin</div>
+      </div>
+      <nav class="admin-nav">
+        <a href="/">الرئيسية</a>
+        <a href="orders">الطلبات</a>
+        <a href="products">المنتجات</a>
+        <a href="collections">المجموعات</a>
+        <a href="promotions">العروض والخصومات</a>
+        <a href="gift-collections" class="active">مجموعات الهدايا</a>
+      </nav>
+    </aside>
+    
+    <main class="admin-main">
+      <div style="max-width:1200px; margin: 0 auto;">
+        <div class="flex-between mb-24" style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <h1 class="page-title" style="margin-bottom:4px">مجموعات الهدايا</h1>
+            <p class="page-subtitle" style="margin-bottom:0">إدارة الهدايا المجانية التي يمكن للعملاء اختيارها</p>
+          </div>
+          <button class="btn btn-primary" onclick="openGiftModal()">+ مجموعة جديدة</button>
+        </div>
+
+        <div id="page-content-spinner">
+          <div class="spinner"></div>
+        </div>
+
+        <div id="main-content-layout" style="display: none;">
+          <div class="table-wrapper" style="background:#fff; border:1px solid #e2e8f0; border-radius:12px;">
+            <table class="products-table" style="width:100%; border-collapse:collapse; text-align:right;">
+              <thead>
+                <tr>
+                  <th style="padding: 16px;">اسم المجموعة</th>
+                  <th style="padding: 16px;">عدد المنتجات</th>
+                  <th style="padding: 16px; text-align: left;">إجراءات</th>
+                </tr>
+              </thead>
+              <tbody id="gift-collections-tbody">
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal -->
+  <div id="gift-modal" class="modal-overlay" style="display:none">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="gift-modal-title">إضافة مجموعة هدايا</h3>
+        <button class="modal-close" onclick="closeGiftModal()">×</button>
+      </div>
+      
+      <input type="hidden" id="gift-id">
+      
+      <div class="form-group mb-16">
+        <label class="form-label">اسم المجموعة</label>
+        <input type="text" id="gift-name" class="form-control" placeholder="مثال: هدايا الصيف">
+      </div>
+      
+      <div class="form-group mb-16">
+        <label class="form-label">المنتجات في هذه المجموعة</label>
+        <input type="text" id="gift-product-search" class="form-control" placeholder="ابحث عن منتج لإضافته..." oninput="searchProducts(this.value)">
+        <div id="gift-search-results" class="product-search-results"></div>
+      </div>
+      
+      <div id="selected-products-container" style="margin-bottom: 24px; max-height: 300px; overflow-y: auto;">
+        <!-- Selected products injected here -->
+      </div>
+      
+      <div style="display:flex; justify-content:flex-end; gap: 12px;">
+        <button class="btn btn-secondary" onclick="closeGiftModal()">إلغاء</button>
+        <button class="btn btn-primary" onclick="saveGiftCollection()">حفظ المجموعة</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api-v2.js?v=20260515_v2"></script>
+  <script src="js/auth-v2.js?v=20260515_v2"></script>
+  <script src="js/gift-collections.js"></script>
+</body>
+</html>
