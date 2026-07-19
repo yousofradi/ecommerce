@@ -19,6 +19,9 @@ async function loadPromotions() {
     const res = await api._request('/promotions', { admin: true });
     promotions = res;
     renderPromotions();
+    document.getElementById('page-content-spinner').style.display = 'none';
+    document.getElementById('main-content-layout').style.display = 'block';
+    document.body.classList.remove('is-loading');
   } catch (err) {
     console.error(err);
   }
@@ -259,7 +262,7 @@ async function savePromotion() {
     await loadPromotions();
   } catch (err) {
     console.error(err);
-    alert('حدث خطأ في الاتصال');
+    alert(err.message || 'حدث خطأ في الاتصال');
   }
 }
 

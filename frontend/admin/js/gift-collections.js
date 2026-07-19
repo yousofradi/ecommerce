@@ -18,6 +18,9 @@ async function loadCollections() {
     const res = await api._request('/gift-collections', { admin: true });
     collections = res;
     renderCollections();
+    document.getElementById('page-content-spinner').style.display = 'none';
+    document.getElementById('main-content-layout').style.display = 'block';
+    document.body.classList.remove('is-loading');
   } catch (err) {
     console.error(err);
   }

@@ -22,7 +22,8 @@ router.post('/', adminAuth, async (req, res) => {
     await newPromo.save();
     res.json(newPromo);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to create promotion' });
+    console.error('Error creating promotion:', error);
+    res.status(500).json({ error: error.message || 'Failed to create promotion' });
   }
 });
 
@@ -32,7 +33,8 @@ router.put('/:id', adminAuth, async (req, res) => {
     if (!updated) return res.status(404).json({ error: 'Promotion not found' });
     res.json(updated);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to update promotion' });
+    console.error('Error updating promotion:', error);
+    res.status(500).json({ error: error.message || 'Failed to update promotion' });
   }
 });
 
