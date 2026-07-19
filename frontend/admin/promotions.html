@@ -127,35 +127,59 @@
         </div>
       </div>
       
-      <div class="section-title">المكافأة (الخصم / الهدية)</div>
-      <div class="form-group mb-16">
-        <label class="form-label">نوع المكافأة</label>
-        <select id="promo-reward-type" class="form-control" onchange="toggleRewardFields()">
-          <option value="PERCENTAGE">نسبة مئوية (%)</option>
-          <option value="FIXED">مبلغ ثابت (ج.م)</option>
-          <option value="FREE_SHIPPING">شحن مجاني</option>
-          <option value="FREE_GIFT">هدية مجانية</option>
-        </select>
-      </div>
+      <div class="section-title">المكافآت المتعددة (حدد ما ينطبق)</div>
       
-      <div class="form-group mb-16" id="field-reward-value">
-        <label class="form-label" id="label-reward-value">قيمة الخصم</label>
-        <input type="number" id="promo-reward-value" class="form-control" value="0" min="0">
-      </div>
-      
-      <div id="field-gift-settings" style="display: none;">
-        <div class="form-group mb-16">
-          <label class="form-label">نظام الهدية</label>
-          <select id="promo-gift-mode" class="form-control" onchange="toggleGiftCollection()">
-            <option value="MANUAL">إضافة يدوية (تظهر رسالة فقط)</option>
-            <option value="CHOICE">العميل يختار من مجموعة هدايا</option>
-          </select>
+      <!-- 1. Discount -->
+      <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; margin-bottom: 12px;">
+        <label style="display:flex; align-items:center; font-weight:bold; cursor:pointer;">
+          <input type="checkbox" id="reward-discount-toggle" onchange="toggleDiscountFields()" style="margin-left:8px; width:18px; height:18px;">
+          تفعيل خصم (نسبة أو مبلغ ثابت)
+        </label>
+        <div id="field-discount-settings" style="display:none; margin-top:12px; padding-top:12px; border-top:1px dashed #cbd5e1;">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">نوع الخصم</label>
+              <select id="promo-discount-type" class="form-control" onchange="updateDiscountLabel()">
+                <option value="PERCENTAGE">نسبة مئوية (%)</option>
+                <option value="FIXED">مبلغ ثابت (ج.م)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" id="label-discount-value">قيمة الخصم (%)</label>
+              <input type="number" id="promo-discount-value" class="form-control" value="0" min="0">
+            </div>
+          </div>
         </div>
-        <div class="form-group mb-16" id="field-gift-collection" style="display: none;">
-          <label class="form-label">اختر مجموعة الهدايا</label>
-          <select id="promo-gift-collection" class="form-control">
-            <option value="">-- اختر مجموعة --</option>
-          </select>
+      </div>
+
+      <!-- 2. Free Shipping -->
+      <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; margin-bottom: 12px;">
+        <label style="display:flex; align-items:center; font-weight:bold; cursor:pointer;">
+          <input type="checkbox" id="reward-shipping-toggle" style="margin-left:8px; width:18px; height:18px;">
+          تفعيل شحن مجاني
+        </label>
+      </div>
+
+      <!-- 3. Free Gift -->
+      <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+        <label style="display:flex; align-items:center; font-weight:bold; cursor:pointer;">
+          <input type="checkbox" id="reward-gift-toggle" onchange="toggleGiftFields()" style="margin-left:8px; width:18px; height:18px;">
+          تفعيل هدية مجانية
+        </label>
+        <div id="field-gift-settings" style="display:none; margin-top:12px; padding-top:12px; border-top:1px dashed #cbd5e1;">
+          <div class="form-group mb-16">
+            <label class="form-label">نظام الهدية</label>
+            <select id="promo-gift-mode" class="form-control" onchange="toggleGiftCollection()">
+              <option value="MANUAL">إضافة يدوية (تظهر رسالة فقط)</option>
+              <option value="CHOICE">العميل يختار من مجموعة هدايا</option>
+            </select>
+          </div>
+          <div class="form-group mb-16" id="field-gift-collection" style="display: none;">
+            <label class="form-label">اختر مجموعة الهدايا</label>
+            <select id="promo-gift-collection" class="form-control">
+              <option value="">-- اختر مجموعة --</option>
+            </select>
+          </div>
         </div>
       </div>
       

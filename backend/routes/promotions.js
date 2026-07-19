@@ -121,12 +121,11 @@ async function evaluateCartPromotions(cartItems) {
       current: rawSubtotal,
       remaining: nextPromotion.minCartSubtotal - rawSubtotal,
       percentage: Math.min(100, (rawSubtotal / nextPromotion.minCartSubtotal) * 100),
-      nextRewardName: nextPromotion.name,
-      nextRewardType: nextPromotion.rewardType
+      nextRewardName: nextPromotion.name
     };
   } else if (activePromotion) {
     // They reached the max tier!
-    progress = { target: activePromotion.minCartSubtotal, current: rawSubtotal, remaining: 0, percentage: 100, nextRewardName: 'MAX', nextRewardType: 'NONE' };
+    progress = { target: activePromotion.minCartSubtotal, current: rawSubtotal, remaining: 0, percentage: 100, nextRewardName: 'MAX' };
   }
 
   // 4. Calculate actual rewards for activePromotion
@@ -135,13 +134,17 @@ async function evaluateCartPromotions(cartItems) {
   let unlockedGifts = [];
 
   if (activePromotion) {
-    if (activePromotion.rewardType === 'PERCENTAGE') {
-      totalDiscount = eligibleSubtotalForActive * (activePromotion.rewardValue / 100);
-    } else if (activePromotion.rewardType === 'FIXED') {
-      totalDiscount = activePromotion.rewardValue;
-    } else if (activePromotion.rewardType === 'FREE_SHIPPING') {
+    if (activePromotion.discountType === 'PERCENTAGE') {
+      totalDiscount = eligibleSubtotalForActive * (activePromotion.discountValue / 100);
+    } else if (activePromotion.discountType === 'FIXED') {
+      totalDiscount = activePromotion.discountValue;
+    }
+
+    if (activePromotion.isFreeShipping) {
       freeShipping = true;
-    } else if (activePromotion.rewardType === 'FREE_GIFT') {
+    }
+
+    if (activePromotion.isFreeGift) {
       if (activePromotion.giftMode === 'MANUAL') {
         unlockedGifts.push({ type: 'MANUAL', message: '🎁 Congratulations! Your order qualifies for a free gift.' });
       } else if (activePromotion.giftMode === 'CHOICE' && activePromotion.giftCollectionId) {
@@ -162,8 +165,6 @@ async function evaluateCartPromotions(cartItems) {
           }
         }
       }
-    } else if (activePromotion.rewardType === 'MULTIPLE') {
-       // Optional: implement multiple rewards if needed in future
     }
   }
 

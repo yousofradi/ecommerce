@@ -17,12 +17,10 @@ const promotionSchema = new mongoose.Schema({
   excludedProducts: [{ type: String }], // Products that don't count towards minimums and don't get discounts
 
   // Rewards
-  rewardType: { 
-    type: String, 
-    required: true,
-    enum: ['PERCENTAGE', 'FIXED', 'FREE_SHIPPING', 'FREE_GIFT', 'COUPON', 'MULTIPLE']
-  },
-  rewardValue: { type: Number, default: 0, min: 0 }, // For PERCENTAGE or FIXED
+  discountType: { type: String, enum: ['PERCENTAGE', 'FIXED', 'NONE'], default: 'NONE' },
+  discountValue: { type: Number, default: 0, min: 0 },
+  isFreeShipping: { type: Boolean, default: false },
+  isFreeGift: { type: Boolean, default: false },
   
   // Free Gift specific settings
   giftMode: { type: String, enum: ['MANUAL', 'CHOICE'] },

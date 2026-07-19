@@ -16,8 +16,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function loadPromotions() {
   try {
-    const res = await api.fetchWithAuth('/api/promotions');
-    if (res.ok) promotions = await res.json();
+    const res = await api._request('/api/promotions', { admin: true });
+    promotions = res;
     renderPromotions();
   } catch (err) {
     console.error(err);
@@ -26,11 +26,8 @@ async function loadPromotions() {
 
 async function loadProducts() {
   try {
-    const res = await fetch(`${api.baseURL}/api/products`);
-    if (res.ok) {
-      const data = await res.json();
-      allProducts = data.products || data;
-    }
+    const res = await api._request('/api/products?admin=true', { admin: true });
+    allProducts = res.products || res;
   } catch (err) {
     console.error(err);
   }
@@ -38,13 +35,11 @@ async function loadProducts() {
 
 async function loadGiftCollections() {
   try {
-    const res = await api.fetchWithAuth('/api/gift-collections');
-    if (res.ok) {
-      giftCollections = await res.json();
-      const select = document.getElementById('promo-gift-collection');
-      select.innerHTML = '<option value="">-- اختر مجموعة --</option>' + 
-        giftCollections.map(c => `<option value="${c._id}">${c.name}</option>`).join('');
-    }
+    const res = await api._request('/api/gift-collections', { admin: true });
+    giftCollections = res;
+    const select = document.getElementById('promo-gift-collection');
+    select.innerHTML = '<option value="">-- اختر مجموعة --</option>' + 
+      giftCollections.map(c => `<option value="${c._id}">${c.name}</option>`).join('');
   } catch (err) {
     console.error(err);
   }
@@ -58,20 +53,21 @@ function renderPromotions() {
   }
   
   tbody.innerHTML = promotions.map(p => {
-    let rewardText = '';
-    if (p.rewardType === 'PERCENTAGE') rewardText = `خصم ${p.rewardValue}%`;
-    else if (p.rewardType === 'FIXED') rewardText = `خصم ${p.rewardValue} ج.م`;
-    else if (p.rewardType === 'FREE_SHIPPING') rewardText = 'شحن مجاني';
-    else if (p.rewardType === 'FREE_GIFT') rewardText = 'هدية مجانية';
+    let rewardTexts = [];
+    if (p.discountType === 'PERCENTAGE') rewardTexts.push(`خصم ${p.discountValue}%`);
+    if (p.discountType === 'FIXED') rewardTexts.push(`خصم ${p.discountValue} ج.م`);
+    if (p.isFreeShipping) rewardTexts.push('شحن مجاني');
+    if (p.isFreeGift) rewardTexts.push('هدية مجانية');
+
+    let rewardHtml = rewardTexts.map(t => `<span style="display:inline-block; margin:2px; background: #e0e7ff; color: #4338ca; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem;">${t}</span>`).join('');
+    if (rewardTexts.length === 0) rewardHtml = '<span style="color:#94a3b8">بدون مكافأة</span>';
 
     return `
     <tr style="border-bottom: 1px solid #f1f5f9; ${!p.isActive ? 'opacity:0.6;' : ''}">
       <td style="padding: 16px;"><strong>${p.name}</strong></td>
       <td style="padding: 16px;">${p.minCartSubtotal || 0} ج.م</td>
-      <td style="padding: 16px;">
-        <span style="background: #e0e7ff; color: #4338ca; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem;">
-          ${rewardText}
-        </span>
+      <td style="padding: 16px; max-width:250px;">
+        ${rewardHtml}
       </td>
       <td style="padding: 16px;">
         ${p.isActive ? '<span style="color:#10b981;font-weight:bold;">نشط</span>' : '<span style="color:#64748b;">غير نشط</span>'}
@@ -84,27 +80,19 @@ function renderPromotions() {
   `}).join('');
 }
 
-function toggleRewardFields() {
-  const type = document.getElementById('promo-reward-type').value;
-  const valField = document.getElementById('field-reward-value');
-  const valLabel = document.getElementById('label-reward-value');
-  const giftSettings = document.getElementById('field-gift-settings');
+function toggleDiscountFields() {
+  const isEnabled = document.getElementById('reward-discount-toggle').checked;
+  document.getElementById('field-discount-settings').style.display = isEnabled ? 'block' : 'none';
+}
 
-  if (type === 'PERCENTAGE') {
-    valField.style.display = 'block';
-    valLabel.textContent = 'نسبة الخصم (%)';
-    giftSettings.style.display = 'none';
-  } else if (type === 'FIXED') {
-    valField.style.display = 'block';
-    valLabel.textContent = 'مبلغ الخصم (ج.م)';
-    giftSettings.style.display = 'none';
-  } else if (type === 'FREE_GIFT') {
-    valField.style.display = 'none';
-    giftSettings.style.display = 'block';
-  } else {
-    valField.style.display = 'none';
-    giftSettings.style.display = 'none';
-  }
+function updateDiscountLabel() {
+  const type = document.getElementById('promo-discount-type').value;
+  document.getElementById('label-discount-value').textContent = type === 'PERCENTAGE' ? 'قيمة الخصم (%)' : 'مبلغ الخصم (ج.م)';
+}
+
+function toggleGiftFields() {
+  const isEnabled = document.getElementById('reward-gift-toggle').checked;
+  document.getElementById('field-gift-settings').style.display = isEnabled ? 'block' : 'none';
 }
 
 function toggleGiftCollection() {
@@ -120,15 +108,19 @@ function openPromoModal() {
   document.getElementById('promo-active').value = 'true';
   document.getElementById('promo-min-subtotal').value = '0';
   document.getElementById('promo-min-qty').value = '0';
-  document.getElementById('promo-reward-type').value = 'PERCENTAGE';
-  document.getElementById('promo-reward-value').value = '0';
+  document.getElementById('reward-discount-toggle').checked = false;
+  document.getElementById('promo-discount-type').value = 'PERCENTAGE';
+  document.getElementById('promo-discount-value').value = '0';
+  document.getElementById('reward-shipping-toggle').checked = false;
+  document.getElementById('reward-gift-toggle').checked = false;
   document.getElementById('promo-gift-mode').value = 'MANUAL';
   document.getElementById('promo-gift-collection').value = '';
   
   excludedProducts = [];
   renderExcludedProducts();
   
-  toggleRewardFields();
+  toggleDiscountFields();
+  toggleGiftFields();
   toggleGiftCollection();
   
   document.getElementById('promo-modal').style.display = 'flex';
@@ -145,15 +137,21 @@ function editPromotion(id) {
   document.getElementById('promo-min-subtotal').value = p.minCartSubtotal || 0;
   document.getElementById('promo-min-qty').value = p.minQuantity || 0;
   
-  document.getElementById('promo-reward-type').value = p.rewardType;
-  document.getElementById('promo-reward-value').value = p.rewardValue || 0;
+  document.getElementById('reward-discount-toggle').checked = (p.discountType && p.discountType !== 'NONE');
+  document.getElementById('promo-discount-type').value = p.discountType || 'PERCENTAGE';
+  document.getElementById('promo-discount-value').value = p.discountValue || 0;
+  
+  document.getElementById('reward-shipping-toggle').checked = !!p.isFreeShipping;
+  
+  document.getElementById('reward-gift-toggle').checked = !!p.isFreeGift;
   document.getElementById('promo-gift-mode').value = p.giftMode || 'MANUAL';
   document.getElementById('promo-gift-collection').value = p.giftCollectionId || '';
   
   excludedProducts = (p.excludedProducts || []).map(pid => allProducts.find(x => x._id === pid) || { _id: pid, name: 'غير معروف' });
   renderExcludedProducts();
   
-  toggleRewardFields();
+  toggleDiscountFields();
+  toggleGiftFields();
   toggleGiftCollection();
   
   document.getElementById('promo-modal').style.display = 'flex';
@@ -232,8 +230,10 @@ async function savePromotion() {
     isActive: document.getElementById('promo-active').value === 'true',
     minCartSubtotal: Number(document.getElementById('promo-min-subtotal').value) || 0,
     minQuantity: Number(document.getElementById('promo-min-qty').value) || 0,
-    rewardType: document.getElementById('promo-reward-type').value,
-    rewardValue: Number(document.getElementById('promo-reward-value').value) || 0,
+    discountType: document.getElementById('reward-discount-toggle').checked ? document.getElementById('promo-discount-type').value : 'NONE',
+    discountValue: document.getElementById('reward-discount-toggle').checked ? (Number(document.getElementById('promo-discount-value').value) || 0) : 0,
+    isFreeShipping: document.getElementById('reward-shipping-toggle').checked,
+    isFreeGift: document.getElementById('reward-gift-toggle').checked,
     giftMode: document.getElementById('promo-gift-mode').value,
     giftCollectionId: document.getElementById('promo-gift-collection').value || null,
     excludedProducts: excludedProducts.map(p => p._id)
@@ -242,24 +242,21 @@ async function savePromotion() {
   try {
     let res;
     if (editId) {
-      res = await api.fetchWithAuth(`/api/promotions/${editId}`, {
+      res = await api._request(`/api/promotions/${editId}`, {
         method: 'PUT',
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        admin: true
       });
     } else {
-      res = await api.fetchWithAuth('/api/promotions', {
+      res = await api._request('/api/promotions', {
         method: 'POST',
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        admin: true
       });
     }
     
-    if (res.ok) {
-      closePromoModal();
-      await loadPromotions();
-    } else {
-      const data = await res.json();
-      alert(data.error || 'حدث خطأ أثناء الحفظ');
-    }
+    closePromoModal();
+    await loadPromotions();
   } catch (err) {
     console.error(err);
     alert('حدث خطأ في الاتصال');
@@ -270,8 +267,8 @@ async function deletePromotion(id) {
   if (!confirm('هل أنت متأكد من حذف هذا العرض؟')) return;
   
   try {
-    const res = await api.fetchWithAuth(`/api/promotions/${id}`, { method: 'DELETE' });
-    if (res.ok) await loadPromotions();
+    await api._request(`/api/promotions/${id}`, { method: 'DELETE', admin: true });
+    await loadPromotions();
   } catch (err) {
     console.error(err);
   }
@@ -292,14 +289,21 @@ async function runSimulator() {
   }];
   
   try {
-    const res = await fetch(`${api.baseURL}/api/promotions/evaluate`, {
+    const baseUrl = typeof API_BASE !== 'undefined' ? API_BASE : '';
+    const res = await fetch(`${baseUrl}/api/promotions/evaluate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ cartItems: mockCart })
     });
     
     if (res.ok) {
-      const result = await res.json();
+      let result;
+      const text = await res.text();
+      if (text) {
+        result = JSON.parse(text);
+      } else {
+        return;
+      }
       let resText = 'لا توجد عروض مطبقة.';
       if (result.appliedPromotion) {
         resText = `✅ تم تطبيق العرض: ${result.appliedPromotion.name} `;

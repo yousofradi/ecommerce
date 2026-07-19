@@ -283,15 +283,21 @@ Cart.evaluatePromotions = async function() {
   }
 
   try {
-    const res = await fetch(`${window.api?.baseURL || ''}/api/promotions/evaluate`, {
+    const baseUrl = typeof API_BASE !== 'undefined' ? API_BASE : '';
+    const res = await fetch(`${baseUrl}/api/promotions/evaluate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ cartItems: items })
     });
     
     if (res.ok) {
-      const data = await res.json();
-      this._renderPromotions(data);
+      const text = await res.text();
+      if (text) {
+        const data = JSON.parse(text);
+        this._renderPromotions(data);
+      }
+    } else {
+      console.error('Promotion evaluation failed with status:', res.status);
     }
   } catch (err) {
     console.error('Failed to evaluate promotions', err);
