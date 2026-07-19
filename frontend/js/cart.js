@@ -374,22 +374,51 @@ Cart._renderPromotions = function(data) {
   const hasFreeGift = items.some(i => i.isFreeGift);
   
   if (choiceGifts.length > 0 && !hasFreeGift) {
-    html += `<div style="font-weight: bold; margin-bottom: 8px; font-size: 0.95rem;">🎁 اختر هديتك المجانية:</div>`;
-    html += `<div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 12px; margin-bottom: 8px; scrollbar-width: none;">`;
+    // Render a button to open the modal
+    html += `
+      <button class="btn btn-primary" style="width: 100%; margin-bottom: 16px; font-weight: bold; padding: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="document.getElementById('slide-cart-gift-modal').style.display='flex'">
+        <span style="font-size: 1.1rem;">🎁</span>
+        <span>اختر هديتك المجانية</span>
+      </button>
+    `;
+    
+    // Create the modal HTML
+    let modalHtml = `
+      <div id="slide-cart-gift-modal" class="modal-overlay" style="display: none; z-index: 100000; align-items: center; justify-content: center; position: fixed; inset: 0; background: rgba(0,0,0,0.5);">
+        <div class="modal" style="position: relative; max-width: 90%; width: 400px; padding: 20px; background: #fff; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+          <button class="modal-close" onclick="document.getElementById('slide-cart-gift-modal').style.display='none'" style="position: absolute; top: 16px; left: 16px; width: 32px; height: 32px; border-radius: 50%; background: #f1f5f9; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">×</button>
+          <div class="modal-header" style="margin-bottom: 20px;">
+            <h3 class="modal-title" style="font-size: 1.2rem; font-weight: bold; margin: 0;">🎁 اختر هديتك المجانية</h3>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; max-height: 60vh; overflow-y: auto; padding-bottom: 8px; direction: rtl;">
+    `;
     
     choiceGifts.forEach(cg => {
       cg.products.forEach(p => {
-        html += `
-          <div style="min-width: 100px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px; text-align: center; cursor: pointer;" onclick="Cart.addFreeGift('${p.id}', '${p.name}', '${p.image}')">
-            <img src="${window.api?.optimizeImageUrl(p.image, 80) || p.image}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; margin: 0 auto 8px auto; display: block;">
-            <div style="font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 6px;">${p.name}</div>
-            <button class="btn btn-sm btn-primary" style="width: 100%; padding: 4px; font-size: 0.75rem;">اختيار</button>
+        modalHtml += `
+          <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px; text-align: center; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='#e2e8f0'" onclick="Cart.addFreeGift('${p.id}', '${p.name.replace(/'/g, "\\'")}', '${p.image}')">
+            <img src="${window.api?.optimizeImageUrl(p.image, 150) || p.image}" style="width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; margin: 0 auto 8px auto; display: block;">
+            <div style="font-size: 0.85rem; height: 38px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; margin-bottom: 8px; line-height: 1.4; color: #1e293b; font-weight: 600;">${p.name}</div>
+            <button class="btn btn-sm btn-primary" style="width: 100%; padding: 8px; font-size: 0.9rem; font-weight: bold; margin-top: auto;">اختيار</button>
           </div>
         `;
       });
     });
     
-    html += `</div>`;
+    modalHtml += `
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Inject or update the modal in the body
+    let existingModal = document.getElementById('slide-cart-gift-modal');
+    if (existingModal) existingModal.remove();
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+  } else {
+    // If no gifts available or already added, remove the modal
+    let existingModal = document.getElementById('slide-cart-gift-modal');
+    if (existingModal) existingModal.remove();
   }
 
   promoWrapper.innerHTML = html;
@@ -419,6 +448,9 @@ Cart._renderPromotions = function(data) {
 };
 
 Cart.addFreeGift = function(productId, name, image) {
+  const modal = document.getElementById('slide-cart-gift-modal');
+  if (modal) modal.style.display = 'none';
+
   const items = this._load();
   items.push({
     key: productId + '_free_gift',
