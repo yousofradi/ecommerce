@@ -75,10 +75,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Evaluate promotions for checkout
   try {
-    const res = await fetch(`${typeof API_BASE !== 'undefined' ? API_BASE : ''}/api/promotions/evaluate`, {
+    const res = await fetch(`${typeof API_BASE !== 'undefined' ? API_BASE : ''}/promotions/evaluate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items: items })
+      body: JSON.stringify({ cartItems: items })
     });
     if (res.ok) {
       window._cartPromotionData = await res.json();
