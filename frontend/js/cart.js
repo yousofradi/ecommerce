@@ -337,7 +337,28 @@ Cart._renderPromotions = function (data) {
   // 1. Evaluate Choice Gifts State First
   const choiceGifts = unlockedGifts.filter(g => g.type === 'CHOICE');
   const items = this.getItems();
-  const hasFreeGift = items.some(i => i.isFreeGift);
+  const hasFreeGiftItem = items.find(i => i.isFreeGift);
+  
+  // Security check: If they have a free gift in the cart, but are no longer eligible for it, remove it!
+  if (hasFreeGiftItem) {
+    let shouldRemove = false;
+    if (choiceGifts.length === 0) {
+      shouldRemove = true;
+    } else {
+      const allowedProductIds = choiceGifts.flatMap(cg => cg.products.map(p => p.id));
+      if (!allowedProductIds.includes(hasFreeGiftItem.productId)) {
+        shouldRemove = true;
+      }
+    }
+    
+    if (shouldRemove) {
+      this.removeItem(hasFreeGiftItem.key);
+      this.renderSlideCart(); // Re-render cart without the ineligible gift
+      return; // Exit this function to prevent double rendering
+    }
+  }
+
+  const hasFreeGift = !!hasFreeGiftItem;
   const pendingGiftChoice = choiceGifts.length > 0 && !hasFreeGift;
 
   // 2. Applied Promotion & Progress Bar
