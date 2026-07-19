@@ -29,7 +29,7 @@ Object.assign(Cart, {
     } else {
       const finalBasePrice = product.basePrice || 0;
       const finalSalePrice = (product.salePrice !== null && product.salePrice !== undefined) ? product.salePrice : null;
-      
+
       const finalUnitPrice = (finalSalePrice !== null && finalSalePrice < finalBasePrice) ? finalSalePrice : finalBasePrice;
 
       let finalImageUrl = '';
@@ -103,7 +103,7 @@ Object.assign(Cart, {
 
 document.addEventListener('DOMContentLoaded', () => {
   Cart.init();
-  
+
   // Create slide cart HTML dynamically if it doesn't exist on the page (but only on storefront, not admin)
   if (!document.querySelector('.admin-layout') && !document.getElementById('slide-cart-overlay')) {
     const overlay = document.createElement('div');
@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const cartEl = document.createElement('div');
     cartEl.className = 'slide-cart';
     cartEl.id = 'slide-cart';
-    
+
     cartEl.innerHTML = `
       <div class="slide-cart-header">
         <button class="slide-cart-back" aria-label="Close Cart" onclick="Cart.closeCart()">
@@ -152,7 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-Cart.openCart = function() {
+Cart.openCart = function () {
   const overlay = document.getElementById('slide-cart-overlay');
   const cart = document.getElementById('slide-cart');
   if (overlay && cart) {
@@ -166,7 +166,7 @@ Cart.openCart = function() {
   }
 };
 
-Cart.closeCart = function() {
+Cart.closeCart = function () {
   const overlay = document.getElementById('slide-cart-overlay');
   const cart = document.getElementById('slide-cart');
   if (overlay && cart) {
@@ -176,13 +176,13 @@ Cart.closeCart = function() {
   }
 };
 
-Cart.renderSlideCart = function() {
+Cart.renderSlideCart = function () {
   const items = this.getItems();
   const body = document.getElementById('slide-cart-body');
   const totalEl = document.getElementById('slide-cart-total');
-  
+
   if (totalEl) totalEl.textContent = formatPrice(this.getTotal());
-  
+
   function getAvailable(item) {
     if (item.selectedOptions && item.selectedOptions.length > 0 && item.variants && item.variants.length > 0) {
       const v = item.variants.find(v => {
@@ -237,13 +237,13 @@ Cart.renderSlideCart = function() {
               </div>
             </div>
 
-            ${(function() {
-              const available = getAvailable(item);
-              if (available !== Infinity && item.quantity > available) {
-                return `<div style="font-size:0.75rem; color:#ef4444; margin-top:4px; font-weight:600; background:#fee2e2; padding:2px 8px; border-radius:4px; display:inline-block; align-self: flex-start;">عذراً، يتوفر ${available} قطعة فقط</div>`;
-              }
-              return '';
-            })()}
+            ${(function () {
+        const available = getAvailable(item);
+        if (available !== Infinity && item.quantity > available) {
+          return `<div style="font-size:0.75rem; color:#ef4444; margin-top:4px; font-weight:600; background:#fee2e2; padding:2px 8px; border-radius:4px; display:inline-block; align-self: flex-start;">عذراً، يتوفر ${available} قطعة فقط</div>`;
+        }
+        return '';
+      })()}
           </div>
         </div>
       </div>
@@ -272,7 +272,7 @@ Cart.renderSlideCart = function() {
   Cart.evaluatePromotions();
 };
 
-Cart.evaluatePromotions = async function() {
+Cart.evaluatePromotions = async function () {
   const items = this.getItems();
   if (items.length === 0) return;
 
@@ -289,7 +289,7 @@ Cart.evaluatePromotions = async function() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ cartItems: items })
     });
-    
+
     if (res.ok) {
       const text = await res.text();
       if (text) {
@@ -306,7 +306,7 @@ Cart.evaluatePromotions = async function() {
   }
 };
 
-Cart._renderPromotions = function(data) {
+Cart._renderPromotions = function (data) {
   const footer = document.querySelector('.slide-cart-footer');
   if (!footer) return;
 
@@ -315,7 +315,7 @@ Cart._renderPromotions = function(data) {
   if (!promoWrapper) {
     promoWrapper = document.createElement('div');
     promoWrapper.id = 'slide-cart-promo-wrapper';
-    
+
     // Insert before the subtotal element in the footer
     const subtotalEl = footer.querySelector('.slide-cart-subtotal');
     if (subtotalEl) {
@@ -328,8 +328,15 @@ Cart._renderPromotions = function(data) {
   const { appliedPromotion, totalDiscount, freeShipping, unlockedGifts, progress } = data;
   let html = '';
 
-  // 1. Progress Bar
-  if (progress) {
+  // 1. Evaluate Choice Gifts State First
+  const choiceGifts = unlockedGifts.filter(g => g.type === 'CHOICE');
+  const items = this.getItems();
+  const hasFreeGift = items.some(i => i.isFreeGift);
+  const pendingGiftChoice = choiceGifts.length > 0 && !hasFreeGift;
+
+  // 2. Progress Bar
+  // If they have a pending gift choice, hide the progress banner because the button will be shown instead
+  if (progress && !pendingGiftChoice) {
     let msg = '';
     if (progress.percentage < 100) {
       msg = `أضف بـ <strong>${progress.remaining} ج.م</strong> للحصول على <strong>${progress.nextRewardName}</strong>`;
@@ -345,7 +352,7 @@ Cart._renderPromotions = function(data) {
         msg = `🎉 مبروك! وصلت لأعلى عرض: <strong>${progress.nextRewardName}</strong>`;
       }
     }
-    
+
     html += `
       <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 16px;">
         <div style="font-size: 0.9rem; margin-bottom: 8px; color: #334155;">${msg}</div>
@@ -354,7 +361,7 @@ Cart._renderPromotions = function(data) {
         </div>
       </div>
     `;
-  } else if (appliedPromotion) {
+  } else if (appliedPromotion && !pendingGiftChoice) {
     html += `
       <div style="background: #dcfce7; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px; margin-bottom: 16px; color: #166534; font-size: 0.9rem; font-weight: bold; text-align: center;">
         🎉 مبروك! تم تفعيل عرض: ${appliedPromotion.name}
@@ -374,21 +381,16 @@ Cart._renderPromotions = function(data) {
     });
   }
 
-  // 3. Choice Gifts
-  const choiceGifts = unlockedGifts.filter(g => g.type === 'CHOICE');
-  // Check if they already added a free gift to cart
-  const items = this.getItems();
-  const hasFreeGift = items.some(i => i.isFreeGift);
-  
-  if (choiceGifts.length > 0 && !hasFreeGift) {
+  // 3. Choice Gifts Button & Modal
+  if (pendingGiftChoice) {
     // Render a button to open the modal
     html += `
       <button class="btn btn-primary btn-block" style="margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="document.getElementById('slide-cart-gift-modal').style.display='flex'">
+      <span>اختر هديتك المجانية</span>
         <span style="font-size: 1.1rem;">🎁</span>
-        <span>اختر هديتك المجانية</span>
       </button>
     `;
-    
+
     // Create the modal HTML
     let modalHtml = `
       <div id="slide-cart-gift-modal" class="modal-overlay" style="display: none; z-index: 100000; align-items: center; justify-content: center; position: fixed; inset: 0; background: rgba(0,0,0,0.5);">
@@ -399,7 +401,7 @@ Cart._renderPromotions = function(data) {
           </div>
           <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; max-height: 60vh; overflow-y: auto; padding-bottom: 8px; direction: rtl;">
     `;
-    
+
     choiceGifts.forEach(cg => {
       cg.products.forEach(p => {
         modalHtml += `
@@ -411,13 +413,13 @@ Cart._renderPromotions = function(data) {
         `;
       });
     });
-    
+
     modalHtml += `
           </div>
         </div>
       </div>
     `;
-    
+
     // Inject or update the modal in the body
     let existingModal = document.getElementById('slide-cart-gift-modal');
     if (existingModal) existingModal.remove();
@@ -435,7 +437,7 @@ Cart._renderPromotions = function(data) {
   if (totalEl) {
     const rawTotal = this.getTotal(); // note: this includes isFreeGift = 0 because we will set its unitPrice to 0
     const finalTotal = Math.max(0, rawTotal - totalDiscount);
-    
+
     let totalHtml = '';
     if (totalDiscount > 0) {
       totalHtml += `<div style="text-decoration: line-through; color: #94a3b8; font-size: 0.85rem;">${formatPrice(rawTotal)}</div>`;
@@ -445,7 +447,7 @@ Cart._renderPromotions = function(data) {
       totalHtml += `<div style="color: #10b981; font-size: 0.85rem; font-weight: bold; margin-bottom: 4px;">شحن مجاني!</div>`;
     }
     totalHtml += `<div>${formatPrice(finalTotal)}</div>`;
-    
+
     totalEl.innerHTML = totalHtml;
     totalEl.style.textAlign = 'left';
     totalEl.style.display = 'flex';
@@ -454,7 +456,7 @@ Cart._renderPromotions = function(data) {
   }
 };
 
-Cart.addFreeGift = function(productId, name, image) {
+Cart.addFreeGift = function (productId, name, image) {
   const modal = document.getElementById('slide-cart-gift-modal');
   if (modal) modal.style.display = 'none';
 
@@ -477,8 +479,8 @@ Cart.addFreeGift = function(productId, name, image) {
 
 
 // ── Mobile bottom nav cart count update ───────────────
-Cart._updateBadge = (function(original) {
-  return function() {
+Cart._updateBadge = (function (original) {
+  return function () {
     original.call(this);
     const mobileBadge = document.getElementById('mobile-cart-count');
     if (mobileBadge) {
