@@ -294,6 +294,9 @@ function initUnsavedChangesBar() {
     // Ignore search inputs
     if (e.target.type === 'search' || e.target.id?.includes('search') || e.target.classList.contains('search-input') || e.target.placeholder?.includes('ابحث')) return;
 
+    // Ignore specific elements like the Live Preview input
+    if (e.target.id === 'sim-subtotal' || e.target.classList.contains('ignore-unsaved')) return;
+
     if (e.target.closest('form') || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
       window.markAsModified();
     }
