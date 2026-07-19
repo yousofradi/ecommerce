@@ -315,7 +315,8 @@ Cart._renderPromotions = function(data) {
   if (!promoWrapper) {
     promoWrapper = document.createElement('div');
     promoWrapper.id = 'slide-cart-promo-wrapper';
-    body.insertBefore(promoWrapper, body.firstChild);
+    // Append to bottom of list
+    body.appendChild(promoWrapper);
   }
 
   const { appliedPromotion, totalDiscount, freeShipping, unlockedGifts, progress } = data;
