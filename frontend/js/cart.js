@@ -307,16 +307,22 @@ Cart.evaluatePromotions = async function() {
 };
 
 Cart._renderPromotions = function(data) {
-  const body = document.getElementById('slide-cart-body');
-  if (!body) return;
+  const footer = document.querySelector('.slide-cart-footer');
+  if (!footer) return;
 
   // Remove existing promo wrapper if any
   let promoWrapper = document.getElementById('slide-cart-promo-wrapper');
   if (!promoWrapper) {
     promoWrapper = document.createElement('div');
     promoWrapper.id = 'slide-cart-promo-wrapper';
-    // Append to bottom of list
-    body.appendChild(promoWrapper);
+    
+    // Insert before the subtotal element in the footer
+    const subtotalEl = footer.querySelector('.slide-cart-subtotal');
+    if (subtotalEl) {
+      footer.insertBefore(promoWrapper, subtotalEl);
+    } else {
+      footer.prepend(promoWrapper);
+    }
   }
 
   const { appliedPromotion, totalDiscount, freeShipping, unlockedGifts, progress } = data;
@@ -377,7 +383,7 @@ Cart._renderPromotions = function(data) {
   if (choiceGifts.length > 0 && !hasFreeGift) {
     // Render a button to open the modal
     html += `
-      <button class="btn btn-primary" style="width: 100%; margin-bottom: 16px; font-weight: bold; padding: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="document.getElementById('slide-cart-gift-modal').style.display='flex'">
+      <button class="btn btn-primary btn-block" style="margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="document.getElementById('slide-cart-gift-modal').style.display='flex'">
         <span style="font-size: 1.1rem;">🎁</span>
         <span>اختر هديتك المجانية</span>
       </button>
