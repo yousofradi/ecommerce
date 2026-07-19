@@ -4,7 +4,7 @@ let selectedProducts = [];
 let editId = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
-  if (!api.getToken()) {
+  if (!api._adminKey()) {
     window.location.href = 'login';
     return;
   }
