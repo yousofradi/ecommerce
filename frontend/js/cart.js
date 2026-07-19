@@ -327,7 +327,16 @@ Cart._renderPromotions = function(data) {
     if (progress.percentage < 100) {
       msg = `أضف بـ <strong>${progress.remaining} ج.م</strong> للحصول على <strong>${progress.nextRewardName}</strong>`;
     } else {
-      msg = `🎉 مبروك! وصلت لأعلى عرض: <strong>${progress.nextRewardName}</strong>`;
+      if (progress.nextRewardName === 'MAX' && appliedPromotion) {
+        let rewardTexts = [];
+        if (appliedPromotion.discountType === 'PERCENTAGE') rewardTexts.push(`خصم ${appliedPromotion.discountValue}%`);
+        if (appliedPromotion.discountType === 'FIXED') rewardTexts.push(`خصم ${appliedPromotion.discountValue} ج.م`);
+        if (appliedPromotion.isFreeShipping) rewardTexts.push('شحن مجاني');
+        if (appliedPromotion.isFreeGift) rewardTexts.push('هدية مجانية');
+        msg = `🎉 مبروك! لقد حصلت علي <strong>${rewardTexts.join(' و ')}</strong>`;
+      } else {
+        msg = `🎉 مبروك! وصلت لأعلى عرض: <strong>${progress.nextRewardName}</strong>`;
+      }
     }
     
     html += `

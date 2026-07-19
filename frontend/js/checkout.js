@@ -73,6 +73,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   const zoneGroup = document.getElementById('zone-form-group');
   const zoneInputEl = document.getElementById('zone');
 
+  // Evaluate promotions for checkout
+  try {
+    const res = await fetch(`${typeof API_BASE !== 'undefined' ? API_BASE : ''}/api/promotions/evaluate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items: items })
+    });
+    if (res.ok) {
+      window._cartPromotionData = await res.json();
+    }
+  } catch (err) {
+    console.error('Failed to evaluate checkout promotions', err);
+  }
+
   renderOrderSummary(items);
   await loadCities();
   await loadPaymentMethods();
@@ -415,7 +429,15 @@ function updatePriceSummary() {
   // Update Shipping Notice under the zone dropdown
   updateShippingMethodNotice(isEgyptPost);
 
-  const total = subtotal + shippingFee;
+  let totalDiscount = 0;
+  if (window._cartPromotionData) {
+    totalDiscount = window._cartPromotionData.totalDiscount || 0;
+    if (window._cartPromotionData.freeShipping) {
+      shippingFee = 0;
+    }
+  }
+
+  const total = Math.max(0, subtotal - totalDiscount) + shippingFee;
   window._currentShippingFee = shippingFee;
 
   if (window.syncAbandonedCart) window.syncAbandonedCart();
@@ -432,8 +454,26 @@ function updatePriceSummary() {
   const subEl = document.getElementById('summary-subtotal');
   const shipEl = document.getElementById('summary-shipping');
   const totalEl = document.getElementById('summary-total-final');
+  const summaryFooter = document.querySelector('.summary-footer');
 
   if (subEl) subEl.textContent = formatPrice(subtotal);
+  
+  // Handle Discount Row
+  let discountRow = document.getElementById('summary-discount-row');
+  if (totalDiscount > 0 && summaryFooter) {
+    if (!discountRow) {
+      discountRow = document.createElement('div');
+      discountRow.id = 'summary-discount-row';
+      discountRow.className = 'summary-price-row';
+      discountRow.innerHTML = `<span>الخصم</span><span id="summary-discount-value" style="color:#ef4444; font-weight:bold;">0 ج.م</span>`;
+      // Insert before shipping row
+      summaryFooter.insertBefore(discountRow, shipEl ? shipEl.closest('.summary-price-row') : totalEl.closest('.summary-price-row'));
+    }
+    document.getElementById('summary-discount-value').textContent = `-${formatPrice(totalDiscount)}`;
+  } else if (discountRow) {
+    discountRow.remove();
+  }
+
   const shipLabelEl = document.getElementById('summary-shipping-label');
   if (shipEl) {
     if (cityId) {
