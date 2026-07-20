@@ -158,8 +158,9 @@
         document.getElementById('summ-address').textContent = order.customer.address;
         document.getElementById('summ-gov').textContent = order.customer.government;
 
-        document.getElementById('summ-items').innerHTML = order.items.map(item =>
-          `<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+        document.getElementById('summ-items').innerHTML = order.items.map(item => {
+          const isFree = item.isFreeGift || item.finalPrice === 0;
+          return `<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
             <div style="width: 48px; height: 48px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
               ${item.imageUrl ? `<img src="${api.optimizeImageUrl(item.imageUrl, 150)}" style="max-width: 100%; max-height: 100%; object-fit: cover;">` : `
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2">
@@ -168,13 +169,18 @@
               `}
             </div>
             <div style="flex: 1; text-align: right; padding: 0 12px;">
-              <div style="font-weight: 700; font-size: 0.9rem;">${item.name}</div>
-              <div style="font-size: 0.85rem; color: #64748b; white-space: nowrap; font-weight: 500;">${item.quantity} x ${formatPrice(item.finalPrice / item.quantity)}</div>
+              <div style="font-weight: 700; font-size: 0.9rem;">
+                ${item.name}
+                ${isFree ? '<span style="background: var(--primary, #ef4444); color: #fff; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; margin-right: 8px;">هدية مجانية 🎁</span>' : ''}
+              </div>
+              <div style="font-size: 0.85rem; color: #64748b; white-space: nowrap; font-weight: 500;">
+                ${isFree ? '<span style="color:var(--primary); font-weight:600;">مجانًا</span>' : `${item.quantity} x ${formatPrice(item.finalPrice / item.quantity)}`}
+              </div>
               <div style="font-size: 0.8rem; color: #64748b;">${item.selectedOptions.map(o => `${o.groupName}: ${o.label}`).join(', ')}</div>
             </div>
-            <span style="font-weight: 700; color: #1e293b;">${formatPrice(item.finalPrice)}</span>
-          </div>`
-        ).join('');
+            <span style="font-weight: 700; color: #1e293b;">${isFree ? '0 ج.م' : formatPrice(item.finalPrice)}</span>
+          </div>`;
+        }).join('');
 
         const subtotal = order.items.reduce((s, i) => s + i.finalPrice, 0);
         document.getElementById('summ-subtotal').textContent = formatPrice(subtotal);
@@ -184,9 +190,22 @@
         const settings = await api.getSetting('sundura_global_settings');
         let waNumber = (settings.socialWa || '').replace(/[^0-9]/g, '');
         if (waNumber.startsWith('01')) waNumber = '2' + waNumber;
-        const brandName = settings.storeNameAr || settings.invoicePrefix || 'المتجر';
-        const waMessage = encodeURIComponent(`مرحباً، قمت بطلب من متجر ${brandName}.\nرقم الطلب الخاص بي هو: ${order.orderId}`);
-        whatsappBtn.href = `https://wa.me/${waNumber}?text=${waMessage}`;
+        
+        const autoWa = urlParams.get('autoWa');
+        const customWaMessage = sessionStorage.getItem('waMessage_' + orderId);
+        
+        let finalWaMessage = '';
+        if (autoWa && customWaMessage) {
+          finalWaMessage = customWaMessage;
+          sessionStorage.removeItem('waMessage_' + orderId);
+          // Redirect to WhatsApp automatically
+          window.location.href = `https://wa.me/${waNumber}?text=${encodeURIComponent(finalWaMessage)}`;
+        } else {
+          const brandName = settings.storeNameAr || settings.invoicePrefix || 'المتجر';
+          finalWaMessage = `مرحباً، قمت بطلب من متجر ${brandName}.\nرقم الطلب الخاص بي هو: ${order.orderId}`;
+        }
+        
+        whatsappBtn.href = `https://wa.me/${waNumber}?text=${encodeURIComponent(finalWaMessage)}`;
         whatsappBtn.style.display = 'flex';
       } catch (e) {
         console.error('Failed to load order', e);

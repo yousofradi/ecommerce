@@ -236,12 +236,8 @@
         }
         waMessage += `يرجى مراجعة التحويل وتأكيد الطلب`;
         
-        let waNumber = (storeSettings.socialWa || '').replace(/[^0-9]/g, '');
-        if (waNumber.startsWith('01')) waNumber = '2' + waNumber;
-        const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(waMessage)}`;
-        
-        window.open(waUrl, '_blank');
-        window.location.href = `order-success?id=${currentOrder.orderId}`;
+        sessionStorage.setItem('waMessage_' + currentOrder.orderId, waMessage);
+        window.location.href = `order-success?id=${currentOrder.orderId}&autoWa=1`;
       } catch (err) {
         console.error(err);
         alert(err.message || 'حدث خطأ أثناء إرسال البيانات. يرجى المحاولة مرة أخرى.');
