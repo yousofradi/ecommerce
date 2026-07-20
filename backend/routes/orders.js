@@ -943,6 +943,30 @@ router.post('/bulk/ship', adminAuth, async (req, res) => {
   }
 });
 
+// GET /api/orders/:orderId/promotion — applied promotion display info
+router.get('/:orderId/promotion', adminAuth, async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    let query = { orderId: orderId };
+    if (mongoose.Types.ObjectId.isValid(orderId)) {
+      query = { $or: [{ orderId: orderId }, { _id: orderId }] };
+    }
+    const order = await Order.findOne(query);
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+
+    const rewardText = order.appliedPromotionRewardText || (Array.isArray(order.appliedPromotionRewards) ? order.appliedPromotionRewards.filter(Boolean).join(' و ') : '');
+    const promotionLine = [order.appliedPromotionName, rewardText].filter(Boolean).join(' : ');
+
+    res.json({
+      appliedPromotionName: order.appliedPromotionName,
+      rewardText,
+      promotionLine
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch order promotion info' });
+  }
+});
+
 // GET /api/orders/:orderId — single order (GREEDY ROUTE - MUST BE AT BOTTOM)
 router.get('/:orderId', adminAuth, async (req, res) => {
   try {

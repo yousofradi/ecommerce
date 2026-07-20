@@ -119,7 +119,7 @@ async function generateInvoiceInnerHtml(order, settings, options = {}) {
   }
   const displayRemaining = remaining > 0 ? (remaining + codFee) : 0;
   const promotionRewardsText = Array.isArray(order.appliedPromotionRewards) && order.appliedPromotionRewards.length > 0
-    ? order.appliedPromotionRewards.filter(Boolean).join(' • ')
+    ? order.appliedPromotionRewards.filter(Boolean).join(' و ')
     : (order.appliedPromotionRewardText ? order.appliedPromotionRewardText : '');
 
   // ================== PHONE ==================
@@ -148,11 +148,13 @@ async function generateInvoiceInnerHtml(order, settings, options = {}) {
     `;
   }
 
-  let promotionBlock = '';
+  let promotionRow = '';
   if (order.appliedPromotionName || promotionRewardsText) {
-    promotionBlock = `
-      <div style="margin: 8px 0 6px; padding: 8px; background: #f0fdf4; border-radius: 8px; border: 1px solid #bbf7d0; font-size: 10px; color: #166534;">
-        ${order.appliedPromotionName ? `<strong>${safe(order.appliedPromotionName)} :</strong> ` : ''}${promotionRewardsText ? safe(promotionRewardsText) : ''}
+    const line = [order.appliedPromotionName, promotionRewardsText].filter(Boolean).join(' : ');
+    promotionRow = `
+      <div class="row" style="margin: 0; padding: 0;">
+        <span>${safe(line)}</span>
+        <span></span>
       </div>
     `;
   }
@@ -310,9 +312,8 @@ ${discountRow}
 <span>الإجمالي</span>
 <span>${total} ج</span>
 </div>
+${promotionRow}
 </div>
-
-${promotionBlock}
 
 <div class="paid-box">
 
