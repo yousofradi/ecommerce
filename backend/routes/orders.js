@@ -260,16 +260,17 @@ router.get('/public/:orderId', async (req, res) => {
 router.post('/public/:orderId/transfer-info', async (req, res) => {
   try {
     const { transferNumber, transferNotes, transferScreenshot } = req.body;
+    console.log(`Received transfer info for order ${req.params.orderId}:`, req.body);
+    
     const order = await Order.findOne({ orderId: req.params.orderId });
     if (!order) return res.status(404).json({ error: 'Order not found' });
     
-    if (transferNumber) order.transferNumber = transferNumber;
-    if (transferScreenshot) order.transferScreenshot = transferScreenshot;
-    if (transferNotes) {
-      order.transferNotes = transferNotes;
-    }
+    if (transferNumber !== undefined) order.transferNumber = transferNumber;
+    if (transferScreenshot !== undefined) order.transferScreenshot = transferScreenshot;
+    if (transferNotes !== undefined) order.transferNotes = transferNotes;
     
     await order.save();
+    console.log(`Saved transfer info for order ${req.params.orderId}`);
     res.json({ success: true, order });
   } catch (err) {
     res.status(500).json({ error: 'Failed to update transfer info' });

@@ -195,7 +195,7 @@
         }
 
         // Save to order details
-        await fetch(`${API_BASE}/orders/public/${currentOrder.orderId}/transfer-info`, {
+        const updateRes = await fetch(`${API_BASE}/orders/public/${currentOrder.orderId}/transfer-info`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -204,6 +204,10 @@
             transferScreenshot: transferScreenshotUrl
           })
         });
+
+        if (!updateRes.ok) {
+          throw new Error('فشل حفظ تفاصيل الدفع');
+        }
 
         // Prepare WhatsApp message
         const subtotal = (currentOrder.items || []).reduce((acc, item) => acc + (item.finalPrice || 0), 0) || (currentOrder.totalPrice - (currentOrder.shippingFee || 0));
@@ -240,6 +244,7 @@
         window.location.href = `order-success?id=${currentOrder.orderId}`;
       } catch (err) {
         console.error(err);
+        alert(err.message || 'حدث خطأ أثناء إرسال البيانات. يرجى المحاولة مرة أخرى.');
         btn.disabled = false;
         btn.textContent = 'تأكيد وإرسال عبر الواتساب';
       }
