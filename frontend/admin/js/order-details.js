@@ -368,7 +368,11 @@ function renderOrder() {
   if (o.transferScreenshot) {
     const imgUrl = o.transferScreenshot;
     document.getElementById('view-transfer-screenshot').href = imgUrl;
+    document.getElementById('view-transfer-screenshot').style.display = 'block';
     document.getElementById('view-transfer-screenshot-img').src = api.optimizeImageUrl(imgUrl, 300);
+    if (transferScreenRow) transferScreenRow.style.display = 'flex';
+  } else if (o.paymentMethod === 'vodafone_cash' || o.paymentMethod === 'instapay') {
+    document.getElementById('view-transfer-screenshot').style.display = 'none';
     if (transferScreenRow) transferScreenRow.style.display = 'flex';
   } else {
     if (transferScreenRow) transferScreenRow.style.display = 'none';
