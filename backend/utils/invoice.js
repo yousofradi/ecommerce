@@ -118,11 +118,8 @@ async function generateInvoiceInnerHtml(order, settings, options = {}) {
     codFee = Math.max(10, Math.ceil((remaining * 0.01) / 5) * 5);
   }
   const displayRemaining = remaining > 0 ? (remaining + codFee) : 0;
-  const promotionRewards = Array.isArray(order.appliedPromotionRewards)
-    ? order.appliedPromotionRewards.filter(Boolean)
-    : [];
-  const promotionRewardsText = promotionRewards.length
-    ? promotionRewards.join(' • ')
+  const promotionRewardsText = Array.isArray(order.appliedPromotionRewards) && order.appliedPromotionRewards.length > 0
+    ? order.appliedPromotionRewards.filter(Boolean).join(' • ')
     : (order.appliedPromotionRewardText ? order.appliedPromotionRewardText : '');
 
   // ================== PHONE ==================
@@ -156,7 +153,7 @@ async function generateInvoiceInnerHtml(order, settings, options = {}) {
     promotionBlock = `
       <div style="margin: 8px 0 6px; border: 1px solid #bbf7d0; border-radius: 8px; padding: 8px; background: #f0fdf4;">
         <div style="font-size: 10px; font-weight: 700; color: #166534; margin-bottom: 4px;">العرض المطبق</div>
-        <div style="font-size: 10px; color: #166534; margin-bottom: 3px;"><strong>${safe(order.appliedPromotionName || 'عرض ترويجي')}</strong></div>
+        ${order.appliedPromotionName ? `<div style="font-size: 10px; color: #166534; margin-bottom: 3px;"><strong>${safe(order.appliedPromotionName)}</strong></div>` : ''}
         ${promotionRewardsText ? `<div style="font-size: 10px; color: #166534;">${safe(promotionRewardsText)}</div>` : ''}
       </div>
     `;
