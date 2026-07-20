@@ -429,7 +429,8 @@ function renderOrder() {
   if (promoRow && promoName) {
     if (promoLine) {
       promoRow.style.display = 'flex';
-      promoName.textContent = promoLine;
+      // Render the same congratulatory banner used in the storefront cart
+      promoName.innerHTML = `<strong>${promoLine}</strong>`;
       hasPromo = true;
     } else {
       promoRow.style.display = 'none';
