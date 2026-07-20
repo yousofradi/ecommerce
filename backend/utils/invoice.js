@@ -118,9 +118,32 @@ async function generateInvoiceInnerHtml(order, settings, options = {}) {
     codFee = Math.max(10, Math.ceil((remaining * 0.01) / 5) * 5);
   }
   const displayRemaining = remaining > 0 ? (remaining + codFee) : 0;
-  const promotionRewardsText = Array.isArray(order.appliedPromotionRewards) && order.appliedPromotionRewards.length > 0
+  let promotionRewardsText = Array.isArray(order.appliedPromotionRewards) && order.appliedPromotionRewards.length > 0
     ? order.appliedPromotionRewards.filter(Boolean).join(' و ')
     : (order.appliedPromotionRewardText ? order.appliedPromotionRewardText : '');
+
+  if (!promotionRewardsText && order.appliedPromotionName) {
+    try {
+      const Promotion = require('../models/Promotion');
+      let promo = null;
+      if (order.appliedPromotionId) {
+        promo = await Promotion.findById(order.appliedPromotionId).lean();
+      }
+      if (!promo) {
+        promo = await Promotion.findOne({ name: order.appliedPromotionName }).lean();
+      }
+      if (promo) {
+        const rewardParts = [];
+        if (promo.discountType === 'PERCENTAGE') rewardParts.push(`خصم ${promo.discountValue}%`);
+        if (promo.discountType === 'FIXED') rewardParts.push(`خصم ${promo.discountValue} ج`);
+        if (promo.isFreeShipping) rewardParts.push('شحن مجاني');
+        if (promo.isFreeGift) rewardParts.push('هدية مجانية');
+        promotionRewardsText = rewardParts.filter(Boolean).join(' و ');
+      }
+    } catch (err) {
+      console.error('Failed to resolve promotion rewards for invoice:', err);
+    }
+  }
 
   // ================== PHONE ==================
   let phone = safe(order.customer.phone);
@@ -149,11 +172,11 @@ async function generateInvoiceInnerHtml(order, settings, options = {}) {
   }
 
   let promotionRow = '';
-  if (order.appliedPromotionName || promotionRewardsText) {
-    const line = [order.appliedPromotionName, promotionRewardsText].filter(Boolean).join(' : ');
+  if (order.appliedPromotionName) {
     promotionRow = `
-      <div style="background: #dcfce7; border: 1px solid #bbf7d0; border-radius: 8px; padding: 6px; margin-top:8px; color: #166534; font-weight: bold; text-align: center;">
-        🎉 مبروك! لقد حصلت علي <strong>${safe(line)}</strong>
+      <div style="background: #dcfce7; border: 1px solid #bbf7d0; border-radius: 8px; padding: 6px 12px; margin-top:8px; color: #166534; font-weight: bold; display: flex; justify-content: space-between; align-items: center; direction: rtl;">
+        <span style="font-size: 11px; font-weight: 700;">🎉 ${safe(order.appliedPromotionName)}</span>
+        <span style="font-size: 11px; font-weight: 500;">${safe(promotionRewardsText)}</span>
       </div>
     `;
   }

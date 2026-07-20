@@ -960,8 +960,13 @@ router.get('/:orderId/promotion', adminAuth, async (req, res) => {
 
     let rewardText = '';
     let promotion = null;
-    if (order.appliedPromotionId) {
-      promotion = await Promotion.findById(order.appliedPromotionId).lean();
+    if (order.appliedPromotionId || order.appliedPromotionName) {
+      if (order.appliedPromotionId) {
+        promotion = await Promotion.findById(order.appliedPromotionId).lean();
+      }
+      if (!promotion && order.appliedPromotionName) {
+        promotion = await Promotion.findOne({ name: order.appliedPromotionName }).lean();
+      }
       if (promotion) {
         const rewardParts = [];
         if (promotion.discountType === 'PERCENTAGE') rewardParts.push(`خصم ${promotion.discountValue}%`);
