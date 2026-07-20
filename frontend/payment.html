@@ -212,8 +212,18 @@
 
         let waMessage = `لقد قمت بطلب اوردر برقم : ${currentOrder.orderId}\n\n`;
         waMessage += `المبلغ الفرعي : ${subtotal} ج.م\n`;
-        waMessage += `مصاريف الشحن : ${shipping} ج.م\n`;
+        if (currentOrder.discount && currentOrder.discount > 0) {
+          const promoName = currentOrder.appliedPromotionName ? ` (${currentOrder.appliedPromotionName})` : '';
+          waMessage += `الخصم${promoName} : -${currentOrder.discount} ج.م\n`;
+        }
+        waMessage += `مصاريف الشحن : ${shipping === 0 ? 'مجاني' : shipping + ' ج.م'}\n`;
         waMessage += `المبلغ المطلوب (الإجمالي) : ${total} ج.م\n\n`;
+
+        const freeGifts = (currentOrder.items || []).filter(item => item.finalPrice === 0 || item.isFreeGift);
+        if (freeGifts.length > 0) {
+          const giftNames = freeGifts.map(g => g.name).join(' و ');
+          waMessage += `الهدايا المجانية : ${giftNames} 🎁\n\n`;
+        }
         
         if (transferNumber) {
           waMessage += `تم التحويل من رقم: ${transferNumber}\n`;
