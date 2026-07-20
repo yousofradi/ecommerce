@@ -449,9 +449,15 @@
                   </div>
                   <div class="summary-row" id="view-transfer-screenshot-row" style="display:none; align-items:flex-start;">
                     <span style="color:var(--text-muted)">اسكرين التحويل</span>
-                    <a id="view-transfer-screenshot" target="_blank" href="#" style="max-width: 150px; display: block; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                      <img src="" id="view-transfer-screenshot-img" style="width: 100%; height: auto; display: block;">
-                    </a>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                      <a id="view-transfer-screenshot" target="_blank" href="#" style="max-width: 150px; display: block; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <img src="" id="view-transfer-screenshot-img" style="width: 100%; height: auto; display: block;">
+                      </a>
+                      <div class="flex gap-4">
+                        <input type="file" id="admin-transfer-screenshot" accept="image/*" style="display: none;" onchange="uploadAdminScreenshot(this)">
+                        <button class="btn btn-sm" style="font-size: 0.75rem; background: #f8fafc; color: #475569; border: 1px dashed #cbd5e1;" onclick="document.getElementById('admin-transfer-screenshot').click()" id="upload-screenshot-btn">رفع / تعديل اسكرين</button>
+                      </div>
+                    </div>
                   </div>
                   <div class="summary-row">
                     <span style="color:var(--text-muted)">المدفوع</span>

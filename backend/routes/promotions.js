@@ -79,7 +79,7 @@ async function evaluateCartPromotions(cartItems) {
       if (item.isFreeGift) continue; // Free gifts don't count towards unlocking promos
       
       // Excluded products don't count towards subtotal
-      if (promo.excludedProducts && promo.excludedProducts.includes(item.productId)) {
+      if (promo.excludedProducts && promo.excludedProducts.some(id => id.toString() === item.productId.toString())) {
         continue;
       }
       // Future expansion: check if promo applies to specific categories or products only
@@ -117,17 +117,35 @@ async function evaluateCartPromotions(cartItems) {
   }
 
   let progress = null;
+  const tiers = promotions.map(p => {
+    let rt = [];
+    if (p.discountType === 'PERCENTAGE') rt.push(`خصم ${p.discountValue}%`);
+    if (p.discountType === 'FIXED') rt.push(`خصم ${p.discountValue} ج`);
+    if (p.isFreeShipping) rt.push('شحن مجاني');
+    if (p.isFreeGift) rt.push('هدية مجانية');
+    return {
+      name: p.name,
+      target: p.minCartSubtotal,
+      isReached: rawSubtotal >= p.minCartSubtotal,
+      rewardText: rt.join(' و ') || 'عرض'
+    };
+  }).sort((a, b) => a.target - b.target);
+
   if (nextPromotion) {
     progress = {
       target: nextPromotion.minCartSubtotal,
       current: rawSubtotal,
       remaining: nextPromotion.minCartSubtotal - rawSubtotal,
       percentage: Math.min(100, (rawSubtotal / nextPromotion.minCartSubtotal) * 100),
-      nextRewardName: nextPromotion.name
+      nextRewardName: nextPromotion.name,
+      tiers
     };
   } else if (activePromotion) {
     // They reached the max tier!
-    progress = { target: activePromotion.minCartSubtotal, current: rawSubtotal, remaining: 0, percentage: 100, nextRewardName: 'MAX' };
+    progress = { target: activePromotion.minCartSubtotal, current: rawSubtotal, remaining: 0, percentage: 100, nextRewardName: 'MAX', tiers };
+  } else if (tiers.length > 0) {
+    // In case no nextPromotion and no activePromotion but tiers exist (e.g. cart is empty)
+    progress = { target: tiers[0].target, current: rawSubtotal, remaining: tiers[0].target - rawSubtotal, percentage: Math.min(100, (rawSubtotal / tiers[0].target) * 100), nextRewardName: tiers[0].name, tiers };
   }
 
   // 4. Calculate actual rewards for activePromotion

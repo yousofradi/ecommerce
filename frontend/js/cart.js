@@ -378,31 +378,52 @@ Cart._renderPromotions = function (data) {
   }
 
   // If they have a pending gift choice, hide the progress banner because the button will be shown instead
-  if (progress && !pendingGiftChoice) {
+  if (progress && !pendingGiftChoice && progress.tiers && progress.tiers.length > 0) {
     let msg = '';
+    const nextTier = progress.tiers.find(t => t.target === progress.target);
+    const rewardText = nextTier ? nextTier.rewardText : progress.nextRewardName;
+    
     if (progress.percentage < 100) {
-      msg = `أضف بـ <strong>${progress.remaining} ج.م</strong> للحصول على <strong>${progress.nextRewardName}</strong>`;
-      
-      html += `
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 16px;">
-          <div style="font-size: 0.9rem; margin-bottom: 8px; color: #334155;">${msg}</div>
-          <div style="height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; width: 100%;">
-            <div style="height: 100%; background: var(--primary); width: ${progress.percentage}%; transition: width 0.3s ease;"></div>
-          </div>
-        </div>
-      `;
-    } else if (!appliedPromotion) {
-      // Reached MAX but no applied promotion (edge case)
-      msg = `🎉 مبروك! وصلت لأعلى عرض: <strong>${progress.nextRewardName}</strong>`;
-      html += `
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 16px;">
-          <div style="font-size: 0.9rem; margin-bottom: 8px; color: #334155;">${msg}</div>
-          <div style="height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; width: 100%;">
-            <div style="height: 100%; background: var(--primary); width: 100%; transition: width 0.3s ease;"></div>
-          </div>
-        </div>
-      `;
+      msg = `أضف <strong>${progress.remaining} ج.م</strong> لتحصل علي <strong>${rewardText}</strong>`;
+    } else if (appliedPromotion) {
+      const activeTier = progress.tiers.find(t => t.name === appliedPromotion.name);
+      msg = `🎉 مبروك لقد حصلت علي <strong>${activeTier ? activeTier.rewardText : appliedPromotion.name}</strong>`;
+    } else {
+      msg = `🎉 مبروك! وصلت لأعلى عرض: <strong>${rewardText}</strong>`;
     }
+
+    const maxTarget = progress.tiers[progress.tiers.length - 1].target;
+    const currentPercent = Math.min(100, (progress.current / maxTarget) * 100);
+
+    const milestonesHtml = progress.tiers.map(t => {
+      const percent = (t.target / maxTarget) * 100;
+      const isReached = progress.current >= t.target;
+      return `
+        <div style="position: absolute; right: ${percent}%; top: -12px; transform: translateX(50%); display: flex; flex-direction: column; align-items: center; z-index: 2;">
+          <div style="background: ${isReached ? '#8c6046' : '#e2e8f0'}; color: ${isReached ? '#fff' : '#475569'}; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            ${isReached ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : t.target}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    html += `
+      <div style="background: #fff; padding: 16px 12px; margin-bottom: 16px;">
+        <div style="position: relative; height: 6px; background: #e2e8f0; border-radius: 4px; margin: 24px 16px 12px 16px;">
+          <!-- Active Track -->
+          <div style="position: absolute; top: 0; bottom: 0; right: 0; width: ${currentPercent}%; background: #8c6046; border-radius: 4px; transition: width 0.3s ease;"></div>
+          <!-- Milestones -->
+          ${milestonesHtml}
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #64748b; font-weight: 600; padding: 0 16px;">
+          <span>0 ج.م</span>
+          <span>${maxTarget} ج.م</span>
+        </div>
+        <div style="text-align: center; margin-top: 12px; font-size: 0.9rem; font-weight: bold; color: #1e293b;">
+          ${msg}
+        </div>
+      </div>
+    `;
   }
 
   // 2. Manual Gifts (Removed because they are already displayed in the main green banner)
