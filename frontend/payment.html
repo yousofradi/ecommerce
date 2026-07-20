@@ -221,8 +221,7 @@
 
         const freeGifts = (currentOrder.items || []).filter(item => item.finalPrice === 0 || item.isFreeGift);
         if (freeGifts.length > 0) {
-          const giftNames = freeGifts.map(g => g.name).join(' و ');
-          waMessage += `الهدايا المجانية : ${giftNames} 🎁\n\n`;
+          waMessage += `لقد حصلت علي هديه مجانيه 🎁\n\n`;
         }
         
         if (transferNumber) {
