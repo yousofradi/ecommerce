@@ -21,7 +21,7 @@ function resolveShippingDetails(cityName, zoneName, forcedCarrier) {
   };
 
   let carrier = forcedCarrier || 'bosta';
-  let govData = (window._fullShippingData || []).find(s => 
+  let govData = (window._fullShippingData || []).find(s =>
     isCityEqual(s.city, cityName) || isCityEqual(s.cityOtherName, cityName)
   );
 
@@ -40,7 +40,7 @@ function resolveShippingDetails(cityName, zoneName, forcedCarrier) {
     if (!forcedCarrier && selectedOption) {
       carrier = getCarrierInternalValue(selectedOption.name);
     }
-    const cityObj = selectedOption ? (selectedOption.cities || []).find(c => 
+    const cityObj = selectedOption ? (selectedOption.cities || []).find(c =>
       isCityEqual(c.city, cityName)
     ) : null;
     fee = cityObj ? cityObj.fee : (selectedOption ? selectedOption.cost : 0);
@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const result = await api.shipOrdersBulk([orderId]);
       if (result && result.count > 0) {
         showToast('تم شحن الاوردر بنجاح', 'success');
-        
+
         // Reload order data after a brief delay to show new status and tracking number
         setTimeout(() => window.location.reload(), 1000);
       } else {
@@ -300,7 +300,7 @@ function renderOrder() {
 
   // Customer Info Consolidated
   document.getElementById('view-c-name').textContent = o.customer.name || '—';
-  
+
   const phoneContainer = document.getElementById('view-c-phone');
   if (o.customer.phone) {
     let cleanPhone = o.customer.phone.replace(/[^0-9]/g, '');
@@ -324,7 +324,7 @@ function renderOrder() {
 
   // Shipping Info
   document.getElementById('view-c-address').textContent = o.customer.address || 'لا يوجد عنوان';
-  
+
   const govEl = document.getElementById('view-c-gov');
   govEl.textContent = o.customer.government || 'لا يوجد محافظة';
   if (o.carrier === 'egyptpost') {
@@ -351,28 +351,28 @@ function renderOrder() {
   }
 
   document.getElementById('view-payment-method').textContent =
-      o.paymentMethod === 'vodafone_cash' ? 'فودافون كاش' :
+    o.paymentMethod === 'vodafone_cash' ? 'فودافون كاش' :
       o.paymentMethod === 'instapay' ? 'إنستاباي' :
-      o.paymentMethod === 'card' ? 'بطاقة ائتمان' : 'دفع عند الاستلام';
+        o.paymentMethod === 'card' ? 'بطاقة ائتمان' : 'دفع عند الاستلام';
 
-    // Transfer info
-    const transferNumRow = document.getElementById('view-transfer-number-row');
-    const transferScreenRow = document.getElementById('view-transfer-screenshot-row');
-    if (o.transferNumber) {
-      document.getElementById('view-transfer-number').textContent = o.transferNumber;
-      if (transferNumRow) transferNumRow.style.display = 'flex';
-    } else {
-      if (transferNumRow) transferNumRow.style.display = 'none';
-    }
-    
-    if (o.transferScreenshot) {
-      const imgUrl = o.transferScreenshot;
-      document.getElementById('view-transfer-screenshot').href = imgUrl;
-      document.getElementById('view-transfer-screenshot-img').src = api.optimizeImageUrl(imgUrl, 300);
-      if (transferScreenRow) transferScreenRow.style.display = 'flex';
-    } else {
-      if (transferScreenRow) transferScreenRow.style.display = 'none';
-    }
+  // Transfer info
+  const transferNumRow = document.getElementById('view-transfer-number-row');
+  const transferScreenRow = document.getElementById('view-transfer-screenshot-row');
+  if (o.transferNumber) {
+    document.getElementById('view-transfer-number').textContent = o.transferNumber;
+    if (transferNumRow) transferNumRow.style.display = 'flex';
+  } else {
+    if (transferNumRow) transferNumRow.style.display = 'none';
+  }
+
+  if (o.transferScreenshot) {
+    const imgUrl = o.transferScreenshot;
+    document.getElementById('view-transfer-screenshot').href = imgUrl;
+    document.getElementById('view-transfer-screenshot-img').src = api.optimizeImageUrl(imgUrl, 300);
+    if (transferScreenRow) transferScreenRow.style.display = 'flex';
+  } else {
+    if (transferScreenRow) transferScreenRow.style.display = 'none';
+  }
 
   const notesEl = document.getElementById('view-c-notes');
   const notesContainer = document.getElementById('view-c-notes-container');
@@ -448,10 +448,10 @@ function renderItems() {
             <div style="text-align: right; display: flex; flex-direction: column; justify-content: center;">
               <div style="font-weight: 700; font-size: 13px; color: #1e293b; line-height: 1.2;">${item.name}</div>
               ${optText ? `<div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">${optText}</div>` : ''}
-              ${item.discount ? (item.discount > 0 
-                ? `<div style="font-size:0.75rem; color:#dc2626; margin-top:4px; font-weight:600;">خصم: ${formatPrice(item.discount)}</div>` 
-                : `<div style="font-size:0.75rem; color:#10b981; margin-top:4px; font-weight:600;">زياده ${Math.abs(item.discount)} ج.م</div>`
-              ) : ''}
+              ${item.discount ? (item.discount > 0
+        ? `<div style="font-size:0.75rem; color:#dc2626; margin-top:4px; font-weight:600;">خصم: ${formatPrice(item.discount)}</div>`
+        : `<div style="font-size:0.75rem; color:#10b981; margin-top:4px; font-weight:600;">زياده ${Math.abs(item.discount)} ج.م</div>`
+      ) : ''}
               ${lowStock ? `<div style="font-size:0.75rem; color:#ef4444; margin-top:4px; font-weight:600; background:#fee2e2; padding:2px 8px; border-radius:4px; display:inline-block;">عذراً، يتوفر ${available} قطعة فقط</div>` : ''}
             </div>
 
@@ -533,9 +533,9 @@ function updatePaymentStatusUI() {
   if (remaining > 0) {
     codFee = Math.max(10, Math.ceil((remaining * 0.01) / 5) * 5);
   }
-  
+
   const displayRemaining = remaining > 0 ? (remaining + codFee) : 0;
-  
+
   const codFeeRow = document.getElementById('sum-collection-fee-row');
   if (codFeeRow) {
     if (codFee > 0) {
@@ -613,7 +613,7 @@ window.openCustomerModal = function () {
         return `<option value="${val}">${o.name}</option>`;
       }).join('');
     }
-    
+
     // Set current value
     const currentVal = currentOrder.carrier || 'bosta';
     const matchingOpt = Array.from(carrierSelect.options).find(opt => opt.value === currentVal);
@@ -632,7 +632,7 @@ window.openCustomerModal = function () {
   document.getElementById('modal-c-zone').value = currentOrder.customer.zone || '';
   document.getElementById('modal-c-address').value = currentOrder.customer.address || '';
   document.getElementById('modal-c-notes').value = currentOrder.customer.notes || '';
-  
+
   openModal('customer-modal');
 
   // Load the zones in the background without blocking the UI
@@ -665,7 +665,7 @@ window.handleModalCityChange = async function (skipZoneClear = false) {
   renderModalZoneDropdown();
 };
 
-window.handleModalCarrierChange = function() {
+window.handleModalCarrierChange = function () {
   const carrier = document.getElementById('modal-c-carrier')?.value || 'bosta';
   const zoneContainer = document.getElementById('modal-c-zone-container');
   if (zoneContainer) {
@@ -838,35 +838,35 @@ window.applyPaymentChanges = async function (btn) {
   if (window.hideBar) window.hideBar();
 };
 
-  window.resendPaymentConfirmationDirect = async function (btn) {
-    if (!currentOrder) return;
-    
-    const confirmed = await window.showConfirmModal('ارسال تأكيد واتساب', 'هل تريد إرسال تأكيد الطلب/الدفع للعميل الآن؟', true);
-    if (!confirmed) return;
+window.resendPaymentConfirmationDirect = async function (btn) {
+  if (!currentOrder) return;
 
+  const confirmed = await window.showConfirmModal('ارسال تأكيد واتساب', 'هل تريد إرسال تأكيد الطلب/الدفع للعميل الآن؟', true);
+  if (!confirmed) return;
+
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:8px;display:inline-block;vertical-align:middle;"></span> جاري الإرسال...';
+  }
+
+  try {
+    // This will trigger order.created if paidAmount=0, or order.paid if paidAmount>0
+    const success = await api.triggerOrderPaid(currentOrder.orderId, currentOrder);
+    if (success) {
+      showToast('تم إرسال التأكيد بنجاح');
+    } else {
+      showToast('فشل إرسال التأكيد', 'error');
+    }
+  } catch (err) {
+    console.error('Resend Error:', err);
+    showToast('حدث خطأ أثناء الإرسال', 'error');
+  } finally {
     if (btn) {
-      btn.disabled = true;
-      btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:8px;display:inline-block;vertical-align:middle;"></span> جاري الإرسال...';
+      btn.disabled = false;
+      btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block; vertical-align:middle;"><path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 0 0 1.333 4.99L2 22l5.13-1.347a9.92 9.92 0 0 0 4.882 1.28c5.505 0 9.988-4.478 9.99-9.988 0-2.667-1.04-5.176-2.93-7.062C17.182 3.002 14.675 2 12.012 2zm5.733 14.153c-.25.706-1.463 1.298-2.013 1.378-.49.071-.856.326-3.003-.522-2.748-1.085-4.48-3.906-4.617-4.09-.136-.18-.992-1.314-.992-2.51 0-1.196.626-1.782.846-2.023.22-.24.48-.3.64-.3.16 0 .32.003.46.01.144.006.336-.054.528.406.196.47.672 1.637.732 1.758.06.12.1.26.02.42-.08.16-.12.26-.24.4-.12.14-.252.312-.36.42-.12.12-.245.251-.106.49.139.238.618 1.018 1.326 1.649.91.81 1.675 1.06 1.915 1.18.24.12.38.1.52-.06.14-.16.6-1.002.76-1.222.16-.22.32-.18.54-.1.22.08 1.4.66 1.64.78.24.12.4.18.46.28.06.1.06.58-.19 1.286z"/></svg> ارسال';
     }
-
-    try {
-      // This will trigger order.created if paidAmount=0, or order.paid if paidAmount>0
-      const success = await api.triggerOrderPaid(currentOrder.orderId, currentOrder);
-      if (success) {
-        showToast('تم إرسال التأكيد بنجاح');
-      } else {
-        showToast('فشل إرسال التأكيد', 'error');
-      }
-    } catch (err) {
-      console.error('Resend Error:', err);
-      showToast('حدث خطأ أثناء الإرسال', 'error');
-    } finally {
-      if (btn) {
-        btn.disabled = false;
-        btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block; vertical-align:middle;"><path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 0 0 1.333 4.99L2 22l5.13-1.347a9.92 9.92 0 0 0 4.882 1.28c5.505 0 9.988-4.478 9.99-9.988 0-2.667-1.04-5.176-2.93-7.062C17.182 3.002 14.675 2 12.012 2zm5.733 14.153c-.25.706-1.463 1.298-2.013 1.378-.49.071-.856.326-3.003-.522-2.748-1.085-4.48-3.906-4.617-4.09-.136-.18-.992-1.314-.992-2.51 0-1.196.626-1.782.846-2.023.22-.24.48-.3.64-.3.16 0 .32.003.46.01.144.006.336-.054.528.406.196.47.672 1.637.732 1.758.06.12.1.26.02.42-.08.16-.12.26-.24.4-.12.14-.252.312-.36.42-.12.12-.245.251-.106.49.139.238.618 1.018 1.326 1.649.91.81 1.675 1.06 1.915 1.18.24.12.38.1.52-.06.14-.16.6-1.002.76-1.222.16-.22.32-.18.54-.1.22.08 1.4.66 1.64.78.24.12.4.18.46.28.06.1.06.58-.19 1.286z"/></svg> ارسال';
-      }
-    }
-  };
+  }
+};
 
 // ── Actions ────────────────────────────────────────────
 
@@ -1017,7 +1017,7 @@ window.markFullyPaid = async function (btn) {
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:8px;display:inline-block;vertical-align:middle;"></span> جاري الحفظ...';
   }
-  
+
   currentOrder.paidAmount = currentOrder.totalPrice;
   currentOrder.paid = true;
   currentOrder.forcePaymentWebhook = true;
@@ -1027,7 +1027,7 @@ window.markFullyPaid = async function (btn) {
 
   // Save immediately
   const success = await saveOrderChanges(true);
-  
+
   if (!success && btn) {
     btn.disabled = false;
     btn.innerHTML = 'مدفوع بالكامل';
@@ -1412,7 +1412,7 @@ window.toggleDetailsMenu = function (e) {
 window.archiveCurrentOrder = async function (btn) {
   const confirmed = await window.showConfirmModal('تأكيد الأرشفة', 'هل أنت متأكد من أرشفة هذا الطلب؟');
   if (!confirmed) return;
-  
+
   if (btn) {
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:8px;display:inline-block;vertical-align:middle;"></span> جاري الأرشفة...';
@@ -1437,7 +1437,7 @@ window.archiveCurrentOrder = async function (btn) {
 window.deleteCurrentOrder = async function (btn) {
   const confirmed = await window.showConfirmModal('تأكيد الحذف', 'سيتم حذف هذا الطلب نهائياً. هل أنت متأكد؟');
   if (!confirmed) return;
-  
+
   if (btn) {
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:8px;display:inline-block;vertical-align:middle;"></span> جاري الحذف...';
