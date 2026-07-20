@@ -407,24 +407,29 @@ function renderOrder() {
   const giftsList = document.getElementById('free-gifts-list');
   
   let hasPromo = false;
-  if (o.appliedPromotionName || o.appliedPromotionRewardText || (Array.isArray(o.appliedPromotionRewards) && o.appliedPromotionRewards.length > 0)) {
-    promoRow.style.display = 'flex';
-    const promoNameText = o.appliedPromotionName || '';
-    const rewardText = o.appliedPromotionRewardText || (Array.isArray(o.appliedPromotionRewards) ? o.appliedPromotionRewards.join(' و ') : '');
-    const promoLine = promoNameText + (promoNameText && rewardText ? ` : ${rewardText}` : rewardText);
-    promoName.textContent = promoLine;
-    hasPromo = true;
-  } else {
-    promoRow.style.display = 'none';
+  const promoNameText = o.appliedPromotionName || '';
+  const rewardText = o.appliedPromotionRewardText || (Array.isArray(o.appliedPromotionRewards) ? o.appliedPromotionRewards.join(' و ') : '');
+  const promoLine = promoNameText + (promoNameText && rewardText ? ` : ${rewardText}` : rewardText);
+
+  if (promoRow && promoName) {
+    if (promoLine) {
+      promoRow.style.display = 'flex';
+      promoName.textContent = promoLine;
+      hasPromo = true;
+    } else {
+      promoRow.style.display = 'none';
+    }
   }
 
   const freeGifts = (o.items || []).filter(item => item.isFreeGift);
-  if (freeGifts.length > 0) {
-    giftsContainer.style.display = 'block';
-    giftsList.innerHTML = freeGifts.map(g => `<li style="margin-bottom:4px; display:flex; align-items:center; gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> ${g.name} (${g.quantity}x)</li>`).join('');
-    hasPromo = true;
-  } else {
-    giftsContainer.style.display = 'none';
+  if (giftsContainer && giftsList) {
+    if (freeGifts.length > 0) {
+      giftsContainer.style.display = 'block';
+      giftsList.innerHTML = freeGifts.map(g => `<li style="margin-bottom:4px; display:flex; align-items:center; gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> ${g.name} (${g.quantity}x)</li>`).join('');
+      hasPromo = true;
+    } else {
+      giftsContainer.style.display = 'none';
+    }
   }
 
   if (promoCard) {
