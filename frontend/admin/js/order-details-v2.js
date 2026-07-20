@@ -367,11 +367,9 @@ function renderOrder() {
     legacyTransferNotes = parts.slice(1).join('[معلومات التحويل]:').trim();
   }
   
-  if (o.paymentMethod === 'vodafone_cash' || o.paymentMethod === 'instapay') {
-    if (transferCard) transferCard.style.display = 'block';
-    
-    document.getElementById('admin-transfer-number').value = o.transferNumber || '';
-    document.getElementById('admin-transfer-notes').value = o.transferNotes || legacyTransferNotes || '';
+  if (transferCard) transferCard.style.display = 'block';
+  document.getElementById('admin-transfer-number').value = o.transferNumber || '';
+  document.getElementById('admin-transfer-notes').value = o.transferNotes || legacyTransferNotes || '';
     
     const screenLink = document.getElementById('admin-transfer-screenshot-link');
     const screenImg = document.getElementById('admin-transfer-screenshot-img');
@@ -388,10 +386,10 @@ function renderOrder() {
       screenLink.style.display = 'none';
       removeBtn.style.display = 'none';
     }
-  } else {
-    if (transferCard) transferCard.style.display = 'none';
+  if (transferCard) {
+    // If it's a completely different payment method that isn't supposed to have transfer info, we could optionally style it differently,
+    // but the user requested it to be visible.
   }
-
   const notesEl = document.getElementById('view-c-notes');
   const notesContainer = document.getElementById('view-c-notes-container');
   if (displayNotes) {
@@ -411,7 +409,13 @@ function renderOrder() {
   let hasPromo = false;
   if (o.appliedPromotionName) {
     promoRow.style.display = 'flex';
-    promoName.textContent = o.appliedPromotionName;
+    
+    let detailsHtml = '';
+    if (o.discount > 0) {
+      detailsHtml = `<div style="font-size:0.85rem; color:#10b981; font-weight:600; margin-top:4px;">وفر للعميل خصم بقيمة ${formatPrice(o.discount)}</div>`;
+    }
+
+    promoName.innerHTML = `${o.appliedPromotionName} ${detailsHtml}`;
     hasPromo = true;
   } else {
     promoRow.style.display = 'none';
