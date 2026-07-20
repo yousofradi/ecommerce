@@ -422,18 +422,24 @@ function renderOrder() {
   const giftsList = document.getElementById('free-gifts-list');
   
   let hasPromo = false;
-  const promoNameText = o.appliedPromotionName || '';
-  const rewardText = o.appliedPromotionRewardText || (Array.isArray(o.appliedPromotionRewards) ? o.appliedPromotionRewards.filter(Boolean).join(' و ') : '');
-  const promoLine = [promoNameText, rewardText].filter(Boolean).join(' : ');
-
-  if (promoRow && promoName) {
-    if (promoLine) {
-      promoRow.style.display = 'flex';
-      promoName.innerHTML = ` <strong>${promoLine}</strong>`;
-      hasPromo = true;
-    } else {
-      promoRow.style.display = 'none';
+  if (o.appliedPromotionName) {
+    promoRow.style.display = 'flex';
+    
+    const rewards = Array.isArray(o.appliedPromotionRewards) ? o.appliedPromotionRewards.filter(Boolean) : [];
+    let badgesHtml = '';
+    if (rewards.length > 0) {
+      badgesHtml = rewards.map(r => `<span style="background: #e0e7ff; color: #4338ca; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; white-space:nowrap;">${r}</span>`).join('');
     }
+    
+    promoRow.innerHTML = `
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        ${badgesHtml}
+      </div>
+      <span style="font-weight:700; color:var(--primary); white-space:nowrap;">${o.appliedPromotionName}</span>
+    `;
+    hasPromo = true;
+  } else {
+    promoRow.style.display = 'none';
   }
 
   const freeGifts = (o.items || []).filter(item => item.isFreeGift);
