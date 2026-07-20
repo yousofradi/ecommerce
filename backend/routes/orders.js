@@ -152,11 +152,17 @@ router.post('/', async (req, res) => {
     // Evaluate promotions server-side to prevent spoofing
     let finalDiscount = discount || 0; // fallback to frontend provided discount (e.g. coupons if we have them)
     let appliedPromotionName = null;
+    let appliedPromotionRewards = [];
+    let appliedPromotionRewardText = '';
     try {
       const promoResult = await evaluateCartPromotions(items);
       
       if (promoResult.appliedPromotion) {
         appliedPromotionName = promoResult.appliedPromotion.name;
+      }
+      if (Array.isArray(promoResult.rewardTexts) && promoResult.rewardTexts.length > 0) {
+        appliedPromotionRewards = promoResult.rewardTexts;
+        appliedPromotionRewardText = promoResult.rewardText || promoResult.rewardTexts.join(' و ');
       }
 
       // If promotion gives a higher discount, use it
@@ -211,6 +217,8 @@ router.post('/', async (req, res) => {
       items,
       discount: finalDiscount,
       appliedPromotionName,
+      appliedPromotionRewards,
+      appliedPromotionRewardText,
       totalPrice,
       shippingFee,
       paymentMethod,

@@ -168,18 +168,23 @@ async function evaluateCartPromotions(cartItems) {
   let freeShipping = false;
   let unlockedGifts = [];
 
+  let rewardTexts = [];
   if (activePromotion) {
     if (activePromotion.discountType === 'PERCENTAGE') {
       totalDiscount = eligibleSubtotalForActive * (activePromotion.discountValue / 100);
+      rewardTexts.push(`خصم ${activePromotion.discountValue}%`);
     } else if (activePromotion.discountType === 'FIXED') {
       totalDiscount = activePromotion.discountValue;
+      rewardTexts.push(`خصم ${activePromotion.discountValue} ج`);
     }
 
     if (activePromotion.isFreeShipping) {
       freeShipping = true;
+      rewardTexts.push('شحن مجاني');
     }
 
     if (activePromotion.isFreeGift) {
+      rewardTexts.push('هدية مجانية');
       if (activePromotion.giftMode === 'MANUAL') {
         unlockedGifts.push({ type: 'MANUAL', message: '🎁 Congratulations! Your order qualifies for a free gift.' });
       } else if (activePromotion.giftMode === 'CHOICE' && activePromotion.giftCollectionId) {
@@ -208,7 +213,9 @@ async function evaluateCartPromotions(cartItems) {
     totalDiscount: Math.round(totalDiscount), // round to nearest EGP
     freeShipping,
     unlockedGifts,
-    progress
+    progress,
+    rewardTexts,
+    rewardText: rewardTexts.join(' و ')
   };
 }
 

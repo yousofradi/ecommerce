@@ -411,15 +411,19 @@ function renderOrder() {
     promoRow.style.display = 'flex';
     
     let detailsArr = [];
-    if (o.discount > 0) {
-      detailsArr.push(`خصم بقيمة ${formatPrice(o.discount)}`);
-    }
-    if (o.shippingFee === 0) {
-      detailsArr.push('شحن مجاني');
-    }
-    const hasFreeGifts = (o.items || []).some(item => item.isFreeGift);
-    if (hasFreeGifts) {
-      detailsArr.push('هدية مجانية');
+    if (o.appliedPromotionRewardText) {
+      detailsArr.push(o.appliedPromotionRewardText);
+    } else {
+      if (o.discount > 0) {
+        detailsArr.push(`خصم بقيمة ${formatPrice(o.discount)}`);
+      }
+      if (o.shippingFee === 0) {
+        detailsArr.push('شحن مجاني');
+      }
+      const hasFreeGifts = (o.items || []).some(item => item.isFreeGift);
+      if (hasFreeGifts) {
+        detailsArr.push('هدية مجانية');
+      }
     }
     
     let detailsHtml = '';
