@@ -409,35 +409,10 @@ function renderOrder() {
   let hasPromo = false;
   if (o.appliedPromotionName) {
     promoRow.style.display = 'flex';
-    
-    let detailsArr = [];
-    if (o.appliedPromotionRewardText) {
-      detailsArr.push(o.appliedPromotionRewardText);
-    } else {
-      if (o.discount > 0) {
-        detailsArr.push(`خصم بقيمة ${formatPrice(o.discount)}`);
-      }
-      if (o.shippingFee === 0) {
-        detailsArr.push('شحن مجاني');
-      }
-      const hasFreeGifts = (o.items || []).some(item => item.isFreeGift);
-      if (hasFreeGifts) {
-        detailsArr.push('هدية مجانية');
-      }
-    }
-    
-    let detailsHtml = '';
-    if (detailsArr.length > 0) {
-      const badges = detailsArr.map(d => `<span style="background: #e0e7ff; color: #4338ca; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">${d}</span>`).join('');
-      detailsHtml = `<div style="margin-top:8px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-        ${badges}
-      </div>`;
-    }
-
+    const rewardText = o.appliedPromotionRewardText || (Array.isArray(o.appliedPromotionRewards) ? o.appliedPromotionRewards.join(' و ') : '');
     promoName.innerHTML = `
-      <div style="display:flex; flex-direction:column;">
-        <span>${o.appliedPromotionName}</span>
-        ${detailsHtml}
+      <div style="display:flex; flex-direction:column; gap:4px;">
+        <span>${safe(o.appliedPromotionName)}${rewardText ? ` : ${safe(rewardText)}` : ''}</span>
       </div>
     `;
     hasPromo = true;
