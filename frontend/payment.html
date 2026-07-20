@@ -184,7 +184,7 @@
         if (file) {
           const formData = new FormData();
           formData.append('image', file);
-          const uploadRes = await fetch(`${api.baseUrl}/upload/public`, {
+          const uploadRes = await fetch(`${API_BASE}/upload/public`, {
             method: 'POST',
             body: formData
           });
@@ -195,7 +195,7 @@
         }
 
         // Save to order details
-        await fetch(`${api.baseUrl}/orders/public/${currentOrder.orderId}/transfer-info`, {
+        await fetch(`${API_BASE}/orders/public/${currentOrder.orderId}/transfer-info`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
