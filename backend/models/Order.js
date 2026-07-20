@@ -57,7 +57,8 @@ const orderSchema = new mongoose.Schema({
     default: 'pending' 
   },
   transferScreenshot: { type: String, default: null },
-  transferNumber: { type: String, default: null }
+  transferNumber: { type: String, default: null },
+  transferNotes: { type: String, default: '' }
 }, { timestamps: true });
 
 orderSchema.index({ 'customer.phone': 1 });

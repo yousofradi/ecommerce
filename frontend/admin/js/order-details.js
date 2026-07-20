@@ -355,27 +355,31 @@ function renderOrder() {
       o.paymentMethod === 'instapay' ? 'إنستاباي' :
         o.paymentMethod === 'card' ? 'بطاقة ائتمان' : 'دفع عند الاستلام';
 
-  // Transfer info
-  const transferNumRow = document.getElementById('view-transfer-number-row');
-  const transferScreenRow = document.getElementById('view-transfer-screenshot-row');
-  if (o.transferNumber) {
-    document.getElementById('view-transfer-number').textContent = o.transferNumber;
-    if (transferNumRow) transferNumRow.style.display = 'flex';
+  // Transfer info card
+  const transferCard = document.getElementById('transfer-info-card');
+  if (o.paymentMethod === 'vodafone_cash' || o.paymentMethod === 'instapay') {
+    if (transferCard) transferCard.style.display = 'block';
+    
+    document.getElementById('admin-transfer-number').value = o.transferNumber || '';
+    document.getElementById('admin-transfer-notes').value = o.transferNotes || '';
+    
+    const screenLink = document.getElementById('admin-transfer-screenshot-link');
+    const screenImg = document.getElementById('admin-transfer-screenshot-img');
+    const removeBtn = document.getElementById('admin-transfer-screenshot-remove');
+    
+    if (o.transferScreenshot) {
+      screenLink.href = o.transferScreenshot;
+      screenImg.src = api.optimizeImageUrl(o.transferScreenshot, 300);
+      screenLink.style.display = 'block';
+      removeBtn.style.display = 'block';
+    } else {
+      screenLink.href = '#';
+      screenImg.src = '';
+      screenLink.style.display = 'none';
+      removeBtn.style.display = 'none';
+    }
   } else {
-    if (transferNumRow) transferNumRow.style.display = 'none';
-  }
-
-  if (o.transferScreenshot) {
-    const imgUrl = o.transferScreenshot;
-    document.getElementById('view-transfer-screenshot').href = imgUrl;
-    document.getElementById('view-transfer-screenshot').style.display = 'block';
-    document.getElementById('view-transfer-screenshot-img').src = api.optimizeImageUrl(imgUrl, 300);
-    if (transferScreenRow) transferScreenRow.style.display = 'flex';
-  } else if (o.paymentMethod === 'vodafone_cash' || o.paymentMethod === 'instapay') {
-    document.getElementById('view-transfer-screenshot').style.display = 'none';
-    if (transferScreenRow) transferScreenRow.style.display = 'flex';
-  } else {
-    if (transferScreenRow) transferScreenRow.style.display = 'none';
+    if (transferCard) transferCard.style.display = 'none';
   }
 
   const notesEl = document.getElementById('view-c-notes');
@@ -1579,52 +1583,80 @@ window.confirmMarkAsReady = async function (btn) {
 };
 // printOrderInvoice consolidated at top
 
-async function uploadAdminScreenshot(input) {
+let pendingTransferScreenshotFile = null;
+let pendingTransferScreenshotRemoved = false;
+
+window.previewAdminTransferScreenshot = function(input) {
   if (!input.files || !input.files[0]) return;
   const file = input.files[0];
-  const btn = document.getElementById('upload-screenshot-btn');
-  const originalText = btn.textContent;
+  pendingTransferScreenshotFile = file;
+  pendingTransferScreenshotRemoved = false;
   
-  btn.textContent = 'جاري الرفع...';
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    document.getElementById('admin-transfer-screenshot-img').src = e.target.result;
+    document.getElementById('admin-transfer-screenshot-link').style.display = 'block';
+    document.getElementById('admin-transfer-screenshot-remove').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+};
+
+window.removeAdminTransferScreenshot = function() {
+  pendingTransferScreenshotFile = null;
+  pendingTransferScreenshotRemoved = true;
+  document.getElementById('admin-transfer-screenshot-input').value = '';
+  document.getElementById('admin-transfer-screenshot-img').src = '';
+  document.getElementById('admin-transfer-screenshot-link').style.display = 'none';
+  document.getElementById('admin-transfer-screenshot-remove').style.display = 'none';
+};
+
+window.saveTransferInfo = async function(btn) {
+  const originalText = btn.textContent;
+  btn.textContent = 'جاري الحفظ...';
   btn.disabled = true;
   
   try {
-    const formData = new FormData();
-    formData.append('image', file);
+    let screenshotUrl = currentOrder.transferScreenshot;
     
-    // 1. Upload to public endpoint
-    const uploadRes = await fetch(`${typeof API_BASE !== 'undefined' ? API_BASE : ''}/upload/public`, {
-      method: 'POST',
-      body: formData
-    });
+    if (pendingTransferScreenshotRemoved) {
+      screenshotUrl = null;
+    } else if (pendingTransferScreenshotFile) {
+      const formData = new FormData();
+      formData.append('image', pendingTransferScreenshotFile);
+      const uploadRes = await fetch(`${typeof API_BASE !== 'undefined' ? API_BASE : ''}/upload/public`, {
+        method: 'POST',
+        body: formData
+      });
+      if (!uploadRes.ok) throw new Error('فشل رفع الصورة');
+      const uploadData = await uploadRes.json();
+      screenshotUrl = uploadData.url;
+    }
     
-    if (!uploadRes.ok) throw new Error('فشل رفع الصورة');
-    const uploadData = await uploadRes.json();
-    const screenshotUrl = uploadData.url;
-    
-    // 2. Save to order using the public transfer-info endpoint
     const updateRes = await fetch(`${typeof API_BASE !== 'undefined' ? API_BASE : ''}/orders/public/${currentOrder.orderId}/transfer-info`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        transferNumber: document.getElementById('admin-transfer-number').value,
+        transferNotes: document.getElementById('admin-transfer-notes').value,
         transferScreenshot: screenshotUrl
       })
     });
     
-    if (!updateRes.ok) throw new Error('فشل حفظ الصورة في الطلب');
+    if (!updateRes.ok) throw new Error('فشل حفظ بيانات التحويل');
     
-    // Update UI
+    // Update local state
+    currentOrder.transferNumber = document.getElementById('admin-transfer-number').value;
+    currentOrder.transferNotes = document.getElementById('admin-transfer-notes').value;
     currentOrder.transferScreenshot = screenshotUrl;
-    document.getElementById('view-transfer-screenshot-row').style.display = 'flex';
-    document.getElementById('view-transfer-screenshot').style.display = 'block';
-    document.getElementById('view-transfer-screenshot').href = screenshotUrl;
-    document.getElementById('view-transfer-screenshot-img').src = api.optimizeImageUrl(screenshotUrl, 300);
-    showToast('تم رفع الصورة بنجاح', 'success');
+    
+    pendingTransferScreenshotFile = null;
+    pendingTransferScreenshotRemoved = false;
+    
+    showToast('تم الحفظ بنجاح', 'success');
   } catch (err) {
     showToast(err.message, 'error');
   } finally {
     btn.textContent = originalText;
     btn.disabled = false;
-    input.value = '';
   }
-}
+};

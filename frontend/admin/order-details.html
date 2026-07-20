@@ -443,22 +443,6 @@
                     <span style="color:var(--text-muted)">وسيلة الدفع</span>
                     <span id="view-payment-method"></span>
                   </div>
-                  <div class="summary-row" id="view-transfer-number-row" style="display:none;">
-                    <span style="color:var(--text-muted)">الرقم المحول منه</span>
-                    <span id="view-transfer-number" style="font-weight:600; direction:ltr;"></span>
-                  </div>
-                  <div class="summary-row" id="view-transfer-screenshot-row" style="display:none; align-items:flex-start;">
-                    <span style="color:var(--text-muted)">اسكرين التحويل</span>
-                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                      <a id="view-transfer-screenshot" target="_blank" href="#" style="max-width: 150px; display: block; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                        <img src="" id="view-transfer-screenshot-img" style="width: 100%; height: auto; display: block;">
-                      </a>
-                      <div class="flex gap-4">
-                        <input type="file" id="admin-transfer-screenshot" accept="image/*" style="display: none;" onchange="uploadAdminScreenshot(this)">
-                        <button class="btn btn-sm" style="font-size: 0.75rem; background: #f8fafc; color: #475569; border: 1px dashed #cbd5e1;" onclick="document.getElementById('admin-transfer-screenshot').click()" id="upload-screenshot-btn">رفع / تعديل اسكرين</button>
-                      </div>
-                    </div>
-                  </div>
                   <div class="summary-row">
                     <span style="color:var(--text-muted)">المدفوع</span>
                     <span id="view-paid-amount">0 ج.م</span>
@@ -527,6 +511,42 @@
                 <div id="view-c-notes-container">
                   <h4 style="font-size:0.85rem;color:var(--text-muted);margin-bottom:8px">ملاحظات</h4>
                   <div style="font-size:0.95rem" id="view-c-notes"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Transfer Info Card -->
+            <div class="info-card" id="transfer-info-card" style="margin-top: 24px;">
+              <div class="info-card-header flex justify-between" style="align-items:center;margin-bottom:20px">
+                <h3>معلومات التحويل</h3>
+                <button class="btn btn-sm btn-primary" onclick="saveTransferInfo(this)" id="save-transfer-btn"
+                  style="padding: 4px 12px; font-size: 0.85rem;">حفظ التعديلات</button>
+              </div>
+              <div class="info-card-body">
+                <div class="form-group mb-16">
+                  <label class="form-label">الرقم المحول منه</label>
+                  <input type="text" id="admin-transfer-number" class="form-control" placeholder="01xxxxxxxxx">
+                </div>
+                <div class="form-group mb-16">
+                  <label class="form-label">ملاحظات التحويل</label>
+                  <textarea id="admin-transfer-notes" class="form-control" rows="2" placeholder="أو اسم المحول..."></textarea>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">اسكرين التحويل</label>
+                  <div style="display: flex; gap: 16px; align-items: flex-start;">
+                    <a id="admin-transfer-screenshot-link" target="_blank" href="#" style="display: none; max-width: 120px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color);">
+                      <img src="" id="admin-transfer-screenshot-img" style="width: 100%; height: auto; display: block;">
+                    </a>
+                    <div class="flex flex-col gap-8">
+                      <input type="file" id="admin-transfer-screenshot-input" accept="image/*" style="display: none;" onchange="uploadAdminScreenshot(this)">
+                      <button class="btn btn-secondary btn-sm" onclick="document.getElementById('admin-transfer-screenshot-input').click()" style="background: #f8fafc; border: 1px dashed #cbd5e1; font-size: 0.8rem;">
+                        رفع / تعديل صورة
+                      </button>
+                      <button class="btn btn-sm" id="admin-transfer-screenshot-remove" onclick="removeAdminTransferScreenshot()" style="display: none; color: var(--danger); font-size: 0.8rem; background: #fee2e2; border: none;">
+                        حذف الصورة
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
