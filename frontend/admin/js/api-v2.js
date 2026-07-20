@@ -62,6 +62,12 @@ const api = {
       }
     }
 
+    if (opts.useCache !== true && method === 'GET') {
+      opts.cache = 'no-store';
+      const separator = finalPath.includes('?') ? '&' : '?';
+      finalPath += `${separator}_t=${Date.now()}`;
+    }
+
     if (API_BASE === 'API_URL' + '_PLACEHOLDER') {
       clearTimeout(id);
       console.error(`CRITICAL: API URL is not configured (Value: ${API_BASE})`);

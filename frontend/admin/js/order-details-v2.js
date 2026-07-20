@@ -5,24 +5,6 @@ let originalOrder = null;
 let allProducts = [];
 let collectionsMap = {};
 let shippingMap = {};
-let isSaving = false;
-
-// Smart Search helper for Arabic
-function smartMatch(text, query) {
-  if (!query) return true; // Show all if no query
-  if (!text) return false;
-  const normalize = (s) => s.toLowerCase()
-    .replace(/[أإآ]/g, 'ا')
-    .replace(/ة/g, 'ه')
-    .replace(/ى/g, 'ي')
-    .replace(/^ال/, '')
-    .replace(/\sال/g, ' ')
-    .trim();
-
-  const nText = normalize(text);
-  const nQuery = normalize(query);
-  return nText.includes(nQuery) || nQuery.includes(nText);
-}
 
 function getCarrierInternalValue(name) {
   if (!name) return 'bosta';
@@ -65,6 +47,28 @@ function resolveShippingDetails(cityName, zoneName, forcedCarrier) {
   }
 
   return { fee, carrier };
+}
+
+function getShippingFeeForCityAndZone(cityName, zoneName) {
+  const details = resolveShippingDetails(cityName, zoneName);
+  return details.fee;
+}
+
+// Smart Search helper for Arabic
+function smartMatch(text, query) {
+  if (!query) return true; // Show all if no query
+  if (!text) return false;
+  const normalize = (s) => s.toLowerCase()
+    .replace(/[أإآ]/g, 'ا')
+    .replace(/ة/g, 'ه')
+    .replace(/ى/g, 'ي')
+    .replace(/^ال/, '')
+    .replace(/\sال/g, ' ')
+    .trim();
+
+  const nText = normalize(text);
+  const nQuery = normalize(query);
+  return nText.includes(nQuery) || nQuery.includes(nText);
 }
 
 
@@ -110,11 +114,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.body.classList.add('is-loading');
 
   try {
-    const [order, shipping, settings, shippingOptions] = await Promise.all([
+    const [order, shipping, settings, shippingOptions, productsRes] = await Promise.all([
       api.getOrder(orderId),
       api.getShippingList().catch(() => []),
       api.getSetting('sundura_global_settings').catch(() => ({})),
-      api.getSetting('shipping_options').catch(() => [])
+      api.getSetting('shipping_options').catch(() => []),
+      api.getProducts(1, 1000, true).catch(() => [])
     ]);
 
     currentOrder = order;
@@ -122,6 +127,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     window._fullShippingData = shipping;
     window._globalSettings = settings || {};
     window._shippingOptions = shippingOptions || [];
+    allProducts = Array.isArray(productsRes) ? productsRes : (productsRes.products || []);
 
     const searchInput = document.getElementById('modal-c-gov-search');
     const dropdown = document.getElementById('modal-c-gov-dropdown');
@@ -174,9 +180,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
     renderOrder();
+    document.body.classList.remove('is-loading');
   } catch (err) {
     showToast('فشل تحميل بيانات الطلب', 'error');
-  } finally {
     document.body.classList.remove('is-loading');
   }
 
@@ -283,28 +289,10 @@ function renderOrder() {
     document.getElementById('page-order-id').innerHTML += ' <span class="badge badge-danger">ملغي</span>';
   }
 
-  // Ready button visibility: show if pending or ready
+  // Ready button visibility: only show if pending
   const readyBtnContainer = document.getElementById('ready-btn-container');
   if (readyBtnContainer) {
-    if (o.status === 'pending' || o.status === 'ready') {
-      readyBtnContainer.style.display = 'block';
-      const btn = document.getElementById('btn-make-ready');
-      if (btn) {
-        if (o.status === 'ready') {
-          btn.textContent = 'إلغاء التجهيز';
-          btn.style.background = '#f59e0b';
-          btn.style.color = '#fff';
-          btn.setAttribute('onclick', 'markAsUnready()');
-        } else {
-          btn.textContent = 'جاهز';
-          btn.style.background = '#0f766e';
-          btn.style.color = '#fff';
-          btn.setAttribute('onclick', 'markAsReady()');
-        }
-      }
-    } else {
-      readyBtnContainer.style.display = 'none';
-    }
+    readyBtnContainer.style.display = o.status === 'pending' ? 'block' : 'none';
   }
   if (o.status === 'ready') {
     document.getElementById('page-order-id').innerHTML += ' <span class="badge badge-success" style="background:#0f766e; color:#fff; padding: 4px 12px; border-radius: 12px; font-size: 0.8rem; margin-right:8px;">جاهز</span>';
@@ -312,7 +300,7 @@ function renderOrder() {
 
   // Customer Info Consolidated
   document.getElementById('view-c-name').textContent = o.customer.name || '—';
-  
+
   const phoneContainer = document.getElementById('view-c-phone');
   if (o.customer.phone) {
     let cleanPhone = o.customer.phone.replace(/[^0-9]/g, '');
@@ -362,13 +350,84 @@ function renderOrder() {
     }
   }
 
+  document.getElementById('view-payment-method').textContent =
+    o.paymentMethod === 'vodafone_cash' ? 'فودافون كاش' :
+      o.paymentMethod === 'instapay' ? 'إنستاباي' :
+        o.paymentMethod === 'card' ? 'بطاقة ائتمان' : 'دفع عند الاستلام';
+
+  // Transfer info card
+  const transferCard = document.getElementById('transfer-info-card');
+  
+  // Extract transfer notes from legacy customer.notes if present
+  let displayNotes = o.customer.notes || '';
+  let legacyTransferNotes = '';
+  if (displayNotes.includes('[معلومات التحويل]:')) {
+    const parts = displayNotes.split('[معلومات التحويل]:');
+    displayNotes = parts[0].trim();
+    legacyTransferNotes = parts.slice(1).join('[معلومات التحويل]:').trim();
+  }
+  
+  if (o.paymentMethod === 'vodafone_cash' || o.paymentMethod === 'instapay') {
+    if (transferCard) transferCard.style.display = 'block';
+    
+    document.getElementById('admin-transfer-number').value = o.transferNumber || '';
+    document.getElementById('admin-transfer-notes').value = o.transferNotes || legacyTransferNotes || '';
+    
+    const screenLink = document.getElementById('admin-transfer-screenshot-link');
+    const screenImg = document.getElementById('admin-transfer-screenshot-img');
+    const removeBtn = document.getElementById('admin-transfer-screenshot-remove');
+    
+    if (o.transferScreenshot) {
+      screenLink.href = o.transferScreenshot;
+      screenImg.src = api.optimizeImageUrl(o.transferScreenshot, 300);
+      screenLink.style.display = 'block';
+      removeBtn.style.display = 'block';
+    } else {
+      screenLink.href = '#';
+      screenImg.src = '';
+      screenLink.style.display = 'none';
+      removeBtn.style.display = 'none';
+    }
+  } else {
+    if (transferCard) transferCard.style.display = 'none';
+  }
+
   const notesEl = document.getElementById('view-c-notes');
   const notesContainer = document.getElementById('view-c-notes-container');
-  if (o.customer.notes) {
-    notesEl.textContent = o.customer.notes;
+  if (displayNotes) {
+    notesEl.textContent = displayNotes;
     notesContainer.style.display = 'block';
   } else {
     notesContainer.style.display = 'none';
+  }
+
+  // Promotions & Gifts Card
+  const promoCard = document.getElementById('promo-info-card');
+  const promoRow = document.getElementById('applied-promo-row');
+  const promoName = document.getElementById('view-applied-promo');
+  const giftsContainer = document.getElementById('free-gifts-container');
+  const giftsList = document.getElementById('free-gifts-list');
+  
+  let hasPromo = false;
+  if (o.appliedPromotionName) {
+    promoRow.style.display = 'flex';
+    promoName.textContent = o.appliedPromotionName;
+    hasPromo = true;
+  } else {
+    promoRow.style.display = 'none';
+  }
+
+  const freeGifts = (o.items || []).filter(item => item.isFreeGift);
+  if (freeGifts.length > 0) {
+    giftsContainer.style.display = 'block';
+    giftsList.innerHTML = freeGifts.map(g => `<li style="margin-bottom:4px; display:flex; align-items:center; gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> ${g.name} (${g.quantity}x)</li>`).join('');
+    hasPromo = true;
+  } else {
+    giftsContainer.style.display = 'none';
+  }
+
+  if (promoCard) {
+    promoCard.style.display = hasPromo ? 'block' : 'none';
   }
 
   // Payment
@@ -405,31 +464,25 @@ function renderItems() {
     const available = getAvailableQty(p, item.selectedOptions);
     const lowStock = available !== Infinity && item.quantity > available;
 
-    // Find matching variant option specific image url
-    let finalImageUrl = '';
-    if (p && p.variants && item.selectedOptions && item.selectedOptions.length > 0) {
-      const matchingVariant = p.variants.find(v => {
-        if (!v.combination) return false;
-        return item.selectedOptions.every(opt => v.combination[opt.groupName] === opt.label);
-      });
-      if (matchingVariant && matchingVariant.imageUrl) {
-        finalImageUrl = matchingVariant.imageUrl;
-      }
-    }
-
-    // Fall back to product base image url
+    let finalImageUrl = item.imageUrl;
     if (!finalImageUrl && p) {
-      finalImageUrl = p.imageUrl;
-    }
-
-    // Fall back to order item's original imageUrl
-    if (!finalImageUrl) {
-      finalImageUrl = item.imageUrl;
+      if (p.variants && item.selectedOptions && item.selectedOptions.length > 0) {
+        const matchingVariant = p.variants.find(v => {
+          if (!v.combination) return false;
+          return item.selectedOptions.every(opt => v.combination[opt.groupName] === opt.label);
+        });
+        if (matchingVariant && matchingVariant.imageUrl) {
+          finalImageUrl = matchingVariant.imageUrl;
+        }
+      }
+      if (!finalImageUrl) {
+        finalImageUrl = (p.images && p.images.length > 0) ? p.images[0] : (p.imageUrl || '');
+      }
     }
 
     const imgHtml = finalImageUrl
       ? `<img src="${finalImageUrl}" style="width:52px; height:52px; border-radius:8px; object-fit:contain; border:1px solid #f1f5f9;" alt="${item.name}">`
-      : `<div style="width:52px; height:52px; border-radius:8px; background:#f8fafc; display:flex; align-items:center; justify-content:center; color:#94a3b8; border:1px solid #f1f5f9;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>`;
+      : `<div style="width:52px; height:52px; border-radius:8px; background:#f8fafc; display:flex; align-items:center; justify-content:center; color:#94a3b8; border:1px solid #f1f5f9;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>`;
 
     const optText = (item.selectedOptions || []).map(op => op.label).join(' / ');
     return `
@@ -440,7 +493,10 @@ function renderItems() {
           <div style="display: flex; align-items: center; gap: 12px; flex: 1.5;">
             ${imgHtml}
             <div style="text-align: right; display: flex; flex-direction: column; justify-content: center;">
-              <div style="font-weight: 700; font-size: 13px; color: #1e293b; line-height: 1.2;">${item.name}</div>
+              <div style="font-weight: 700; font-size: 13px; color: #1e293b; line-height: 1.2;">
+                ${item.name}
+                ${item.isFreeGift ? '<span class="badge" style="background:#dcfce7;color:#166534;font-size:0.7rem;margin-right:6px;padding:2px 6px;border-radius:4px;">هدية مجانية 🎁</span>' : ''}
+              </div>
               ${optText ? `<div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">${optText}</div>` : ''}
               ${item.discount ? (item.discount > 0
         ? `<div style="font-size:0.75rem; color:#dc2626; margin-top:4px; font-weight:600;">خصم: ${formatPrice(item.discount)}</div>`
@@ -453,8 +509,12 @@ function renderItems() {
           
           <!-- Left side: Unit Price Block and Total Price -->
           <div style="display: flex; align-items: center; gap: 16px; flex: 1; justify-content: space-between;">
-            <div style="font-size: 0.85rem; color: #64748b; white-space: nowrap; font-weight: 500; text-align: center; flex: 1;" dir="ltr">${formatPrice(item.basePrice)}x${item.quantity} </div>
-            <div style="font-weight: 700; font-size: 1rem; color: #1e293b; min-width: 80px; text-align: left; flex: 1;">${formatPrice(item.finalPrice)}</div>
+            <div style="font-size: 0.85rem; color: #64748b; white-space: nowrap; font-weight: 500; text-align: center; flex: 1;" dir="ltr">
+              ${item.isFreeGift ? '' : `${formatPrice(item.basePrice)}x${item.quantity}`}
+            </div>
+            <div style="font-weight: 700; font-size: 1rem; color: #1e293b; min-width: 80px; text-align: left; flex: 1;">
+              ${item.isFreeGift ? '<span style="color:#10b981;">مجانًا</span>' : formatPrice(item.finalPrice)}
+            </div>
           </div>
         </div>
 
@@ -527,9 +587,9 @@ function updatePaymentStatusUI() {
   if (remaining > 0) {
     codFee = Math.max(10, Math.ceil((remaining * 0.01) / 5) * 5);
   }
-  
+
   const displayRemaining = remaining > 0 ? (remaining + codFee) : 0;
-  
+
   const codFeeRow = document.getElementById('sum-collection-fee-row');
   if (codFeeRow) {
     if (codFee > 0) {
@@ -731,6 +791,11 @@ document.addEventListener('click', (e) => {
 });
 
 window.applyCustomerChanges = async function (btn) {
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:8px;display:inline-block;vertical-align:middle;"></span> جارٍ الحفظ...';
+  }
+
   const name = document.getElementById('modal-c-name').value.trim();
   const phone = document.getElementById('modal-c-phone').value.trim();
   const cityId = document.getElementById('modal-c-gov').value;
@@ -744,12 +809,20 @@ window.applyCustomerChanges = async function (btn) {
   const hasZones = carrier === 'bosta' && window._globalSettings?.enableZones !== false && window._modalZones && window._modalZones.length > 0;
   if (!name || !phone || !cityName || (hasZones && !zone)) {
     showToast(hasZones ? 'الاسم ورقم الهاتف والمدينة والمنطقة مطلوبة' : 'الاسم ورقم الهاتف والمدينة مطلوبة', 'error');
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'حفظ التغييرات';
+    }
     return;
   }
 
   // Arabic-only name validation
   if (!/^[\u0600-\u06FF\s]+$/.test(name)) {
     showToast('يرجى إدخال اسم العميل باللغة العربية فقط', 'error');
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'حفظ التغييرات';
+    }
     return;
   }
 
@@ -757,14 +830,21 @@ window.applyCustomerChanges = async function (btn) {
   const phone2 = document.getElementById('modal-c-phone2').value.trim();
   if (!/^[0-9+]+$/.test(phone) || (phone2 && !/^[0-9+]+$/.test(phone2))) {
     showToast('يرجى إدخال رقم الهاتف بالأرقام الإنجليزية فقط', 'error');
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'حفظ التغييرات';
+    }
     return;
   }
 
   if (!/^01[0-9]{9}$/.test(phone)) {
     showToast('رقم الهاتف يجب أن يكون 11 رقم ويبدأ بـ 01', 'error');
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'حفظ التغييرات';
+    }
     return;
   }
-
 
   currentOrder.customer.name = name;
   currentOrder.customer.phone = phone;
@@ -780,9 +860,11 @@ window.applyCustomerChanges = async function (btn) {
   currentOrder.customer.address = document.getElementById('modal-c-address').value.trim();
   currentOrder.customer.notes = document.getElementById('modal-c-notes').value.trim();
 
-  updateTotals();
   renderOrder();
+  updateTotals();
   closeModal('customer-modal');
+
+  // Trigger unsaved changes bar
   if (window.markAsModified) window.markAsModified();
 };
 
@@ -794,15 +876,51 @@ window.openPaymentModal = function () {
 };
 
 window.applyPaymentChanges = async function (btn) {
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:8px;display:inline-block;vertical-align:middle;"></span> جارٍ الحفظ...';
+  }
   currentOrder.paymentMethod = document.getElementById('modal-payment-method').value;
   currentOrder.paidAmount = parseFloat(document.getElementById('modal-paid-amount').value) || 0;
 
   renderOrder();
   closeModal('payment-modal');
-  if (window.markAsModified) window.markAsModified();
+
+  // Save immediately as requested
+  await saveOrderChanges(true);
+
+  if (window.hideBar) window.hideBar();
 };
 
+window.resendPaymentConfirmationDirect = async function (btn) {
+  if (!currentOrder) return;
 
+  const confirmed = await window.showConfirmModal('ارسال تأكيد واتساب', 'هل تريد إرسال تأكيد الطلب/الدفع للعميل الآن؟', true);
+  if (!confirmed) return;
+
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:8px;display:inline-block;vertical-align:middle;"></span> جاري الإرسال...';
+  }
+
+  try {
+    // This will trigger order.created if paidAmount=0, or order.paid if paidAmount>0
+    const success = await api.triggerOrderPaid(currentOrder.orderId, currentOrder);
+    if (success) {
+      showToast('تم إرسال التأكيد بنجاح');
+    } else {
+      showToast('فشل إرسال التأكيد', 'error');
+    }
+  } catch (err) {
+    console.error('Resend Error:', err);
+    showToast('حدث خطأ أثناء الإرسال', 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block; vertical-align:middle;"><path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 0 0 1.333 4.99L2 22l5.13-1.347a9.92 9.92 0 0 0 4.882 1.28c5.505 0 9.988-4.478 9.99-9.988 0-2.667-1.04-5.176-2.93-7.062C17.182 3.002 14.675 2 12.012 2zm5.733 14.153c-.25.706-1.463 1.298-2.013 1.378-.49.071-.856.326-3.003-.522-2.748-1.085-4.48-3.906-4.617-4.09-.136-.18-.992-1.314-.992-2.51 0-1.196.626-1.782.846-2.023.22-.24.48-.3.64-.3.16 0 .32.003.46.01.144.006.336-.054.528.406.196.47.672 1.637.732 1.758.06.12.1.26.02.42-.08.16-.12.26-.24.4-.12.14-.252.312-.36.42-.12.12-.245.251-.106.49.139.238.618 1.018 1.326 1.649.91.81 1.675 1.06 1.915 1.18.24.12.38.1.52-.06.14-.16.6-1.002.76-1.222.16-.22.32-.18.54-.1.22.08 1.4.66 1.64.78.24.12.4.18.46.28.06.1.06.58-.19 1.286z"/></svg> ارسال';
+    }
+  }
+};
 
 // ── Actions ────────────────────────────────────────────
 
@@ -872,15 +990,20 @@ window.promptItemQty = function (idx) {
   openModal('item-qty-modal');
 };
 
-window.applyItemQty = async function (btn) {
+window.applyItemQty = function (btn) {
   const idx = parseInt(document.getElementById('modal-qty-idx').value, 10);
   const qty = parseInt(document.getElementById('modal-item-qty').value, 10);
   if (qty >= 1 && currentOrder.items[idx]) {
     currentOrder.items[idx].quantity = qty;
     updateTotals();
-    renderOrder();
-    closeModal('item-qty-modal');
+    renderItems();
     if (window.markAsModified) window.markAsModified();
+  }
+  closeModal('item-qty-modal');
+
+  // Refresh ready modal if open
+  if (document.getElementById('ready-confirm-modal').style.display === 'flex') {
+    markAsReady();
   }
 };
 
@@ -888,55 +1011,17 @@ window.openItemDiscountModal = function (idx) {
   const item = currentOrder.items[idx];
   document.getElementById('modal-item-idx').value = idx;
   document.getElementById('modal-item-discount').value = item.discount || '';
-  previewItemDiscount();
   openModal('item-discount-modal');
 };
 
-window.previewItemDiscount = function () {
-  const val = parseFloat(document.getElementById('modal-item-discount').value) || 0;
-  const preview = document.getElementById('discount-preview');
-
-  if (val === 0 || isNaN(val)) {
-    preview.style.display = 'none';
-    return;
-  }
-
-  preview.style.display = 'block';
-  if (val > 0) {
-    preview.textContent = `خصم: ${val.toLocaleString('ar-EG')} ج.م`;
-    preview.style.color = '#dc2626';
-  } else {
-    preview.textContent = `زياده: ${Math.abs(val).toLocaleString('ar-EG')} ج.م`;
-    preview.style.color = '#10b981';
-  }
-};
-
-window.applyItemDiscount = async function (type) {
-  const idx = parseInt(document.getElementById('modal-item-idx').value, 10);
-  const val = parseFloat(document.getElementById('modal-item-discount').value) || 0;
-
-  if (currentOrder.items[idx]) {
-    if (type === 'discount') {
-      // خصم: store as positive value (will be subtracted)
-      currentOrder.items[idx].discount = val;
-    } else if (type === 'increase') {
-      // زياده: store as negative value (will be added)
-      currentOrder.items[idx].discount = -val;
-    }
-    updateTotals();
-    renderOrder();
-    closeModal('item-discount-modal');
-    if (window.markAsModified) window.markAsModified();
-  }
-};
-
 window.removeItem = function (idx) {
-  if (currentOrder.items[idx]) {
-    currentOrder.items.splice(idx, 1);
-    updateTotals();
-    renderOrder();
-    if (window.markAsModified) window.markAsModified();
-  }
+  const item = currentOrder.items[idx];
+  if (!item) return;
+
+  currentOrder.items.splice(idx, 1);
+  updateTotals();
+  renderItems();
+  if (window.markAsModified) window.markAsModified();
 };
 
 window.promptOrderDiscount = function () {
@@ -949,22 +1034,19 @@ window.openOrderDiscountModal = function () {
   document.getElementById('modal-order-discount').value = currentOrder.discount || '';
 };
 
-window.applyOrderDiscount = async function (type) {
-  const valRaw = document.getElementById('modal-order-discount').value;
-  let val = Math.abs(parseFloat(valRaw) || 0);
-
-  if (type === 'discount') {
-    currentOrder.discount = val; // Positive value reduces total
-  } else if (type === 'increase') {
-    currentOrder.discount = -val; // Negative value increases total
-  } else {
-    currentOrder.discount = 0;
-  }
-
-  updateTotals();
-  renderOrder();
+window.applyOrderDiscount = async function (btn) {
+  const val = document.getElementById('modal-order-discount').value;
+  currentOrder.discount = parseFloat(val) || 0;
   closeModal('order-discount-modal');
+  updateTotals();
+
+  // Trigger unsaved changes bar
   if (window.markAsModified) window.markAsModified();
+
+  // Refresh ready modal if open
+  if (document.getElementById('ready-confirm-modal').style.display === 'flex') {
+    markAsReady();
+  }
 };
 
 window.openShippingEditModal = function () {
@@ -983,34 +1065,13 @@ window.applyShippingFeeChanges = async function (btn) {
 
 
 
-window.resendPaymentConfirmationDirect = async function (btn) {
-  if (!currentOrder) return;
-
-  if (btn) {
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:8px;display:inline-block;vertical-align:middle;"></span> جاري الإرسال...';
-  }
-
-  try {
-    // This will trigger order.created if paidAmount=0, or order.paid if paidAmount>0
-    const success = await api.triggerOrderPaid(currentOrder.orderId, currentOrder);
-    if (success) {
-      showToast('تم إرسال التأكيد بنجاح');
-    } else {
-      showToast('فشل إرسال التأكيد', 'error');
-    }
-  } catch (err) {
-    console.error('Resend Error:', err);
-    showToast('حدث خطأ أثناء الإرسال', 'error');
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block; vertical-align:middle;"><path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 0 0 1.333 4.99L2 22l5.13-1.347a9.92 9.92 0 0 0 4.882 1.28c5.505 0 9.988-4.478 9.99-9.988 0-2.667-1.04-5.176-2.93-7.062C17.182 3.002 14.675 2 12.012 2zm5.733 14.153c-.25.706-1.463 1.298-2.013 1.378-.49.071-.856.326-3.003-.522-2.748-1.085-4.48-3.906-4.617-4.09-.136-.18-.992-1.314-.992-2.51 0-1.196.626-1.782.846-2.023.22-.24.48-.3.64-.3.16 0 .32.003.46.01.144.006.336-.054.528.406.196.47.672 1.637.732 1.758.06.12.1.26.02.42-.08.16-.12.26-.24.4-.12.14-.252.312-.36.42-.12.12-.245.251-.106.49.139.238.618 1.018 1.326 1.649.91.81 1.675 1.06 1.915 1.18.24.12.38.1.52-.06.14-.16.6-1.002.76-1.222.16-.22.32-.18.54-.1.22.08 1.4.66 1.64.78.24.12.4.18.46.28.06.1.06.58-.19 1.286z"/></svg> ارسال';
-    }
-  }
-};
 
 window.markFullyPaid = async function (btn) {
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:8px;display:inline-block;vertical-align:middle;"></span> جاري الحفظ...';
+  }
+
   currentOrder.paidAmount = currentOrder.totalPrice;
   currentOrder.paid = true;
   currentOrder.forcePaymentWebhook = true;
@@ -1019,37 +1080,30 @@ window.markFullyPaid = async function (btn) {
   renderOrder();
 
   // Save immediately
-  await saveOrderChanges(true);
+  const success = await saveOrderChanges(true);
+
+  if (!success && btn) {
+    btn.disabled = false;
+    btn.innerHTML = 'مدفوع بالكامل';
+  }
 };
 
 // ── Save ───────────────────────────────────────────────
 
 window.saveOrderChanges = async function (silent = false) {
-  if (isSaving) return false;
-
   const btn = document.getElementById('save-all-btn');
   const originalText = btn ? btn.textContent : '';
 
   if (!silent && btn) {
     btn.disabled = true;
-    btn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2.5px;margin:0;"></span> جارٍ الحفظ...';
+    btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:8px;display:inline-block;vertical-align:middle;"></span> جارٍ الحفظ...';
   }
-
-  isSaving = true;
 
   // Zone validation
   const currentCarrier = currentOrder.carrier || 'bosta';
   const hasZones = currentCarrier === 'bosta' && window._globalSettings?.enableZones !== false && window._modalZones && window._modalZones.length > 0;
   if (hasZones) {
-    if (!currentOrder.customer.zone) {
-      showToast('يرجى اختيار منطقة صحيحة من القائمة', 'error');
-      if (!silent && btn) {
-        btn.disabled = false;
-        btn.textContent = 'حفظ التغييرات';
-      }
-      return false;
-    }
-    const zoneOptions = window._modalZones.map(z => api.formatZoneName(z));
+    const zoneOptions = (window._modalZones || []).map(z => api.formatZoneName(z));
     if (!zoneOptions.includes(currentOrder.customer.zone)) {
       showToast('يرجى اختيار منطقة صحيحة من القائمة', 'error');
       if (!silent && btn) {
@@ -1071,7 +1125,6 @@ window.saveOrderChanges = async function (silent = false) {
       })),
       discount: currentOrder.discount,
       shippingFee: currentOrder.shippingFee,
-      carrier: currentOrder.carrier,
       totalPrice: currentOrder.totalPrice,
       paymentMethod: currentOrder.paymentMethod,
       paidAmount: currentOrder.paidAmount,
@@ -1113,7 +1166,6 @@ window.saveOrderChanges = async function (silent = false) {
     showToast(err.message || 'فشل الحفظ', 'error');
     return false;
   } finally {
-    isSaving = false;
     if (!silent && btn) {
       btn.disabled = false;
       btn.textContent = originalText || 'حفظ التغييرات';
@@ -1125,12 +1177,21 @@ window.cancelOrder = async function (btn) {
   const confirmed = await window.showConfirmModal('تأكيد الإلغاء', 'هل أنت متأكد من إلغاء هذا الطلب؟ سيتم إرسال إشعار بذلك وتصفير القيم.');
   if (!confirmed) return;
 
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:8px;display:inline-block;vertical-align:middle;"></span> جارٍ الإلغاء...';
+  }
+
   try {
     await api.cancelOrder(currentOrder.orderId);
     showToast('تم إلغاء الطلب بنجاح');
     setTimeout(() => window.location.reload(), 1000);
   } catch (err) {
     showToast(err.message || 'فشل الإلغاء', 'error');
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg> <span>إلغاء الطلب</span>';
+    }
   }
 };
 
@@ -1206,7 +1267,7 @@ window.renderModalProducts = function () {
   // Filter by stock
   filtered = filtered.filter(p => {
     if (p.variants && p.variants.length > 0) {
-      return p.variants.some(v => v.active !== false && (v.quantity === null || v.quantity > 0));
+      return p.variants.some(v => v.quantity === null || v.quantity > 0);
     }
     return p.quantity === null || p.quantity > 0;
   });
@@ -1221,7 +1282,8 @@ window.renderModalProducts = function () {
 
   listEl.innerHTML = filtered.map(p => {
     const isChecked = modalSelectedProducts.has(p._id);
-    const imgHtml = p.imageUrl ? `<img src="${p.imageUrl}" class="pli-img">` : `<div class="pli-img"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>`;
+    const imgUrl = (p.images && p.images.length > 0) ? p.images[0] : (p.imageUrl || '');
+    const imgHtml = imgUrl ? `<img src="${imgUrl}" class="pli-img">` : `<div class="pli-img"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>`;
     const hasOptions = p.options && p.options.length > 0;
     const effectiveBase = (p.salePrice && p.salePrice < p.basePrice) ? p.salePrice : p.basePrice;
 
@@ -1246,41 +1308,36 @@ window.renderModalProducts = function () {
     }
 
     let variantsHtml = '';
+    const combinations = p.variants && p.variants.length > 0 ? [] : getProductCombinations(p.options);
 
     if (p.variants && p.variants.length > 0) {
       variantsHtml = p.variants
-        .filter(v => v.active !== false && (v.quantity === null || v.quantity > 0))
+        .filter(v => v.quantity === null || v.quantity > 0)
         .map((v, idx) => {
-          // Normalize combination to array format for consistent selection
-          const combo = v.combination instanceof Map ? Object.fromEntries(v.combination) : v.combination;
-          const comboList = Object.entries(combo).map(([g, l]) => ({ groupName: g, label: l }));
+          const comboList = Object.entries(v.combination).map(([g, l]) => ({ groupName: g, label: l }));
           const title = comboList.map(c => c.label).join(' / ');
           const finalPrice = (v.salePrice !== null && v.salePrice !== undefined) ? v.salePrice : v.price;
           const comboStr = encodeURIComponent(JSON.stringify(comboList));
           const vKey = `${p._id}-${comboStr}`;
-
           return `
-            <label class="product-variant-item" style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-bottom:1px solid var(--border-color); background:rgba(0,0,0,0.02); cursor:pointer; padding-right:48px; transition: background 0.2s;">
+            <label class="product-variant-item" style="display:flex; align-items:center; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border-color); background:#fafafa; cursor:pointer; padding-right:48px;">
               <div style="display:flex; align-items:center; gap:12px;">
-                <div style="font-size:0.85rem; font-weight:500; color:var(--text-main);">${title}</div>
-                <div style="font-size:0.8rem; color:var(--primary); font-weight:600;">${formatPrice(finalPrice)}</div>
+                <div style="font-size:0.9rem;font-weight:500;">${title}</div>
+                <div style="font-size:0.85rem;color:var(--primary)">${formatPrice(finalPrice)}</div>
               </div>
               <input type="checkbox" class="pli-checkbox product-variant-cb" 
                 data-pid="${p._id}" data-combo="${comboStr}" data-price="${finalPrice}"
                 ${modalSelectedVariants.has(vKey) ? 'checked' : ''}
-                onchange="handleModalVariantSelect('${p._id}', '${comboStr}', ${finalPrice}, this.checked)"
-                style="width:16px; height:16px; accent-color:var(--primary); cursor:pointer;">
+                onchange="handleModalVariantSelect('${p._id}', '${comboStr}', ${finalPrice}, this.checked)">
             </label>
           `;
         }).join('');
-    } else if (hasOptions) {
-      // Fallback for products that only have options but no variants array (legacy)
-      const combinations = getProductCombinations(p.options);
+    } else {
       variantsHtml = combinations.map((combo, idx) => {
         const title = combo.map(c => c.label).join(' / ');
         const optionsPriceTotal = combo.reduce((sum, c) => sum + (c.price || 0), 0);
-        const finalPrice = optionsPriceTotal > 0 ? optionsPriceTotal : effectiveBase;
         // Matching storefront logic: options prices REPLACE base price if no variants
+        const finalPrice = optionsPriceTotal > 0 ? optionsPriceTotal : effectiveBase;
         const comboStr = encodeURIComponent(JSON.stringify(combo));
         const vKey = `${p._id}-${comboStr}`;
         return `
@@ -1317,7 +1374,11 @@ window.renderModalProducts = function () {
   }).join('');
 };
 
-window.addSelectedProducts = async function (btn) {
+window.addSelectedProducts = function (btn) {
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:8px;display:inline-block;vertical-align:middle;"></span> جاري الإضافة...';
+  }
   // 1. Add simple products from persistent set
   modalSelectedProducts.forEach(pid => {
     const p = allProducts.find(x => x._id === pid);
@@ -1330,7 +1391,7 @@ window.addSelectedProducts = async function (btn) {
         currentOrder.items.push({
           productId: p._id,
           name: p.name,
-          imageUrl: p.imageUrl || '',
+          imageUrl: (p.images && p.images.length > 0) ? p.images[0] : (p.imageUrl || ''),
           basePrice: effectiveBase,
           selectedOptions: [],
           quantity: 1,
@@ -1347,19 +1408,6 @@ window.addSelectedProducts = async function (btn) {
     if (p) {
       const variantPrice = v.price;
       const combo = v.combo;
-
-      // Find matching variant option specific image url
-      let variantImageUrl = '';
-      if (p.variants && p.variants.length > 0) {
-        const matchingVariant = p.variants.find(varObj => {
-          if (!varObj.combination) return false;
-          return combo.every(c => varObj.combination[c.groupName] === c.label);
-        });
-        if (matchingVariant && matchingVariant.imageUrl) {
-          variantImageUrl = matchingVariant.imageUrl;
-        }
-      }
-
       const existing = currentOrder.items.find(i => {
         if (i.productId !== p._id) return false;
         if (!i.selectedOptions || i.selectedOptions.length !== combo.length) return false;
@@ -1369,10 +1417,21 @@ window.addSelectedProducts = async function (btn) {
       if (existing) {
         existing.quantity++;
       } else {
+        let variantImageUrl = '';
+        if (p.variants && p.variants.length > 0 && combo && combo.length > 0) {
+          const matchingVariant = p.variants.find(varObj => {
+            if (!varObj.combination) return false;
+            return combo.every(opt => varObj.combination[opt.groupName] === opt.label);
+          });
+          if (matchingVariant && matchingVariant.imageUrl) {
+            variantImageUrl = matchingVariant.imageUrl;
+          }
+        }
+
         currentOrder.items.push({
           productId: p._id,
           name: p.name,
-          imageUrl: variantImageUrl || p.imageUrl || '',
+          imageUrl: variantImageUrl || ((p.images && p.images.length > 0) ? p.images[0] : (p.imageUrl || '')),
           basePrice: variantPrice,
           selectedOptions: combo,
           quantity: 1,
@@ -1383,10 +1442,10 @@ window.addSelectedProducts = async function (btn) {
     }
   });
 
+  renderItems();
   updateTotals();
-  renderOrder();
-  closeProductsModal();
   if (window.markAsModified) window.markAsModified();
+  closeProductsModal();
 };
 
 window.toggleDetailsMenu = function (e) {
@@ -1408,6 +1467,11 @@ window.archiveCurrentOrder = async function (btn) {
   const confirmed = await window.showConfirmModal('تأكيد الأرشفة', 'هل أنت متأكد من أرشفة هذا الطلب؟');
   if (!confirmed) return;
 
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:8px;display:inline-block;vertical-align:middle;"></span> جاري الأرشفة...';
+  }
+
   try {
     document.body.classList.add('is-loading');
     await api.archiveOrders([currentOrder.orderId]);
@@ -1415,6 +1479,10 @@ window.archiveCurrentOrder = async function (btn) {
     window.location.href = 'orders';
   } catch (err) {
     showToast(err.message || 'فشل الأرشفة', 'error');
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" /><path d="m3.3 7 8.7 5 8.7-5" /><path d="M12 22V12" /></svg> <span>أرشفة</span>';
+    }
   } finally {
     document.body.classList.remove('is-loading');
   }
@@ -1424,6 +1492,11 @@ window.deleteCurrentOrder = async function (btn) {
   const confirmed = await window.showConfirmModal('تأكيد الحذف', 'سيتم حذف هذا الطلب نهائياً. هل أنت متأكد؟');
   if (!confirmed) return;
 
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:8px;display:inline-block;vertical-align:middle;"></span> جاري الحذف...';
+  }
+
   try {
     document.body.classList.add('is-loading');
     await api.deleteOrder(currentOrder.orderId);
@@ -1431,6 +1504,10 @@ window.deleteCurrentOrder = async function (btn) {
     window.location.href = 'orders';
   } catch (err) {
     showToast(err.message || 'فشل الحذف', 'error');
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /></svg> <span style="font-weight:600;">حذف نهائي</span>';
+    }
   } finally {
     document.body.classList.remove('is-loading');
   }
@@ -1454,33 +1531,9 @@ window.markAsReady = function () {
 
   const renderFulfillmentList = () => {
     modalItems.innerHTML = window.fulfillmentState.map((item, idx) => {
-      const p = allProducts.find(x => x._id === item.productId) || {};
-
-      // Find matching variant option specific image url
-      let finalImageUrl = '';
-      if (p && p.variants && item.selectedOptions && item.selectedOptions.length > 0) {
-        const matchingVariant = p.variants.find(v => {
-          if (!v.combination) return false;
-          return item.selectedOptions.every(opt => v.combination[opt.groupName] === opt.label);
-        });
-        if (matchingVariant && matchingVariant.imageUrl) {
-          finalImageUrl = matchingVariant.imageUrl;
-        }
-      }
-
-      // Fall back to product base image url
-      if (!finalImageUrl && p) {
-        finalImageUrl = p.imageUrl;
-      }
-
-      // Fall back to order item's original imageUrl
-      if (!finalImageUrl) {
-        finalImageUrl = item.imageUrl;
-      }
-
-      const imgHtml = finalImageUrl
+      const imgHtml = item.imageUrl
         ? `<div style="position:relative; width:64px; height:64px;">
-             <img src="${finalImageUrl}" style="width:64px; height:64px; border-radius:16px; object-fit:contain; border:1px solid #f1f5f9;" alt="${item.name}">
+             <img src="${item.imageUrl}" style="width:64px; height:64px; border-radius:16px; object-fit:contain; border:1px solid #f1f5f9;" alt="${item.name}">
              <div style="position:absolute; bottom:-4px; right:-4px; background:#fef3c7; color:#d97706; font-size:0.75rem; font-weight:800; padding:2px 8px; border-radius:10px; border:2px solid #fff; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
                ${item.current}/${item.quantity}
              </div>
@@ -1504,7 +1557,7 @@ window.markAsReady = function () {
             </div>
           </div>
           
-          <div style="display: flex; align-items: center; gap: 0; background: #f8fafc; padding: 4px; border-radius: 12px; border: 1px solid #f1f5f9;">
+          <div style="display: flex; align-items: center; gap: 8px; background: #f8fafc; padding: 4px; border-radius: 12px; border: 1px solid #f1f5f9;">
             <button onclick="updateFulfillment(${idx}, 1)" style="width: 30px; height: 30px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; color: #1e293b; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;">+</button>
             <div style="display: flex; align-items: center; gap: 4px; padding: 0 4px; min-width: 65px; justify-content: center;">
                <span style="font-weight: 800; color: #1e293b; font-size: 0.95rem;">${item.current}</span>
@@ -1544,7 +1597,7 @@ window.markAsReady = function () {
 window.confirmMarkAsReady = async function (btn) {
   if (btn) {
     btn.disabled = true;
-    btn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2.5px;margin:0;"></span> جاري التحديث...';
+    btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:8px;display:inline-block;vertical-align:middle;"></span> جاري التحديث...';
   }
   try {
     closeModal('ready-confirm-modal');
@@ -1576,80 +1629,80 @@ window.confirmMarkAsReady = async function (btn) {
 };
 // printOrderInvoice consolidated at top
 
-window.markAsUnready = async function () {
-  if (!currentOrder) return;
+let pendingTransferScreenshotFile = null;
+let pendingTransferScreenshotRemoved = false;
 
-  const btn = document.getElementById('btn-make-ready');
-  const originalText = btn ? btn.textContent : '';
-  if (btn) {
-    btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;display:inline-block;vertical-align:middle;border-top-color:transparent;"></span>';
-    btn.disabled = true;
-  }
-
-  try {
-    document.body.classList.add('is-loading');
-    const updated = await api.updateOrder(currentOrder.orderId, { status: 'pending', updatedAt: currentOrder.updatedAt, skipWebhook: true });
-    currentOrder = updated;
-    if (typeof originalOrder !== 'undefined') originalOrder = JSON.parse(JSON.stringify(updated));
-    renderOrder();
-    showToast('تم إرجاع الطلب كغير مجهز', 'success');
-  } catch (err) {
-    showToast(err.message || 'فشل تحديث الحالة', 'error');
-    if (btn) {
-      btn.innerHTML = originalText;
-      btn.disabled = false;
-    }
-  } finally {
-    document.body.classList.remove('is-loading');
-  }
-};
-
-async function uploadAdminScreenshot(input) {
+window.previewAdminTransferScreenshot = function(input) {
   if (!input.files || !input.files[0]) return;
   const file = input.files[0];
-  const btn = document.getElementById('upload-screenshot-btn');
-  const originalText = btn.textContent;
+  pendingTransferScreenshotFile = file;
+  pendingTransferScreenshotRemoved = false;
   
-  btn.textContent = 'جاري الرفع...';
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    document.getElementById('admin-transfer-screenshot-img').src = e.target.result;
+    document.getElementById('admin-transfer-screenshot-link').style.display = 'block';
+    document.getElementById('admin-transfer-screenshot-remove').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+};
+
+window.removeAdminTransferScreenshot = function() {
+  pendingTransferScreenshotFile = null;
+  pendingTransferScreenshotRemoved = true;
+  document.getElementById('admin-transfer-screenshot-input').value = '';
+  document.getElementById('admin-transfer-screenshot-img').src = '';
+  document.getElementById('admin-transfer-screenshot-link').style.display = 'none';
+  document.getElementById('admin-transfer-screenshot-remove').style.display = 'none';
+};
+
+window.saveTransferInfo = async function(btn) {
+  const originalText = btn.textContent;
+  btn.textContent = 'جاري الحفظ...';
   btn.disabled = true;
   
   try {
-    const formData = new FormData();
-    formData.append('image', file);
+    let screenshotUrl = currentOrder.transferScreenshot;
     
-    // 1. Upload to public endpoint
-    const uploadRes = await fetch(`${typeof API_BASE !== 'undefined' ? API_BASE : ''}/upload/public`, {
-      method: 'POST',
-      body: formData
-    });
+    if (pendingTransferScreenshotRemoved) {
+      screenshotUrl = null;
+    } else if (pendingTransferScreenshotFile) {
+      const formData = new FormData();
+      formData.append('image', pendingTransferScreenshotFile);
+      const uploadRes = await fetch(`${typeof API_BASE !== 'undefined' ? API_BASE : ''}/upload/public`, {
+        method: 'POST',
+        body: formData
+      });
+      if (!uploadRes.ok) throw new Error('فشل رفع الصورة');
+      const uploadData = await uploadRes.json();
+      screenshotUrl = uploadData.url;
+    }
     
-    if (!uploadRes.ok) throw new Error('فشل رفع الصورة');
-    const uploadData = await uploadRes.json();
-    const screenshotUrl = uploadData.url;
-    
-    // 2. Save to order using the public transfer-info endpoint
     const updateRes = await fetch(`${typeof API_BASE !== 'undefined' ? API_BASE : ''}/orders/public/${currentOrder.orderId}/transfer-info`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        transferNumber: document.getElementById('admin-transfer-number').value,
+        transferNotes: document.getElementById('admin-transfer-notes').value,
         transferScreenshot: screenshotUrl
       })
     });
     
-    if (!updateRes.ok) throw new Error('فشل حفظ الصورة في الطلب');
+    if (!updateRes.ok) throw new Error('فشل حفظ بيانات التحويل');
     
-    // Update UI
+    // Update local state
+    currentOrder.transferNumber = document.getElementById('admin-transfer-number').value;
+    currentOrder.transferNotes = document.getElementById('admin-transfer-notes').value;
     currentOrder.transferScreenshot = screenshotUrl;
-    document.getElementById('view-transfer-screenshot-row').style.display = 'flex';
-    document.getElementById('view-transfer-screenshot').style.display = 'block';
-    document.getElementById('view-transfer-screenshot').href = screenshotUrl;
-    document.getElementById('view-transfer-screenshot-img').src = api.optimizeImageUrl(screenshotUrl, 300);
-    showToast('تم رفع الصورة بنجاح', 'success');
+    
+    pendingTransferScreenshotFile = null;
+    pendingTransferScreenshotRemoved = false;
+    
+    showToast('تم الحفظ بنجاح', 'success');
   } catch (err) {
     showToast(err.message, 'error');
   } finally {
     btn.textContent = originalText;
     btn.disabled = false;
-    input.value = '';
   }
-}
+};
