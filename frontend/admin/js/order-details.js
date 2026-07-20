@@ -357,11 +357,21 @@ function renderOrder() {
 
   // Transfer info card
   const transferCard = document.getElementById('transfer-info-card');
+  
+  // Extract transfer notes from legacy customer.notes if present
+  let displayNotes = o.customer.notes || '';
+  let legacyTransferNotes = '';
+  if (displayNotes.includes('[معلومات التحويل]:')) {
+    const parts = displayNotes.split('[معلومات التحويل]:');
+    displayNotes = parts[0].trim();
+    legacyTransferNotes = parts.slice(1).join('[معلومات التحويل]:').trim();
+  }
+  
   if (o.paymentMethod === 'vodafone_cash' || o.paymentMethod === 'instapay') {
     if (transferCard) transferCard.style.display = 'block';
     
     document.getElementById('admin-transfer-number').value = o.transferNumber || '';
-    document.getElementById('admin-transfer-notes').value = o.transferNotes || '';
+    document.getElementById('admin-transfer-notes').value = o.transferNotes || legacyTransferNotes || '';
     
     const screenLink = document.getElementById('admin-transfer-screenshot-link');
     const screenImg = document.getElementById('admin-transfer-screenshot-img');
@@ -384,8 +394,8 @@ function renderOrder() {
 
   const notesEl = document.getElementById('view-c-notes');
   const notesContainer = document.getElementById('view-c-notes-container');
-  if (o.customer.notes) {
-    notesEl.textContent = o.customer.notes;
+  if (displayNotes) {
+    notesEl.textContent = displayNotes;
     notesContainer.style.display = 'block';
   } else {
     notesContainer.style.display = 'none';

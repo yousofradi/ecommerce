@@ -267,9 +267,6 @@ router.post('/public/:orderId/transfer-info', async (req, res) => {
     if (transferScreenshot) order.transferScreenshot = transferScreenshot;
     if (transferNotes) {
       order.transferNotes = transferNotes;
-      order.customer.notes = order.customer.notes 
-        ? `${order.customer.notes}\n[معلومات التحويل]: ${transferNotes}`
-        : `[معلومات التحويل]: ${transferNotes}`;
     }
     
     await order.save();
