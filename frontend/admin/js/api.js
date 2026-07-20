@@ -47,6 +47,13 @@ const api = {
 
     const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
     if (opts.admin) headers['x-admin-key'] = this._adminKey();
+    
+    // Add cache busting if not explicitly cached
+    if (opts.useCache !== true && (!opts.method || opts.method.toUpperCase() === 'GET')) {
+      opts.cache = 'no-store';
+      path += (path.includes('?') ? '&' : '?') + '_t=' + Date.now();
+    }
+    
     try {
       const res = await fetch(`${API_BASE}${path}`, { ...opts, headers, signal: controller.signal });
       const data = await res.json();

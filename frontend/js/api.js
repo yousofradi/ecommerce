@@ -30,6 +30,12 @@ const api = {
         headers['Content-Type'] = 'application/json';
       }
       if (opts.admin) headers['x-admin-key'] = this._adminKey();
+
+      if (opts.useCache !== true && method === 'GET') {
+        opts.cache = 'no-store';
+        path += (path.includes('?') ? '&' : '?') + '_t=' + Date.now();
+      }
+
       const res = await fetch(`${API_BASE}${path}`, { ...opts, headers });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
