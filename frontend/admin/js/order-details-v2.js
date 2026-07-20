@@ -129,12 +129,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     window._shippingOptions = shippingOptions || [];
     allProducts = Array.isArray(productsRes) ? productsRes : (productsRes.products || []);
 
-    if (currentOrder.appliedPromotionName && !currentOrder.appliedPromotionRewardText && (!Array.isArray(currentOrder.appliedPromotionRewards) || currentOrder.appliedPromotionRewards.length === 0)) {
+    if (currentOrder.appliedPromotionName || currentOrder.appliedPromotionId) {
       try {
         const promoInfo = await api.getOrderPromotion(orderId);
-        if (promoInfo && promoInfo.rewardText) {
-          currentOrder.appliedPromotionRewardText = promoInfo.rewardText;
+        if (promoInfo) {
+          currentOrder.appliedPromotionId = promoInfo.appliedPromotionId || currentOrder.appliedPromotionId;
+          currentOrder.appliedPromotionName = promoInfo.appliedPromotionName || currentOrder.appliedPromotionName;
+          currentOrder.appliedPromotionRewardText = promoInfo.rewardText || currentOrder.appliedPromotionRewardText;
           currentOrder.appliedPromotionRewards = promoInfo.appliedPromotionRewards || currentOrder.appliedPromotionRewards;
+          currentOrder.appliedPromotion = promoInfo.promotion || currentOrder.appliedPromotion;
         }
       } catch (err) {
         console.warn('Failed to load promotion info:', err);
@@ -420,14 +423,7 @@ function renderOrder() {
   
   let hasPromo = false;
   const promoNameText = o.appliedPromotionName || '';
-  let rewardText = o.appliedPromotionRewardText || (Array.isArray(o.appliedPromotionRewards) ? o.appliedPromotionRewards.filter(Boolean).join(' و ') : '');
-  if (!rewardText) {
-    const rewardParts = [];
-    if (o.discount > 0) rewardParts.push(`خصم بقيمة ${formatPrice(o.discount)}`);
-    if (o.shippingFee === 0) rewardParts.push('شحن مجاني');
-    if ((o.items || []).some(item => item.isFreeGift)) rewardParts.push('هدية مجانية');
-    rewardText = rewardParts.join(' و ');
-  }
+  const rewardText = o.appliedPromotionRewardText || (Array.isArray(o.appliedPromotionRewards) ? o.appliedPromotionRewards.filter(Boolean).join(' و ') : '');
   const promoLine = [promoNameText, rewardText].filter(Boolean).join(' : ');
 
   if (promoRow && promoName) {

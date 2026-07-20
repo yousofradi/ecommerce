@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const router = express.Router();
 const Order = require('../models/Order');
+const Promotion = require('../models/Promotion');
 const adminAuth = require('../middleware/adminAuth');
 const sendWebhook = require('../utils/webhook');
 const { sendPushToAdmins } = require('../utils/push');
@@ -151,6 +152,7 @@ router.post('/', async (req, res) => {
 
     // Evaluate promotions server-side to prevent spoofing
     let finalDiscount = discount || 0; // fallback to frontend provided discount (e.g. coupons if we have them)
+    let appliedPromotionId = null;
     let appliedPromotionName = null;
     let appliedPromotionRewards = [];
     let appliedPromotionRewardText = '';
@@ -158,6 +160,7 @@ router.post('/', async (req, res) => {
       const promoResult = await evaluateCartPromotions(items);
       
       if (promoResult.appliedPromotion) {
+        appliedPromotionId = promoResult.appliedPromotion._id || null;
         appliedPromotionName = promoResult.appliedPromotion.name;
       }
       if (Array.isArray(promoResult.rewardTexts) && promoResult.rewardTexts.length > 0) {
@@ -216,6 +219,7 @@ router.post('/', async (req, res) => {
       customer,
       items,
       discount: finalDiscount,
+      appliedPromotionId,
       appliedPromotionName,
       appliedPromotionRewards,
       appliedPromotionRewardText,
@@ -954,12 +958,31 @@ router.get('/:orderId/promotion', adminAuth, async (req, res) => {
     const order = await Order.findOne(query);
     if (!order) return res.status(404).json({ error: 'Order not found' });
 
-    const rewardText = order.appliedPromotionRewardText || (Array.isArray(order.appliedPromotionRewards) ? order.appliedPromotionRewards.filter(Boolean).join(' و ') : '');
+    let rewardText = '';
+    let promotion = null;
+    if (order.appliedPromotionId) {
+      promotion = await Promotion.findById(order.appliedPromotionId).lean();
+      if (promotion) {
+        const rewardParts = [];
+        if (promotion.discountType === 'PERCENTAGE') rewardParts.push(`خصم ${promotion.discountValue}%`);
+        if (promotion.discountType === 'FIXED') rewardParts.push(`خصم ${promotion.discountValue} ج`);
+        if (promotion.isFreeShipping) rewardParts.push('شحن مجاني');
+        if (promotion.isFreeGift) rewardParts.push('هدية مجانية');
+        rewardText = rewardParts.filter(Boolean).join(' و ');
+      }
+    }
+
+    if (!rewardText) {
+      rewardText = order.appliedPromotionRewardText || (Array.isArray(order.appliedPromotionRewards) ? order.appliedPromotionRewards.filter(Boolean).join(' و ') : '');
+    }
     const promotionLine = [order.appliedPromotionName, rewardText].filter(Boolean).join(' : ');
 
     res.json({
+      appliedPromotionId: order.appliedPromotionId,
       appliedPromotionName: order.appliedPromotionName,
       rewardText,
+      appliedPromotionRewards: order.appliedPromotionRewards || [],
+      promotion,
       promotionLine
     });
   } catch (err) {
