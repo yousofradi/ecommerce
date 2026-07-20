@@ -45,8 +45,15 @@
       </div>
 
       <div style="text-align:right;">
+        <label class="form-label" style="font-weight:700; margin-bottom:6px; display:block; font-size: 0.85rem;">إيصال التحويل (اسكرين شوت)</label>
+        <input type="file" id="transfer-screenshot" accept="image/*" class="notes-input" style="margin-bottom: 12px; padding: 6px;">
+
+        <label class="form-label" style="font-weight:700; margin-bottom:6px; display:block; font-size: 0.85rem;">رقم الهاتف المحول منه</label>
+        <input type="text" id="transfer-number" class="notes-input" placeholder="010..." style="margin-bottom: 12px;">
+
         <label class="form-label" style="font-weight:700; margin-bottom:6px; display:block; font-size: 0.85rem;">ملاحظات التحويل (اختياري)</label>
-        <textarea class="notes-input" id="transfer-notes" placeholder="مثال: تم التحويل من رقم 010... أو اسم المحول..." rows="2"></textarea>
+        <textarea class="notes-input" id="transfer-notes" placeholder="أو اسم المحول..." rows="2"></textarea>
+        
         <button class="confirm-btn" onclick="submitTransferInfo()" id="submit-btn">تأكيد وإرسال عبر الواتساب</button>
       </div>
       
@@ -128,21 +135,40 @@
 
     async function submitTransferInfo() {
       const notes = document.getElementById('transfer-notes').value.trim();
+      const transferNumber = document.getElementById('transfer-number').value.trim();
+      const screenshotInput = document.getElementById('transfer-screenshot');
+      const file = screenshotInput.files[0];
       const btn = document.getElementById('submit-btn');
       
       btn.disabled = true;
       btn.textContent = 'جاري الحفظ...';
 
       try {
-        // Append notes to order notes
-        const updatedNotes = currentOrder.customer.notes 
-          ? `${currentOrder.customer.notes}\n\n[معلومات التحويل]: ${notes}` 
-          : `[معلومات التحويل]: ${notes}`;
-        
-        // We use public API to update order (some risk, but for simple app it's fine if orderId is secure)
-        // Wait, current API doesn't allow public updates? 
-        // I'll check api.js
-        
+        let transferScreenshotUrl = null;
+        if (file) {
+          const formData = new FormData();
+          formData.append('image', file);
+          const uploadRes = await fetch(`${api.baseUrl}/upload/public`, {
+            method: 'POST',
+            body: formData
+          });
+          if (uploadRes.ok) {
+            const uploadData = await uploadRes.json();
+            transferScreenshotUrl = uploadData.url;
+          }
+        }
+
+        // Save to order details
+        await fetch(`${api.baseUrl}/orders/public/${currentOrder.orderId}/transfer-info`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            transferNumber,
+            transferNotes: notes,
+            transferScreenshot: transferScreenshotUrl
+          })
+        });
+
         // Prepare WhatsApp message
         const subtotal = (currentOrder.items || []).reduce((acc, item) => acc + (item.finalPrice || 0), 0) || (currentOrder.totalPrice - (currentOrder.shippingFee || 0));
         const shipping = currentOrder.shippingFee || 0;
@@ -152,6 +178,10 @@
         waMessage += `المبلغ الفرعي : ${subtotal} ج.م\n`;
         waMessage += `مصاريف الشحن : ${shipping} ج.م\n`;
         waMessage += `المبلغ المطلوب (الإجمالي) : ${total} ج.م\n\n`;
+        
+        if (transferNumber) {
+          waMessage += `تم التحويل من رقم: ${transferNumber}\n`;
+        }
         if (notes) {
           waMessage += `ملاحظات التحويل : ${notes}\n\n`;
         }

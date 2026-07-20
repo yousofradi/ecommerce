@@ -350,6 +350,30 @@ function renderOrder() {
     }
   }
 
+  document.getElementById('view-payment-method').textContent =
+      o.paymentMethod === 'vodafone_cash' ? 'فودافون كاش' :
+      o.paymentMethod === 'instapay' ? 'إنستاباي' :
+      o.paymentMethod === 'card' ? 'بطاقة ائتمان' : 'دفع عند الاستلام';
+
+    // Transfer info
+    const transferNumRow = document.getElementById('view-transfer-number-row');
+    const transferScreenRow = document.getElementById('view-transfer-screenshot-row');
+    if (o.transferNumber) {
+      document.getElementById('view-transfer-number').textContent = o.transferNumber;
+      if (transferNumRow) transferNumRow.style.display = 'flex';
+    } else {
+      if (transferNumRow) transferNumRow.style.display = 'none';
+    }
+    
+    if (o.transferScreenshot) {
+      const imgUrl = o.transferScreenshot;
+      document.getElementById('view-transfer-screenshot').href = imgUrl;
+      document.getElementById('view-transfer-screenshot-img').src = api.optimizeImageUrl(imgUrl, 300);
+      if (transferScreenRow) transferScreenRow.style.display = 'flex';
+    } else {
+      if (transferScreenRow) transferScreenRow.style.display = 'none';
+    }
+
   const notesEl = document.getElementById('view-c-notes');
   const notesContainer = document.getElementById('view-c-notes-container');
   if (o.customer.notes) {

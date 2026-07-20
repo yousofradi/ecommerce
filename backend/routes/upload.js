@@ -94,4 +94,33 @@ router.post('/', adminAuth, upload.single('image'), (req, res) => {
   }
 });
 
+// POST /api/upload/public — upload a single image publicly (e.g. transfer screenshots)
+router.post('/public', upload.single('image'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+    
+    let imageUrl = req.file.path;
+    
+    if (isCloudinaryConfigured) {
+      const { optimizeCloudinaryUrl } = require('../utils/cloudinary');
+      imageUrl = imageUrl.replace(/\.(png|jpe?g|gif)$/i, '.webp');
+      imageUrl = optimizeCloudinaryUrl(imageUrl);
+    } else {
+      const host = req.get('host');
+      const protocol = (req.headers['x-forwarded-proto'] || req.protocol || 'http').split(',')[0];
+      const finalProtocol = (host.includes('render.com') || host.includes('onrender.com')) ? 'https' : protocol;
+      imageUrl = `${finalProtocol}://${host}/uploads/${req.file.filename}`;
+    }
+    
+    res.json({ 
+      url: imageUrl,
+      filename: req.file.filename || req.file.public_id
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Upload failed: ' + err.message });
+  }
+});
+
 module.exports = router;

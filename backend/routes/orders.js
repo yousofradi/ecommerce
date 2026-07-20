@@ -256,6 +256,28 @@ router.get('/public/:orderId', async (req, res) => {
   }
 });
 
+// POST /api/orders/public/:orderId/transfer-info — public endpoint to update transfer info
+router.post('/public/:orderId/transfer-info', async (req, res) => {
+  try {
+    const { transferNumber, transferNotes, transferScreenshot } = req.body;
+    const order = await Order.findOne({ orderId: req.params.orderId });
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    
+    if (transferNumber) order.transferNumber = transferNumber;
+    if (transferScreenshot) order.transferScreenshot = transferScreenshot;
+    if (transferNotes) {
+      order.customer.notes = order.customer.notes 
+        ? `${order.customer.notes}\n[معلومات التحويل]: ${transferNotes}`
+        : `[معلومات التحويل]: ${transferNotes}`;
+    }
+    
+    await order.save();
+    res.json({ success: true, order });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update transfer info' });
+  }
+});
+
 // ── Admin ───────────────────────────────────────────────
 
 // GET /api/orders/bulk/download-pdf — Bulk PDF download using PDFBolt

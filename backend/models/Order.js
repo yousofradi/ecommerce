@@ -55,7 +55,9 @@ const orderSchema = new mongoose.Schema({
     type: String, 
     enum: ['pending', 'completed', 'failed'], 
     default: 'pending' 
-  }
+  },
+  transferScreenshot: { type: String, default: null },
+  transferNumber: { type: String, default: null }
 }, { timestamps: true });
 
 orderSchema.index({ 'customer.phone': 1 });
