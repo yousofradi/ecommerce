@@ -133,12 +133,12 @@ async function generateInvoiceInnerHtml(order, settings, options = {}) {
 
   // ================== DISCOUNT ROW ==================
   let discountRow = '';
-  if (num(order.discount) > 0 || order.appliedPromotionName) {
+  if (num(order.discount) > 0) {
     const promoName = order.appliedPromotionName ? ` (${safe(order.appliedPromotionName)})` : '';
     discountRow = `
       <div class="row red">
         <span>خصم الطلب${promoName}</span>
-        <span>-${num(order.discount || 0)} ج</span>
+        <span>-${num(order.discount)} ج</span>
       </div>
     `;
   }

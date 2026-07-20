@@ -500,16 +500,16 @@ function updateTotals() {
   document.getElementById('sum-shipping').textContent = formatPrice(o.shippingFee);
 
   const discRow = document.getElementById('sum-discount-row');
-  if ((o.discount !== 0 && o.discount !== undefined && o.discount !== null) || o.appliedPromotionName) {
+  if (o.discount && o.discount > 0) {
     discRow.style.display = 'flex';
-    document.getElementById('sum-discount').textContent = formatPrice(Math.abs(o.discount || 0));
+    document.getElementById('sum-discount').textContent = formatPrice(Math.abs(o.discount));
     const label = document.getElementById('sum-discount-label');
     if (label) {
-      label.textContent = (o.discount > 0 || o.appliedPromotionName) ? 'خصم الطلب' : 'إضافة للطلب';
-      if (o.appliedPromotionName) {
-        label.textContent = `العرض: ${o.appliedPromotionName}`;
+      label.textContent = o.discount > 0 ? 'خصم الطلب' : 'إضافة للطلب';
+      if (o.appliedPromotionName && o.discount > 0) {
+        label.textContent += ` (${o.appliedPromotionName})`;
       }
-      label.style.color = (o.discount > 0 || o.appliedPromotionName) ? 'var(--danger)' : 'var(--primary)';
+      label.style.color = o.discount > 0 ? 'var(--danger)' : 'var(--primary)';
     }
   } else {
     discRow.style.display = 'none';

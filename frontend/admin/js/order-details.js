@@ -506,7 +506,7 @@ function updateTotals() {
   document.getElementById('sum-shipping').textContent = formatPrice(o.shippingFee);
 
   const discRow = document.getElementById('sum-discount-row');
-  if (o.discount !== 0 && o.discount !== undefined && o.discount !== null) {
+  if (o.discount && o.discount > 0) {
     discRow.style.display = 'flex';
     document.getElementById('sum-discount').textContent = formatPrice(Math.abs(o.discount));
     const label = document.getElementById('sum-discount-label');
