@@ -152,9 +152,8 @@ async function generateInvoiceInnerHtml(order, settings, options = {}) {
   if (order.appliedPromotionName || promotionRewardsText) {
     const line = [order.appliedPromotionName, promotionRewardsText].filter(Boolean).join(' : ');
     promotionRow = `
-      <div class="row" style="margin: 0; padding: 0;">
-        <span>${safe(line)}</span>
-        <span></span>
+      <div style="background: #dcfce7; border: 1px solid #bbf7d0; border-radius: 8px; padding: 6px; margin-top:8px; color: #166534; font-weight: bold; text-align: center;">
+        🎉 مبروك! لقد حصلت علي <strong>${safe(line)}</strong>
       </div>
     `;
   }

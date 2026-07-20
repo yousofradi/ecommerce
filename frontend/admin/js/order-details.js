@@ -429,7 +429,7 @@ function renderOrder() {
   if (promoRow && promoName) {
     if (promoLine) {
       promoRow.style.display = 'flex';
-      promoName.textContent = promoLine;
+      promoName.innerHTML = ` <strong>${promoLine}</strong>`;
       hasPromo = true;
     } else {
       promoRow.style.display = 'none';
