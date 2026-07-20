@@ -407,14 +407,12 @@ function renderOrder() {
   const giftsList = document.getElementById('free-gifts-list');
   
   let hasPromo = false;
-  if (o.appliedPromotionName) {
+  if (o.appliedPromotionName || o.appliedPromotionRewardText || (Array.isArray(o.appliedPromotionRewards) && o.appliedPromotionRewards.length > 0)) {
     promoRow.style.display = 'flex';
+    const promoNameText = o.appliedPromotionName || '';
     const rewardText = o.appliedPromotionRewardText || (Array.isArray(o.appliedPromotionRewards) ? o.appliedPromotionRewards.join(' و ') : '');
-    promoName.innerHTML = `
-      <div style="display:flex; flex-direction:column; gap:4px;">
-        <span>${safe(o.appliedPromotionName)}${rewardText ? ` : ${safe(rewardText)}` : ''}</span>
-      </div>
-    `;
+    const promoLine = promoNameText + (promoNameText && rewardText ? ` : ${rewardText}` : rewardText);
+    promoName.textContent = promoLine;
     hasPromo = true;
   } else {
     promoRow.style.display = 'none';
