@@ -66,27 +66,35 @@ async function evaluateCartPromotions(cartItems) {
     return { appliedPromotion: null, totalDiscount: 0, freeShipping: false, unlockedGifts: [], progress: null };
   }
 
-  // 2. We need to calculate eligible subtotal for EACH promotion
-  // Because each promotion might have different excludedProducts
+  // Helper to calculate eligible subtotal for a specific promotion
+  const getEligibleSubtotal = (promo) => {
+    return cartItems.reduce((sum, item) => {
+      if (item.isFreeGift) return sum;
+      if (promo.excludedProducts && promo.excludedProducts.some(id => id.toString() === item.productId.toString())) {
+        return sum;
+      }
+      return sum + (item.unitPrice * item.quantity);
+    }, 0);
+  };
+
+  const getEligibleQty = (promo) => {
+    return cartItems.reduce((sum, item) => {
+      if (item.isFreeGift) return sum;
+      if (promo.excludedProducts && promo.excludedProducts.some(id => id.toString() === item.productId.toString())) {
+        return sum;
+      }
+      return sum + item.quantity;
+    }, 0);
+  };
+
+  // 2. Evaluate ACTIVE promotion
+  // Iterate from highest target to lowest
   let activePromotion = null;
   let eligibleSubtotalForActive = 0;
 
   for (const promo of promotions) {
-    let eligibleSubtotal = 0;
-    let totalQty = 0;
-
-    for (const item of cartItems) {
-      if (item.isFreeGift) continue; // Free gifts don't count towards unlocking promos
-      
-      // Excluded products don't count towards subtotal
-      if (promo.excludedProducts && promo.excludedProducts.some(id => id.toString() === item.productId.toString())) {
-        continue;
-      }
-      // Future expansion: check if promo applies to specific categories or products only
-
-      eligibleSubtotal += (item.unitPrice * item.quantity);
-      totalQty += item.quantity;
-    }
+    let eligibleSubtotal = getEligibleSubtotal(promo);
+    let totalQty = getEligibleQty(promo);
 
     let isEligible = true;
     if (promo.minCartSubtotal && eligibleSubtotal < promo.minCartSubtotal) isEligible = false;
@@ -101,51 +109,57 @@ async function evaluateCartPromotions(cartItems) {
   }
 
   // 3. Find the NEXT tier for the progress bar
-  const rawSubtotal = cartItems.reduce((sum, item) => {
-    if (item.isFreeGift) return sum;
-    return sum + (item.unitPrice * item.quantity);
-  }, 0);
+  // Sort from smallest target to largest target
+  const sortedPromotions = [...promotions].sort((a, b) => (a.minCartSubtotal || 0) - (b.minCartSubtotal || 0));
   
-  // Find the smallest promotion where minCartSubtotal > rawSubtotal
-  // promotions is sorted descending, so we look from the bottom up to find the closest next tier
   let nextPromotion = null;
-  for (let i = promotions.length - 1; i >= 0; i--) {
-    if (promotions[i].minCartSubtotal > rawSubtotal) {
-      nextPromotion = promotions[i];
+  let nextPromoEligibleSubtotal = 0;
+  
+  for (const promo of sortedPromotions) {
+    if (!promo.minCartSubtotal) continue;
+    const eligibleSubtotal = getEligibleSubtotal(promo);
+    if (eligibleSubtotal < promo.minCartSubtotal) {
+      nextPromotion = promo;
+      nextPromoEligibleSubtotal = eligibleSubtotal;
       break;
     }
   }
 
-  let progress = null;
-  const tiers = promotions.map(p => {
+  const tiers = sortedPromotions.filter(p => p.minCartSubtotal > 0).map(p => {
     let rt = [];
     if (p.discountType === 'PERCENTAGE') rt.push(`خصم ${p.discountValue}%`);
     if (p.discountType === 'FIXED') rt.push(`خصم ${p.discountValue} ج`);
     if (p.isFreeShipping) rt.push('شحن مجاني');
     if (p.isFreeGift) rt.push('هدية مجانية');
+    
+    const eligibleSubtotal = getEligibleSubtotal(p);
+    
     return {
       name: p.name,
       target: p.minCartSubtotal,
-      isReached: rawSubtotal >= p.minCartSubtotal,
+      isReached: eligibleSubtotal >= p.minCartSubtotal,
       rewardText: rt.join(' و ') || 'عرض'
     };
-  }).sort((a, b) => a.target - b.target);
+  });
 
+  let progress = null;
   if (nextPromotion) {
     progress = {
       target: nextPromotion.minCartSubtotal,
-      current: rawSubtotal,
-      remaining: nextPromotion.minCartSubtotal - rawSubtotal,
-      percentage: Math.min(100, (rawSubtotal / nextPromotion.minCartSubtotal) * 100),
+      current: nextPromoEligibleSubtotal,
+      remaining: nextPromotion.minCartSubtotal - nextPromoEligibleSubtotal,
+      percentage: Math.min(100, (nextPromoEligibleSubtotal / nextPromotion.minCartSubtotal) * 100),
       nextRewardName: nextPromotion.name,
       tiers
     };
-  } else if (activePromotion) {
+  } else if (activePromotion && activePromotion.minCartSubtotal) {
     // They reached the max tier!
-    progress = { target: activePromotion.minCartSubtotal, current: rawSubtotal, remaining: 0, percentage: 100, nextRewardName: 'MAX', tiers };
+    const eligibleSubtotal = getEligibleSubtotal(activePromotion);
+    progress = { target: activePromotion.minCartSubtotal, current: eligibleSubtotal, remaining: 0, percentage: 100, nextRewardName: 'MAX', tiers };
   } else if (tiers.length > 0) {
     // In case no nextPromotion and no activePromotion but tiers exist (e.g. cart is empty)
-    progress = { target: tiers[0].target, current: rawSubtotal, remaining: tiers[0].target - rawSubtotal, percentage: Math.min(100, (rawSubtotal / tiers[0].target) * 100), nextRewardName: tiers[0].name, tiers };
+    const eligibleSubtotal = getEligibleSubtotal(sortedPromotions[0]);
+    progress = { target: tiers[0].target, current: eligibleSubtotal, remaining: tiers[0].target - eligibleSubtotal, percentage: Math.min(100, (eligibleSubtotal / tiers[0].target) * 100), nextRewardName: tiers[0].name, tiers };
   }
 
   // 4. Calculate actual rewards for activePromotion

@@ -62,7 +62,14 @@
 
       <div style="text-align:right;">
         <label class="form-label" style="font-weight:700; margin-bottom:6px; display:block; font-size: 0.85rem;">إيصال التحويل (اسكرين شوت)</label>
-        <input type="file" id="transfer-screenshot" accept="image/*" class="notes-input" style="margin-bottom: 12px; background: #fff;">
+        <div class="custom-file-upload" onclick="document.getElementById('transfer-screenshot').click()">
+          <div id="upload-placeholder" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #64748b; gap: 8px;">
+            <span style="font-size: 1.5rem; line-height: 1;">+</span>
+            <span style="font-size: 0.85rem; font-weight: 600;">إضافة صورة</span>
+          </div>
+          <img id="upload-preview" src="" style="display: none; width: 100%; height: 100%; object-fit: contain; border-radius: 12px;">
+        </div>
+        <input type="file" id="transfer-screenshot" accept="image/*" style="display: none;" onchange="previewUpload(this)">
 
         <label class="form-label" style="font-weight:700; margin-bottom:6px; display:block; font-size: 0.85rem;">رقم الهاتف المحول منه</label>
         <input type="text" id="transfer-number" class="notes-input" placeholder="01234567891" style="margin-bottom: 12px;">
@@ -149,6 +156,18 @@
       });
     }
 
+    function previewUpload(input) {
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById('upload-placeholder').style.display = 'none';
+          const preview = document.getElementById('upload-preview');
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+        }
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
 
     async function submitTransferInfo() {
       const notes = document.getElementById('transfer-notes').value.trim();
