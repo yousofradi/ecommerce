@@ -377,7 +377,7 @@ function renderOrder() {
     
     if (o.transferScreenshot) {
       screenLink.href = o.transferScreenshot;
-      screenImg.src = api.optimizeImageUrl(o.transferScreenshot, 300);
+      screenImg.src = o.transferScreenshot;
       screenLink.style.display = 'block';
       removeBtn.style.display = 'block';
     } else {
