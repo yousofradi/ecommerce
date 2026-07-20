@@ -118,6 +118,12 @@ async function generateInvoiceInnerHtml(order, settings, options = {}) {
     codFee = Math.max(10, Math.ceil((remaining * 0.01) / 5) * 5);
   }
   const displayRemaining = remaining > 0 ? (remaining + codFee) : 0;
+  const promotionRewards = Array.isArray(order.appliedPromotionRewards)
+    ? order.appliedPromotionRewards.filter(Boolean)
+    : [];
+  const promotionRewardsText = promotionRewards.length
+    ? promotionRewards.join(' • ')
+    : (order.appliedPromotionRewardText ? order.appliedPromotionRewardText : '');
 
   // ================== PHONE ==================
   let phone = safe(order.customer.phone);
@@ -127,8 +133,10 @@ async function generateInvoiceInnerHtml(order, settings, options = {}) {
 
   // ================== REMAINING TEXT ==================
   let remtext = `المتبقي عند الاستلام (+${codFee} ج رسوم)`;
+  let remainingValue = `${displayRemaining} ج`;
   if (remaining === 0) {
     remtext = 'مدفوع بالكامل';
+    remainingValue = 'مدفوع بالكامل';
   }
 
   // ================== DISCOUNT ROW ==================
@@ -139,6 +147,17 @@ async function generateInvoiceInnerHtml(order, settings, options = {}) {
       <div class="row red">
         <span>خصم الطلب${promoName}</span>
         <span>-${num(order.discount)} ج</span>
+      </div>
+    `;
+  }
+
+  let promotionBlock = '';
+  if (order.appliedPromotionName || promotionRewardsText) {
+    promotionBlock = `
+      <div style="margin: 8px 0 6px; border: 1px solid #bbf7d0; border-radius: 8px; padding: 8px; background: #f0fdf4;">
+        <div style="font-size: 10px; font-weight: 700; color: #166534; margin-bottom: 4px;">العرض المطبق</div>
+        <div style="font-size: 10px; color: #166534; margin-bottom: 3px;"><strong>${safe(order.appliedPromotionName || 'عرض ترويجي')}</strong></div>
+        ${promotionRewardsText ? `<div style="font-size: 10px; color: #166534;">${safe(promotionRewardsText)}</div>` : ''}
       </div>
     `;
   }
@@ -285,18 +304,20 @@ ${productsHtml}
 <span>${sub} ج</span>
 </div>
 
+${discountRow}
+
 <div class="row">
 <span>مصاريف الشحن (${safe(order.carrier === 'egyptpost' ? 'البريد المصري' : 'بوسطة')} - ${safe(order.customer.government)})</span>
-<span>${shipping} ج</span>
+<span>${shipping === 0 ? 'مجاني' : `${shipping} ج`}</span>
 </div>
-
-${discountRow}
 
 <div class="row grand">
 <span>الإجمالي</span>
 <span>${total} ج</span>
 </div>
 </div>
+
+${promotionBlock}
 
 <div class="paid-box">
 
@@ -307,7 +328,7 @@ ${discountRow}
 
 <div class="row red">
 <span>${remtext}</span>
-<span>${displayRemaining} ج</span>
+<span>${remainingValue}</span>
 </div>
 
 </div>

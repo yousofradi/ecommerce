@@ -371,7 +371,7 @@ Cart._renderPromotions = function (data) {
     if (appliedPromotion.isFreeGift) rewardTexts.push('هدية مجانية');
     
     html += `
-      <div style="background: #dcfce7; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px; margin-bottom: 12px; color: #166534; font-size: 0.9rem; font-weight: bold; text-align: center;">
+      <div style="background: #dcfce7; border: 1px solid #bbf7d0; border-radius: 8px; padding: 0; margin-bottom: 0; color: #166534; font-size: 0.9rem; font-weight: bold; text-align: center;">
         🎉 مبروك! لقد حصلت علي <strong>${rewardTexts.join(' و ')}</strong>
       </div>
     `;
@@ -408,7 +408,7 @@ Cart._renderPromotions = function (data) {
     }).join('');
 
     html += `
-      <div style="background: #fff; padding: 16px 12px; margin-bottom: 16px;">
+      <div style="background: #fff; margin-bottom: 16px;">
         <div style="position: relative; height: 6px; background: #e2e8f0; border-radius: 4px; margin: 24px 16px 12px 16px;">
           <!-- Active Track -->
           <div style="position: absolute; top: 0; bottom: 0; right: 0; width: ${currentPercent}%; background: #8c6046; border-radius: 4px; transition: width 0.3s ease;"></div>
@@ -419,7 +419,7 @@ Cart._renderPromotions = function (data) {
           <span>0 ج.م</span>
           <span>${maxTarget} ج.م</span>
         </div>
-        <div style="text-align: center; margin-top: 12px; font-size: 0.9rem; font-weight: bold; color: #1e293b;">
+        <div style="text-align: center; margin-top: 12px; font-size: 0.8rem; font-weight: bold; color: #1e293b;">
           ${msg}
         </div>
       </div>
