@@ -73,7 +73,8 @@ async function evaluateCartPromotions(cartItems) {
       if (promo.excludedProducts && promo.excludedProducts.some(id => id.toString() === item.productId.toString())) {
         return sum;
       }
-      return sum + (item.unitPrice * item.quantity);
+      const uPrice = Number(item.unitPrice) || Number(item.price) || Number(item.basePrice) || 0;
+      return sum + (uPrice * item.quantity);
     }, 0);
   };
 

@@ -694,9 +694,11 @@ function setupForm() {
         name: item.name,
         imageUrl: item.imageUrl || '',
         basePrice: effectiveBase,
+        unitPrice: item.unitPrice,
         selectedOptions: item.selectedOptions,
         finalPrice: item.unitPrice * item.quantity,
-        quantity: item.quantity
+        quantity: item.quantity,
+        isFreeGift: item.isFreeGift || false
       };
     });
 

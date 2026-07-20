@@ -401,6 +401,35 @@ function renderOrder() {
     notesContainer.style.display = 'none';
   }
 
+  // Promotions & Gifts Card
+  const promoCard = document.getElementById('promo-info-card');
+  const promoRow = document.getElementById('applied-promo-row');
+  const promoName = document.getElementById('view-applied-promo');
+  const giftsContainer = document.getElementById('free-gifts-container');
+  const giftsList = document.getElementById('free-gifts-list');
+  
+  let hasPromo = false;
+  if (o.appliedPromotionName) {
+    promoRow.style.display = 'flex';
+    promoName.textContent = o.appliedPromotionName;
+    hasPromo = true;
+  } else {
+    promoRow.style.display = 'none';
+  }
+
+  const freeGifts = (o.items || []).filter(item => item.isFreeGift);
+  if (freeGifts.length > 0) {
+    giftsContainer.style.display = 'block';
+    giftsList.innerHTML = freeGifts.map(g => `<li style="margin-bottom:4px; display:flex; align-items:center; gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> ${g.name} (${g.quantity}x)</li>`).join('');
+    hasPromo = true;
+  } else {
+    giftsContainer.style.display = 'none';
+  }
+
+  if (promoCard) {
+    promoCard.style.display = hasPromo ? 'block' : 'none';
+  }
+
   // Payment
   const paymentLabels = {
     'vodafone_cash': 'فودافون كاش',
@@ -464,7 +493,10 @@ function renderItems() {
           <div style="display: flex; align-items: center; gap: 12px; flex: 1.5;">
             ${imgHtml}
             <div style="text-align: right; display: flex; flex-direction: column; justify-content: center;">
-              <div style="font-weight: 700; font-size: 13px; color: #1e293b; line-height: 1.2;">${item.name}</div>
+              <div style="font-weight: 700; font-size: 13px; color: #1e293b; line-height: 1.2;">
+                ${item.name}
+                ${item.isFreeGift ? '<span class="badge" style="background:#dcfce7;color:#166534;font-size:0.7rem;margin-right:6px;padding:2px 6px;border-radius:4px;">هدية مجانية 🎁</span>' : ''}
+              </div>
               ${optText ? `<div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">${optText}</div>` : ''}
               ${item.discount ? (item.discount > 0
         ? `<div style="font-size:0.75rem; color:#dc2626; margin-top:4px; font-weight:600;">خصم: ${formatPrice(item.discount)}</div>`
@@ -477,8 +509,12 @@ function renderItems() {
           
           <!-- Left side: Unit Price Block and Total Price -->
           <div style="display: flex; align-items: center; gap: 16px; flex: 1; justify-content: space-between;">
-            <div style="font-size: 0.85rem; color: #64748b; white-space: nowrap; font-weight: 500; text-align: center; flex: 1;" dir="ltr">${formatPrice(item.basePrice)}x${item.quantity} </div>
-            <div style="font-weight: 700; font-size: 1rem; color: #1e293b; min-width: 80px; text-align: left; flex: 1;">${formatPrice(item.finalPrice)}</div>
+            <div style="font-size: 0.85rem; color: #64748b; white-space: nowrap; font-weight: 500; text-align: center; flex: 1;" dir="ltr">
+              ${item.isFreeGift ? '' : `${formatPrice(item.basePrice)}x${item.quantity}`}
+            </div>
+            <div style="font-weight: 700; font-size: 1rem; color: #1e293b; min-width: 80px; text-align: left; flex: 1;">
+              ${item.isFreeGift ? '<span style="color:#10b981;">مجانًا</span>' : formatPrice(item.finalPrice)}
+            </div>
           </div>
         </div>
 
