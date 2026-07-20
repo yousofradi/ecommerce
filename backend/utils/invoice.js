@@ -131,6 +131,18 @@ async function generateInvoiceInnerHtml(order, settings, options = {}) {
     remtext = 'مدفوع بالكامل';
   }
 
+  // ================== DISCOUNT ROW ==================
+  let discountRow = '';
+  if (num(order.discount) > 0) {
+    const promoName = order.appliedPromotionName ? ` (${safe(order.appliedPromotionName)})` : '';
+    discountRow = `
+      <div class="row red">
+        <span>خصم الطلب${promoName}</span>
+        <span>-${num(order.discount)} ج</span>
+      </div>
+    `;
+  }
+
   const orderDate = new Date(order.paidAt || order.createdAt || Date.now());
   const dateStr = `${orderDate.getDate()}-${orderDate.getMonth() + 1}-${orderDate.getFullYear()}`;
 
@@ -277,6 +289,8 @@ ${productsHtml}
 <span>مصاريف الشحن (${safe(order.carrier === 'egyptpost' ? 'البريد المصري' : 'بوسطة')} - ${safe(order.customer.government)})</span>
 <span>${shipping} ج</span>
 </div>
+
+${discountRow}
 
 <div class="row grand">
 <span>الإجمالي</span>

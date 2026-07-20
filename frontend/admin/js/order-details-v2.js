@@ -506,6 +506,9 @@ function updateTotals() {
     const label = document.getElementById('sum-discount-label');
     if (label) {
       label.textContent = o.discount > 0 ? 'خصم الطلب' : 'إضافة للطلب';
+      if (o.appliedPromotionName && o.discount > 0) {
+        label.textContent += ` (${o.appliedPromotionName})`;
+      }
       label.style.color = o.discount > 0 ? 'var(--danger)' : 'var(--primary)';
     }
   } else {

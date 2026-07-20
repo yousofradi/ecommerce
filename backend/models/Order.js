@@ -36,6 +36,7 @@ const orderSchema = new mongoose.Schema({
     validate: v => v.length > 0
   },
   discount: { type: Number, default: 0 },    // total order discount in EGP
+  appliedPromotionName: { type: String },    // The name of the promotion applied
   totalPrice: { type: Number, required: true, min: 0 },
   shippingFee: { type: Number, required: true, min: 0 },
   paymentMethod: {

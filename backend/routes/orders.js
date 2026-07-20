@@ -151,9 +151,14 @@ router.post('/', async (req, res) => {
 
     // Evaluate promotions server-side to prevent spoofing
     let finalDiscount = discount; // fallback to frontend provided discount (e.g. coupons if we have them)
+    let appliedPromotionName = null;
     try {
       const promoResult = await evaluateCartPromotions(items);
       
+      if (promoResult.appliedPromotion) {
+        appliedPromotionName = promoResult.appliedPromotion.name;
+      }
+
       // If promotion gives a higher discount, use it
       if (promoResult.totalDiscount > finalDiscount) {
         finalDiscount = promoResult.totalDiscount;
@@ -205,6 +210,7 @@ router.post('/', async (req, res) => {
       customer,
       items,
       discount: finalDiscount,
+      appliedPromotionName,
       totalPrice,
       shippingFee,
       paymentMethod,

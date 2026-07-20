@@ -266,15 +266,29 @@ async function savePromotion() {
   }
 }
 
-async function deletePromotion(id) {
-  if (!confirm('هل أنت متأكد من حذف هذا العرض؟')) return;
+let promotionToDelete = null;
+
+function deletePromotion(id) {
+  promotionToDelete = id;
+  document.getElementById('delete-confirm-modal').style.display = 'flex';
   
-  try {
-    await api._request(`/promotions/${id}`, { method: 'DELETE', admin: true });
-    await loadPromotions();
-  } catch (err) {
-    console.error(err);
-  }
+  const confirmBtn = document.getElementById('confirm-delete-btn');
+  // Remove old event listeners
+  const newBtn = confirmBtn.cloneNode(true);
+  confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+  
+  newBtn.addEventListener('click', async () => {
+    document.getElementById('delete-confirm-modal').style.display = 'none';
+    if (!promotionToDelete) return;
+    
+    try {
+      await api._request(`/promotions/${promotionToDelete}`, { method: 'DELETE', admin: true });
+      promotionToDelete = null;
+      await loadPromotions();
+    } catch (err) {
+      console.error(err);
+    }
+  });
 }
 
 // -- Simulator --
