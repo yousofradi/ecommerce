@@ -378,16 +378,13 @@ Cart._renderPromotions = function (data) {
   }
 
   // If they have a pending gift choice, hide the progress banner because the button will be shown instead
-  if (progress && !pendingGiftChoice && progress.tiers && progress.tiers.length > 0) {
+  if (progress && !pendingGiftChoice && progress.tiers && progress.tiers.length > 0 && (progress.percentage < 100 || !appliedPromotion)) {
     let msg = '';
     const nextTier = progress.tiers.find(t => t.target === progress.target);
     const rewardText = nextTier ? nextTier.rewardText : progress.nextRewardName;
     
     if (progress.percentage < 100) {
       msg = `أضف <strong>${progress.remaining} ج.م</strong> لتحصل علي <strong>${rewardText}</strong>`;
-    } else if (appliedPromotion) {
-      const activeTier = progress.tiers.find(t => t.name === appliedPromotion.name);
-      msg = `🎉 مبروك لقد حصلت علي <strong>${activeTier ? activeTier.rewardText : appliedPromotion.name}</strong>`;
     } else {
       msg = `🎉 مبروك! وصلت لأعلى عرض: <strong>${rewardText}</strong>`;
     }

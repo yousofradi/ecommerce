@@ -1,4 +1,13 @@
 const Product = require('../models/Product');
+const cache = require('./cache');
+
+async function clearStorefrontProductCaches() {
+  try {
+    await cache.clearPrefix('storefront:products:list:');
+  } catch (err) {
+    console.error('[Inventory] Failed to clear storefront product caches:', err.message);
+  }
+}
 
 /**
  * Adjusts stock for a product or variant.
@@ -15,6 +24,8 @@ async function adjustStock(productId, selectedOptions, quantityDiff) {
     return;
   }
 
+  let changed = false;
+
   // Handle variants if selectedOptions are provided
   if (selectedOptions && selectedOptions.length > 0) {
     if (product.variants && product.variants.length > 0) {
@@ -24,10 +35,10 @@ async function adjustStock(productId, selectedOptions, quantityDiff) {
       });
 
       if (variant && variant.quantity !== null && variant.quantity !== undefined) {
-        variant.quantity += quantityDiff;
-        if (variant.quantity < 0) variant.quantity = 0;
+        const nextQuantity = variant.quantity + quantityDiff;
+        variant.quantity = Math.max(0, nextQuantity);
         await product.save();
-        return;
+        changed = true;
       }
     } else {
       // Option 2: Dynamic options (currently no per-option quantity in schema, 
@@ -36,10 +47,15 @@ async function adjustStock(productId, selectedOptions, quantityDiff) {
   }
 
   // Fallback to base product quantity
-  if (product.quantity !== null && product.quantity !== undefined) {
-    product.quantity += quantityDiff;
-    if (product.quantity < 0) product.quantity = 0;
+  if (!changed && product.quantity !== null && product.quantity !== undefined) {
+    const nextQuantity = product.quantity + quantityDiff;
+    product.quantity = Math.max(0, nextQuantity);
     await product.save();
+    changed = true;
+  }
+
+  if (changed) {
+    await clearStorefrontProductCaches();
   }
 }
 
