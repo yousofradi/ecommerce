@@ -539,17 +539,15 @@
             <div class="info-card" id="transfer-info-card" style="margin-top: 24px;">
               <div class="info-card-header flex justify-between" style="align-items:center;margin-bottom:20px">
                 <h3>معلومات التحويل</h3>
-                <button class="btn btn-sm btn-primary" onclick="saveTransferInfo(this)" id="save-transfer-btn"
-                  style="padding: 4px 12px; font-size: 0.85rem;">حفظ التعديلات</button>
               </div>
               <div class="info-card-body">
                 <div class="form-group mb-16">
                   <label class="form-label">الرقم المحول منه</label>
-                  <input type="text" id="admin-transfer-number" class="form-control" placeholder="01xxxxxxxxx">
+                  <input type="text" id="admin-transfer-number" class="form-control" placeholder="01xxxxxxxxx" onchange="autoSaveTransferInfo()">
                 </div>
                 <div class="form-group mb-16">
                   <label class="form-label">ملاحظات التحويل</label>
-                  <textarea id="admin-transfer-notes" class="form-control" rows="2" placeholder="أو اسم المحول..."></textarea>
+                  <textarea id="admin-transfer-notes" class="form-control" rows="2" placeholder="أو اسم المحول..." onchange="autoSaveTransferInfo()"></textarea>
                 </div>
                 <div class="form-group">
                   <label class="form-label">اسكرين التحويل</label>

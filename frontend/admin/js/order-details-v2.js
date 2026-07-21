@@ -425,30 +425,18 @@ function renderOrder() {
   if (o.appliedPromotionName) {
     promoRow.style.display = 'flex';
     
-    // Resolve rewards array (use stored rewards, fallback to constructed rewards from promotion object, fallback to splitting reward text)
-    let rewards = [];
-    if (Array.isArray(o.appliedPromotionRewards) && o.appliedPromotionRewards.filter(Boolean).length > 0) {
-      rewards = o.appliedPromotionRewards.filter(Boolean);
-    } else if (o.appliedPromotion) {
-      const p = o.appliedPromotion;
-      if (p.discountType === 'PERCENTAGE') rewards.push(`خصم ${p.discountValue}%`);
-      if (p.discountType === 'FIXED') rewards.push(`خصم ${p.discountValue} ج`);
-      if (p.isFreeShipping) rewards.push('شحن مجاني');
-      if (p.isFreeGift) rewards.push('هدية مجانية');
-    } else if (o.appliedPromotionRewardText) {
-      rewards = o.appliedPromotionRewardText.split(' و ').map(r => r.trim()).filter(Boolean);
-    }
-    
+    // Build reward badges from the stored appliedPromotionRewards array
+    const rewards = Array.isArray(o.appliedPromotionRewards) ? o.appliedPromotionRewards.filter(Boolean) : [];
     let badgesHtml = '';
     if (rewards.length > 0) {
       badgesHtml = rewards.map(r => `<span style="background: #e0e7ff; color: #4338ca; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; white-space:nowrap;">${r}</span>`).join('');
     }
     
     promoRow.innerHTML = `
-      <span style="font-weight:700; color:var(--primary); white-space:nowrap;">${o.appliedPromotionName}</span>
-      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content: flex-end;">
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
         ${badgesHtml}
       </div>
+      <span style="font-weight:700; color:var(--primary); white-space:nowrap;">${o.appliedPromotionName}</span>
     `;
     hasPromo = true;
   } else {
@@ -1696,11 +1684,7 @@ window.removeAdminTransferScreenshot = function() {
   document.getElementById('admin-transfer-screenshot-remove').style.display = 'none';
 };
 
-window.saveTransferInfo = async function(btn) {
-  const originalText = btn.textContent;
-  btn.textContent = 'جاري الحفظ...';
-  btn.disabled = true;
-  
+window.autoSaveTransferInfo = async function() {
   try {
     let screenshotUrl = currentOrder.transferScreenshot;
     
@@ -1741,8 +1725,9 @@ window.saveTransferInfo = async function(btn) {
     showToast('تم الحفظ بنجاح', 'success');
   } catch (err) {
     showToast(err.message, 'error');
-  } finally {
-    btn.textContent = originalText;
-    btn.disabled = false;
   }
+};
+
+window.saveTransferInfo = async function(btn) {
+  return autoSaveTransferInfo();
 };
