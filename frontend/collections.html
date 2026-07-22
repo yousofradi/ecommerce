@@ -180,7 +180,7 @@
 
         grid.innerHTML = collections.map(c => {
           const img = api.optimizeImageUrl(c.imageUrl, 250);
-          const link = `collection/${c.urlName || c._id}`;
+          const link = `/collection/${c.urlName || c._id}`;
           return `
             <a href="${link}" class="collection-card" style="margin-bottom:0">
               <img src="${img}" alt="${c.name}" class="collection-card-img" style="height:140px; object-fit:contain; border-radius:12px;">

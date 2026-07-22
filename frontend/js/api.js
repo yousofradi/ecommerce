@@ -413,8 +413,8 @@ api.openMenu = function () {
         return;
       }
       body.innerHTML = `
-        <a href="products" class="slide-menu-item" onclick="api.closeMenu()" style="font-weight:700; color:var(--primary); border-bottom: 2px solid #f1f5f9; background: #f8fafc;">كل المنتجات</a>
-      ` + cols.map(c => `<a href="collection/${c.urlName || c._id}" class="slide-menu-item" onclick="api.closeMenu()">${c.name}</a>`).join('');
+        <a href="/products" class="slide-menu-item" onclick="api.closeMenu()" style="font-weight:700; color:var(--primary); border-bottom: 2px solid #f1f5f9; background: #f8fafc;">كل المنتجات</a>
+      ` + cols.map(c => `<a href="/collection/${c.urlName || c._id}" class="slide-menu-item" onclick="api.closeMenu()">${c.name}</a>`).join('');
     }).catch(err => {
       document.getElementById('slide-menu-body').innerHTML = '<div style="padding:20px;text-align:center;color:red">حدث خطأ</div>';
     });
@@ -468,7 +468,7 @@ api.openSearch = function () {
             return;
           }
           results.innerHTML = filtered.map(p => `
-            <a href="product/${p.handle || p._id}" class="search-result-item">
+            <a href="/product/${p.handle || p._id}" class="search-result-item">
               <img src="${p.imageUrl}" class="search-result-img" onerror="this.style.display='none'">
               <div class="search-result-info">
                 <div class="search-result-name">${p.name}</div>
@@ -548,7 +548,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const catBar = catBarWrapper.querySelector('.sticky-cat-bar');
       if (cols && cols.length > 0) {
         const renderBlock = (list) => list.map(c => `
-          <a href="collection/${c.urlName || c._id}" class="cat-badge">
+          <a href="/collection/${c.urlName || c._id}" class="cat-badge">
             <div class="cat-badge-img-wrapper">
               <img src="${api.optimizeImageUrl(c.imageUrl, 100)}" alt="${c.name}" onerror="this.src='https://res.cloudinary.com/sundura/image/upload/v1778758433/ecommerce-uploads/1778758432917-917399313.png'">
             </div>
