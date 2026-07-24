@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const cloudinary = require('cloudinary').v2;
+const cloudinaryPackage = require('cloudinary');
 const CloudinaryStorage = require('multer-storage-cloudinary');
 const adminAuth = require('../middleware/adminAuth');
 
@@ -18,14 +18,14 @@ let storage;
 
 if (isCloudinaryConfigured) {
   // Cloudinary Storage (Persistent)
-  cloudinary.config({
+  cloudinaryPackage.v2.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET
   });
 
   storage = new CloudinaryStorage({
-    cloudinary: cloudinary,
+    cloudinary: cloudinaryPackage,
     params: {
       folder: 'ecommerce-uploads',
       format: async (req, file) => 'webp',
