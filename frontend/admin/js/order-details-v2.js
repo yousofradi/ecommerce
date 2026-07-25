@@ -890,6 +890,10 @@ window.applyCustomerChanges = async function (btn) {
 
   renderOrder();
   updateTotals();
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = 'حفظ التغييرات';
+  }
   closeModal('customer-modal');
 
   // Trigger unsaved changes bar
@@ -912,6 +916,10 @@ window.applyPaymentChanges = async function (btn) {
   currentOrder.paidAmount = parseFloat(document.getElementById('modal-paid-amount').value) || 0;
 
   renderOrder();
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = 'حفظ التغييرات';
+  }
   closeModal('payment-modal');
 
   // Save immediately as requested
@@ -1104,6 +1112,9 @@ window.openOrderDiscountModal = function () {
 window.applyOrderDiscount = async function (btn) {
   const val = document.getElementById('modal-order-discount').value;
   currentOrder.discount = parseFloat(val) || 0;
+  currentOrder.isCustomDiscount = true;
+  currentOrder.appliedPromotionName = null;
+  currentOrder.appliedPromotionId = null;
   closeModal('order-discount-modal');
   updateTotals();
 
@@ -1191,6 +1202,9 @@ window.saveOrderChanges = async function (silent = false) {
         }))
       })),
       discount: currentOrder.discount,
+      isCustomDiscount: currentOrder.isCustomDiscount,
+      appliedPromotionName: currentOrder.appliedPromotionName,
+      appliedPromotionId: currentOrder.appliedPromotionId,
       shippingFee: currentOrder.shippingFee,
       totalPrice: currentOrder.totalPrice,
       paymentMethod: currentOrder.paymentMethod,

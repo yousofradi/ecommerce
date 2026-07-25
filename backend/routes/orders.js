@@ -1073,39 +1073,49 @@ router.put('/:orderId', adminAuth, async (req, res) => {
     let appliedPromotionRewards = order.appliedPromotionRewards || [];
     let appliedPromotionRewardText = order.appliedPromotionRewardText || '';
 
+    // Check if the discount is explicitly marked as custom or changed by admin
+    let isCustomDiscount = (updates.isCustomDiscount !== undefined) 
+      ? updates.isCustomDiscount 
+      : (order.isCustomDiscount || (updates.discount !== undefined && updates.discount !== order.discount));
+
+    if (updates.discount !== undefined && updates.discount !== order.discount) {
+      isCustomDiscount = true;
+    }
+
     // Evaluate promotions if items changed
     if (updates.items) {
       try {
         const promoResult = await evaluateCartPromotions(items);
 
-        appliedPromotionId = promoResult.appliedPromotion ? promoResult.appliedPromotion._id || null : null;
-        appliedPromotionName = promoResult.appliedPromotion ? promoResult.appliedPromotion.name : null;
-        appliedPromotionRewards = promoResult.rewardTexts || [];
-        appliedPromotionRewardText = promoResult.rewardText || (promoResult.rewardTexts ? promoResult.rewardTexts.join(' و ') : '');
-
         if (promoResult.appliedPromotion) {
-          discount = promoResult.totalDiscount;
+          if (!isCustomDiscount) {
+            discount = promoResult.totalDiscount;
+            appliedPromotionId = promoResult.appliedPromotion._id || null;
+            appliedPromotionName = promoResult.appliedPromotion.name;
+          } else {
+            appliedPromotionId = null;
+            appliedPromotionName = null;
+          }
+          appliedPromotionRewards = promoResult.rewardTexts || [];
+          appliedPromotionRewardText = promoResult.rewardText || (promoResult.rewardTexts ? promoResult.rewardTexts.join(' و ') : '');
+
           if (promoResult.freeShipping) {
             shippingFee = 0;
           } else {
-            // Revert back to the standard shipping fee if it was previously free because of a promotion, and shipping fee was not explicitly customized
             if (order.appliedPromotionName && order.shippingFee === 0 && (updates.shippingFee === undefined || updates.shippingFee === 0)) {
               const resolved = await resolveShippingFeeAndCarrier(updates.customer || order.customer, updates.carrier || order.carrier, undefined);
               shippingFee = resolved.shippingFee;
             }
           }
         } else {
-          // If no promotion applies, reset the promotion fields
           appliedPromotionId = null;
           appliedPromotionName = null;
           appliedPromotionRewards = [];
           appliedPromotionRewardText = '';
 
-          // If the order had a promotion before, and the discount wasn't manually updated to a different value, reset discount to 0
-          if (order.appliedPromotionName && (updates.discount === undefined || updates.discount === order.discount)) {
+          if (order.appliedPromotionName && !isCustomDiscount) {
             discount = 0;
           }
-          // Revert back to standard shipping fee if it was previously free because of a promotion
           if (order.appliedPromotionName && order.shippingFee === 0 && (updates.shippingFee === undefined || updates.shippingFee === 0)) {
             const resolved = await resolveShippingFeeAndCarrier(updates.customer || order.customer, updates.carrier || order.carrier, undefined);
             shippingFee = resolved.shippingFee;
@@ -1114,8 +1124,14 @@ router.put('/:orderId', adminAuth, async (req, res) => {
       } catch (promoErr) {
         console.error('Error evaluating promotions on update:', promoErr);
       }
+    } else {
+      if (isCustomDiscount) {
+        appliedPromotionId = null;
+        appliedPromotionName = null;
+      }
     }
 
+    updates.isCustomDiscount = isCustomDiscount;
     updates.appliedPromotionId = appliedPromotionId;
     updates.appliedPromotionName = appliedPromotionName;
     updates.appliedPromotionRewards = appliedPromotionRewards;
