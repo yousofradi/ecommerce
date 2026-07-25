@@ -26,14 +26,12 @@ if (isCloudinaryConfigured) {
 
   storage = new CloudinaryStorage({
     cloudinary: cloudinaryPackage,
-    params: {
-      folder: 'ecommerce-uploads',
-      format: async (req, file) => 'webp',
-      allowed_formats: ['jpg', 'png', 'gif', 'webp', 'jpeg'],
-      public_id: (req, file) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        return uniqueSuffix;
-      }
+    folder: 'ecommerce-uploads',
+    format: 'webp',
+    allowedFormats: ['jpg', 'png', 'gif', 'webp', 'jpeg'],
+    filename: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      cb(undefined, uniqueSuffix);
     }
   });
   console.log('✅ Upload: Using Cloudinary storage');
@@ -68,15 +66,18 @@ router.post('/', adminAuth, upload.single('image'), (req, res) => {
       return res.status(400).json({ error: 'No file uploaded' });
     }
     
-    // For Cloudinary, req.file.path is the URL
+    // For Cloudinary, req.file.path might be undefined in older versions, use secure_url or url
     // For local, we construct the URL
-    let imageUrl = req.file.path;
+    let imageUrl = req.file.path || req.file.secure_url || req.file.url;
     
     if (isCloudinaryConfigured) {
       const { optimizeCloudinaryUrl } = require('../utils/cloudinary');
-      // Force the URL to end in .webp so it explicitly shows as WebP
-      imageUrl = imageUrl.replace(/\.(png|jpe?g|gif)$/i, '.webp');
-      imageUrl = optimizeCloudinaryUrl(imageUrl);
+      // Ensure imageUrl is a string before replacing
+      if (typeof imageUrl === 'string') {
+        // Force the URL to end in .webp so it explicitly shows as WebP
+        imageUrl = imageUrl.replace(/\.(png|jpe?g|gif)$/i, '.webp');
+        imageUrl = optimizeCloudinaryUrl(imageUrl);
+      }
     } else {
       const host = req.get('host');
       // Force https if we are on render or if the host suggests it
@@ -101,12 +102,14 @@ router.post('/public', upload.single('image'), (req, res) => {
       return res.status(400).json({ error: 'No file uploaded' });
     }
     
-    let imageUrl = req.file.path;
+    let imageUrl = req.file.path || req.file.secure_url || req.file.url;
     
     if (isCloudinaryConfigured) {
       const { optimizeCloudinaryUrl } = require('../utils/cloudinary');
-      imageUrl = imageUrl.replace(/\.(png|jpe?g|gif)$/i, '.webp');
-      imageUrl = optimizeCloudinaryUrl(imageUrl);
+      if (typeof imageUrl === 'string') {
+        imageUrl = imageUrl.replace(/\.(png|jpe?g|gif)$/i, '.webp');
+        imageUrl = optimizeCloudinaryUrl(imageUrl);
+      }
     } else {
       const host = req.get('host');
       const protocol = (req.headers['x-forwarded-proto'] || req.protocol || 'http').split(',')[0];

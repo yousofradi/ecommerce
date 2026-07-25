@@ -1042,6 +1042,23 @@ window.openItemDiscountModal = function (idx) {
   openModal('item-discount-modal');
 };
 
+window.applyItemDiscount = function (type) {
+  const idx = parseInt(document.getElementById('modal-item-idx').value, 10);
+  const val = parseFloat(document.getElementById('modal-item-discount').value) || 0;
+  const item = currentOrder.items[idx];
+  if (item) {
+    if (type === 'discount') {
+      item.discount = val;
+    } else if (type === 'increase') {
+      item.discount = -val;
+    }
+    closeModal('item-discount-modal');
+    updateTotals();
+    renderItems();
+    if (window.markAsModified) window.markAsModified();
+  }
+};
+
 window.removeItem = function (idx) {
   const item = currentOrder.items[idx];
   if (!item) return;

@@ -29,6 +29,106 @@ function calcTotals(items, shippingFee, orderDiscount = 0) {
   return { subtotal, totalPrice };
 }
 
+// Helper: Resolve shipping fee and carrier
+async function resolveShippingFeeAndCarrier(customer, inputCarrier, providedShippingFee) {
+  let carrier = inputCarrier || 'bosta';
+  let shippingFee = providedShippingFee !== undefined ? Number(providedShippingFee) : 0;
+
+  try {
+    const Setting = require('../models/Setting');
+    const globalSettings = await Setting.findOne({ key: 'sundura_global_settings' });
+    const settingsVal = globalSettings ? globalSettings.value : {};
+
+    const enableBosta = settingsVal.enableBosta !== false;
+    const enableEgyptPost = settingsVal.enableEgyptPost !== false;
+    const enableZones = settingsVal.enableZones !== false;
+
+    const shippingOptionsRecord = await Setting.findOne({ key: 'shipping_options' });
+    const shippingOptions = shippingOptionsRecord ? shippingOptionsRecord.value : [];
+
+    const isCityEqual = (a, b) => {
+      if (!a || !b) return false;
+      const norm = (s) => s.replace(/[أإآا]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/\s+/g, '').toLowerCase().trim();
+      return norm(a) === norm(b);
+    };
+
+    const formatZoneName = (z) => {
+      const zName = z.zoneOtherName || z.name || '';
+      const dName = z.districtOtherName || z.districtName || '';
+      return zName === dName ? zName : `${zName} - ${dName}`;
+    };
+
+    const Shipping = require('../models/Shipping');
+    const record = await Shipping.findOne({ $or: [{ city: customer.government }, { cityOtherName: customer.government }] });
+
+    if (record) {
+      let resolvedCarrier = carrier || 'bosta';
+
+      if (enableZones && customer.zone && record.zones && record.zones.length > 0) {
+        const zoneRecord = record.zones.find(z => {
+          const compound = formatZoneName(z);
+          return compound === customer.zone || z.name === customer.zone || z.otherName === customer.zone;
+        });
+        if (!zoneRecord || zoneRecord.dropOffAvailability === false || zoneRecord.bostaAvailable === false) {
+          resolvedCarrier = 'egyptpost';
+        } else {
+          resolvedCarrier = carrier || 'bosta';
+        }
+      } else {
+        resolvedCarrier = carrier || 'bosta';
+      }
+
+      // Global overrides take precedence
+      if (!enableBosta) {
+        resolvedCarrier = 'egyptpost';
+      } else if (typeof enableEgyptPost !== 'undefined' && !enableEgyptPost && resolvedCarrier === 'egyptpost') {
+        resolvedCarrier = 'bosta';
+      }
+
+      carrier = resolvedCarrier;
+
+      if (providedShippingFee === undefined) {
+        const isEgyptPost = carrier === 'egyptpost';
+        const cityName = record.cityOtherName || record.city;
+
+        if (isEgyptPost) {
+          const postOption = (shippingOptions || []).find(o =>
+            o.name.includes('البريد') || o.name.toLowerCase().includes('post')
+          ) || (shippingOptions || [])[0];
+
+          const cityObj = postOption ? (postOption.cities || []).find(c =>
+            isCityEqual(c.city, cityName) ||
+            isCityEqual(c.city, record.city) ||
+            isCityEqual(c.city, record.cityOtherName)
+          ) : null;
+          shippingFee = cityObj ? cityObj.fee : (postOption ? postOption.cost : 80);
+        } else {
+          const bostaOption = (shippingOptions || []).find(o =>
+            o.name.includes('بوسطة') || o.name.toLowerCase().includes('bosta')
+          ) || (shippingOptions || [])[1] || (shippingOptions || [])[0];
+
+          const cityObj = bostaOption ? (bostaOption.cities || []).find(c =>
+            isCityEqual(c.city, cityName) ||
+            isCityEqual(c.city, record.city) ||
+            isCityEqual(c.city, record.cityOtherName)
+          ) : null;
+          shippingFee = cityObj ? cityObj.fee : (bostaOption ? bostaOption.cost : 150);
+        }
+      }
+    } else if (providedShippingFee === undefined) {
+      const defaultFees = require('../config/shipping');
+      shippingFee = defaultFees[customer.government] || 0;
+    }
+  } catch (e) {
+    if (providedShippingFee === undefined) {
+      const defaultFees = require('../config/shipping');
+      shippingFee = defaultFees[customer.government] || 0;
+    }
+  }
+
+  return { shippingFee, carrier };
+}
+
 
 // ── Public ──────────────────────────────────────────────
 
@@ -48,101 +148,19 @@ router.post('/', async (req, res) => {
     }
 
     // Shipping fee and Carrier resolution:
-    // Shipping fee and Carrier resolution:
-    // Respect explicitly provided carrier, or check if the selected zone is a non-Bosta zone (Egyptpost)
     let carrier = req.body.carrier || 'bosta';
-    let shippingFee = providedShippingFee !== undefined ? Number(providedShippingFee) : 0;
+    let shippingFee = 0;
 
     try {
-      const Setting = require('../models/Setting');
-      const globalSettings = await Setting.findOne({ key: 'sundura_global_settings' });
-      const settingsVal = globalSettings ? globalSettings.value : {};
-
-      const enableBosta = settingsVal.enableBosta !== false;
-      const enableEgyptPost = settingsVal.enableEgyptPost !== false;
-      const enableZones = settingsVal.enableZones !== false;
-      const egyptPostFeeSetting = settingsVal.egyptPostFee !== undefined ? Number(settingsVal.egyptPostFee) : 60;
-
-      const shippingOptionsRecord = await Setting.findOne({ key: 'shipping_options' });
-      const shippingOptions = shippingOptionsRecord ? shippingOptionsRecord.value : [];
-
-      const isCityEqual = (a, b) => {
-        if (!a || !b) return false;
-        const norm = (s) => s.replace(/[أإآا]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/\s+/g, '').toLowerCase().trim();
-        return norm(a) === norm(b);
-      };
-
-      const formatZoneName = (z) => {
-        const zName = z.zoneOtherName || z.name || '';
-        const dName = z.districtOtherName || z.districtName || '';
-        return zName === dName ? zName : `${zName} - ${dName}`;
-      };
-
-      const Shipping = require('../models/Shipping');
-      const record = await Shipping.findOne({ $or: [{ city: customer.government }, { cityOtherName: customer.government }] });
-
-      if (record) {
-        let resolvedCarrier = carrier || 'bosta';
-
-        if (enableZones && customer.zone && record.zones && record.zones.length > 0) {
-          const zoneRecord = record.zones.find(z => {
-            const compound = formatZoneName(z);
-            return compound === customer.zone || z.name === customer.zone || z.otherName === customer.zone;
-          });
-          if (!zoneRecord || zoneRecord.dropOffAvailability === false || zoneRecord.bostaAvailable === false) {
-            resolvedCarrier = 'egyptpost';
-          } else {
-            resolvedCarrier = carrier || 'bosta';
-          }
-        } else {
-          resolvedCarrier = carrier || 'bosta';
-        }
-
-        // Global overrides take precedence
-        if (!enableBosta) {
-          resolvedCarrier = 'egyptpost';
-        } else if (typeof enableEgyptPost !== 'undefined' && !enableEgyptPost && resolvedCarrier === 'egyptpost') {
-          resolvedCarrier = 'bosta';
-        }
-
-        carrier = resolvedCarrier;
-
-        if (providedShippingFee === undefined) {
-          const isEgyptPost = carrier === 'egyptpost';
-          const cityName = record.cityOtherName || record.city;
-
-          if (isEgyptPost) {
-            const postOption = (shippingOptions || []).find(o =>
-              o.name.includes('البريد') || o.name.toLowerCase().includes('post')
-            ) || (shippingOptions || [])[0];
-
-            const cityObj = postOption ? (postOption.cities || []).find(c =>
-              isCityEqual(c.city, cityName) ||
-              isCityEqual(c.city, record.city) ||
-              isCityEqual(c.city, record.cityOtherName)
-            ) : null;
-            shippingFee = cityObj ? cityObj.fee : (postOption ? postOption.cost : 80);
-          } else {
-            const bostaOption = (shippingOptions || []).find(o =>
-              o.name.includes('بوسطة') || o.name.toLowerCase().includes('bosta')
-            ) || (shippingOptions || [])[1] || (shippingOptions || [])[0];
-
-            const cityObj = bostaOption ? (bostaOption.cities || []).find(c =>
-              isCityEqual(c.city, cityName) ||
-              isCityEqual(c.city, record.city) ||
-              isCityEqual(c.city, record.cityOtherName)
-            ) : null;
-            shippingFee = cityObj ? cityObj.fee : (bostaOption ? bostaOption.cost : 150);
-          }
-        }
-      } else if (providedShippingFee === undefined) {
-        const defaultFees = require('../config/shipping');
-        shippingFee = defaultFees[customer.government] || 0;
-      }
+      const resolved = await resolveShippingFeeAndCarrier(customer, carrier, providedShippingFee);
+      carrier = resolved.carrier;
+      shippingFee = resolved.shippingFee;
     } catch (e) {
       if (providedShippingFee === undefined) {
         const defaultFees = require('../config/shipping');
         shippingFee = defaultFees[customer.government] || 0;
+      } else {
+        shippingFee = Number(providedShippingFee) || 0;
       }
     }
 
@@ -1047,8 +1065,63 @@ router.put('/:orderId', adminAuth, async (req, res) => {
 
     // Recalculate totals if items, shipping, or discount changed
     const items = updates.items || order.items;
-    const shippingFee = (updates.shippingFee !== undefined) ? updates.shippingFee : order.shippingFee;
-    const discount = (updates.discount !== undefined) ? updates.discount : order.discount;
+    let shippingFee = (updates.shippingFee !== undefined) ? updates.shippingFee : order.shippingFee;
+    let discount = (updates.discount !== undefined) ? updates.discount : order.discount;
+
+    let appliedPromotionId = order.appliedPromotionId || null;
+    let appliedPromotionName = order.appliedPromotionName || null;
+    let appliedPromotionRewards = order.appliedPromotionRewards || [];
+    let appliedPromotionRewardText = order.appliedPromotionRewardText || '';
+
+    // Evaluate promotions if items changed
+    if (updates.items) {
+      try {
+        const promoResult = await evaluateCartPromotions(items);
+
+        appliedPromotionId = promoResult.appliedPromotion ? promoResult.appliedPromotion._id || null : null;
+        appliedPromotionName = promoResult.appliedPromotion ? promoResult.appliedPromotion.name : null;
+        appliedPromotionRewards = promoResult.rewardTexts || [];
+        appliedPromotionRewardText = promoResult.rewardText || (promoResult.rewardTexts ? promoResult.rewardTexts.join(' و ') : '');
+
+        if (promoResult.appliedPromotion) {
+          discount = promoResult.totalDiscount;
+          if (promoResult.freeShipping) {
+            shippingFee = 0;
+          } else {
+            // Revert back to the standard shipping fee if it was previously free because of a promotion, and shipping fee was not explicitly customized
+            if (order.appliedPromotionName && order.shippingFee === 0 && (updates.shippingFee === undefined || updates.shippingFee === 0)) {
+              const resolved = await resolveShippingFeeAndCarrier(updates.customer || order.customer, updates.carrier || order.carrier, undefined);
+              shippingFee = resolved.shippingFee;
+            }
+          }
+        } else {
+          // If no promotion applies, reset the promotion fields
+          appliedPromotionId = null;
+          appliedPromotionName = null;
+          appliedPromotionRewards = [];
+          appliedPromotionRewardText = '';
+
+          // If the order had a promotion before, and the discount wasn't manually updated to a different value, reset discount to 0
+          if (order.appliedPromotionName && (updates.discount === undefined || updates.discount === order.discount)) {
+            discount = 0;
+          }
+          // Revert back to standard shipping fee if it was previously free because of a promotion
+          if (order.appliedPromotionName && order.shippingFee === 0 && (updates.shippingFee === undefined || updates.shippingFee === 0)) {
+            const resolved = await resolveShippingFeeAndCarrier(updates.customer || order.customer, updates.carrier || order.carrier, undefined);
+            shippingFee = resolved.shippingFee;
+          }
+        }
+      } catch (promoErr) {
+        console.error('Error evaluating promotions on update:', promoErr);
+      }
+    }
+
+    updates.appliedPromotionId = appliedPromotionId;
+    updates.appliedPromotionName = appliedPromotionName;
+    updates.appliedPromotionRewards = appliedPromotionRewards;
+    updates.appliedPromotionRewardText = appliedPromotionRewardText;
+    updates.discount = discount;
+    updates.shippingFee = shippingFee;
 
     const { totalPrice } = calcTotals(items, shippingFee, discount);
     updates.totalPrice = totalPrice;
