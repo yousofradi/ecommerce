@@ -542,7 +542,7 @@ function renderItems() {
         ? `<div style="font-size:0.75rem; color:#dc2626; margin-top:4px; font-weight:600;">خصم: ${formatPrice(item.discount)}</div>`
         : `<div style="font-size:0.75rem; color:#10b981; margin-top:4px; font-weight:600;">زياده ${Math.abs(item.discount)} ج.م</div>`
       ) : ''}
-              ${lowStock ? `<div style="font-size:0.75rem; color:#ef4444; margin-top:4px; font-weight:600; background:#fee2e2; padding:2px 8px; border-radius:4px; display:inline-block;">عذراً، يتوفر ${available} قطعة فقط</div>` : ''}
+              ${lowStock ? `<div style="font-size:0.75rem; color:#b45309; margin-top:4px; font-weight:600; background:#fef3c7; padding:2px 8px; border-radius:4px; display:inline-block;">الباقي : ${available} قطعة</div>` : ''}
             </div>
 
           </div>

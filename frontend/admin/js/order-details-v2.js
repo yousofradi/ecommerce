@@ -530,7 +530,7 @@ function renderItems() {
         ? `<div style="font-size:0.75rem; color:#dc2626; margin-top:4px; font-weight:600;">خصم: ${formatPrice(item.discount)}</div>`
         : `<div style="font-size:0.75rem; color:#10b981; margin-top:4px; font-weight:600;">زياده ${Math.abs(item.discount)} ج.م</div>`
       ) : ''}
-              ${lowStock ? `<div style="font-size:0.75rem; color:#ef4444; margin-top:4px; font-weight:600; background:#fee2e2; padding:2px 8px; border-radius:4px; display:inline-block;">عذراً، يتوفر ${available} قطعة فقط</div>` : ''}
+              ${lowStock ? `<div style="font-size:0.75rem; color:#b45309; margin-top:4px; font-weight:600; background:#fef3c7; padding:2px 8px; border-radius:4px; display:inline-block;">الباقي : ${available} قطعة</div>` : ''}
             </div>
 
           </div>
@@ -1039,7 +1039,29 @@ window.openItemDiscountModal = function (idx) {
   const item = currentOrder.items[idx];
   document.getElementById('modal-item-idx').value = idx;
   document.getElementById('modal-item-discount').value = item.discount || '';
+  if (typeof previewItemDiscount === 'function') previewItemDiscount();
   openModal('item-discount-modal');
+};
+
+window.previewItemDiscount = function () {
+  const val = parseFloat(document.getElementById('modal-item-discount').value) || 0;
+  const preview = document.getElementById('discount-preview');
+  
+  if (!preview) return;
+
+  if (val === 0 || isNaN(val)) {
+    preview.style.display = 'none';
+    return;
+  }
+  
+  preview.style.display = 'block';
+  if (val > 0) {
+    preview.textContent = `خصم: ${val.toLocaleString('ar-EG')} ج.م`;
+    preview.style.color = '#dc2626';
+  } else {
+    preview.textContent = `زياده: ${Math.abs(val).toLocaleString('ar-EG')} ج.م`;
+    preview.style.color = '#10b981';
+  }
 };
 
 window.applyItemDiscount = function (type) {
