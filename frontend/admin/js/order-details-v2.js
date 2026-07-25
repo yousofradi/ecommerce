@@ -304,10 +304,18 @@ function renderOrder() {
     document.getElementById('page-order-id').innerHTML += ' <span class="badge badge-danger">ملغي</span>';
   }
 
-  // Ready button visibility: only show if pending
+  // Ready button visibility and action toggle
   const readyBtnContainer = document.getElementById('ready-btn-container');
   if (readyBtnContainer) {
-    readyBtnContainer.style.display = o.status === 'pending' ? 'block' : 'none';
+    if (o.status === 'pending') {
+      readyBtnContainer.style.display = 'block';
+      readyBtnContainer.innerHTML = `<button class="btn" id="btn-make-ready" onclick="markAsReady()" style="background:#0f766e; color:#fff; border-radius:12px; padding:8px 24px; font-weight:700; font-size:0.9rem; box-shadow: 0 4px 10px rgba(15, 118, 110, 0.15); border:none;">جاهز</button>`;
+    } else if (o.status === 'ready') {
+      readyBtnContainer.style.display = 'block';
+      readyBtnContainer.innerHTML = `<button class="btn" id="btn-cancel-ready" onclick="cancelReady(this)" style="background:#fff; color:#ef4444; border:1px solid #fee2e2; border-radius:12px; padding:8px 24px; font-weight:700; font-size:0.9rem;">إلغاء التجهيز</button>`;
+    } else {
+      readyBtnContainer.style.display = 'none';
+    }
   }
   if (o.status === 'ready') {
     document.getElementById('page-order-id').innerHTML += ' <span class="badge badge-success" style="background:#0f766e; color:#fff; padding: 4px 12px; border-radius: 12px; font-size: 0.8rem; margin-right:8px;">جاهز</span>';
@@ -1781,4 +1789,28 @@ window.autoSaveTransferInfo = async function() {
 
 window.saveTransferInfo = async function(btn) {
   return autoSaveTransferInfo();
+};
+
+window.cancelReady = async function (btn) {
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:8px;display:inline-block;vertical-align:middle;"></span> جاري التحديث...';
+  }
+  try {
+    document.body.classList.add('is-loading');
+    const updated = await api.updateOrder(currentOrder.orderId, { status: 'pending', updatedAt: currentOrder.updatedAt, skipWebhook: true });
+    currentOrder = updated;
+    if (typeof originalOrder !== 'undefined') originalOrder = JSON.parse(JSON.stringify(updated));
+    renderOrder();
+    showToast('تم إلغاء تجهيز الطلب بنجاح', 'success');
+    if (window.hideBar) window.hideBar();
+  } catch (err) {
+    showToast('فشل تحديث حالة الطلب', 'error');
+  } finally {
+    document.body.classList.remove('is-loading');
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'إلغاء التجهيز';
+    }
+  }
 };
