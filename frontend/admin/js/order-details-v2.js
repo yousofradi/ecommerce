@@ -530,7 +530,7 @@ function renderItems() {
         ? `<div style="font-size:0.75rem; color:#dc2626; margin-top:4px; font-weight:600;">خصم: ${formatPrice(item.discount)}</div>`
         : `<div style="font-size:0.75rem; color:#10b981; margin-top:4px; font-weight:600;">زياده ${Math.abs(item.discount)} ج.م</div>`
       ) : ''}
-              ${lowStock ? `<div style="font-size:0.75rem; color:#b45309; margin-top:4px; font-weight:600; background:#fef3c7; padding:2px 8px; border-radius:4px; display:inline-block;">الباقي : ${available} قطعة</div>` : ''}
+              ${lowStock ? `<div style="font-size:0.75rem; color:#b45309; margin-top:4px; font-weight:600; background:#fef3c7; padding:2px; border-radius:4px; display:inline-block;">الباقي : ${available} قطعة</div>` : ''}
             </div>
 
           </div>
@@ -1113,8 +1113,6 @@ window.applyOrderDiscount = async function (btn) {
   const val = document.getElementById('modal-order-discount').value;
   currentOrder.discount = parseFloat(val) || 0;
   currentOrder.isCustomDiscount = true;
-  currentOrder.appliedPromotionName = null;
-  currentOrder.appliedPromotionId = null;
   closeModal('order-discount-modal');
   updateTotals();
 

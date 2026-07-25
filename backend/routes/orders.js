@@ -1088,16 +1088,14 @@ router.put('/:orderId', adminAuth, async (req, res) => {
         const promoResult = await evaluateCartPromotions(items);
 
         if (promoResult.appliedPromotion) {
-          if (!isCustomDiscount) {
-            discount = promoResult.totalDiscount;
-            appliedPromotionId = promoResult.appliedPromotion._id || null;
-            appliedPromotionName = promoResult.appliedPromotion.name;
-          } else {
-            appliedPromotionId = null;
-            appliedPromotionName = null;
-          }
+          appliedPromotionId = promoResult.appliedPromotion._id || null;
+          appliedPromotionName = promoResult.appliedPromotion.name;
           appliedPromotionRewards = promoResult.rewardTexts || [];
           appliedPromotionRewardText = promoResult.rewardText || (promoResult.rewardTexts ? promoResult.rewardTexts.join(' و ') : '');
+
+          if (!isCustomDiscount) {
+            discount = promoResult.totalDiscount;
+          }
 
           if (promoResult.freeShipping) {
             shippingFee = 0;
