@@ -522,14 +522,23 @@ function setupForm() {
   const nameInput = document.getElementById('cust-name');
   const phoneInput = document.getElementById('cust-phone');
   const phone2Input = document.getElementById('cust-phone2');
-  const addressInput = document.getElementById('cust-address');
+  const addressCityInput = document.getElementById('cust-address-city');
+  const addressVillageInput = document.getElementById('cust-address-village');
+  const addressDetailInput = document.getElementById('cust-address-detail');
   const govSearchInput = document.getElementById('government-search');
   const govHiddenInput = document.getElementById('government');
   const zoneInput = document.getElementById('zone');
 
+  function getCombinedAddress() {
+    const city = addressCityInput ? addressCityInput.value.trim() : '';
+    const village = addressVillageInput ? addressVillageInput.value.trim() : '';
+    const detail = addressDetailInput ? addressDetailInput.value.trim() : '';
+    return [city, village, detail].filter(Boolean).join(' - ');
+  }
+
   // Helper to show/hide errors
   function setError(input, msg) {
-    const group = input.closest('.form-group');
+    const group = input ? input.closest('.form-group') : null;
     if (!group) return;
 
     let errEl = group.querySelector('.error-message');
@@ -582,11 +591,20 @@ function setupForm() {
   }
 
   function validateAddress() {
-    const val = addressInput.value.trim();
-    if (!val) { setError(addressInput, 'العنوان مطلوب بالتفصيل'); return false; }
-    if (val.split(/\s+/).filter(Boolean).length < 2) { setError(addressInput, 'يرجى إدخال العنوان بالتفصيل'); return false; }
-    setError(addressInput, null);
-    return true;
+    let valid = true;
+    if (addressCityInput) {
+      if (!addressCityInput.value.trim()) { setError(addressCityInput, 'المدينة / المركز مطلوب'); valid = false; }
+      else setError(addressCityInput, null);
+    }
+    if (addressVillageInput) {
+      if (!addressVillageInput.value.trim()) { setError(addressVillageInput, 'القرية / المنطقة مطلوبة'); valid = false; }
+      else setError(addressVillageInput, null);
+    }
+    if (addressDetailInput) {
+      if (!addressDetailInput.value.trim()) { setError(addressDetailInput, 'مكان البيت بالتفصيل مطلوب'); valid = false; }
+      else setError(addressDetailInput, null);
+    }
+    return valid;
   }
 
   function validateGov() {
@@ -621,10 +639,12 @@ function setupForm() {
   }
 
   // Real-time validation listeners
-  nameInput.addEventListener('input', validateName);
-  phoneInput.addEventListener('input', validatePhone);
-  phone2Input.addEventListener('input', validatePhone2);
-  addressInput.addEventListener('input', validateAddress);
+  if (nameInput) nameInput.addEventListener('input', validateName);
+  if (phoneInput) phoneInput.addEventListener('input', validatePhone);
+  if (phone2Input) phone2Input.addEventListener('input', validatePhone2);
+  if (addressCityInput) addressCityInput.addEventListener('input', validateAddress);
+  if (addressVillageInput) addressVillageInput.addEventListener('input', validateAddress);
+  if (addressDetailInput) addressDetailInput.addEventListener('input', validateAddress);
 
   govSearchInput.addEventListener('blur', () => {
     setTimeout(() => {
@@ -707,7 +727,7 @@ function setupForm() {
         name: nameInput.value.trim(),
         phone: phoneInput.value.trim(),
         secondPhone: phone2Input.value.trim(),
-        address: addressInput.value.trim(),
+        address: getCombinedAddress(),
         government: cityName,
         zone: zone,
         notes: document.getElementById('cust-notes').value.trim()
@@ -743,7 +763,9 @@ async function restoreCheckoutDraft() {
   const nameInput = document.getElementById('cust-name');
   const phoneInput = document.getElementById('cust-phone');
   const phone2Input = document.getElementById('cust-phone2');
-  const addressInput = document.getElementById('cust-address');
+  const addressCityInput = document.getElementById('cust-address-city');
+  const addressVillageInput = document.getElementById('cust-address-village');
+  const addressDetailInput = document.getElementById('cust-address-detail');
   const govSearchInput = document.getElementById('government-search');
   const govHiddenInput = document.getElementById('government');
   const zoneInput = document.getElementById('zone');
@@ -756,7 +778,19 @@ async function restoreCheckoutDraft() {
       if (draft.name && nameInput) nameInput.value = draft.name;
       if (draft.phone && phoneInput) phoneInput.value = draft.phone;
       if (draft.secondPhone && phone2Input) phone2Input.value = draft.secondPhone;
-      if (draft.address && addressInput) addressInput.value = draft.address;
+      
+      if (draft.addressCity && addressCityInput) addressCityInput.value = draft.addressCity;
+      if (draft.addressVillage && addressVillageInput) addressVillageInput.value = draft.addressVillage;
+      if (draft.addressDetail && addressDetailInput) addressDetailInput.value = draft.addressDetail;
+
+      // Fallback if older draft format was stored
+      if (!draft.addressCity && draft.address) {
+        const parts = draft.address.split(' - ');
+        if (parts[0] && addressCityInput) addressCityInput.value = parts[0];
+        if (parts[1] && addressVillageInput) addressVillageInput.value = parts[1];
+        if (parts[2] && addressDetailInput) addressDetailInput.value = parts.slice(2).join(' - ');
+      }
+
       if (draft.notes && notesInput) notesInput.value = draft.notes;
       
       if (draft.government && govHiddenInput && govSearchInput) {
@@ -808,7 +842,12 @@ function syncAbandonedCart() {
     const name = document.getElementById('cust-name')?.value.trim() || '';
     const phone = document.getElementById('cust-phone')?.value.trim() || '';
     const phone2 = document.getElementById('cust-phone2')?.value.trim() || '';
-    const address = document.getElementById('cust-address')?.value.trim() || '';
+    
+    const addressCity = document.getElementById('cust-address-city')?.value.trim() || '';
+    const addressVillage = document.getElementById('cust-address-village')?.value.trim() || '';
+    const addressDetail = document.getElementById('cust-address-detail')?.value.trim() || '';
+    const address = [addressCity, addressVillage, addressDetail].filter(Boolean).join(' - ');
+
     const cityId = document.getElementById('government')?.value || '';
     const govData = (window._fullShippingData || []).find(s => s._id === cityId);
     const cityName = govData ? (govData.cityOtherName || govData.city) : '';
@@ -820,6 +859,9 @@ function syncAbandonedCart() {
       phone,
       secondPhone: phone2,
       address,
+      addressCity,
+      addressVillage,
+      addressDetail,
       government: cityName,
       zone,
       notes

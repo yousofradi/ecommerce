@@ -174,9 +174,9 @@ async function generateInvoiceInnerHtml(order, settings, options = {}) {
   let promotionRow = '';
   if (order.appliedPromotionName) {
     promotionRow = `
-      <div style="background: #dcfce7; border: 1px solid #bbf7d0;  color: #166534; font-weight: bold; display: flex; justify-content: space-between; align-items: center; direction: rtl;">
-        <span style="font-size: 11px; font-weight: 700;"> ${safe(order.appliedPromotionName)}</span>
-        <span style="font-size: 11px; font-weight: 500;">${safe(promotionRewardsText)}</span>
+      <div class="row green" style="background: #dcfce7; border: 1px solid #bbf7d0; color: #166534; font-weight: bold; padding: 2px 6px !important; border-radius: 4px; margin-top: 2px;">
+        <span style="font-weight: 700;">${safe(order.appliedPromotionName)}</span>
+        <span style="font-weight: 500;">${safe(promotionRewardsText)}</span>
       </div>
     `;
   }
