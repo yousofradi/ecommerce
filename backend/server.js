@@ -65,7 +65,7 @@ app.use('/api/visitors', require('./routes/visitors'));
 
 // Serve static uploads with long cache
 app.use('/uploads', express.static('uploads', {
-  maxAge: '30d',
+  maxAge: '365d',
   immutable: true
 }));
 

@@ -304,6 +304,14 @@ api.optimizeImageUrl = function(url, width) {
   if (!url || typeof url !== 'string') {
     return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2Y1ZjVmNSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iI2FhYSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
   }
+  // Bucket width to standardized tiers: 200 (thumbnail/list), 600 (card/detail), 1000 (banner/hero)
+  let targetWidth = 600;
+  if (width) {
+    const num = Number(width);
+    if (num <= 300) targetWidth = 200;
+    else if (num <= 800) targetWidth = 600;
+    else targetWidth = 1000;
+  }
   if (url.includes('res.cloudinary.com')) {
     const parts = url.split('/upload/');
     if (parts.length === 2) {
@@ -313,11 +321,11 @@ api.optimizeImageUrl = function(url, width) {
       const firstSegment = segments[0];
       
       if (firstSegment.match(/^v\d+$/)) {
-        return `${prefix}/f_auto,q_85,w_${width},c_limit/${rest}`;
+        return `${prefix}/f_auto,q_85,w_${targetWidth},c_limit/${rest}`;
       } else {
         const trans = firstSegment.split(',');
         const filteredTrans = trans.filter(t => !t.startsWith('w_') && !t.startsWith('c_') && !t.startsWith('f_') && !t.startsWith('q_'));
-        filteredTrans.push('f_auto', 'q_85', `w_${width}`, 'c_limit');
+        filteredTrans.push('f_auto', 'q_85', `w_${targetWidth}`, 'c_limit');
         segments[0] = filteredTrans.join(',');
         return `${prefix}/${segments.join('/')}`;
       }
