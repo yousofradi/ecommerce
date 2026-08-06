@@ -80,7 +80,10 @@ router.get('/', async (req, res) => {
     // 1. Try Cache
     try {
       const cached = await redis.get(SHIPPING_CACHE_KEY);
-      if (cached) return res.json(JSON.parse(cached));
+      if (cached) {
+        res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400');
+        return res.json(JSON.parse(cached));
+      }
     } catch (err) {
       console.error('[Redis] Shipping cache get failed:', err.message);
     }
@@ -142,6 +145,7 @@ router.get('/', async (req, res) => {
       console.error('[Redis] Shipping cache set failed:', err.message);
     }
 
+    res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400');
     res.json(finalFees);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -214,7 +218,10 @@ router.get('/zones/:cityId', async (req, res) => {
     const cacheKey = `storefront:shipping:zones:${cityId}`;
     try {
       const cached = await redis.get(cacheKey);
-      if (cached) return res.json(JSON.parse(cached));
+      if (cached) {
+        res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400');
+        return res.json(JSON.parse(cached));
+      }
     } catch (err) {
       console.error('[Redis] Zones cache get failed:', err.message);
     }
@@ -238,6 +245,7 @@ router.get('/zones/:cityId', async (req, res) => {
       console.error('[Redis] Zones cache set failed:', err.message);
     }
 
+    res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400');
     res.json(zones);
   } catch (error) {
     res.status(500).json({ error: error.message });

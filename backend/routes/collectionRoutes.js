@@ -11,7 +11,10 @@ router.get('/', async (req, res, next) => {
 
   if (admin !== 'true') {
     const cached = await cache.get(cacheKey);
-    if (cached) return res.json(cached);
+    if (cached) {
+      res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
+      return res.json(cached);
+    }
   }
   
   // Intercept the response to cache it
