@@ -30,7 +30,7 @@ htmlFiles.forEach(file => {
   const newHeader = `<header class="store-header">
     <div class="container">
       ${rightBtn}
-      <a href="index" class="store-logo-link"><img src="https://assets.wuiltstore.com/cmo1fsgmc060f01lwhwpn6ga7__D8_B3_D9_86_D8_AF_D9_88_D8_B1.webp" alt="Sundura" class="store-logo-img"></a>
+      <a href="index" class="store-logo-link"><img src="/assets/logo.webp" alt="Sundura" class="store-logo-img"></a>
       ${leftIcons}
     </div>
   </header>`;

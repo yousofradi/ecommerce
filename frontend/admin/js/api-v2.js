@@ -22,9 +22,9 @@
       if (!document.getElementById('dynamic-primary-style')) document.head.appendChild(style);
     }
     if (cachedLogo) {
-      document.querySelectorAll('.store-logo-img, img[src*="cmo1fsgmc060f01lwhwpn6ga7"]').forEach(img => img.src = cachedLogo);
+      document.querySelectorAll('.store-logo-img, img[src*="cmo1fsgmc060f01lwhwpn6ga7"]').forEach(img => img.src = cachedLogo || '/assets/logo.webp');
       const loginLogo = document.getElementById('login-brand-logo');
-      if (loginLogo) loginLogo.innerHTML = `<img src="${cachedLogo}" style="max-height:100%; max-width:150px; display:block; margin:0 auto;">`;
+      if (loginLogo) loginLogo.innerHTML = `<img src="${cachedLogo || '/assets/logo.webp'}" style="max-height:100%; max-width:150px; display:block; margin:0 auto;">`;
     }
     if (cachedUrl) {
       document.querySelectorAll('.admin-store-preview').forEach(a => a.href = cachedUrl);

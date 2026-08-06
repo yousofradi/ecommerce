@@ -3,7 +3,7 @@ const path = require('path');
 
 const FRONTEND_DIR = 'c:/Users/YousofRady/.gemini/antigravity/scratch/ecommerce/frontend';
 
-const LOGO_URL = 'https://res.cloudinary.com/sundura/image/upload/f_auto,q_auto/v1779328561/ecommerce-uploads/1779328561151-334345189.webp';
+const LOGO_URL = '/assets/logo.webp';
 const BRAND_NAME = 'SunduraShop';
 
 const replaceInFile = (filePath) => {

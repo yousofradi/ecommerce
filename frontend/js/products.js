@@ -206,7 +206,7 @@ function renderStoreCard(p, lazy = true) {
       <a href="${productLink}" style="display:block; text-decoration:none; color:inherit; flex:1;">
         <div class="store-product-img" style="position:relative; background:#f8fafc; overflow:hidden; border-radius:12px;">
           ${img ? `
-            <img src="${img}" alt="${p.name}" style="width:100%;height:100%;object-fit:contain;transition:transform 0.3s;" ${lazyAttr} class="product-hover-img">
+            <img src="${img}" alt="${p.name}" style="width:100%;height:100%;object-fit:contain;transition:transform 0.3s;" ${lazyAttr} decoding="async" class="product-hover-img">
           ` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#f1f5f9;"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>`}
           ${hasDiscount ? '<span class="discount-badge">خصم</span>' : ''}
         </div>
