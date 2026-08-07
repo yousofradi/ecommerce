@@ -176,7 +176,7 @@ Cart.closeCart = function () {
   }
 };
 
-Cart.renderSlideCart = function () {
+Cart.renderSlideCart = function (skipEvaluate = false) {
   const items = this.getItems();
   const body = document.getElementById('slide-cart-body');
   const totalEl = document.getElementById('slide-cart-total');
@@ -274,8 +274,10 @@ Cart.renderSlideCart = function () {
     }
   }
 
-  // Evaluate promotions asynchronously
-  Cart.evaluatePromotions();
+  // Evaluate promotions asynchronously (unless skipped)
+  if (!skipEvaluate) {
+    Cart.evaluatePromotions();
+  }
 };
 
 Cart.evaluatePromotions = async function () {
@@ -300,6 +302,47 @@ Cart.evaluatePromotions = async function () {
       const text = await res.text();
       if (text) {
         const data = JSON.parse(text);
+        
+        // Sync local stock with the latest backend inventory
+        if (data.inventory) {
+          let changed = false;
+          const currentItems = this.getItems();
+          currentItems.forEach(item => {
+            const p = data.inventory[item.productId];
+            if (p) {
+              const isInactive = p.active === false || p.status === 'draft';
+              const baseQty = isInactive ? 0 : ((p.quantity !== null && p.quantity !== undefined) ? p.quantity : null);
+              
+              if (item.availableQuantity !== baseQty) {
+                item.availableQuantity = baseQty;
+                changed = true;
+              }
+              
+              if (item.variants && item.variants.length > 0 && p.variants) {
+                // To safely update variant quantities
+                const newVarStr = JSON.stringify(p.variants);
+                const oldVarStr = JSON.stringify(item.variants);
+                if (newVarStr !== oldVarStr) {
+                  item.variants = p.variants;
+                  changed = true;
+                }
+              }
+            } else {
+              // Product not found in DB anymore, set to 0
+              if (item.availableQuantity !== 0) {
+                item.availableQuantity = 0;
+                changed = true;
+              }
+            }
+          });
+          
+          if (changed) {
+            this._save(currentItems);
+            // Re-render slide cart without re-triggering evaluation to avoid infinite loop
+            this.renderSlideCart(true);
+          }
+        }
+        
         this._renderPromotions(data);
       }
     } else {

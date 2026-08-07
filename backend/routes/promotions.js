@@ -228,6 +228,18 @@ router.post('/evaluate', async (req, res) => {
       return res.status(400).json({ error: 'cartItems array is required' });
     }
     const result = await evaluateCartPromotions(cartItems);
+    
+    // Also fetch updated stock for these items to sync frontend carts
+    const productIds = [...new Set(cartItems.map(i => i.productId))];
+    const Product = require('../models/Product');
+    const products = await Product.find({ _id: { $in: productIds } }, 'quantity active status variants').lean();
+    
+    // Map them for easy frontend use
+    result.inventory = products.reduce((acc, p) => {
+      acc[p._id.toString()] = p;
+      return acc;
+    }, {});
+
     res.json(result);
   } catch (error) {
     console.error('Promotion evaluation error:', error);
