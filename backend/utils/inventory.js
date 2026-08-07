@@ -37,6 +37,14 @@ async function adjustStock(productId, selectedOptions, quantityDiff) {
       if (variant && variant.quantity !== null && variant.quantity !== undefined) {
         const nextQuantity = variant.quantity + quantityDiff;
         variant.quantity = Math.max(0, nextQuantity);
+        
+        // Auto-archive variant if out of stock, unarchive if restocked
+        if (variant.quantity === 0) {
+          variant.active = false;
+        } else if (variant.quantity > 0 && quantityDiff > 0) {
+          variant.active = true;
+        }
+        
         await product.save();
         changed = true;
       }
@@ -50,6 +58,16 @@ async function adjustStock(productId, selectedOptions, quantityDiff) {
   if (!changed && product.quantity !== null && product.quantity !== undefined) {
     const nextQuantity = product.quantity + quantityDiff;
     product.quantity = Math.max(0, nextQuantity);
+
+    // Auto-archive product if out of stock, unarchive if restocked
+    if (product.quantity === 0) {
+      product.active = false;
+      product.status = 'draft';
+    } else if (product.quantity > 0 && quantityDiff > 0) {
+      product.active = true;
+      product.status = 'active';
+    }
+
     await product.save();
     changed = true;
   }

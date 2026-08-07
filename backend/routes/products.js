@@ -279,6 +279,17 @@ router.put('/:id', adminAuth, async (req, res) => {
     // Process images if they are from Google Drive
     await processDriveImages(body);
 
+    // If product is being archived (deactivated/draft), set its quantity to 0
+    if (body.status === 'draft' || body.active === false) {
+      body.quantity = 0;
+      if (Array.isArray(body.variants)) {
+        body.variants.forEach(v => {
+          v.quantity = 0;
+          v.active = false;
+        });
+      }
+    }
+
     const product = await Product.findByIdAndUpdate(
       req.params.id,
       body,
@@ -341,7 +352,15 @@ router.post('/deactivate/batch', adminAuth, async (req, res) => {
     if (!Array.isArray(productIds)) return res.status(400).json({ error: 'productIds must be an array' });
     await Product.updateMany(
       { _id: { $in: productIds } },
-      { $set: { active: false, status: 'draft' } }
+      { 
+        $set: { 
+          active: false, 
+          status: 'draft', 
+          quantity: 0,
+          'variants.$[].quantity': 0,
+          'variants.$[].active': false
+        } 
+      }
     );
 
     // Write-Through: Update affected products
