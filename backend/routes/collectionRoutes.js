@@ -10,9 +10,9 @@ router.get('/', async (req, res, next) => {
   const cacheKey = 'storefront:collections:list';
 
   if (admin !== 'true') {
+    res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
     const cached = await cache.get(cacheKey);
     if (cached) {
-      res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
       return res.json(cached);
     }
   }
@@ -29,7 +29,30 @@ router.get('/', async (req, res, next) => {
   next();
 }, collectionController.getCollections);
 
-router.get('/:id', collectionController.getCollection);
+router.get('/:id', async (req, res, next) => {
+  const { admin } = req.query;
+  const { id } = req.params;
+  const cacheKey = `storefront:collection:id:${id}`;
+
+  if (admin !== 'true') {
+    res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
+    const cached = await cache.get(cacheKey);
+    if (cached) {
+      return res.json(cached);
+    }
+  }
+  
+  // Intercept the response to cache it
+  const originalJson = res.json;
+  res.json = function(data) {
+    if (admin !== 'true' && (!res.statusCode || (res.statusCode >= 200 && res.statusCode < 300))) {
+      cache.set(cacheKey, data, 2592000);
+    }
+    return originalJson.call(this, data);
+  };
+  
+  next();
+}, collectionController.getCollection);
 
 // Admin only routes
 router.post('/delete/batch', adminAuth, async (req, res, next) => {

@@ -42,6 +42,7 @@ router.get('/:key', async (req, res) => {
     const cacheKey = `storefront:settings:${key}`;
     
     if (!bypassCache) {
+      res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
       const cached = await cache.get(cacheKey);
       if (cached) return res.json(cached);
     }

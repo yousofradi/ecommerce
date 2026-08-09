@@ -54,9 +54,9 @@ router.get('/', async (req, res) => {
 
     // 1. ADMIN BYPASS: Skip Redis entirely for admin requests
     if (admin !== 'true') {
+      res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
       const cached = await cache.get(cacheKey);
       if (cached) {
-        res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
         return res.json(cached);
       }
     }
@@ -191,9 +191,23 @@ router.get('/', async (req, res) => {
 // GET /api/products/:id — single product
 router.get('/:id', async (req, res) => {
   try {
+    const admin = req.query.admin;
+    const cacheKey = `storefront:product:id:${req.params.id}`;
+    
+    if (admin !== 'true') {
+      res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
+      const cached = await cache.get(cacheKey);
+      if (cached) return res.json(cached);
+    }
+    
     const product = await Product.findById(req.params.id).lean();
     if (!product) return res.status(404).json({ error: 'Product not found' });
-    res.json(optimizeProductData(product));
+    
+    const optimized = optimizeProductData(product);
+    if (admin !== 'true') {
+      await cache.set(cacheKey, optimized, REDIS_TTL);
+    }
+    res.json(optimized);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch product' });
   }
@@ -202,9 +216,23 @@ router.get('/:id', async (req, res) => {
 // GET /api/products/handle/:handle — single product by handle
 router.get('/handle/:handle', async (req, res) => {
   try {
+    const admin = req.query.admin;
+    const cacheKey = `storefront:product:handle:${req.params.handle}`;
+    
+    if (admin !== 'true') {
+      res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
+      const cached = await cache.get(cacheKey);
+      if (cached) return res.json(cached);
+    }
+
     const product = await Product.findOne({ handle: req.params.handle }).lean();
     if (!product) return res.status(404).json({ error: 'Product not found' });
-    res.json(optimizeProductData(product));
+    
+    const optimized = optimizeProductData(product);
+    if (admin !== 'true') {
+      await cache.set(cacheKey, optimized, REDIS_TTL);
+    }
+    res.json(optimized);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch product by handle' });
   }
