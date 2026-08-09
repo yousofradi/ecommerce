@@ -70,9 +70,9 @@ function optimizeCloudinaryUrl(url) {
     url = url.replace(/\.(png|jpe?g|gif)$/i, '.webp');
     
     if (url.includes('/upload/')) {
-      // Strip any dynamic transformations from the URL.
+      // Strip any dynamic transformations from the URL, but ONLY if they are actually transformations.
       // Since images are already optimized during upload (800w, webp), serving the raw URL costs 0 transformation credits.
-      url = url.replace(/\/upload\/(?:[^\/]+\/)?/, '/upload/');
+      url = url.replace(/\/upload\/(?:[a-z]+_[^/,]+(?:,[a-z]+_[^/,]+)*\/)?/i, '/upload/');
     }
   }
   
