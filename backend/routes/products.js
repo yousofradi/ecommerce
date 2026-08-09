@@ -307,14 +307,33 @@ router.put('/:id', adminAuth, async (req, res) => {
     // Process images if they are from Google Drive
     await processDriveImages(body);
 
-    // If product is being archived (deactivated/draft), set its quantity to 0
+    // Fetch existing product to check state transitions
+    const existingProduct = await Product.findById(req.params.id).lean();
+    if (!existingProduct) return res.status(404).json({ error: 'Product not found' });
+
+    // If product is being archived (deactivated/draft), set its quantity to 0 and sync active boolean
     if (body.status === 'draft' || body.active === false) {
+      body.active = false;
+      body.status = 'draft';
       body.quantity = 0;
       if (Array.isArray(body.variants)) {
         body.variants.forEach(v => {
           v.quantity = 0;
           v.active = false;
         });
+      }
+    } else if (body.status === 'active' || body.active === true) {
+      body.active = true;
+      body.status = 'active';
+      // If we are reactivating a previously archived product, set quantity to null (infinity)
+      if (existingProduct.status === 'draft' || existingProduct.active === false) {
+        body.quantity = null;
+        if (Array.isArray(body.variants)) {
+          body.variants.forEach(v => {
+            v.quantity = null;
+            v.active = true;
+          });
+        }
       }
     }
 
