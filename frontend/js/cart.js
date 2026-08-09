@@ -212,7 +212,7 @@ Cart.renderSlideCart = function (skipEvaluate = false) {
     return `
       <div class="sc-item">
         <div class="sc-item-top" style="margin-bottom: 0; align-items: stretch;">
-          ${imgSrc ? `<img src="${imgSrc}" class="sc-item-img" alt="${item.name}" onerror="this.style.display='none'">` : '<div class="sc-item-img sc-item-img-placeholder"></div>'}
+          ${imgSrc ? `<img src="${imgSrc}" class="sc-item-img" alt="${item.name}" loading="lazy" decoding="async" onerror="this.style.display='none'">` : '<div class="sc-item-img sc-item-img-placeholder"></div>'}
           
           <div class="sc-item-info" style="display: flex; flex-direction: column; justify-content: space-between;">
             <!-- Top row: Name/Options & Delete button -->

@@ -1,73 +1,45 @@
-import React, { useRef, useState } from 'react';
-import { StyleSheet, View, BackHandler, Platform, ActivityIndicator } from 'react-native';
-import { WebView } from 'react-native-webview';
+import React, { useEffect, useState } from 'react';
+import { I18nManager, View, ActivityIndicator } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Font from 'expo-font';
+import AppNavigator from './src/navigation/AppNavigator';
+import { Cairo_300Light, Cairo_400Regular, Cairo_500Medium, Cairo_600SemiBold, Cairo_700Bold } from '@expo-google-fonts/cairo';
 
+// Force RTL layout
+I18nManager.allowRTL(true);
+I18nManager.forceRTL(true);
 
 export default function App() {
-  const webViewRef = useRef(null);
-  const [canGoBack, setCanGoBack] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [fontsLoaded, setFontsLoaded] = useState(false);
 
-  // Admin URL
-  const ADMIN_URL = 'https://sundura.onrender.com/admin/';
+  useEffect(() => {
+    async function loadFonts() {
+      await Font.loadAsync({
+        Cairo: Cairo_400Regular,
+        Cairo_300Light,
+        Cairo_400Regular,
+        Cairo_500Medium,
+        Cairo_600SemiBold,
+        Cairo_700Bold,
+      });
+      setFontsLoaded(true);
+    }
+    loadFonts();
+  }, []);
 
-  // Handle hardware back button on Android
-  React.useEffect(() => {
-    const onBackPress = () => {
-      if (canGoBack && webViewRef.current) {
-        webViewRef.current.goBack();
-        return true; // prevent default behavior
-      }
-      return false;
-    };
-
-    BackHandler.addEventListener('hardwareBackPress', onBackPress);
-    return () => BackHandler.removeEventListener('hardwareBackPress', onBackPress);
-  }, [canGoBack]);
+  if (!fontsLoaded) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f7f9fc' }}>
+        <ActivityIndicator size="large" color="#0f766e" />
+      </View>
+    );
+  }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <StatusBar style="dark" backgroundColor="#ffffff" />
-      
-      <WebView
-        ref={webViewRef}
-        source={{ uri: ADMIN_URL }}
-        style={styles.webview}
-        onNavigationStateChange={(navState) => {
-          setCanGoBack(navState.canGoBack);
-        }}
-        onLoadEnd={() => setIsLoading(false)}
-        allowsInlineMediaPlayback={true}
-        bounces={false}
-        showsVerticalScrollIndicator={false}
-        showsHorizontalScrollIndicator={false}
-        sharedCookiesEnabled={true}
-        thirdPartyCookiesEnabled={true}
-      />
-
-      {isLoading && (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color="#0f766e" />
-        </View>
-      )}
-    </SafeAreaView>
+    <SafeAreaProvider>
+      <StatusBar style="dark" />
+      <AppNavigator />
+    </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-  },
-  webview: {
-    flex: 1,
-  },
-  loaderContainer: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#ffffff',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-});

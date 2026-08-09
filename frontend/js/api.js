@@ -313,22 +313,14 @@ api.optimizeImageUrl = function(url, width) {
     else targetWidth = 1000;
   }
   if (url.includes('res.cloudinary.com')) {
-    const parts = url.split('/upload/');
+    // Standardize extensions to .webp
+    let cleanUrl = url.replace(/\.(png|jpe?g|gif)$/i, '.webp');
+    const parts = cleanUrl.split('/upload/');
     if (parts.length === 2) {
       const prefix = parts[0] + '/upload';
-      const rest = parts[1];
-      const segments = rest.split('/');
-      const firstSegment = segments[0];
-      
-      if (firstSegment.match(/^v\d+$/)) {
-        return `${prefix}/f_auto,q_85,w_${targetWidth},c_limit/${rest}`;
-      } else {
-        const trans = firstSegment.split(',');
-        const filteredTrans = trans.filter(t => !t.startsWith('w_') && !t.startsWith('c_') && !t.startsWith('f_') && !t.startsWith('q_'));
-        filteredTrans.push('f_auto', 'q_85', `w_${targetWidth}`, 'c_limit');
-        segments[0] = filteredTrans.join(',');
-        return `${prefix}/${segments.join('/')}`;
-      }
+      const rest = parts[1].replace(/^(?:[^\/]+\/)?/, ''); // strip existing transformation prefix
+      // Use the raw optimized asset without any on-the-fly URL transformations (0 credit burn)
+      return `${prefix}/${rest}`;
     }
   }
   return url;
@@ -477,7 +469,7 @@ api.openSearch = function () {
           }
           results.innerHTML = filtered.map(p => `
             <a href="/product/${p.handle || p._id}" class="search-result-item">
-              <img src="${p.imageUrl}" class="search-result-img" onerror="this.style.display='none'">
+              <img src="${api.optimizeImageUrl(p.imageUrl, 100)}" class="search-result-img" loading="lazy" decoding="async" onerror="this.style.display='none'">
               <div class="search-result-info">
                 <div class="search-result-name">${p.name}</div>
                 <div class="search-result-price">${p.salePrice || p.basePrice} ج.م</div>
@@ -558,7 +550,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const renderBlock = (list) => list.map(c => `
           <a href="/collection/${c.urlName || c._id}" class="cat-badge">
             <div class="cat-badge-img-wrapper">
-              <img src="${api.optimizeImageUrl(c.imageUrl, 100)}" alt="${c.name}" onerror="this.src='https://res.cloudinary.com/sundura/image/upload/v1778758433/ecommerce-uploads/1778758432917-917399313.png'">
+              <img src="${api.optimizeImageUrl(c.imageUrl, 100)}" alt="${c.name}" onerror="this.src='/assets/logo.webp'">
             </div>
             <span class="cat-badge-name">${c.name}</span>
           </a>

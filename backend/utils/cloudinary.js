@@ -28,16 +28,17 @@ async function uploadToCloudinary(source, folder = 'ecommerce-products') {
   try {
     const result = await cloudinary.uploader.upload(source, {
       folder: folder,
-      resource_type: 'auto',
+      resource_type: 'image',
       format: 'webp',
-      quality: 85,  // High quality setting
-      fetch_format: 'webp'
+      transformation: [
+        { width: 800, crop: 'limit' },
+        { quality: 'auto:good' }
+      ]
     });
     
     let finalUrl = result.secure_url;
     // Force the URL to end in .webp explicitly
     finalUrl = finalUrl.replace(/\.(png|jpe?g|gif)$/i, '.webp');
-    // Ensure f_auto and q_auto are applied
     return optimizeCloudinaryUrl(finalUrl);
   } catch (err) {
     console.error('❌ Cloudinary Upload Error:', err);
@@ -56,7 +57,7 @@ function isDriveUrl(url) {
 }
 
 /**
- * Injects f_auto and q_auto into a Cloudinary URL for optimal compression.
+ * Injects clean bandwidth-saving transformations into a Cloudinary URL.
  * @param {string} url - The original Cloudinary image URL.
  * @returns {string} - The optimized URL.
  */
@@ -65,18 +66,13 @@ function optimizeCloudinaryUrl(url) {
   
   // Check if it's actually a Cloudinary URL
   if (url.includes('res.cloudinary.com')) {
-    // 1. Force the URL to explicitly end in .webp
+    // Force the URL to explicitly end in .webp
     url = url.replace(/\.(png|jpe?g|gif)$/i, '.webp');
     
     if (url.includes('/upload/')) {
-      // 2. Remove any existing transformation strings like f_auto, q_85, etc to avoid duplication
-      url = url.replace(/\/upload\/(?:f_auto,?)?(?:q_[a-zA-Z0-9]+,?)?(?:c_limit,?)?(?:w_[0-9]+,?)?\/?/, '/upload/');
-      
-      // 3. Inject bandwidth-saving transformations
-      // c_limit,w_800: Scales large images down to max 800px width (huge bandwidth savings)
-      // q_85: Explicit quality prevents dynamic quality transformations
-      // We removed f_auto to stop Cloudinary from generating 3+ versions (WebP/AVIF/JPG) per image
-      url = url.replace('/upload/', '/upload/c_limit,w_800,q_85/');
+      // Strip any dynamic transformations from the URL.
+      // Since images are already optimized during upload (800w, webp), serving the raw URL costs 0 transformation credits.
+      url = url.replace(/\/upload\/(?:[^\/]+\/)?/, '/upload/');
     }
   }
   

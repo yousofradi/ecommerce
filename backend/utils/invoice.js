@@ -13,7 +13,18 @@ function num(val) {
 async function generateInvoiceInnerHtml(order, settings, options = {}) {
   const brandName = settings.storeNameAr || settings.storeName || 'سندورة';
   const Product = require('../models/Product');
+  const fs = require('fs');
+  const path = require('path');
   const includeImages = options.includeImages === true;
+
+  let logoSrc = '/assets/logo.webp';
+  try {
+    const logoPath = path.join(__dirname, '../../frontend/assets/logo.webp');
+    if (fs.existsSync(logoPath)) {
+      const buf = fs.readFileSync(logoPath);
+      logoSrc = `data:image/webp;base64,${buf.toString('base64')}`;
+    }
+  } catch (e) {}
 
   const isCompact = order.items.length > 11;
   const imgSize = isCompact ? 18 : 24;
@@ -275,7 +286,7 @@ async function generateInvoiceInnerHtml(order, settings, options = {}) {
   <div style="display: flex; justify-content: space-between; align-items: center; font-weight: bold; padding: 4px 0; font-size: 13px;">
     <span style="width: 100px; text-align: right;">${safe(order.orderId)}</span>
     <span style="flex: 1; text-align: center; display: flex; justify-content: center; align-items: center;">
-      <img src="https://res.cloudinary.com/sundura/image/upload/f_png,q_100/v1779328561/ecommerce-uploads/1779328561151-334345189.png" style="height: 28px; width: auto; display: block;" alt="Logo" crossorigin="anonymous" />
+      <img src="${logoSrc}" style="height: 28px; width: auto; display: block;" alt="Logo" />
     </span>
     <span style="width: 100px; text-align: left;">${dateStr}</span>
   </div>

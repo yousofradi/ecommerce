@@ -121,7 +121,7 @@ function renderProduct(p) {
             <button type="button" class="gallery-nav-btn prev" onclick="event.preventDefault(); switchMainImageByOffset(-1); this.blur();">‹</button>
             <button type="button" class="gallery-nav-btn next" onclick="event.preventDefault(); switchMainImageByOffset(1); this.blur();">›</button>
           ` : ''}
-          <img id="main-product-img" src="${mainImg}" alt="${p.name}" data-index="0" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2Y1ZjVmNSIvPjwvc3ZnPg=='">
+          <img id="main-product-img" src="${mainImg}" alt="${p.name}" data-index="0" fetchpriority="high" decoding="async" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2Y1ZjVmNSIvPjwvc3ZnPg=='">
         </div>
         ${thumbsHTML}
       </div>

@@ -26,15 +26,16 @@ if (isCloudinaryConfigured) {
 
   storage = new CloudinaryStorage({
     cloudinary: cloudinaryPackage,
-    folder: 'ecommerce-uploads',
-    format: 'webp',
-    allowedFormats: ['jpg', 'png', 'gif', 'webp', 'jpeg'],
-    filename: (req, file, cb) => {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      cb(undefined, uniqueSuffix);
+    params: {
+      folder: 'ecommerce-uploads',
+      format: 'webp',
+      transformation: [
+        { width: 800, crop: 'limit' },
+        { quality: 'auto:good' }
+      ]
     }
   });
-  console.log('✅ Upload: Using Cloudinary storage');
+  console.log('✅ Upload: Using Cloudinary storage with pre-compression');
 } else {
   // Local Disk Storage (Fallback - NOT persistent on ephemeral platforms)
   const uploadDir = path.join(__dirname, '../uploads');

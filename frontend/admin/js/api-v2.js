@@ -400,22 +400,13 @@ api.optimizeImageUrl = function(url, width) {
     else targetWidth = 1000;
   }
   if (url.includes('res.cloudinary.com')) {
-    const parts = url.split('/upload/');
+    let cleanUrl = url.replace(/\.(png|jpe?g|gif)$/i, '.webp');
+    const parts = cleanUrl.split('/upload/');
     if (parts.length === 2) {
       const prefix = parts[0] + '/upload';
-      const rest = parts[1];
-      const segments = rest.split('/');
-      const firstSegment = segments[0];
-      
-      if (firstSegment.match(/^v\d+$/)) {
-        return `${prefix}/f_auto,q_85,w_${targetWidth},c_limit/${rest}`;
-      } else {
-        const trans = firstSegment.split(',');
-        const filteredTrans = trans.filter(t => !t.startsWith('w_') && !t.startsWith('c_') && !t.startsWith('f_') && !t.startsWith('q_'));
-        filteredTrans.push('f_auto', 'q_85', `w_${targetWidth}`, 'c_limit');
-        segments[0] = filteredTrans.join(',');
-        return `${prefix}/${segments.join('/')}`;
-      }
+      const rest = parts[1].replace(/^(?:[^\/]+\/)?/, '');
+      // Use the raw optimized asset without any on-the-fly URL transformations (0 credit burn)
+      return `${prefix}/${rest}`;
     }
   }
   return url;

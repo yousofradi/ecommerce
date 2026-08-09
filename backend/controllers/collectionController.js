@@ -1,8 +1,12 @@
 const Collection = require('../models/Collection');
+const { optimizeCloudinaryUrl } = require('../utils/cloudinary');
 
 exports.getCollections = async (req, res) => {
   try {
     const collections = await Collection.find().sort({ sortOrder: 1, createdAt: -1 }).lean();
+    collections.forEach(c => {
+      if (c.imageUrl) c.imageUrl = optimizeCloudinaryUrl(c.imageUrl);
+    });
     res.json(collections);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -23,6 +27,9 @@ exports.getCollection = async (req, res) => {
     }
 
     if (!collection) return res.status(404).json({ error: 'Collection not found' });
+    if (collection.imageUrl) {
+      collection.imageUrl = optimizeCloudinaryUrl(collection.imageUrl);
+    }
     res.json(collection);
   } catch (error) {
     res.status(500).json({ error: error.message });

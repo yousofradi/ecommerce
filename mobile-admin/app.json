@@ -21,13 +21,13 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      "expo-status-bar"
-    ],
     "extra": {
       "eas": {
         "projectId": "cabadade-64f7-4998-a217-71713834aa39"
       }
-    }
+    },
+    "plugins": [
+      "expo-font"
+    ]
   }
 }
