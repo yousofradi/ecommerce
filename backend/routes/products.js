@@ -31,6 +31,11 @@ const REDIS_TTL = 2592000; // 30 days ("Never violate")
 
 async function updateStorefrontCache(productId, productData) {
   try {
+    // Clear specific product cache
+    await cache.del(`storefront:product:id:${productId}`);
+    if (productData && productData.handle) {
+      await cache.del(`storefront:product:handle:${productData.handle}`);
+    }
     // Always clear storefront list page caches when a product changes
     await clearListCache();
   } catch (err) {
