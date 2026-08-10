@@ -283,6 +283,17 @@ router.post('/', adminAuth, async (req, res) => {
     // Process images if they are from Google Drive
     await processDriveImages(body);
 
+    // Auto-sync overall product quantity with sum of variant quantities
+    if (Array.isArray(body.variants) && body.variants.length > 0) {
+      const hasVariantQuantities = body.variants.some(v => v.quantity !== null && v.quantity !== undefined && v.quantity !== "");
+      if (hasVariantQuantities) {
+        body.quantity = body.variants.reduce((sum, v) => {
+          const q = parseInt(v.quantity);
+          return sum + (isNaN(q) ? 0 : Math.max(0, q));
+        }, 0);
+      }
+    }
+
     const product = new Product({ 
       ...body,
       sortOrder: -Date.now()
@@ -339,6 +350,17 @@ router.put('/:id', adminAuth, async (req, res) => {
             v.active = true;
           });
         }
+      }
+    }
+
+    // Auto-sync overall product quantity with sum of variant quantities
+    if (Array.isArray(body.variants) && body.variants.length > 0 && body.status !== 'draft' && body.active !== false) {
+      const hasVariantQuantities = body.variants.some(v => v.quantity !== null && v.quantity !== undefined && v.quantity !== "");
+      if (hasVariantQuantities) {
+        body.quantity = body.variants.reduce((sum, v) => {
+          const q = parseInt(v.quantity);
+          return sum + (isNaN(q) ? 0 : Math.max(0, q));
+        }, 0);
       }
     }
 

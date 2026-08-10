@@ -71,29 +71,9 @@ function renderProduct(p) {
 
   // Options HTML
   const optionsHTML = (p.options || []).map((group, gi) => {
-    const validValues = group.values.filter(v => {
-      if (!p.variants || p.variants.length === 0) return true;
-      const groupNameClean = group.name.trim().toLowerCase();
-      const valueLabelClean = v.label.trim().toLowerCase();
-      
-      return p.variants.some(varObj => {
-        if (!varObj.combination) return false;
-        const combo = varObj.combination instanceof Map ? Object.fromEntries(varObj.combination) : varObj.combination;
-        const comboKeys = Object.keys(combo);
-        const matchKey = comboKeys.find(k => k.trim().toLowerCase() === groupNameClean);
-        
-        if (!matchKey) return false;
-        const comboVal = (combo[matchKey] || '').trim().toLowerCase();
-        
-        return comboVal === valueLabelClean && 
-               (varObj.active !== false) &&
-               (varObj.quantity === null || varObj.quantity === undefined || varObj.quantity === "" || Number(varObj.quantity) > 0);
-      });
-    });
+    if (!group.values || group.values.length === 0) return '';
 
-    if (validValues.length === 0) return '';
-
-    const valuesHTML = validValues.map((v, vi) => {
+    const valuesHTML = group.values.map((v, vi) => {
       return `<div class="radio-option">
         <input type="radio" name="opt_${gi}" id="opt_${gi}_${vi}" value="${v.label}" ${vi === 0 ? 'checked' : ''} onchange="updateTotalPrice()">
         <label for="opt_${gi}_${vi}">${v.label}</label>
@@ -169,7 +149,7 @@ function renderProduct(p) {
     updateTotalPrice();
 }
 
-window.updateTotalPrice = function() {
+window.updateTotalPrice = function(isRecursive = false) {
   if (!currentProduct) return;
   
   const selectedOptionsMap = {};
@@ -190,6 +170,21 @@ window.updateTotalPrice = function() {
       hasOverride = true;
       optionsOriginalTotal += (optVal.price || 0);
       optionsSaleTotal += (optVal.salePrice !== null ? optVal.salePrice : (optVal.price || 0));
+    }
+  });
+
+  // Update disabled options and auto-select if needed
+  const selectionChanged = updateDisabledOptions(selectedOptionsMap);
+
+  if (selectionChanged && !isRecursive) {
+    return updateTotalPrice(true);
+  }
+
+  // Re-read selected options in case updateDisabledOptions changed selected radio
+  (currentProduct.options || []).forEach((group, gi) => {
+    const selected = document.querySelector(`input[name="opt_${gi}"]:checked`);
+    if (selected) {
+      selectedOptionsMap[group.name] = selected.value;
     }
   });
 
@@ -227,9 +222,9 @@ window.updateTotalPrice = function() {
       // While selecting variants, show product base price
       finalBasePrice = currentProduct.basePrice;
       finalSalePrice = currentProduct.salePrice || currentProduct.basePrice;
+      isAvailable = false;
     } else {
       // For products using Options as absolute prices (no variants)
-      // If options have prices, they REPLACE the base price to avoid double-charging
       if (optionsOriginalTotal > 0 || optionsSaleTotal > 0) {
         finalBasePrice = optionsOriginalTotal;
         finalSalePrice = optionsSaleTotal;
@@ -237,8 +232,8 @@ window.updateTotalPrice = function() {
         finalBasePrice = currentProduct.basePrice;
         finalSalePrice = (currentProduct.salePrice || currentProduct.basePrice);
       }
+      isAvailable = currentProduct.quantity === null || currentProduct.quantity === undefined || currentProduct.quantity === "" || Number(currentProduct.quantity) > 0;
     }
-    isAvailable = currentProduct.quantity === null || currentProduct.quantity === undefined || currentProduct.quantity === "" || Number(currentProduct.quantity) > 0;
   }
   
   const hasDiscount = finalSalePrice < finalBasePrice;
@@ -276,7 +271,6 @@ window.updateTotalPrice = function() {
     const mainImg = document.getElementById('main-product-img');
     if (mainImg) {
       mainImg.src = api.optimizeImageUrl(targetImg, 800);
-      // Also update thumbnail active states if we switched to a specific image
       const thumbs = document.querySelectorAll('.product-gallery-thumb');
       const imagesList = getImages(currentProduct);
       thumbs.forEach((t, i) => {
@@ -284,16 +278,21 @@ window.updateTotalPrice = function() {
       });
     }
   }
-
-  updateDisabledOptions(selectedOptionsMap);
 };
 
 window.updateDisabledOptions = function(currentSelections) {
-  if (!currentProduct || !currentProduct.variants || currentProduct.variants.length === 0) return;
+  if (!currentProduct || !currentProduct.variants || currentProduct.variants.length === 0) return false;
 
-  const activeVariants = currentProduct.variants.filter(v => v.active !== false);
+  let selectionChanged = false;
+
+  const activeVariants = currentProduct.variants.filter(v => 
+    v.active !== false && 
+    (v.quantity === null || v.quantity === undefined || v.quantity === "" || Number(v.quantity) > 0)
+  );
 
   (currentProduct.options || []).forEach((group, gi) => {
+    let hasCheckedAndEnabled = false;
+
     group.values.forEach((v, vi) => {
       const input = document.getElementById(`opt_${gi}_${vi}`);
       if (!input) return;
@@ -324,8 +323,25 @@ window.updateDisabledOptions = function(currentSelections) {
       });
 
       input.disabled = !isPossible;
+      if (input.checked && !isPossible) {
+        input.checked = false;
+        selectionChanged = true;
+      }
+      if (input.checked && isPossible) {
+        hasCheckedAndEnabled = true;
+      }
     });
+
+    if (!hasCheckedAndEnabled) {
+      const firstEnabled = group.values.map((_, vi) => document.getElementById(`opt_${gi}_${vi}`)).find(inp => inp && !inp.disabled);
+      if (firstEnabled) {
+        firstEnabled.checked = true;
+        selectionChanged = true;
+      }
+    }
   });
+
+  return selectionChanged;
 };
 
 

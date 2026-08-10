@@ -26,54 +26,60 @@ async function adjustStock(productId, selectedOptions, quantityDiff) {
 
   let changed = false;
 
-  // Handle variants if selectedOptions are provided
-  if (selectedOptions && selectedOptions.length > 0) {
-    if (product.variants && product.variants.length > 0) {
-      // Option 1: Product has hardcoded variants
-      const variant = product.variants.find(v => {
-        return selectedOptions.every(so => v.combination.get(so.groupName) === so.label);
-      });
+  // 1. Handle variants if selectedOptions are provided and product has variants
+  if (selectedOptions && selectedOptions.length > 0 && product.variants && product.variants.length > 0) {
+    const variant = product.variants.find(v => {
+      if (!v.combination) return false;
+      const combo = v.combination instanceof Map ? Object.fromEntries(v.combination) : (v.combination || {});
+      const comboKeys = Object.keys(combo);
 
-      if (variant && variant.quantity !== null && variant.quantity !== undefined) {
-        const nextQuantity = variant.quantity + quantityDiff;
-        variant.quantity = Math.max(0, nextQuantity);
-        
-        // Auto-archive variant if out of stock, unarchive if restocked
-        if (variant.quantity === 0) {
-          variant.active = false;
-        } else if (variant.quantity > 0 && quantityDiff > 0) {
-          variant.active = true;
-        }
-        
-        await product.save();
-        changed = true;
-      }
-    } else {
-      // Option 2: Dynamic options (currently no per-option quantity in schema, 
-      // but we can deduct from base product quantity if that's how it's set up)
+      return selectedOptions.every(so => {
+        const groupNameClean = (so.groupName || '').trim().toLowerCase();
+        const labelClean = (so.label || '').trim().toLowerCase();
+
+        const matchKey = comboKeys.find(k => k.trim().toLowerCase() === groupNameClean);
+        if (!matchKey) return false;
+        return (combo[matchKey] || '').trim().toLowerCase() === labelClean;
+      });
+    });
+
+    if (variant && variant.quantity !== null && variant.quantity !== undefined && variant.quantity !== "") {
+      const nextQuantity = Math.max(0, Number(variant.quantity) + quantityDiff);
+      variant.quantity = nextQuantity;
+      changed = true;
     }
   }
 
-  // Fallback to base product quantity
-  if (!changed && product.quantity !== null && product.quantity !== undefined) {
-    const nextQuantity = product.quantity + quantityDiff;
-    product.quantity = Math.max(0, nextQuantity);
-
-    // Auto-archive product if out of stock, unarchive if restocked
-    if (product.quantity === 0) {
-      product.active = false;
-      product.status = 'draft';
-    } else if (product.quantity > 0 && quantityDiff > 0) {
-      product.active = true;
-      product.status = 'active';
-    }
-
-    await product.save();
+  // 2. Fallback to base product quantity if no variant was matched or product has no variants
+  if (!changed && product.quantity !== null && product.quantity !== undefined && product.quantity !== "") {
+    const nextQuantity = Math.max(0, Number(product.quantity) + quantityDiff);
+    product.quantity = nextQuantity;
     changed = true;
   }
 
+  // 3. Sync product.quantity to the sum of variant quantities if product has variant quantities
+  if (product.variants && product.variants.length > 0) {
+    const hasVariantQuantities = product.variants.some(v => v.quantity !== null && v.quantity !== undefined && v.quantity !== "");
+    if (hasVariantQuantities) {
+      product.quantity = product.variants.reduce((sum, v) => {
+        const q = parseInt(v.quantity);
+        return sum + (isNaN(q) ? 0 : Math.max(0, q));
+      }, 0);
+      changed = true;
+    }
+  }
+
   if (changed) {
+    await product.save();
     await clearStorefrontProductCaches();
+    try {
+      await cache.del(`storefront:product:id:${productId}`);
+      if (product.handle) {
+        await cache.del(`storefront:product:handle:${product.handle}`);
+      }
+    } catch (cErr) {
+      console.error('[Inventory] Cache clear error:', cErr.message);
+    }
   }
 }
 
