@@ -701,6 +701,8 @@ window.shipOrders = async function () {
 
     let rowIdx = 2;
     ordersToShip.forEach(o => {
+      const row = sheet.getRow(rowIdx);
+
       let remainingAmount = Math.max(0, o.totalPrice - (o.paidAmount || 0));
       if (remainingAmount > 0) {
         const codFee = Math.max(remainingAmount * 0.01, 10);
