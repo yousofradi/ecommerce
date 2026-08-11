@@ -15,6 +15,13 @@ function smartMatch(text, query) {
   return nText.includes(nQuery) || nQuery.includes(nText);
 }
 
+function convertArabicDigitsToEnglish(str) {
+  if (str === null || str === undefined) return '';
+  return str.toString()
+    .replace(/[٠-٩]/g, d => String.fromCharCode(d.charCodeAt(0) - 1632 + 48))
+    .replace(/[۰-۹]/g, d => String.fromCharCode(d.charCodeAt(0) - 1776 + 48));
+}
+
 /** Checkout page logic */
 document.addEventListener('DOMContentLoaded', async () => {
   // Check if we need to recover a checkout from an abandoned cart
@@ -724,13 +731,13 @@ function setupForm() {
 
     const orderData = {
       customer: {
-        name: nameInput.value.trim(),
-        phone: phoneInput.value.trim(),
-        secondPhone: phone2Input.value.trim(),
-        address: getCombinedAddress(),
+        name: convertArabicDigitsToEnglish(nameInput.value.trim()),
+        phone: convertArabicDigitsToEnglish(phoneInput.value.trim()),
+        secondPhone: convertArabicDigitsToEnglish(phone2Input.value.trim()),
+        address: convertArabicDigitsToEnglish(getCombinedAddress()),
         government: cityName,
-        zone: zone,
-        notes: document.getElementById('cust-notes').value.trim()
+        zone: convertArabicDigitsToEnglish(zone),
+        notes: convertArabicDigitsToEnglish(document.getElementById('cust-notes').value.trim())
       },
       items,
       paymentMethod: payment.value,

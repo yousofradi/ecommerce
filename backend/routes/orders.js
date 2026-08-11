@@ -12,6 +12,24 @@ const { orderQueue } = require('../utils/queue');
 const { generateInvoiceInnerHtml } = require('../utils/invoice');
 const { evaluateCartPromotions } = require('./promotions');
 
+function convertArabicDigitsToEnglish(str) {
+  if (str === null || str === undefined) return '';
+  return str.toString()
+    .replace(/[٠-٩]/g, d => String.fromCharCode(d.charCodeAt(0) - 1632 + 48))
+    .replace(/[۰-۹]/g, d => String.fromCharCode(d.charCodeAt(0) - 1776 + 48));
+}
+
+function normalizeCustomerDigits(cust) {
+  if (!cust) return cust;
+  if (cust.name) cust.name = convertArabicDigitsToEnglish(cust.name);
+  if (cust.phone) cust.phone = convertArabicDigitsToEnglish(cust.phone);
+  if (cust.secondPhone) cust.secondPhone = convertArabicDigitsToEnglish(cust.secondPhone);
+  if (cust.address) cust.address = convertArabicDigitsToEnglish(cust.address);
+  if (cust.zone) cust.zone = convertArabicDigitsToEnglish(cust.zone);
+  if (cust.notes) cust.notes = convertArabicDigitsToEnglish(cust.notes);
+  return cust;
+}
+
 // Helper: recalculate totals from items + shipping + discount
 function calcTotals(items, shippingFee, orderDiscount = 0) {
   let subtotal = 0;
@@ -136,6 +154,7 @@ async function resolveShippingFeeAndCarrier(customer, inputCarrier, providedShip
 router.post('/', async (req, res) => {
   try {
     const { customer, items, paymentMethod, discount = 0, paidAmount = 0, shippingFee: providedShippingFee } = req.body;
+    normalizeCustomerDigits(customer);
 
     if (!customer || !items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'Customer info and at least one item are required' });

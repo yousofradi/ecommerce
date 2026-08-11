@@ -692,6 +692,13 @@ window.shipOrders = async function () {
       if (headers[i]) colMap[headers[i].toString().trim()] = i;
     }
 
+    function convertArabicDigitsToEnglish(str) {
+      if (str === null || str === undefined) return '';
+      return str.toString()
+        .replace(/[٠-٩]/g, d => String.fromCharCode(d.charCodeAt(0) - 1632 + 48))
+        .replace(/[۰-۹]/g, d => String.fromCharCode(d.charCodeAt(0) - 1776 + 48));
+    }
+
     let rowIdx = 2;
     ordersToShip.forEach(o => {
       let remainingAmount = Math.max(0, o.totalPrice - (o.paidAmount || 0));
@@ -700,7 +707,7 @@ window.shipOrders = async function () {
         remainingAmount = Math.ceil((remainingAmount + codFee) / 5) * 5;
       }
 
-      const secondPhone = o.customer.secondPhone || '';
+      const secondPhone = o.customer.secondPhone ? convertArabicDigitsToEnglish(o.customer.secondPhone) : '';
       const note = `تسليم بدون بطاقة - برجاء معامله المنتج برفق قابل للكسر${secondPhone ? ' | ت: ' + secondPhone : ''}`;
       const govEn = cityMap[o.customer.government] || o.customer.government;
 
@@ -714,10 +721,10 @@ window.shipOrders = async function () {
       if (colMap['Total_Weight']) row.getCell(colMap['Total_Weight']).value = "1600";
       if (colMap['Package_volume']) row.getCell(colMap['Package_volume']).value = "Small";
       if (colMap['COD_Value']) row.getCell(colMap['COD_Value']).value = remainingAmount;
-      if (colMap['Item_Special_Notes']) row.getCell(colMap['Item_Special_Notes']).value = note;
-      if (colMap['Customer_Name']) row.getCell(colMap['Customer_Name']).value = o.customer.name;
-      if (colMap['Mobile_No']) row.getCell(colMap['Mobile_No']).value = o.customer.phone;
-      if (colMap['Street']) row.getCell(colMap['Street']).value = o.customer.address;
+      if (colMap['Item_Special_Notes']) row.getCell(colMap['Item_Special_Notes']).value = convertArabicDigitsToEnglish(note);
+      if (colMap['Customer_Name']) row.getCell(colMap['Customer_Name']).value = convertArabicDigitsToEnglish(o.customer.name);
+      if (colMap['Mobile_No']) row.getCell(colMap['Mobile_No']).value = convertArabicDigitsToEnglish(o.customer.phone);
+      if (colMap['Street']) row.getCell(colMap['Street']).value = convertArabicDigitsToEnglish(o.customer.address);
       if (colMap['City']) row.getCell(colMap['City']).value = govEn;
       if (colMap['HasPOD']) row.getCell(colMap['HasPOD']).value = "no";
       
