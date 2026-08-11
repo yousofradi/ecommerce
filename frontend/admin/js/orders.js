@@ -704,9 +704,13 @@ window.shipOrders = async function () {
       const note = `تسليم بدون بطاقة - برجاء معامله المنتج برفق قابل للكسر${secondPhone ? ' | ت: ' + secondPhone : ''}`;
       const govEn = cityMap[o.customer.government] || o.customer.government;
 
-      const row = sheet.getRow(rowIdx);
+      const orderDate = o.paidAt ? new Date(o.paidAt) : (o.createdAt ? new Date(o.createdAt) : new Date());
+      const monthName = orderDate.toLocaleString('en-US', { month: 'long' });
+      const rawId = (o.orderId || '').toString();
+      const formattedOrderId = rawId.startsWith('Order-') ? rawId : `Order-${rawId}`;
+      const descValue = `ادوات مكتبية - قابل للكسر\n(${formattedOrderId},${monthName})`;
 
-      if (colMap['Description']) row.getCell(colMap['Description']).value = "ادوات مكتبية - قابل للكسر";
+      if (colMap['Description']) row.getCell(colMap['Description']).value = descValue;
       if (colMap['Total_Weight']) row.getCell(colMap['Total_Weight']).value = "1600";
       if (colMap['Package_volume']) row.getCell(colMap['Package_volume']).value = "Small";
       if (colMap['COD_Value']) row.getCell(colMap['COD_Value']).value = remainingAmount;
