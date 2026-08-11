@@ -664,7 +664,7 @@ window.shipOrders = async function () {
     }
 
     const cityMap = {
-      "القاهره": "CAIRO", "الجيزه": "GIZA", "الإسكندريه": "ALEXANDRIA",
+      "القاهره": "CAIRO", "الجيزه": "GIZA", "الاسكندريه": "ALEXANDRIA",
       "البحيره": "BEHIRA", "القليوبيه": "QALIUBIA", "الغربيه": "GHARBIA",
       "المنوفيه": "MONOUFIA", "دمياط": "DOMITTA", "الدقهليه": "DAKAHLIA",
       "كفر الشيخ": "KAFR EL SHEIKH", "مطروح": "MARSA MATROUH", "الإسماعيليه": "ISMAILIA",

@@ -1,7 +1,7 @@
 const cityMap = {
   "القاهره": "CAIRO",
   "الجيزه": "GIZA",
-  "الإسكندريه": "ALEXANDRIA",
+  "الاسكندريه": "ALEXANDRIA",
   "البحيره": "BEHIRA",
   "القليوبيه": "QALIUBIA",
   "الغربيه": "GHARBIA",
