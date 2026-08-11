@@ -667,7 +667,7 @@ window.shipOrders = async function () {
       "القاهره": "CAIRO", "الجيزه": "GIZA", "الاسكندريه": "ALEXANDRIA",
       "البحيره": "BEHIRA", "القليوبيه": "QALIUBIA", "الغربيه": "GHARBIA",
       "المنوفيه": "MONOUFIA", "دمياط": "DOMITTA", "الدقهليه": "DAKAHLIA",
-      "كفر الشيخ": "KAFR EL SHEIKH", "مطروح": "MARSA MATROUH", "الإسماعيليه": "ISMAILIA",
+      "كفر الشيخ": "KAFR EL SHEIKH", "مطروح": "MARSA MATROUH", "الاسماعيليه": "ISMAILIA",
       "السويس": "SUEZ", "بور سعيد": "PORT SAID", "الشرقيه": "SHARKIA",
       "الفيوم": "FAYOUM", "بني سويف": "BANI SWEIF", "المنيا": "MENIA",
       "اسيوط": "ASSIUT", "سوهاج": "SOUHAGE", "قنا": "QENA",

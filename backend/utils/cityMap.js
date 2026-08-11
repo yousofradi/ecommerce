@@ -10,7 +10,7 @@ const cityMap = {
   "الدقهليه": "DAKAHLIA",
   "كفر الشيخ": "KAFR EL SHEIKH",
   "مطروح": "MARSA MATROUH",
-  "الإسماعيليه": "ISMAILIA",
+  "الاسماعيليه": "ISMAILIA",
   "السويس": "SUEZ",
   "بور سعيد": "PORT SAID",
   "الشرقيه": "SHARKIA",
