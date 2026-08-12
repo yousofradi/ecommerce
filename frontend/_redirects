@@ -1,4 +1,2 @@
-/collection/* /collection.html 200!
-/product/* /product.html 200!
-/collection /collection.html 200!
-/product /product.html 200!
+/collection/* /collection 200
+/product/* /product 200
