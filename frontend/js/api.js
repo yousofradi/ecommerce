@@ -304,6 +304,12 @@ api.optimizeImageUrl = function(url, width) {
   if (!url || typeof url !== 'string') {
     return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2Y1ZjVmNSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iI2FhYSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
   }
+
+  // Bypass if it's already an R2 URL (pre-optimized by backend sharp)
+  if (url.includes('r2.dev') || url.includes('r2.cloudflarestorage.com') || url.includes('pub-')) {
+    return url;
+  }
+
   if (url.includes('res.cloudinary.com')) {
     let cleanUrl = url.replace(/\.(png|jpe?g|gif)$/i, '.webp');
     const parts = cleanUrl.split('/upload/');

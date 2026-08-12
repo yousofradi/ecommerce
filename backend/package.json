@@ -8,6 +8,7 @@
     "dev": "node --watch server.js"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1108.0",
     "axios": "^1.7.0",
     "bullmq": "^5.76.8",
     "cloudinary": "^2.10.0",
@@ -20,6 +21,7 @@
     "mongoose": "^8.9.5",
     "multer": "^2.1.1",
     "multer-storage-cloudinary": "^2.2.1",
+    "sharp": "^0.35.3",
     "uuid": "^11.1.0",
     "web-push": "^3.6.7"
   },

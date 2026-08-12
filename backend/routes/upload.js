@@ -6,6 +6,7 @@ const fs = require('fs');
 const cloudinaryPackage = require('cloudinary');
 const CloudinaryStorage = require('multer-storage-cloudinary');
 const adminAuth = require('../middleware/adminAuth');
+const { isR2Configured, uploadToR2 } = require('../utils/r2');
 
 // ── Storage Configuration ────────────────────────────────
 
@@ -16,7 +17,11 @@ const isCloudinaryConfigured = process.env.CLOUDINARY_CLOUD_NAME &&
 
 let storage;
 
-if (isCloudinaryConfigured) {
+if (isR2Configured) {
+  // If R2 is configured, we use memory storage so sharp can process the buffer
+  storage = multer.memoryStorage();
+  console.log('✅ Upload: Using Cloudflare R2 storage (MemoryBuffer -> Sharp -> R2)');
+} else if (isCloudinaryConfigured) {
   // Cloudinary Storage (Persistent)
   cloudinaryPackage.v2.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -50,7 +55,7 @@ if (isCloudinaryConfigured) {
       cb(null, uniqueSuffix + path.extname(file.originalname));
     }
   });
-  console.log('⚠️ Upload: Cloudinary not configured, using local disk storage');
+  console.log('⚠️ Upload: Cloudinary and R2 not configured, using local disk storage');
 }
 
 const upload = multer({ 
@@ -61,67 +66,74 @@ const upload = multer({
 // ── Routes ───────────────────────────────────────────────
 
 // POST /api/upload — upload a single image
-router.post('/', adminAuth, upload.single('image'), (req, res) => {
+router.post('/', adminAuth, upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
     
-    // For Cloudinary, req.file.path might be undefined in older versions, use secure_url or url
-    // For local, we construct the URL
-    let imageUrl = req.file.path || req.file.secure_url || req.file.url;
-    
-    if (isCloudinaryConfigured) {
-      const { optimizeCloudinaryUrl } = require('../utils/cloudinary');
-      // Ensure imageUrl is a string before replacing
-      if (typeof imageUrl === 'string') {
-        // Force the URL to end in .webp so it explicitly shows as WebP
-        imageUrl = imageUrl.replace(/\.(png|jpe?g|gif)$/i, '.webp');
-        imageUrl = optimizeCloudinaryUrl(imageUrl);
-      }
+    let imageUrl = '';
+    let filename = '';
+
+    if (isR2Configured) {
+      imageUrl = await uploadToR2(req.file.buffer, req.file.originalname);
+      filename = path.basename(imageUrl);
     } else {
-      const host = req.get('host');
-      // Force https if we are on render or if the host suggests it
-      const protocol = (req.headers['x-forwarded-proto'] || req.protocol || 'http').split(',')[0];
-      const finalProtocol = (host.includes('render.com') || host.includes('onrender.com')) ? 'https' : protocol;
-      imageUrl = `${finalProtocol}://${host}/uploads/${req.file.filename}`;
+      imageUrl = req.file.path || req.file.secure_url || req.file.url;
+      filename = req.file.filename || req.file.public_id;
+      
+      if (isCloudinaryConfigured) {
+        const { optimizeCloudinaryUrl } = require('../utils/cloudinary');
+        if (typeof imageUrl === 'string') {
+          imageUrl = imageUrl.replace(/\.(png|jpe?g|gif)$/i, '.webp');
+          imageUrl = optimizeCloudinaryUrl(imageUrl);
+        }
+      } else {
+        const host = req.get('host');
+        const protocol = (req.headers['x-forwarded-proto'] || req.protocol || 'http').split(',')[0];
+        const finalProtocol = (host.includes('render.com') || host.includes('onrender.com')) ? 'https' : protocol;
+        imageUrl = `${finalProtocol}://${host}/uploads/${req.file.filename}`;
+      }
     }
     
-    res.json({ 
-      url: imageUrl,
-      filename: req.file.filename || req.file.public_id
-    });
+    res.json({ url: imageUrl, filename });
   } catch (err) {
     res.status(500).json({ error: 'Upload failed: ' + err.message });
   }
 });
 
 // POST /api/upload/public — upload a single image publicly (e.g. transfer screenshots)
-router.post('/public', upload.single('image'), (req, res) => {
+router.post('/public', upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
     
-    let imageUrl = req.file.path || req.file.secure_url || req.file.url;
-    
-    if (isCloudinaryConfigured) {
-      const { optimizeCloudinaryUrl } = require('../utils/cloudinary');
-      if (typeof imageUrl === 'string') {
-        imageUrl = imageUrl.replace(/\.(png|jpe?g|gif)$/i, '.webp');
-        imageUrl = optimizeCloudinaryUrl(imageUrl);
-      }
+    let imageUrl = '';
+    let filename = '';
+
+    if (isR2Configured) {
+      imageUrl = await uploadToR2(req.file.buffer, req.file.originalname, 'public-uploads');
+      filename = path.basename(imageUrl);
     } else {
-      const host = req.get('host');
-      const protocol = (req.headers['x-forwarded-proto'] || req.protocol || 'http').split(',')[0];
-      const finalProtocol = (host.includes('render.com') || host.includes('onrender.com')) ? 'https' : protocol;
-      imageUrl = `${finalProtocol}://${host}/uploads/${req.file.filename}`;
+      imageUrl = req.file.path || req.file.secure_url || req.file.url;
+      filename = req.file.filename || req.file.public_id;
+      
+      if (isCloudinaryConfigured) {
+        const { optimizeCloudinaryUrl } = require('../utils/cloudinary');
+        if (typeof imageUrl === 'string') {
+          imageUrl = imageUrl.replace(/\.(png|jpe?g|gif)$/i, '.webp');
+          imageUrl = optimizeCloudinaryUrl(imageUrl);
+        }
+      } else {
+        const host = req.get('host');
+        const protocol = (req.headers['x-forwarded-proto'] || req.protocol || 'http').split(',')[0];
+        const finalProtocol = (host.includes('render.com') || host.includes('onrender.com')) ? 'https' : protocol;
+        imageUrl = `${finalProtocol}://${host}/uploads/${req.file.filename}`;
+      }
     }
     
-    res.json({ 
-      url: imageUrl,
-      filename: req.file.filename || req.file.public_id
-    });
+    res.json({ url: imageUrl, filename });
   } catch (err) {
     res.status(500).json({ error: 'Upload failed: ' + err.message });
   }
