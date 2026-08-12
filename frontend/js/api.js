@@ -313,16 +313,12 @@ api.optimizeImageUrl = function(url, width) {
     else targetWidth = 1000;
   }
   if (url.includes('res.cloudinary.com')) {
-    // Standardize extensions to .webp
     let cleanUrl = url.replace(/\.(png|jpe?g|gif)$/i, '.webp');
     const parts = cleanUrl.split('/upload/');
     if (parts.length === 2) {
       const prefix = parts[0] + '/upload';
-      // Only strip the prefix if it's actually a Cloudinary transformation (e.g. c_limit,w_800,q_auto)
-      // Matches things like "q_auto/", "c_limit,w_800/", etc. but not "v123/" or "folder-name/"
       const rest = parts[1].replace(/^(?:[a-z]+_[^/,]+(?:,[a-z]+_[^/,]+)*)\//i, ''); 
-      // Use the raw optimized asset without any on-the-fly URL transformations (0 credit burn)
-      return `${prefix}/${rest}`;
+      return `${prefix}/f_auto,q_auto,w_${targetWidth},c_limit/${rest}`;
     }
   }
   return url;
