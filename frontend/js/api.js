@@ -183,6 +183,32 @@ const api = {
     });
   },
 
+  uploadImage(file, prefix) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `${API_BASE}/upload`, true);
+
+      xhr.onload = function () {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            resolve(JSON.parse(xhr.responseText));
+          } catch (e) { resolve({}); }
+        } else {
+          try {
+            reject(new Error(JSON.parse(xhr.responseText).error));
+          } catch (e) { reject(new Error('Upload failed')); }
+        }
+      };
+
+      xhr.onerror = () => reject(new Error('Network Error'));
+
+      const formData = new FormData();
+      formData.append('image', file);
+      if (prefix) formData.append('prefix', prefix);
+      xhr.send(formData);
+    });
+  },
+
   importProducts(file, deleteAll, onProgress) {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();

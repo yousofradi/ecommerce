@@ -129,12 +129,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     const progressBar = progressContainer ? progressContainer.querySelector('.upload-progress-bar-fill') : null;
     const progressText = document.getElementById('upload-progress-text');
     if (progressContainer) progressContainer.style.display = 'flex';
+    
+    const productNameInput = document.getElementById('p-name');
+    const pHandleInput = document.getElementById('p-handle');
+    let prefix = '';
+    if (pHandleInput && pHandleInput.value) {
+      prefix = pHandleInput.value;
+    } else if (productNameInput && productNameInput.value) {
+      prefix = productNameInput.value;
+    }
 
-    const promises = Array.from(files).map(file =>
+    const promises = Array.from(files).map((file, idx) =>
       api.uploadFile(file, (percent) => {
         if (progressBar) progressBar.style.width = percent + '%';
         if (progressText) progressText.textContent = `رفع ${percent}%`;
-      }).then(res => {
+      }, prefix ? `${prefix}-${idx + 1}` : '').then(res => {
         if (res && res.url) productImages.push(res.url);
       }).catch(err => {
         console.error('Upload failed', err);

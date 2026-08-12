@@ -27,9 +27,10 @@ if (isR2Configured) {
  * @param {Buffer} fileBuffer - The original file buffer.
  * @param {string} originalName - The original filename.
  * @param {string} folder - The destination folder prefix in R2.
+ * @param {string} prefix - Optional custom prefix for the filename (e.g., product name).
  * @returns {Promise<string>} - The public URL of the uploaded image.
  */
-async function uploadToR2(fileBuffer, originalName, folder = 'ecommerce-uploads') {
+async function uploadToR2(fileBuffer, originalName, folder = 'sundurashop', prefix = '') {
   if (!isR2Configured || !s3Client) {
     throw new Error('Cloudflare R2 is not configured in Environment Variables.');
   }
@@ -43,10 +44,17 @@ async function uploadToR2(fileBuffer, originalName, folder = 'ecommerce-uploads'
 
     // 2. Generate a unique filename
     const ext = '.webp';
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    // clean original name
-    const cleanName = path.basename(originalName, path.extname(originalName)).replace(/[^a-zA-Z0-9]/g, '');
-    const filename = `${folder}/${cleanName}-${uniqueSuffix}${ext}`;
+    const uniqueSuffix = Math.round(Math.random() * 1E5); // Shorter suffix
+    
+    let baseName = '';
+    if (prefix) {
+      baseName = prefix.replace(/[^a-zA-Z0-9\u0600-\u06FF-]/g, '-').replace(/-+/g, '-');
+    } else {
+      baseName = path.basename(originalName, path.extname(originalName)).replace(/[^a-zA-Z0-9]/g, '');
+      if (!baseName) baseName = 'image';
+    }
+    
+    const filename = `${folder}/${baseName}-${uniqueSuffix}${ext}`;
 
     // 3. Upload to R2
     const uploadParams = {

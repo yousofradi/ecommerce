@@ -195,7 +195,7 @@ const api = {
   getVisitors() { return this._request('/visitors', { admin: true }); },
 
   // File Upload
-  uploadFile(file, onProgress) {
+  uploadFile(file, onProgress, prefix) {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.open('POST', `${API_BASE}/upload`, true);
@@ -226,6 +226,7 @@ const api = {
 
       const formData = new FormData();
       formData.append('image', file);
+      if (prefix) formData.append('prefix', prefix);
       xhr.send(formData);
     });
   },

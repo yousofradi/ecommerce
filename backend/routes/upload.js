@@ -76,7 +76,9 @@ router.post('/', adminAuth, upload.single('image'), async (req, res) => {
     let filename = '';
 
     if (isR2Configured) {
-      imageUrl = await uploadToR2(req.file.buffer, req.file.originalname);
+      const folder = req.body.folder || 'sundurashop';
+      const prefix = req.body.prefix || '';
+      imageUrl = await uploadToR2(req.file.buffer, req.file.originalname, folder, prefix);
       filename = path.basename(imageUrl);
     } else {
       imageUrl = req.file.path || req.file.secure_url || req.file.url;
@@ -113,7 +115,8 @@ router.post('/public', upload.single('image'), async (req, res) => {
     let filename = '';
 
     if (isR2Configured) {
-      imageUrl = await uploadToR2(req.file.buffer, req.file.originalname, 'public-uploads');
+      const prefix = req.body.prefix || '';
+      imageUrl = await uploadToR2(req.file.buffer, req.file.originalname, 'public-uploads', prefix);
       filename = path.basename(imageUrl);
     } else {
       imageUrl = req.file.path || req.file.secure_url || req.file.url;
