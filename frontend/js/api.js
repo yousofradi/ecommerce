@@ -548,7 +548,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const renderBlock = (list) => list.map(c => `
           <a href="/collection/${c.urlName || c._id}" class="cat-badge">
             <div class="cat-badge-img-wrapper">
-              <img src="/assets/collections/${c.urlName || c._id}.webp" alt="${c.name}" onerror="this.onerror=null; this.src='${api.optimizeImageUrl(c.imageUrl, 100) || '/assets/logo.webp'}';">
+              <img src="${api.optimizeImageUrl(c.imageUrl, 100) || '/assets/logo.webp'}" alt="${c.name}">
             </div>
             <span class="cat-badge-name">${c.name}</span>
           </a>

@@ -119,7 +119,7 @@ function renderCollectionSection(s, collections) {
     const lazyAttr = idx < 4 ? '' : 'loading="lazy"';
     return `
             <a href="${link}" class="cat-item">
-              <img src="/assets/collections/${c.urlName || c._id}.webp" alt="${c.name}" ${lazyAttr} onerror="this.onerror=null; this.src='${img || ''}'; if(!this.src) this.style.background='#f5efe9';">
+              <img src="${img || '/assets/logo.webp'}" alt="${c.name}" ${lazyAttr} onerror="this.onerror=null; this.style.background='#f5efe9';">
               ${s.showNames !== false ? `<div class="cat-label">${c.name}</div>` : ''}
             </a>`;
   }).join('')}
