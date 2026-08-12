@@ -309,7 +309,14 @@ api.optimizeImageUrl = function(url, width) {
     const parts = cleanUrl.split('/upload/');
     if (parts.length === 2) {
       const prefix = parts[0] + '/upload';
-      const rest = parts[1].replace(/^(?:[a-z]+_[^/,]+(?:,[a-z]+_[^/,]+)*)\//i, ''); 
+      const rest = parts[1].replace(/^(?:[a-z]+_[^/,]+(?:,[a-z]+_[^/,]+)*)\//i, '');
+      
+      // OPTIMIZATION: If width is requested (thumbnail), use quantized widths and eco quality to save massive bandwidth.
+      if (width) {
+        const w = width <= 150 ? 150 : 400; // Snap to 150 or 400 to limit transformations
+        return `${prefix}/f_auto,q_auto:eco,w_${w}/${rest}`;
+      }
+      // If no width requested (main image), serve raw pre-optimized WebP (0 transformations)
       return `${prefix}/${rest}`;
     }
   }
