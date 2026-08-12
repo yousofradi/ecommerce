@@ -244,22 +244,50 @@ router.get('/handle/:handle', async (req, res) => {
 });
 
 // Helper to process drive images in payload
+const { isR2Configured, uploadToR2 } = require('../utils/r2');
+const axios = require('axios');
+
+async function processDriveUrlToStorage(url, prefix = 'product') {
+  if (!isDriveUrl(url)) return url;
+  
+  if (isR2Configured) {
+    try {
+      // 1. Extract file ID from drive URL
+      const fileIdMatch = url.match(/[-\w]{25,}/);
+      const fileId = fileIdMatch ? fileIdMatch[0] : null;
+      if (!fileId) return await uploadToCloudinary(url);
+
+      const downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+      const response = await axios.get(downloadUrl, { responseType: 'arraybuffer' });
+      const buffer = Buffer.from(response.data);
+
+      return await uploadToR2(buffer, `drive-${fileId}.jpg`, 'sundurashop', prefix);
+    } catch (err) {
+      console.error('Failed to upload drive image to R2, falling back to Cloudinary:', err.message);
+      return await uploadToCloudinary(url);
+    }
+  } else {
+    return await uploadToCloudinary(url);
+  }
+}
+
 async function processDriveImages(body) {
   try {
-    if (isDriveUrl(body.imageUrl)) {
-      body.imageUrl = await uploadToCloudinary(body.imageUrl);
+    const prefix = (body.handle || body.name || 'product').replace(/[^a-zA-Z0-9\u0600-\u06FF-]/g, '-');
+    
+    if (body.imageUrl) {
+      body.imageUrl = await processDriveUrlToStorage(body.imageUrl, prefix);
     }
     if (Array.isArray(body.images)) {
       for (let i = 0; i < body.images.length; i++) {
-        if (isDriveUrl(body.images[i])) {
-          body.images[i] = await uploadToCloudinary(body.images[i]);
-        }
+        body.images[i] = await processDriveUrlToStorage(body.images[i], `${prefix}-${i + 1}`);
       }
     }
     if (Array.isArray(body.variants)) {
-      for (let v of body.variants) {
-        if (isDriveUrl(v.imageUrl)) {
-          v.imageUrl = await uploadToCloudinary(v.imageUrl);
+      for (let i = 0; i < body.variants.length; i++) {
+        const v = body.variants[i];
+        if (v.imageUrl) {
+          v.imageUrl = await processDriveUrlToStorage(v.imageUrl, `${prefix}-var-${i + 1}`);
         }
       }
     }
