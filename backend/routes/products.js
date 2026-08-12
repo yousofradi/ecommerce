@@ -274,20 +274,31 @@ async function processDriveUrlToStorage(url, prefix = 'product') {
 async function processDriveImages(body) {
   try {
     const prefix = (body.handle || body.name || 'product').replace(/[^a-zA-Z0-9\u0600-\u06FF-]/g, '-');
+    const uploadedCache = new Map();
+
+    const processUrlWithCache = async (url, itemPrefix) => {
+      if (!url) return url;
+      if (uploadedCache.has(url)) {
+        return uploadedCache.get(url);
+      }
+      const uploadedUrl = await processDriveUrlToStorage(url, itemPrefix);
+      uploadedCache.set(url, uploadedUrl);
+      return uploadedUrl;
+    };
     
     if (body.imageUrl) {
-      body.imageUrl = await processDriveUrlToStorage(body.imageUrl, prefix);
+      body.imageUrl = await processUrlWithCache(body.imageUrl, prefix);
     }
     if (Array.isArray(body.images)) {
       for (let i = 0; i < body.images.length; i++) {
-        body.images[i] = await processDriveUrlToStorage(body.images[i], `${prefix}-${i + 1}`);
+        body.images[i] = await processUrlWithCache(body.images[i], `${prefix}-${i + 1}`);
       }
     }
     if (Array.isArray(body.variants)) {
       for (let i = 0; i < body.variants.length; i++) {
         const v = body.variants[i];
         if (v.imageUrl) {
-          v.imageUrl = await processDriveUrlToStorage(v.imageUrl, `${prefix}-var-${i + 1}`);
+          v.imageUrl = await processUrlWithCache(v.imageUrl, `${prefix}-var-${i + 1}`);
         }
       }
     }
