@@ -9,8 +9,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Fallback: extract handle or ID from path /product/VALUE
   if (!productId && !handle) {
-    const pathParts = window.location.pathname.split('/');
-    const lastPart = pathParts[pathParts.length - 1];
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    const lastPart = pathParts.length > 0 ? pathParts[pathParts.length - 1] : '';
     if (lastPart && lastPart !== 'product' && lastPart !== 'product.html') {
       if (/^[0-9a-fA-F]{24}$/.test(lastPart)) {
         productId = lastPart;

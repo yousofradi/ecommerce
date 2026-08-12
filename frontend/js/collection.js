@@ -11,8 +11,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Fallback: extract slug from path /collection/SLUG
   if (!id && !slug) {
-    const pathParts = window.location.pathname.split('/');
-    const lastPart = pathParts[pathParts.length - 1];
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    const lastPart = pathParts.length > 0 ? pathParts[pathParts.length - 1] : '';
     if (lastPart && lastPart !== 'collection' && lastPart !== 'collection.html') {
       slug = lastPart;
     }
