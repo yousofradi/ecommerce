@@ -705,8 +705,8 @@ window.shipOrders = async function () {
 
       let remainingAmount = Math.max(0, o.totalPrice - (o.paidAmount || 0));
       if (remainingAmount > 0) {
-        const codFee = Math.max(remainingAmount * 0.01, 10);
-        remainingAmount = Math.ceil((remainingAmount + codFee) / 5) * 5;
+        const codFee = Math.max(10, Math.ceil((remainingAmount * 0.01) / 5) * 5);
+        remainingAmount = remainingAmount + codFee;
       }
 
       const secondPhone = o.customer.secondPhone ? convertArabicDigitsToEnglish(o.customer.secondPhone) : '';
