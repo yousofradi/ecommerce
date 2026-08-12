@@ -596,16 +596,16 @@ function updateTotals() {
   document.getElementById('sum-shipping').textContent = formatPrice(o.shippingFee);
 
   const discRow = document.getElementById('sum-discount-row');
-  if (o.discount && o.discount > 0) {
+  if (o.discount !== undefined && o.discount !== null && o.discount !== 0) {
     discRow.style.display = 'flex';
     document.getElementById('sum-discount').textContent = formatPrice(Math.abs(o.discount));
     const label = document.getElementById('sum-discount-label');
     if (label) {
-      label.textContent = o.discount > 0 ? 'خصم الطلب' : 'إضافة للطلب';
+      label.textContent = o.discount > 0 ? 'خصم الطلب' : 'زيادة في الطلب';
       if (o.appliedPromotionName && o.discount > 0) {
         label.textContent += ` (${o.appliedPromotionName})`;
       }
-      label.style.color = o.discount > 0 ? 'var(--danger)' : 'var(--primary)';
+      label.style.color = o.discount > 0 ? 'var(--danger)' : '#10b981';
     }
   } else {
     discRow.style.display = 'none';
@@ -1114,21 +1114,30 @@ window.promptOrderDiscount = function () {
 
 window.openOrderDiscountModal = function () {
   openModal('order-discount-modal');
-  document.getElementById('modal-order-discount').value = currentOrder.discount || '';
+  const input = document.getElementById('modal-order-discount');
+  if (input) {
+    input.value = currentOrder.discount ? Math.abs(currentOrder.discount) : '';
+  }
 };
 
-window.applyOrderDiscount = async function (btn) {
+window.applyOrderDiscount = async function (type) {
   const val = document.getElementById('modal-order-discount').value;
-  currentOrder.discount = parseFloat(val) || 0;
+  const num = Math.abs(parseFloat(val) || 0);
+  
+  if (type === 'increase') {
+    currentOrder.discount = -num;
+  } else {
+    currentOrder.discount = num;
+  }
+
   currentOrder.isCustomDiscount = true;
   closeModal('order-discount-modal');
   updateTotals();
+  renderOrder();
 
-  // Trigger unsaved changes bar
   if (window.markAsModified) window.markAsModified();
 
-  // Refresh ready modal if open
-  if (document.getElementById('ready-confirm-modal').style.display === 'flex') {
+  if (document.getElementById('ready-confirm-modal')?.style.display === 'flex') {
     markAsReady();
   }
 };

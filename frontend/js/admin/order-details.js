@@ -230,8 +230,8 @@ function updateTotals() {
     document.getElementById('sum-discount').textContent = formatPrice(Math.abs(o.discount));
     const label = document.getElementById('sum-discount-label');
     if (label) {
-      label.textContent = o.discount > 0 ? 'خصم الطلب' : 'إضافة للطلب';
-      label.style.color = o.discount > 0 ? 'var(--danger)' : 'var(--primary)';
+      label.textContent = o.discount > 0 ? 'خصم الطلب' : 'زيادة في الطلب';
+      label.style.color = o.discount > 0 ? 'var(--danger)' : '#10b981';
     }
   } else {
     discRow.style.display = 'none';
@@ -460,14 +460,26 @@ window.promptOrderDiscount = function () {
 
 window.openOrderDiscountModal = function () {
   openModal('order-discount-modal');
-  document.getElementById('modal-order-discount').value = currentOrder.discount || 0;
+  const input = document.getElementById('modal-order-discount');
+  if (input) {
+    input.value = currentOrder.discount ? Math.abs(currentOrder.discount) : '';
+  }
 };
 
-window.applyOrderDiscount = async function () {
+window.applyOrderDiscount = async function (type) {
   const val = document.getElementById('modal-order-discount').value;
-  currentOrder.discount = parseFloat(val) || 0;
+  const num = Math.abs(parseFloat(val) || 0);
+  
+  if (type === 'increase') {
+    currentOrder.discount = -num;
+  } else {
+    currentOrder.discount = num;
+  }
+
+  currentOrder.isCustomDiscount = true;
   closeModal('order-discount-modal');
   updateTotals();
+  renderOrder();
 
   // Trigger unsaved changes bar
   if (window.markAsModified) window.markAsModified();
