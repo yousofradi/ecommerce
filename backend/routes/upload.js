@@ -149,8 +149,8 @@ router.post('/public', upload.single('image'), async (req, res) => {
   }
 });
 
-// POST /api/upload/migrate-to-r2 — Migrate all non-R2 image URLs in DB to Cloudflare R2
-router.post('/migrate-to-r2', adminAuth, async (req, res) => {
+// GET / POST /api/upload/migrate-to-r2 — Migrate all non-R2 image URLs in DB to Cloudflare R2
+router.all('/migrate-to-r2', adminAuth, async (req, res) => {
   if (!isR2Configured) {
     return res.status(400).json({ error: 'Cloudflare R2 is not configured in Environment Variables.' });
   }
@@ -318,14 +318,15 @@ router.post('/migrate-to-r2', adminAuth, async (req, res) => {
       }
     } catch (_) {}
 
-    res.json({
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.send(JSON.stringify({
       success: true,
       message: 'Migration process completed.',
       stats,
       migratedCount: stats.migrated
-    });
+    }, null, 2));
   } catch (err) {
-    res.status(500).json({ error: 'Migration failed: ' + err.message, stats });
+    res.status(500).setHeader('Content-Type', 'application/json; charset=utf-8').send(JSON.stringify({ error: 'Migration failed: ' + err.message, stats }, null, 2));
   }
 });
 

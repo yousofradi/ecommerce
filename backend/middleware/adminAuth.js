@@ -3,7 +3,7 @@
  * Checks for x-admin-key header against ADMIN_API_KEY env var.
  */
 const adminAuth = (req, res, next) => {
-  const key = req.headers['x-admin-key'] || req.query.ADMIN_API_KEY || req.query.adminKey;
+  const key = req.headers['x-admin-key'] || req.query.ADMIN_API_KEY || req.query.adminKey || req.query.key;
   const adminKey = process.env.ADMIN_API_KEY;
 
   if (!adminKey) {
