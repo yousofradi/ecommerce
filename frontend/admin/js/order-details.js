@@ -114,12 +114,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.body.classList.add('is-loading');
 
   try {
-    const [order, shipping, settings, shippingOptions, productsRes] = await Promise.all([
+    const [order, shipping, settings, shippingOptions] = await Promise.all([
       api.getOrder(orderId),
       api.getShippingList().catch(() => []),
       api.getSetting('sundura_global_settings').catch(() => ({})),
-      api.getSetting('shipping_options').catch(() => []),
-      api.getProducts(1, 1000, true).catch(() => [])
+      api.getSetting('shipping_options').catch(() => [])
     ]);
 
     currentOrder = order;
@@ -127,7 +126,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     window._fullShippingData = shipping;
     window._globalSettings = settings || {};
     window._shippingOptions = shippingOptions || [];
-    allProducts = Array.isArray(productsRes) ? productsRes : (productsRes.products || []);
+    allProducts = []; // Will be populated shortly
+
+    // Defer heavy product load to background
+    api.getProducts(1, 1000, true).then(productsRes => {
+      allProducts = Array.isArray(productsRes) ? productsRes : (productsRes.products || []);
+    }).catch(err => console.warn('Failed to load products for edit modal:', err));
 
     if (currentOrder.appliedPromotionName || currentOrder.appliedPromotionId) {
       try {

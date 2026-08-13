@@ -115,7 +115,13 @@ const api = {
 
   // Orders
   createOrder(d) { return this._request('/orders', { method: 'POST', body: JSON.stringify(d) }); },
-  getOrders(archived = false) { return this._request(`/orders?archived=${archived}`, { admin: true }); },
+  getOrders(archived = false, page = null, limit = null, status = null, search = null) {
+    let url = `/orders?archived=${archived}`;
+    if (page && limit) url += `&page=${page}&limit=${limit}`;
+    if (status && status !== 'all') url += `&status=${status}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    return this._request(url, { admin: true });
+  },
   getOrder(id) { return this._request(`/orders/${id}`, { admin: true }); },
   getOrderPromotion(id) { return this._request(`/orders/${id}/promotion`, { admin: true }); },
   updateOrder(id, d) { return this._request(`/orders/${id}`, { method: 'PUT', body: JSON.stringify(d), admin: true }); },
@@ -129,7 +135,8 @@ const api = {
   shipOrdersBulk(orderIds) { return this._request('/orders/bulk/ship', { method: 'POST', body: JSON.stringify({ orderIds }), admin: true }); },
 
   // Abandoned Carts
-  getAbandonedCarts() { return this._request('/abandoned-carts', { admin: true }); },
+  getAbandonedCarts(page = 1, limit = 50) { return this._request(`/abandoned-carts?page=${page}&limit=${limit}`, { admin: true }); },
+  getAbandonedCart(id) { return this._request(`/abandoned-carts/${id}`, { admin: true }); },
   deleteAbandonedCart(id) { return this._request(`/abandoned-carts/${id}`, { method: 'DELETE', admin: true }); },
   deleteAllAbandonedCarts() { return this._request('/abandoned-carts', { method: 'DELETE', admin: true }); },
 

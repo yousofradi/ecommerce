@@ -24,12 +24,27 @@ async function loadOrders() {
 
   tbody.innerHTML = '<tr><td colspan="10" class="text-center" style="padding:32px;"><div class="spinner"></div></td></tr>';
   try {
-    const [ordersData, globalSettings, adminSettings] = await Promise.all([
-      api.getOrders(showingArchived),
+    const searchInput = document.getElementById('order-search');
+    const query = searchInput ? searchInput.value.trim() : '';
+    
+    const [ordersRes, globalSettings, adminSettings] = await Promise.all([
+      api.getOrders(showingArchived, currentPage, currentLimit, currentFilter, query),
       api.getSetting('sundura_global_settings').catch(() => null),
       api.getSetting('admin_global_settings').catch(() => null)
     ]);
-    allOrdersData = ordersData;
+    
+    // Support both paginated format and fallback flat format
+    if (ordersRes && ordersRes.orders) {
+      allOrdersData = ordersRes.orders;
+      totalPages = ordersRes.totalPages || 1;
+      updatePaginationInfo(ordersRes.totalCount || allOrdersData.length);
+      updateFilterCounts(ordersRes.totalCount || allOrdersData.length);
+    } else {
+      allOrdersData = ordersRes || [];
+      totalPages = Math.ceil(allOrdersData.length / currentLimit) || 1;
+      updatePaginationInfo(allOrdersData.length);
+      updateFilterCounts(allOrdersData.length);
+    }
     
     // Webhook uses sundura_global_settings for paymentMethods and paymentNotes
     if (globalSettings) {
@@ -41,9 +56,9 @@ async function loadOrders() {
       paymentNotesCache = adminSettings.paymentNotes || '';
     }
     
-    updateFilterCounts();
-    filterOrdersClient();
+    renderOrders(allOrdersData);
   } catch (err) {
+    console.error(err);
     tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">فشل تحميل الطلبات</td></tr>';
   } finally {
     document.body.classList.remove('is-loading');
@@ -52,9 +67,24 @@ async function loadOrders() {
 
 async function loadOrdersSilently() {
   try {
-    allOrdersData = await api.getOrders(showingArchived);
-    updateFilterCounts();
-    filterOrdersClient();
+    const searchInput = document.getElementById('order-search');
+    const query = searchInput ? searchInput.value.trim() : '';
+    
+    const ordersRes = await api.getOrders(showingArchived, currentPage, currentLimit, currentFilter, query);
+    
+    if (ordersRes && ordersRes.orders) {
+      allOrdersData = ordersRes.orders;
+      totalPages = ordersRes.totalPages || 1;
+      updatePaginationInfo(ordersRes.totalCount || allOrdersData.length);
+      updateFilterCounts(ordersRes.totalCount || allOrdersData.length);
+    } else {
+      allOrdersData = ordersRes || [];
+      totalPages = Math.ceil(allOrdersData.length / currentLimit) || 1;
+      updatePaginationInfo(allOrdersData.length);
+      updateFilterCounts(allOrdersData.length);
+    }
+    
+    renderOrders(allOrdersData);
   } catch (err) {
     console.warn('Auto-refresh failed silently (network issue or server offline):', err.message || err);
   }
@@ -82,44 +112,13 @@ window.setFilter = function (filter) {
       return;
     }
   }
-  updateFilterCounts();
-  filterOrdersClient();
+  loadOrders();
 };
 
 window.filterOrdersClient = function () {
-  const searchInput = document.getElementById('order-search');
-  const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
-  let filtered = allOrdersData;
-
-  if (currentFilter === 'pending') {
-    filtered = filtered.filter(o => o.status === 'pending' && (o.paid || o.paidAmount > 0));
-  } else if (currentFilter === 'ready') {
-    filtered = filtered.filter(o => o.status === 'ready');
-  } else if (currentFilter === 'shipped') {
-    filtered = filtered.filter(o => o.status === 'shipped');
-  } else if (currentFilter === 'unpaid') {
-    filtered = filtered.filter(o => !o.paid && (!o.paidAmount || o.paidAmount === 0) && o.status !== 'shipped');
-  }
-
-  if (query) {
-    filtered = filtered.filter(o =>
-      o.orderId.toLowerCase().includes(query) ||
-      (o.customer && o.customer.name && o.customer.name.toLowerCase().includes(query)) ||
-      (o.customer && o.customer.phone && o.customer.phone.includes(query))
-    );
-  }
-
-  // Pagination
-  const total = filtered.length;
-  totalPages = Math.ceil(total / currentLimit) || 1;
-  if (currentPage > totalPages) currentPage = totalPages;
-
-  const start = (currentPage - 1) * currentLimit;
-  const end = start + currentLimit;
-  const pageData = filtered.slice(start, end);
-
-  updatePaginationInfo(total);
-  renderOrders(pageData);
+  // We no longer filter client-side. A search input change should trigger a server load.
+  currentPage = 1;
+  loadOrders();
 };
 
 function updatePaginationInfo(total) {
@@ -145,34 +144,30 @@ window.changePage = function(delta) {
   const newPage = currentPage + delta;
   if (newPage < 1 || newPage > totalPages) return;
   currentPage = newPage;
-  filterOrdersClient();
+  loadOrders();
 };
 
 window.goToPage = function(page) {
   currentPage = parseInt(page) || 1;
-  filterOrdersClient();
+  loadOrders();
 };
 
-window.updateFilterCounts = function () {
-  if (!showingArchived) {
-    const elAll = document.getElementById('count-all');
-    const elPending = document.getElementById('count-pending');
-    const elReady = document.getElementById('count-ready');
-    const elShipped = document.getElementById('count-shipped');
-    const elUnpaid = document.getElementById('count-unpaid');
-
-    if (elAll) elAll.textContent = allOrdersData.length;
-    if (elPending) elPending.textContent = allOrdersData.filter(o => o.status === 'pending' && (o.paid || o.paidAmount > 0)).length;
-    if (elReady) elReady.textContent = allOrdersData.filter(o => o.status === 'ready').length;
-    if (elShipped) elShipped.textContent = allOrdersData.filter(o => o.status === 'shipped').length;
-    if (elUnpaid) elUnpaid.textContent = allOrdersData.filter(o => !o.paid && (!o.paidAmount || o.paidAmount === 0) && o.status !== 'shipped').length;
+window.updateFilterCounts = function (totalCount = 0) {
+  // Update the badge of the currently active tab
+  const activeTab = document.querySelector('.order-tab.active');
+  if (activeTab) {
+    const badge = activeTab.querySelector('.tab-badge');
+    if (badge) {
+      badge.textContent = totalCount;
+      badge.style.display = 'inline-block';
+    }
   }
 
-  // Show number only for active tab
-  document.querySelectorAll('.order-tab').forEach(tab => {
+  // Hide badges for inactive tabs
+  document.querySelectorAll('.order-tab:not(.active)').forEach(tab => {
     const badge = tab.querySelector('.tab-badge');
     if (badge) {
-      badge.style.display = tab.classList.contains('active') ? 'inline-block' : 'none';
+      badge.style.display = 'none';
     }
   });
 };

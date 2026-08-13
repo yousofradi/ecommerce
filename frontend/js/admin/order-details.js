@@ -19,17 +19,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.body.classList.add('is-loading');
 
   try {
-    const [order, shipping, settings, productsRes] = await Promise.all([
+    const [order, shipping, settings] = await Promise.all([
       api.getOrder(orderId),
       api.getShipping().catch(() => ({})),
-      api.getSetting('sundura_global_settings').catch(() => ({})),
-      api.getProducts(1, 1000, true).catch(() => [])
+      api.getSetting('sundura_global_settings').catch(() => ({}))
     ]);
 
     currentOrder = order;
     originalOrder = JSON.parse(JSON.stringify(order));
     shippingMap = shipping;
-    allProducts = Array.isArray(productsRes) ? productsRes : (productsRes.products || []);
+    allProducts = []; // Will be populated shortly
+
+    // Defer heavy product load to background
+    api.getProducts(1, 1000, true).then(productsRes => {
+      allProducts = Array.isArray(productsRes) ? productsRes : (productsRes.products || []);
+    }).catch(err => console.warn('Failed to load products for edit modal:', err));
 
     // Fallback if DB is empty
     if (Object.keys(shippingMap).length === 0) {

@@ -758,16 +758,79 @@ window.onload = function() {
 // GET /api/orders — list all
 router.get('/', adminAuth, async (req, res) => {
   try {
-    const { archived } = req.query;
+    const { archived, page, limit, status, search } = req.query;
     const query = {};
     if (archived === 'true') {
       query.archived = true;
     } else {
       query.archived = { $ne: true };
     }
-    const orders = await Order.find(query).sort({ createdAt: -1 });
-    res.json(orders);
+    
+    // Status filters based on UI tabs
+    if (status === 'pending') {
+      query.status = 'pending';
+      query.$or = [{ paid: true }, { paidAmount: { $gt: 0 } }];
+    } else if (status === 'ready') {
+      query.status = 'ready';
+    } else if (status === 'shipped') {
+      query.status = 'shipped';
+    } else if (status === 'unpaid') {
+      query.$or = [{ paid: false }, { paid: { $exists: false } }];
+      query.$and = [{ paidAmount: { $eq: 0 } }, { status: { $ne: 'shipped' } }];
+    }
+    
+    // Search
+    if (search) {
+      const searchRegex = new RegExp(search, 'i');
+      const orConditions = [
+        { orderId: searchRegex },
+        { 'customer.name': searchRegex },
+        { 'customer.phone': searchRegex }
+      ];
+      
+      if (query.$or && status !== 'pending') {
+        // If there's an existing $or, we need an $and to combine them
+        if (query.$and) {
+           query.$and.push({ $or: orConditions });
+        } else {
+           query.$and = [{ $or: query.$or }, { $or: orConditions }];
+           delete query.$or;
+        }
+      } else if (status === 'pending') {
+        // 'pending' already uses $or for paid/paidAmount, so use $and
+        query.$and = [{ $or: query.$or }, { $or: orConditions }];
+        delete query.$or;
+      } else {
+        query.$or = orConditions;
+      }
+    }
+    
+    if (page && limit) {
+      const pageNum = parseInt(page) || 1;
+      const limitNum = parseInt(limit) || 50;
+      const skip = (pageNum - 1) * limitNum;
+      
+      const orders = await Order.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNum);
+        
+      const totalCount = await Order.countDocuments(query);
+      const totalPages = Math.ceil(totalCount / limitNum);
+      
+      res.json({
+        orders,
+        totalPages,
+        totalCount,
+        currentPage: pageNum
+      });
+    } else {
+      // Backward compatibility for full fetch
+      const orders = await Order.find(query).sort({ createdAt: -1 });
+      res.json(orders);
+    }
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: 'Failed to fetch orders' });
   }
 });

@@ -111,7 +111,8 @@ const api = {
 
   // Abandoned Carts
   saveAbandonedCart(d) { return this._request('/abandoned-carts', { method: 'POST', body: JSON.stringify(d) }); },
-  getAbandonedCarts() { return this._request('/abandoned-carts', { admin: true }); },
+  getAbandonedCarts(page = 1, limit = 50) { return this._request(`/abandoned-carts?page=${page}&limit=${limit}`, { admin: true }); },
+  getDashboardStats() { return this._request('/stats/dashboard', { admin: true }); },
   deleteAbandonedCart(id) { return this._request(`/abandoned-carts/${id}`, { method: 'DELETE', admin: true }); },
   deleteAbandonedCartByToken(token) { return this._request(`/abandoned-carts/token/${token}`, { method: 'DELETE' }); },
   getPublicAbandonedCart(token) { return this._request(`/abandoned-carts/public/${token}`); },

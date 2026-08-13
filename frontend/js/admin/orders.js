@@ -8,6 +8,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 let allOrdersData = [];
 let currentFilter = 'all';
+let currentPage = 1;
+let currentLimit = 30;
+let totalPages = 1;
 
 async function loadOrders() {
   const tbody = document.getElementById('orders-tbody');
@@ -17,19 +20,50 @@ async function loadOrders() {
 
   tbody.innerHTML = '<tr><td colspan="10" class="text-center" style="padding:32px;"><div class="spinner"></div></td></tr>';
   try {
-    allOrdersData = await api.getOrders(showingArchived);
-    updateFilterCounts();
-    filterOrdersClient();
+    const searchInput = document.getElementById('order-search');
+    const query = searchInput ? searchInput.value.trim() : '';
+    
+    const ordersRes = await api.getOrders(showingArchived, currentPage, currentLimit, currentFilter, query);
+    
+    if (ordersRes && ordersRes.orders) {
+      allOrdersData = ordersRes.orders;
+      totalPages = ordersRes.totalPages || 1;
+      updateFilterCounts(ordersRes.totalCount || allOrdersData.length);
+      updatePaginationInfo(ordersRes.totalCount || allOrdersData.length);
+    } else {
+      allOrdersData = ordersRes || [];
+      totalPages = Math.ceil(allOrdersData.length / currentLimit) || 1;
+      updateFilterCounts(allOrdersData.length);
+      updatePaginationInfo(allOrdersData.length);
+    }
+    
+    renderOrders(allOrdersData);
   } catch (err) {
+    console.error(err);
     tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">فشل تحميل الطلبات</td></tr>';
   }
 }
 
 async function loadOrdersSilently() {
   try {
-    allOrdersData = await api.getOrders(showingArchived);
-    updateFilterCounts();
-    filterOrdersClient();
+    const searchInput = document.getElementById('order-search');
+    const query = searchInput ? searchInput.value.trim() : '';
+    
+    const ordersRes = await api.getOrders(showingArchived, currentPage, currentLimit, currentFilter, query);
+    
+    if (ordersRes && ordersRes.orders) {
+      allOrdersData = ordersRes.orders;
+      totalPages = ordersRes.totalPages || 1;
+      updateFilterCounts(ordersRes.totalCount || allOrdersData.length);
+      updatePaginationInfo(ordersRes.totalCount || allOrdersData.length);
+    } else {
+      allOrdersData = ordersRes || [];
+      totalPages = Math.ceil(allOrdersData.length / currentLimit) || 1;
+      updateFilterCounts(allOrdersData.length);
+      updatePaginationInfo(allOrdersData.length);
+    }
+    
+    renderOrders(allOrdersData);
   } catch (err) {
     console.warn('Auto-refresh failed silently (network issue or server offline):', err.message || err);
   }
@@ -40,6 +74,7 @@ setInterval(loadOrdersSilently, 30000);
 
 window.setFilter = function (filter) {
   currentFilter = filter;
+  currentPage = 1;
   document.querySelectorAll('.order-tab').forEach(el => el.classList.remove('active'));
   document.querySelector(`.order-tab[data-filter="${filter}"]`)?.classList.add('active');
 
@@ -56,51 +91,65 @@ window.setFilter = function (filter) {
       return;
     }
   }
-  updateFilterCounts();
-  filterOrdersClient();
+  loadOrders();
 };
 
 window.filterOrdersClient = function () {
-  const searchInput = document.getElementById('order-search');
-  const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
-  let filtered = allOrdersData;
-
-  if (currentFilter === 'pending') {
-    filtered = filtered.filter(o => o.status !== 'cancelled');
-  } else if (currentFilter === 'unpaid') {
-    filtered = filtered.filter(o => !o.paid && (o.totalPrice > (o.paidAmount || 0)));
-  }
-
-  if (query) {
-    filtered = filtered.filter(o =>
-      o.orderId.toLowerCase().includes(query) ||
-      (o.customer && o.customer.name && o.customer.name.toLowerCase().includes(query)) ||
-      (o.customer && o.customer.phone && o.customer.phone.includes(query))
-    );
-  }
-
-  renderOrders(filtered);
+  // We no longer filter client-side. A search input change should trigger a server load.
+  currentPage = 1;
+  loadOrders();
 };
 
-window.updateFilterCounts = function () {
-  if (!showingArchived) {
-    const elAll = document.getElementById('count-all');
-    const elPending = document.getElementById('count-pending');
-    const elUnpaid = document.getElementById('count-unpaid');
-
-    if (elAll) elAll.textContent = allOrdersData.length;
-    if (elPending) elPending.textContent = allOrdersData.filter(o => o.status !== 'cancelled').length;
-    if (elUnpaid) elUnpaid.textContent = allOrdersData.filter(o => !o.paid && (o.totalPrice > (o.paidAmount || 0))).length;
+window.updateFilterCounts = function (totalCount = 0) {
+  // Update the badge of the currently active tab
+  const activeTab = document.querySelector('.order-tab.active');
+  if (activeTab) {
+    const badge = activeTab.querySelector('.tab-badge');
+    if (badge) {
+      badge.textContent = totalCount;
+      badge.style.display = 'inline-block';
+    }
   }
 
-  // Show number only for active tab
-  document.querySelectorAll('.order-tab').forEach(tab => {
+  // Hide badges for inactive tabs
+  document.querySelectorAll('.order-tab:not(.active)').forEach(tab => {
     const badge = tab.querySelector('.tab-badge');
     if (badge) {
-      badge.style.display = tab.classList.contains('active') ? 'inline-block' : 'none';
+      badge.style.display = 'none';
     }
   });
 };
+
+window.changePage = function(delta) {
+  const newPage = currentPage + delta;
+  if (newPage < 1 || newPage > totalPages) return;
+  currentPage = newPage;
+  loadOrders();
+};
+
+window.goToPage = function(page) {
+  currentPage = parseInt(page) || 1;
+  loadOrders();
+};
+
+function updatePaginationInfo(total) {
+  const infoEl = document.getElementById('pagination-info');
+  const pageDropdown = document.getElementById('page-dropdown');
+  const prevBtn = document.getElementById('prev-page');
+  const nextBtn = document.getElementById('next-page');
+
+  if (infoEl) infoEl.textContent = total.toString();
+  if (prevBtn) prevBtn.disabled = currentPage <= 1;
+  if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
+
+  if (pageDropdown) {
+    let optionsHtml = '';
+    for (let i = 1; i <= totalPages; i++) {
+      optionsHtml += `<option value="${i}" ${i === currentPage ? 'selected' : ''}>${i}</option>`;
+    }
+    pageDropdown.innerHTML = optionsHtml;
+  }
+}
 
 function renderOrders(orders) {
   const tbody = document.getElementById('orders-tbody');

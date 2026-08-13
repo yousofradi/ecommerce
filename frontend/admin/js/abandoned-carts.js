@@ -21,8 +21,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function loadAbandonedCarts() {
   const tbody = document.getElementById('carts-tbody');
   try {
-    const carts = await api.getAbandonedCarts();
-    allCarts = carts || [];
+    const res = await api.getAbandonedCarts();
+    allCarts = res.carts || res || [];
     renderCarts(allCarts);
   } catch (err) {
     console.error('Failed to load abandoned carts:', err);

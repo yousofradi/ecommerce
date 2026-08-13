@@ -157,6 +157,8 @@ const api = {
   },
 
   // Customers
+  getAbandonedCarts(page = 1, limit = 50) { return this._request(`/abandoned-carts?page=${page}&limit=${limit}`, { admin: true }); },
+  getDashboardStats() { return this._request('/stats/dashboard', { admin: true }); },
   getCustomers() { return this._request('/customers', { admin: true }); },
   getCustomer(phone) { return this._request(`/customers/${phone}`, { admin: true }); },
   updateCustomer(phone, d) { return this._request(`/customers/${phone}`, { method: 'PUT', body: JSON.stringify(d), admin: true }); },

@@ -251,8 +251,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function recoverAbandonedCart(cartId) {
   try {
-    const carts = await api.getAbandonedCarts();
-    const cart = (carts || []).find(c => c._id === cartId);
+    let cart = null;
+    let page = 1;
+    let limit = 50;
+    while (!cart && page <= 10) {
+      const res = await api.getAbandonedCarts(page, limit);
+      const carts = res.carts || res || [];
+      cart = carts.find(c => c._id === cartId);
+      if (cart || carts.length < limit) break;
+      page++;
+    }
+
     if (!cart) {
       showToast('السلة المتروكة غير موجودة أو تم حذفها', 'error');
       return;

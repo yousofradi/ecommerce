@@ -62,6 +62,7 @@ app.use('/api/gift-collections', require('./routes/giftCollections'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/abandoned-carts', require('./routes/abandonedCarts'));
 app.use('/api/visitors', require('./routes/visitors'));
+app.use('/api/stats', require('./routes/stats'));
 
 // Serve static uploads with long cache
 app.use('/uploads', express.static('uploads', {

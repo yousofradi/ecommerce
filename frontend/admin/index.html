@@ -249,62 +249,28 @@
       if (!requireAdmin()) return;
       try {
         // Fetch products, active orders, archived orders, and visitors in parallel
-        const [products, activeOrders, archivedOrders, visitors] = await Promise.all([
-          api.getProducts(),
-          api.getOrders(false),
-          api.getOrders(true),
-          api.getVisitors()
-        ]);
+        const statsRes = await api.getDashboardStats();
 
-        const allOrders = [...activeOrders, ...archivedOrders];
+        // ── GROWTH HELPERS ──
+        function getGrowthPct(cur, prev, defaultVal) {
+          if (!prev || prev === 0) {
+            return cur > 0 ? defaultVal : 0;
+          }
+          return Math.round(((cur - prev) / prev) * 100);
+        }
 
-        const now = new Date();
-        const currentMonth = now.getMonth();
-        const currentYear = now.getFullYear();
+        const mCurrent = statsRes.metrics.current;
+        const mPrev = statsRes.metrics.previous;
 
-        // 1. ALL orders for current month
-        const allMonthOrders = allOrders.filter(o => {
-          if (!o.createdAt) return false;
-          const d = new Date(o.createdAt);
-          return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-        });
+        const curRevenue = mCurrent.revenue;
+        const curProductsSold = mCurrent.productsSold;
+        const curOrdersCount = mCurrent.ordersCount;
+        const curAOV = mCurrent.aov;
 
-        // Filter paid orders for current month
-        const monthOrders = allMonthOrders.filter(o => (o.paid || Number(o.paidAmount) > 0));
-
-        // 2. Filter orders for previous month to calculate growth
-        const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-        const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
-        const prevMonthOrders = allOrders.filter(o => {
-          if (!o.createdAt || !(o.paid || Number(o.paidAmount) > 0)) return false;
-          const d = new Date(o.createdAt);
-          return d.getMonth() === prevMonth && d.getFullYear() === prevYear;
-        });
-
-        // ── CALCULATIONS FOR CURRENT MONTH ──
-        // Total Sales (all paid orders in month, without shipping fees)
-        const curRevenue = monthOrders.reduce((sum, o) => sum + Math.max(0, (o.totalPrice || 0) - (o.shippingFee || 0)), 0);
-        
-        // Total Products Sold in month (excluding cancelled)
-        const curProductsSold = monthOrders.reduce((sum, o) => {
-          if (o.status === 'cancelled') return sum;
-          return sum + (o.items || []).reduce((s, item) => s + (Number(item.quantity) || 0), 0);
-        }, 0);
-
-        // Total Orders placed in month
-        const curOrdersCount = monthOrders.length;
-
-        // Average Order Value in month
-        const curAOV = curOrdersCount > 0 ? (curRevenue / curOrdersCount) : 0;
-
-        // ── CALCULATIONS FOR PREVIOUS MONTH ──
-        const prevRevenue = prevMonthOrders.reduce((sum, o) => sum + Math.max(0, (o.totalPrice || 0) - (o.shippingFee || 0)), 0);
-        const prevProductsSold = prevMonthOrders.reduce((sum, o) => {
-          if (o.status === 'cancelled') return sum;
-          return sum + (o.items || []).reduce((s, item) => s + (Number(item.quantity) || 0), 0);
-        }, 0);
-        const prevOrdersCount = prevMonthOrders.length;
-        const prevAOV = prevOrdersCount > 0 ? (prevRevenue / prevOrdersCount) : 0;
+        const prevRevenue = mPrev.revenue;
+        const prevProductsSold = mPrev.productsSold;
+        const prevOrdersCount = mPrev.ordersCount;
+        const prevAOV = mPrev.aov;
 
         // Growth helper (falls back to screenshot values if previous is 0/absent)
         function getGrowthPct(cur, prev, defaultVal) {
@@ -331,21 +297,15 @@
         document.getElementById('stat-aov').textContent = formatPrice(curAOV);
 
         // ── VISITORS ──
-        const curMonthStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
-        const curVisitorObj = visitors.find(v => v.month === curMonthStr);
-        const curVisitorCount = curVisitorObj ? curVisitorObj.count : 0;
-        document.getElementById('stat-visitors').textContent = curVisitorCount.toLocaleString('ar-EG');
+        document.getElementById('stat-visitors').textContent = statsRes.visitors.toLocaleString('ar-EG');
 
 
         // ── ORDER STATUS BREAKDOWN ──
-        const confirmedOrders = monthOrders.filter(o => o.status !== 'cancelled');
-        const cancelledOrders = allMonthOrders.filter(o => o.status === 'cancelled');
-
-        const confirmedCount = confirmedOrders.length;
-        const confirmedValue = confirmedOrders.reduce((sum, o) => sum + Math.max(0, (o.totalPrice || 0) - (o.shippingFee || 0)), 0);
-
-        const cancelledCount = cancelledOrders.length;
-        const cancelledValue = cancelledOrders.reduce((sum, o) => sum + Math.max(0, (o.totalPrice || 0) - (o.shippingFee || 0)), 0);
+        const sBreak = statsRes.statusBreakdown;
+        const confirmedCount = sBreak.confirmed.count;
+        const confirmedValue = sBreak.confirmed.value;
+        const cancelledCount = sBreak.cancelled.count;
+        const cancelledValue = sBreak.cancelled.value;
 
         document.getElementById('status-confirmed-count').textContent = confirmedCount;
         document.getElementById('status-confirmed-value').textContent = formatPrice(confirmedValue);
@@ -353,60 +313,19 @@
         document.getElementById('status-cancelled-count').textContent = cancelledCount;
         document.getElementById('status-cancelled-value').textContent = formatPrice(cancelledValue);
 
-        document.getElementById('status-total-count').textContent = confirmedCount + cancelledCount;
-        document.getElementById('status-total-value').textContent = formatPrice(confirmedValue + cancelledValue);
+        document.getElementById('status-total-count').textContent = confirmedCount;
+        document.getElementById('status-total-value').textContent = formatPrice(confirmedValue);
 
         // ── BEST SELLERS CALCULATION ──
-        const productMap = {};
-        products.forEach(p => { productMap[p._id] = p; });
-
-        const productSales = {};
-        monthOrders.forEach(o => {
-          if (o.status === 'cancelled') return; // exclude cancelled orders
-          if (o.items && Array.isArray(o.items)) {
-            o.items.forEach(item => {
-              const pId = (item.name || 'منتج غير معروف').trim();
-              if (!pId) return;
-
-              const qty = Number(item.quantity) || 0;
-              const price = Number(item.unitPrice) || Number(item.price) || Number(item.basePrice) || 0;
-              const lineTotal = item.finalPrice !== undefined ? Number(item.finalPrice) : (price * qty);
-
-              if (!productSales[pId]) {
-                productSales[pId] = {
-                  name: item.name || 'منتج غير معروف',
-                  image: item.image || (item.images && item.images.length > 0 ? item.images[0] : item.imageUrl) || '',
-                  quantitySold: 0,
-                  revenue: 0,
-                  optionsList: new Set()
-                };
-              }
-
-              productSales[pId].quantitySold += qty;
-              productSales[pId].revenue += lineTotal;
-
-              if (item.selectedOptions && Array.isArray(item.selectedOptions) && item.selectedOptions.length > 0) {
-                const optFormatted = item.selectedOptions.map(opt => opt.label || opt.value || '').filter(Boolean).join(' / ');
-                if (optFormatted) {
-                  productSales[pId].optionsList.add(optFormatted);
-                }
-              }
-            });
-          }
-        });
-
-        const bestSellers = Object.entries(productSales).map(([id, info]) => {
-          const dbProduct = products.find(p => p.name === id);
-          const finalImg = info.image || (dbProduct ? (dbProduct.images?.[0] || dbProduct.imageUrl) : '') || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2Y1ZjVmNSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
-          const optionsText = info.optionsList.size > 0 ? Array.from(info.optionsList).join(', ') : '';
+        const bestSellers = statsRes.bestSellers.slice(0, 4).map(info => {
           return {
             name: info.name,
-            img: finalImg,
+            img: info.image || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2Y1ZjVmNSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==',
             sold: info.quantitySold,
             rev: info.revenue,
-            optionsText: optionsText
+            optionsText: ''
           };
-        }).sort((a, b) => b.sold - a.sold).slice(0, 4); // Only show top 4 different products
+        });
 
         const bestSellersContainer = document.getElementById('best-sellers-container');
         if (bestSellers.length === 0) {
