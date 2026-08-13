@@ -5,10 +5,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const content = document.getElementById('home-content');
 
   try {
-    const [products, collections] = await Promise.all([
+    let [productsRes, collections] = await Promise.all([
       api.getProducts(1, 500, false),
       api.getCollections()
     ]);
+    
+    const products = productsRes.products || productsRes;
 
     // Try to load homepage config
     let sections = [];

@@ -454,7 +454,8 @@ window.addProductToCart = function() {
 
 async function loadRelatedProducts(colId, currentId) {
   try {
-    const products = await api.getProductsByCollection(colId, 10);
+    const res = await api.getProductsByCollection(colId, 10);
+    const products = res.products || res;
     const related = products.filter(p => p._id !== currentId).slice(0, 5);
     if (related.length > 0) {
       const container = document.getElementById('related-products-container');
