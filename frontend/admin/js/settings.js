@@ -272,4 +272,37 @@ async function clearSystemCache() {
   }
 }
 
+async function migrateImagesToR2() {
+  const btn = document.getElementById('migrate-r2-btn');
+  if (!btn) return;
+
+  const confirmed = await window.showConfirmModal(
+    'نقل الصور إلى Cloudflare R2',
+    'هل تريد نقل كافة الصور من Cloudinary أو التخزين القديم إلى Cloudflare R2 وتحديث روابط المنتجات والأقسام في قاعدة البيانات تلقائياً؟'
+  );
+  if (!confirmed) return;
+
+  try {
+    btn.disabled = true;
+    btn.textContent = 'جاري نقل الصور... (يرجى الانتظار)';
+
+    const res = await api.migrateImagesToR2();
+    if (res.success) {
+      const stats = res.stats || {};
+      const msg = `تم النقل بنجاح! تم نقل ${stats.migrated || 0} صورة جديدة إلى R2 (وتخطي ${stats.skippedAlreadyR2 || 0} صورة كانت منقولة بالفعل).`;
+      showToast(msg, 'success');
+      alert(msg);
+    } else {
+      throw new Error(res.error || 'فشلت عملية النقل');
+    }
+  } catch (err) {
+    showToast(err.message || 'فشلت عملية النقل', 'error');
+    alert('خطأ أثناء النقل: ' + (err.message || 'فشلت العملية'));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'بدء نقل الصور إلى Cloudflare R2';
+  }
+}
+
 window.clearSystemCache = clearSystemCache;
+window.migrateImagesToR2 = migrateImagesToR2;

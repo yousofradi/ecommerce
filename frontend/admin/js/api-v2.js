@@ -268,6 +268,13 @@ const api = {
     });
   },
 
+  migrateImagesToR2() {
+    return this._request('/upload/migrate-to-r2', {
+      method: 'POST',
+      admin: true
+    });
+  },
+
   async markOrdersShippedBatch(orderIds) {
     return await this._request('/orders/ship/batch', {
       method: 'POST',

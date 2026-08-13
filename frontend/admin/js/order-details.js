@@ -1742,6 +1742,9 @@ window.saveTransferInfo = async function(btn) {
     } else if (pendingTransferScreenshotFile) {
       const formData = new FormData();
       formData.append('image', pendingTransferScreenshotFile);
+      if (typeof currentOrder !== 'undefined' && currentOrder && currentOrder.orderId) {
+        formData.append('prefix', currentOrder.orderId);
+      }
       const uploadRes = await fetch(`${typeof API_BASE !== 'undefined' ? API_BASE : ''}/upload/public`, {
         method: 'POST',
         body: formData

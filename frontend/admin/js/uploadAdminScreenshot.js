@@ -11,6 +11,9 @@ async function uploadAdminScreenshot(input) {
   try {
     const formData = new FormData();
     formData.append('image', file);
+    if (typeof currentOrder !== 'undefined' && currentOrder && currentOrder.orderId) {
+      formData.append('prefix', currentOrder.orderId);
+    }
     
     // 1. Upload to public endpoint
     const uploadRes = await fetch(`${API_BASE}/upload/public`, {

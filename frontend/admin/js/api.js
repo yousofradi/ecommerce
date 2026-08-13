@@ -165,6 +165,13 @@ const api = {
     return res;
   },
 
+  migrateImagesToR2() {
+    return this._request('/upload/migrate-to-r2', {
+      method: 'POST',
+      admin: true
+    });
+  },
+
   // Auth check
   async checkAdmin() {
     try { await this._request('/orders', { admin: true }); return true; }

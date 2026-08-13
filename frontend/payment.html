@@ -184,6 +184,9 @@
         if (file) {
           const formData = new FormData();
           formData.append('image', file);
+          if (currentOrder && currentOrder.orderId) {
+            formData.append('prefix', currentOrder.orderId);
+          }
           const uploadRes = await fetch(`${API_BASE}/upload/public`, {
             method: 'POST',
             body: formData
