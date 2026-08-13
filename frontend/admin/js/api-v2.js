@@ -136,7 +136,14 @@ const api = {
 
   // Orders
   createOrder(d) { return this._request('/orders', { method: 'POST', body: JSON.stringify(d) }); },
-  getOrders(archived = false) { return this._request(`/orders?archived=${archived}`, { admin: true }); },
+  getOrders(archived = false, page = 1, limit = 50, status = 'all', search = '') {
+    let url = `/orders?archived=${archived}`;
+    if (page) url += `&page=${page}`;
+    if (limit) url += `&limit=${limit}`;
+    if (status && status !== 'all') url += `&status=${status}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    return this._request(url, { admin: true });
+  },
   getOrder(id) { return this._request(`/orders/${id}`, { admin: true }); },
   getOrderPromotion(id) { return this._request(`/orders/${id}/promotion`, { admin: true }); },
   updateOrder(id, d) { return this._request(`/orders/${id}`, { method: 'PUT', body: JSON.stringify(d), admin: true }); },
