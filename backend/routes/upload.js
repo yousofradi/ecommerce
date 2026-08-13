@@ -185,7 +185,8 @@ router.post('/migrate-to-r2', adminAuth, async (req, res) => {
       let originalName = path.basename(cleanUrl.split('?')[0]) || 'migrated-image.jpg';
 
       if (cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://')) {
-        const response = await fetch(cleanUrl);
+        const fetchSignal = typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(10000) : undefined;
+        const response = await fetch(cleanUrl, { signal: fetchSignal });
         if (!response.ok) throw new Error(`HTTP ${response.status} fetching ${cleanUrl}`);
         const arrayBuffer = await response.arrayBuffer();
         imageBuffer = Buffer.from(arrayBuffer);

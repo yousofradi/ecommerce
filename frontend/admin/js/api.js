@@ -42,8 +42,9 @@ const api = {
   _adminKey() { return localStorage.getItem('adminKey') || ''; },
 
   async _request(path, opts = {}) {
+    const timeoutMs = typeof opts.timeout === 'number' ? opts.timeout : 15000;
     const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), 15000); // 15s timeout
+    const id = timeoutMs > 0 ? setTimeout(() => controller.abort(), timeoutMs) : null;
 
     const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
     if (opts.admin) headers['x-admin-key'] = this._adminKey();
@@ -60,7 +61,7 @@ const api = {
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
       return data;
     } finally {
-      clearTimeout(id);
+      if (id) clearTimeout(id);
     }
   },
 
@@ -168,7 +169,8 @@ const api = {
   migrateImagesToR2() {
     return this._request('/upload/migrate-to-r2', {
       method: 'POST',
-      admin: true
+      admin: true,
+      timeout: 600000
     });
   },
 
