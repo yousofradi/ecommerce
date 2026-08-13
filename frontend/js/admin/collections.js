@@ -17,28 +17,34 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function loadCollections() {
   const list = document.getElementById('collections-list');
   try {
-    const [cols, productsRes] = await Promise.all([
-      api.getCollections(),
-      api.getProducts(1, 1000, true) // Fetch many products to get accurate counts
-    ]);
-    
-    const products = (Array.isArray(productsRes) ? productsRes : productsRes.products || []).filter(p => p.status !== 'draft');
-    const counts = {};
-    products.forEach(p => {
-      if (p.collectionId) {
-        counts[p.collectionId] = (counts[p.collectionId] || 0) + 1;
-      }
-      if (Array.isArray(p.collectionIds)) {
-        p.collectionIds.forEach(cid => {
-          counts[cid] = (counts[cid] || 0) + 1;
-        });
-      }
-    });
+    const cols = await api.getCollections();
 
     if (!cols.length) {
       list.innerHTML = '<div style="padding:40px;text-align:center;color:#666">لا توجد تصنيفات بعد</div>';
       return;
     }
+
+    // Background fetch to calculate product counts
+    api.getProducts(1, 1000, true).then(productsRes => {
+      const products = (Array.isArray(productsRes) ? productsRes : productsRes.products || []).filter(p => p.status !== 'draft');
+      const counts = {};
+      products.forEach(p => {
+        if (p.collectionId) {
+          counts[p.collectionId] = (counts[p.collectionId] || 0) + 1;
+        }
+        if (Array.isArray(p.collectionIds)) {
+          p.collectionIds.forEach(cid => {
+            counts[cid] = (counts[cid] || 0) + 1;
+          });
+        }
+      });
+      cols.forEach(c => {
+        const countBadge = document.getElementById(`count-badge-${c._id}`);
+        if (countBadge) {
+          countBadge.textContent = `${counts[c._id] || 0} منتجات`;
+        }
+      });
+    }).catch(console.error);
 
     list.innerHTML = cols.map(c => `
       <div class="collection-row" data-name="${c.name.toLowerCase()}" style="grid-template-columns: 40px 60px 1fr 100px 100px;" onclick="if(!event.target.closest('.action-menu') && !event.target.closest('.action-dropdown') && !event.target.closest('input[type=checkbox]')) window.location.href='collection-form?id=${c._id}'">

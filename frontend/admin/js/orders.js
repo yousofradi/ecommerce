@@ -658,6 +658,9 @@ window.shipOrders = async function () {
     btn.disabled = true;
   }
 
+  // Yield main thread so the browser can paint the spinner before freezing
+  await new Promise(r => setTimeout(r, 50));
+
   try {
     if (typeof ExcelJS === 'undefined') {
       throw new Error('مكتبة ExcelJS لم يتم تحميلها بشكل صحيح');
@@ -700,7 +703,8 @@ window.shipOrders = async function () {
     }
 
     let rowIdx = 2;
-    ordersToShip.forEach(o => {
+    for (let i = 0; i < ordersToShip.length; i++) {
+      const o = ordersToShip[i];
       const row = sheet.getRow(rowIdx);
 
       let remainingAmount = Math.max(0, o.totalPrice - (o.paidAmount || 0));
@@ -731,7 +735,12 @@ window.shipOrders = async function () {
       if (colMap['HasPOD']) row.getCell(colMap['HasPOD']).value = "no";
       
       rowIdx++;
-    });
+      
+      // Yield every 25 rows to keep the browser responsive
+      if (i % 25 === 0) {
+        await new Promise(r => setTimeout(r, 0));
+      }
+    }
 
     const finalBuffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([finalBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });

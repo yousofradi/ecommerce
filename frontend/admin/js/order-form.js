@@ -83,22 +83,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.body.classList.add('is-loading');
 
   try {
-    const [productsRes, shippingRes, settings, customersRes, collectionsRes, shippingOptionsRes] = await Promise.all([
-      api.getProducts(1, 1000, true).catch(() => []),
-      api.getShippingList().catch(() => []),
+    const [settings, shippingOptionsRes, collectionsRes] = await Promise.all([
       api.getSetting('sundura_global_settings').catch(() => ({})),
-      api.getCustomers().catch(() => []),
-      api.getCollections().catch(() => []),
-      api.getSetting('shipping_options').catch(() => [])
+      api.getSetting('shipping_options').catch(() => []),
+      api.getCollections().catch(() => [])
     ]);
 
-    const products = (productsRes.products || productsRes).filter(p => p.status !== 'draft');
-    allCustomers = customersRes || [];
-    let shipping = shippingRes;
     window._globalSettings = settings || {};
     window._shippingOptions = shippingOptionsRes || [];
-
-    allProducts = products;
 
     // Populate Collections Map and Modal Dropdown
     const colFilter = document.getElementById('modal-col-filter');
@@ -109,7 +101,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         colFilter.add(new Option(c.name, c._id));
       });
     }
-    window._fullShippingData = shipping; // Store full objects
+
+    // Background fetch heavy payloads
+    Promise.all([
+      api.getProducts(1, 1000, true).catch(() => []),
+      api.getShippingList().catch(() => []),
+      api.getCustomers().catch(() => [])
+    ]).then(([productsRes, shippingRes, customersRes]) => {
+      const products = (productsRes.products || productsRes).filter(p => p.status !== 'draft');
+      allProducts = products;
+      allCustomers = customersRes || [];
+      window._fullShippingData = shippingRes;
+      renderProductsModal(); // Ensure modal is ready with products
+    });
 
     const carrierSelect = document.getElementById('c-carrier');
     if (carrierSelect && window._shippingOptions && window._shippingOptions.length > 0) {

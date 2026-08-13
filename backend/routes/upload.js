@@ -17,9 +17,9 @@ const GiftCollection = require('../models/GiftCollection');
 // ── Storage Configuration ────────────────────────────────
 
 // Check for Cloudinary credentials
-const isCloudinaryConfigured = process.env.CLOUDINARY_CLOUD_NAME && 
-                               process.env.CLOUDINARY_API_KEY && 
-                               process.env.CLOUDINARY_API_SECRET;
+const isCloudinaryConfigured = process.env.CLOUDINARY_CLOUD_NAME &&
+  process.env.CLOUDINARY_API_KEY &&
+  process.env.CLOUDINARY_API_SECRET;
 
 let storage;
 
@@ -64,7 +64,7 @@ if (isR2Configured) {
   console.log('⚠️ Upload: Cloudinary and R2 not configured, using local disk storage');
 }
 
-const upload = multer({ 
+const upload = multer({
   storage: storage,
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
@@ -77,7 +77,7 @@ router.post('/', adminAuth, upload.single('image'), async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
-    
+
     let imageUrl = '';
     let filename = '';
 
@@ -89,7 +89,7 @@ router.post('/', adminAuth, upload.single('image'), async (req, res) => {
     } else {
       imageUrl = req.file.path || req.file.secure_url || req.file.url;
       filename = req.file.filename || req.file.public_id;
-      
+
       if (isCloudinaryConfigured) {
         const { optimizeCloudinaryUrl } = require('../utils/cloudinary');
         if (typeof imageUrl === 'string') {
@@ -103,7 +103,7 @@ router.post('/', adminAuth, upload.single('image'), async (req, res) => {
         imageUrl = `${finalProtocol}://${host}/uploads/${req.file.filename}`;
       }
     }
-    
+
     res.json({ url: imageUrl, filename });
   } catch (err) {
     res.status(500).json({ error: 'Upload failed: ' + err.message });
@@ -116,7 +116,7 @@ router.post('/public', upload.single('image'), async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
-    
+
     let imageUrl = '';
     let filename = '';
 
@@ -128,7 +128,7 @@ router.post('/public', upload.single('image'), async (req, res) => {
     } else {
       imageUrl = req.file.path || req.file.secure_url || req.file.url;
       filename = req.file.filename || req.file.public_id;
-      
+
       if (isCloudinaryConfigured) {
         const { optimizeCloudinaryUrl } = require('../utils/cloudinary');
         if (typeof imageUrl === 'string') {
@@ -142,7 +142,7 @@ router.post('/public', upload.single('image'), async (req, res) => {
         imageUrl = `${finalProtocol}://${host}/uploads/${req.file.filename}`;
       }
     }
-    
+
     res.json({ url: imageUrl, filename });
   } catch (err) {
     res.status(500).json({ error: 'Upload failed: ' + err.message });
@@ -301,7 +301,7 @@ router.all('/migrate-to-r2', adminAuth, async (req, res) => {
           }
         }
       }
-    } catch (_) {}
+    } catch (_) { }
 
     // 6. Gift Collections
     try {
@@ -316,7 +316,7 @@ router.all('/migrate-to-r2', adminAuth, async (req, res) => {
           }
         }
       }
-    } catch (_) {}
+    } catch (_) { }
 
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     res.send(JSON.stringify({

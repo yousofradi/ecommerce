@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   try {
     const [products, collections] = await Promise.all([
-      api.getProducts(null, null, false),
+      api.getProducts(1, 500, false),
       api.getCollections()
     ]);
 

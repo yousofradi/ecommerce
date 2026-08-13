@@ -11,15 +11,31 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.body.classList.add('is-loading');
 
   try {
-    const [productsRes, shippingRes, settings, collectionsRes] = await Promise.all([
-      api.getProducts(1, 1000, true).catch(() => []),
-      api.getShipping().catch(() => ({})),
+    const [settings, collectionsRes] = await Promise.all([
       api.getSetting('sundura_global_settings').catch(() => ({})),
       api.getCollections().catch(() => [])
     ]);
 
-    const products = (productsRes.products || productsRes).filter(p => p.status !== 'draft');
-    let shipping = shippingRes;
+    // Background fetch heavy payloads
+    Promise.all([
+      api.getProducts(1, 1000, true).catch(() => []),
+      api.getShipping().catch(() => ({}))
+    ]).then(([productsRes, shippingRes]) => {
+      allProducts = (productsRes.products || productsRes).filter(p => p.status !== 'draft');
+      let shipping = shippingRes;
+      if (Object.keys(shipping).length === 0) {
+        shipping = { 'Cairo': 45, 'Giza': 45, 'Alexandria': 55 };
+      }
+      shippingMap = shipping;
+      const govSelect = document.getElementById('c-gov');
+      if (govSelect) {
+        Object.keys(shippingMap).forEach(gov => {
+          govSelect.add(new Option(gov, gov));
+        });
+      }
+    });
+
+    let shipping = {};
 
     // Fallback if DB is empty
     if (Object.keys(shipping).length === 0) {

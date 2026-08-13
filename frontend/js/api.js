@@ -72,8 +72,10 @@ const api = {
   searchProducts(query) {
     return this._request(`/products?admin=false&search=${encodeURIComponent(query)}`);
   },
-  getProductsByCollection(collectionId) {
-    return this._request(`/products?collectionId=${collectionId}`);
+  getProductsByCollection(collectionId, limit = 0) {
+    let url = `/products?collectionId=${collectionId}`;
+    if (limit > 0) url += `&limit=${limit}`;
+    return this._request(url);
   },
   getProduct(id) { return this._request(`/products/${id}`); },
   getProductByHandle(handle) { return this._request(`/products/handle/${handle}`); },

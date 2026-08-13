@@ -47,10 +47,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function loadCollections() {
   const list = document.getElementById('collections-list');
   try {
-    const [cols, productsRes] = await Promise.all([
-      api.getCollections(),
-      api.getProducts(1, 1000, true) // Fetch many products to get accurate counts
-    ]);
+    const cols = await api.getCollections();
     
     allCollectionsData = cols;
     
@@ -58,6 +55,21 @@ async function loadCollections() {
       list.innerHTML = '<div style="padding:40px;text-align:center;color:#666">لا توجد تصنيفات بعد</div>';
       return;
     }
+
+    // Background fetch to calculate product counts
+    api.getProducts(1, 1000, true).then(productsRes => {
+      const prods = (productsRes.products || productsRes).filter(p => p.status !== 'draft');
+      cols.forEach(c => {
+        const countBadge = document.getElementById(`count-badge-${c._id}`);
+        if (countBadge) {
+          const count = prods.filter(p => {
+            const cIds = (p.collectionIds || []).map(id => id.toString());
+            return cIds.includes(c._id.toString()) || (p.collectionId && p.collectionId.toString() === c._id.toString());
+          }).length;
+          countBadge.textContent = `${count} منتجات`;
+        }
+      });
+    }).catch(console.error);
 
     list.innerHTML = cols.map(c => `
       <div class="collection-row" data-id="${c._id}" data-name="${c.name.toLowerCase()}" style="grid-template-columns: 30px 40px 60px 1fr 60px; gap: 8px;" onclick="if(!event.target.closest('.action-menu') && !event.target.closest('.action-dropdown') && !event.target.closest('input[type=checkbox]') && !event.target.closest('.drag-handle')) window.location.href='collection-form?id=${c._id}'">

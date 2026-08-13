@@ -16,19 +16,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.body.classList.add('is-loading');
   try {
-    await loadAllProducts();
+    const productsPromise = loadAllProducts();
 
     if (collectionId) {
       document.title = 'تعديل التصنيف — Admin';
       const formTitle = document.getElementById('form-page-title');
       if (formTitle) formTitle.textContent = 'تعديل التصنيف';
       await loadCollection(collectionId);
+      productsPromise.then(() => {
+        if (originalCollection) populateCollectionForm(originalCollection);
+      });
     } else {
       document.title = 'إضافة تصنيف — Admin';
       const formTitle = document.getElementById('form-page-title');
       if (formTitle) formTitle.textContent = 'إضافة تصنيف';
       originalCollection = null;
       populateCollectionForm(null);
+      productsPromise.then(() => {
+        populateCollectionForm(null);
+      });
     }
   } catch (err) {
     console.error('Error loading collection form:', err);

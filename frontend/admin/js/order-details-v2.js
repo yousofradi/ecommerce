@@ -114,20 +114,27 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.body.classList.add('is-loading');
 
   try {
-    const [order, shipping, settings, shippingOptions, productsRes] = await Promise.all([
+    const [order, settings, shippingOptions] = await Promise.all([
       api.getOrder(orderId),
-      api.getShippingList().catch(() => []),
       api.getSetting('sundura_global_settings').catch(() => ({})),
-      api.getSetting('shipping_options').catch(() => []),
-      api.getProducts(1, 1000, true).catch(() => [])
+      api.getSetting('shipping_options').catch(() => [])
     ]);
 
     currentOrder = order;
     originalOrder = JSON.parse(JSON.stringify(order));
-    window._fullShippingData = shipping;
     window._globalSettings = settings || {};
     window._shippingOptions = shippingOptions || [];
-    allProducts = Array.isArray(productsRes) ? productsRes : (productsRes.products || []);
+
+    // Background fetch heavy payloads
+    Promise.all([
+      api.getShippingList().catch(() => []),
+      api.getProducts(1, 1000, true).catch(() => [])
+    ]).then(([shipping, productsRes]) => {
+      window._fullShippingData = shipping;
+      allProducts = Array.isArray(productsRes) ? productsRes : (productsRes.products || []);
+      // Re-render items in case stock indicators or variant images need to be updated
+      renderItems();
+    });
 
     if (currentOrder.appliedPromotionName || currentOrder.appliedPromotionId) {
       try {
