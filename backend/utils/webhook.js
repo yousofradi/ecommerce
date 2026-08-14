@@ -166,55 +166,25 @@ ${remainingText}
             }
             const whatsappLink = `https://api.whatsapp.com/send?phone=${cleanCustomerPhone}&text=${encodeURIComponent(customerMessage)}`;
 
-            // 3. Shorten the Link using is.gd first, then TinyURL
+            // 3. Shorten the Link using Sundura API
             let shortLink = whatsappLink;
             try {
-              let response = await this.helpers.httpRequest({
+              const shortenRes = await fetch('https://url.sundura.workers.dev/api/shorten', {
                 method: 'POST',
-                url: 'https://is.gd/create.php',
-                body: new URLSearchParams({
-                  format: 'simple',
-                  url: whatsappLink,
-                }).toString(),
-                headers: {
-                  'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                timeout: 8000,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: whatsappLink }),
+                signal: AbortSignal.timeout(8000)
               });
-
-              if (response && response.trim() && !response.toLowerCase().includes('error')) {
-                shortLink = response.trim();
-              } else {
-                // Fallback to TinyURL
-                response = await this.helpers.httpRequest({
-                  method: 'GET',
-                  url: 'https://tinyurl.com/api-create.php',
-                  qs: {
-                    url: whatsappLink,
-                  },
-                  timeout: 8000,
-                });
-                if (response && response.trim() && !response.toLowerCase().includes('error')) {
-                  shortLink = response.trim();
+              if (shortenRes.ok) {
+                const shortenData = await shortenRes.json();
+                if (shortenData && shortenData.shortUrl) {
+                  shortLink = shortenData.shortUrl;
                 }
+              } else {
+                console.warn('[WhatsApp] Sundura URL shortener returned status:', shortenRes.status);
               }
             } catch (error) {
-              console.warn('[WhatsApp] is.gd failed, trying TinyURL:', error.message);
-              try {
-                const fallbackResponse = await this.helpers.httpRequest({
-                  method: 'GET',
-                  url: 'https://tinyurl.com/api-create.php',
-                  qs: {
-                    url: whatsappLink,
-                  },
-                  timeout: 8000,
-                });
-                if (fallbackResponse && fallbackResponse.trim() && !fallbackResponse.toLowerCase().includes('error')) {
-                  shortLink = fallbackResponse.trim();
-                }
-              } catch (fallbackError) {
-                console.warn('[WhatsApp] Both link shortenings failed:', fallbackError.message);
-              }
+              console.warn('[WhatsApp] Sundura link shortening failed:', error.message);
             }
 
             // 4. Prepare Owner Message
