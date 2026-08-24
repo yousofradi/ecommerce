@@ -41,7 +41,7 @@
 
     .form-group input,
     .form-group textarea {
-      padding: 6px 16px;
+      padding: 6px 10px;
       border: 1px solid #cbd5e1;
       border-radius: var(--radius-md);
       font-family: inherit;
@@ -297,8 +297,16 @@
       if (!requireAdmin()) return;
       document.body.classList.remove('is-loading');
 
-      // Set default date to today
-      document.getElementById('expense-date').valueAsDate = new Date();
+      // Set default date to today (local timezone)
+      const dateInput = document.getElementById('expense-date');
+      const setTodayDate = () => {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        dateInput.value = `${yyyy}-${mm}-${dd}`;
+      };
+      setTodayDate();
 
       const form = document.getElementById('expense-form');
       const submitBtn = document.getElementById('submit-btn');
@@ -363,6 +371,7 @@
             // Reset form partly
             document.getElementById('expense-amount').value = '';
             document.getElementById('expense-notes').value = '';
+            setTodayDate();
           } else {
             throw new Error('Failed to submit');
           }
