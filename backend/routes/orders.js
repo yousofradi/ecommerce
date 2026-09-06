@@ -49,18 +49,11 @@ function calcTotals(items, shippingFee, orderDiscount = 0) {
 
 // Helper: Resolve shipping fee and carrier
 async function resolveShippingFeeAndCarrier(customer, inputCarrier, providedShippingFee) {
-  let carrier = inputCarrier || 'bosta';
+  let carrier = 'egyptpost';
   let shippingFee = providedShippingFee !== undefined ? Number(providedShippingFee) : 0;
 
   try {
     const Setting = require('../models/Setting');
-    const globalSettings = await Setting.findOne({ key: 'sundura_global_settings' });
-    const settingsVal = globalSettings ? globalSettings.value : {};
-
-    const enableBosta = settingsVal.enableBosta !== false;
-    const enableEgyptPost = settingsVal.enableEgyptPost !== false;
-    const enableZones = settingsVal.enableZones !== false;
-
     const shippingOptionsRecord = await Setting.findOne({ key: 'shipping_options' });
     const shippingOptions = shippingOptionsRecord ? shippingOptionsRecord.value : [];
 
@@ -70,81 +63,45 @@ async function resolveShippingFeeAndCarrier(customer, inputCarrier, providedShip
       return norm(a) === norm(b);
     };
 
-    const formatZoneName = (z) => {
-      const zName = z.zoneOtherName || z.name || '';
-      const dName = z.districtOtherName || z.districtName || '';
-      return zName === dName ? zName : `${zName} - ${dName}`;
-    };
-
     const Shipping = require('../models/Shipping');
     const record = await Shipping.findOne({ $or: [{ city: customer.government }, { cityOtherName: customer.government }] });
 
-    if (record) {
-      let resolvedCarrier = carrier || 'bosta';
+    if (providedShippingFee === undefined) {
+      const cityName = record ? (record.cityOtherName || record.city) : customer.government;
 
-      if (enableZones && customer.zone && record.zones && record.zones.length > 0) {
-        const zoneRecord = record.zones.find(z => {
-          const compound = formatZoneName(z);
-          return compound === customer.zone || z.name === customer.zone || z.otherName === customer.zone;
-        });
-        if (!zoneRecord || zoneRecord.dropOffAvailability === false || zoneRecord.bostaAvailable === false) {
-          resolvedCarrier = 'egyptpost';
-        } else {
-          resolvedCarrier = carrier || 'bosta';
-        }
+      const postOption = (shippingOptions || []).find(o =>
+        o.name.includes('البريد') || o.name.toLowerCase().includes('post')
+      ) || (shippingOptions || [])[0];
+
+      const cityObj = postOption ? (postOption.cities || []).find(c =>
+        isCityEqual(c.city, cityName) ||
+        (record && (isCityEqual(c.city, record.city) || isCityEqual(c.city, record.cityOtherName)))
+      ) : null;
+
+      if (cityObj && cityObj.fee !== undefined && !isNaN(Number(cityObj.fee))) {
+        shippingFee = Number(cityObj.fee);
+      } else if (record && record.fee !== undefined && !isNaN(Number(record.fee))) {
+        shippingFee = Number(record.fee);
       } else {
-        resolvedCarrier = carrier || 'bosta';
-      }
-
-      // Global overrides take precedence
-      if (!enableBosta) {
-        resolvedCarrier = 'egyptpost';
-      } else if (typeof enableEgyptPost !== 'undefined' && !enableEgyptPost && resolvedCarrier === 'egyptpost') {
-        resolvedCarrier = 'bosta';
-      }
-
-      carrier = resolvedCarrier;
-
-      if (providedShippingFee === undefined) {
-        const isEgyptPost = carrier === 'egyptpost';
-        const cityName = record.cityOtherName || record.city;
-
-        if (isEgyptPost) {
-          const postOption = (shippingOptions || []).find(o =>
-            o.name.includes('البريد') || o.name.toLowerCase().includes('post')
-          ) || (shippingOptions || [])[0];
-
-          const cityObj = postOption ? (postOption.cities || []).find(c =>
-            isCityEqual(c.city, cityName) ||
-            isCityEqual(c.city, record.city) ||
-            isCityEqual(c.city, record.cityOtherName)
-          ) : null;
-          shippingFee = cityObj ? cityObj.fee : (postOption ? postOption.cost : 80);
-        } else {
-          const bostaOption = (shippingOptions || []).find(o =>
-            o.name.includes('بوسطة') || o.name.toLowerCase().includes('bosta')
-          ) || (shippingOptions || [])[1] || (shippingOptions || [])[0];
-
-          const cityObj = bostaOption ? (bostaOption.cities || []).find(c =>
-            isCityEqual(c.city, cityName) ||
-            isCityEqual(c.city, record.city) ||
-            isCityEqual(c.city, record.cityOtherName)
-          ) : null;
-          shippingFee = cityObj ? cityObj.fee : (bostaOption ? bostaOption.cost : 150);
+        const defaultFees = require('../config/shipping');
+        let matchedFee = null;
+        for (const [gov, fee] of Object.entries(defaultFees)) {
+          if (isCityEqual(gov, cityName) || (record && (isCityEqual(gov, record.city) || isCityEqual(gov, record.cityOtherName)))) {
+            matchedFee = fee;
+            break;
+          }
         }
+        shippingFee = matchedFee !== null ? matchedFee : (defaultFees[customer.government] || 85);
       }
-    } else if (providedShippingFee === undefined) {
-      const defaultFees = require('../config/shipping');
-      shippingFee = defaultFees[customer.government] || 0;
     }
   } catch (e) {
     if (providedShippingFee === undefined) {
       const defaultFees = require('../config/shipping');
-      shippingFee = defaultFees[customer.government] || 0;
+      shippingFee = defaultFees[customer.government] || 85;
     }
   }
 
-  return { shippingFee, carrier };
+  return { shippingFee, carrier: 'egyptpost' };
 }
 
 
@@ -166,21 +123,18 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Valid payment method is required' });
     }
 
-    // Shipping fee and Carrier resolution:
-    let carrier = req.body.carrier || 'bosta';
+    // Shipping fee and Carrier resolution (server-side authority):
+    let carrier = 'egyptpost';
     let shippingFee = 0;
 
     try {
-      const resolved = await resolveShippingFeeAndCarrier(customer, carrier, providedShippingFee);
-      carrier = resolved.carrier;
+      // Recalculate shipping fee based on governorate to protect old sessions from stale cached fees
+      const resolved = await resolveShippingFeeAndCarrier(customer, 'egyptpost', undefined);
+      carrier = 'egyptpost';
       shippingFee = resolved.shippingFee;
     } catch (e) {
-      if (providedShippingFee === undefined) {
-        const defaultFees = require('../config/shipping');
-        shippingFee = defaultFees[customer.government] || 0;
-      } else {
-        shippingFee = Number(providedShippingFee) || 0;
-      }
+      const defaultFees = require('../config/shipping');
+      shippingFee = defaultFees[customer.government] || 85;
     }
 
     if (shippingFee === 0 && !customer.government) {

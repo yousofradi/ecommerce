@@ -79,18 +79,18 @@ router.post('/:key', adminAuth, async (req, res) => {
         const SHIPPING_CACHE_KEY = 'storefront:shipping:list';
         
         const options = req.body.value || [];
-        const bostaOption = options.find(o => 
-          o.name.includes('بوسطة') || o.name.toLowerCase().includes('bosta')
+        const postOption = options.find(o => 
+          o.name.includes('البريد') || o.name.toLowerCase().includes('post')
         ) || options[0];
 
-        if (bostaOption && Array.isArray(bostaOption.cities)) {
+        if (postOption && Array.isArray(postOption.cities)) {
           const isCityEqual = (a, b) => {
             if (!a || !b) return false;
             const norm = (s) => s.replace(/[أإآا]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/\s+/g, '').toLowerCase().trim();
             return norm(a) === norm(b);
           };
 
-          for (const cityObj of bostaOption.cities) {
+          for (const cityObj of postOption.cities) {
             const newFee = Number(cityObj.fee);
             const record = await Shipping.findOne({
               $or: [

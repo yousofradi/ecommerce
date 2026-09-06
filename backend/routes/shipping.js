@@ -15,8 +15,8 @@ async function refreshShippingCache() {
     const Setting = require('../models/Setting');
     const shippingOptionsRecord = await Setting.findOne({ key: 'shipping_options' });
     const shippingOptions = shippingOptionsRecord ? shippingOptionsRecord.value : [];
-    const bostaOption = shippingOptions.find(o => 
-      o.name.includes('بوسطة') || o.name.toLowerCase().includes('bosta')
+    const postOption = shippingOptions.find(o => 
+      o.name.includes('البريد') || o.name.toLowerCase().includes('post')
     ) || shippingOptions[0];
 
     const isCityEqual = (a, b) => {
@@ -26,7 +26,7 @@ async function refreshShippingCache() {
     };
 
     const finalFees = fees.map(record => {
-      const cityObj = bostaOption ? (bostaOption.cities || []).find(c => 
+      const cityObj = postOption ? (postOption.cities || []).find(c => 
         isCityEqual(c.city, record.city) || isCityEqual(c.city, record.cityOtherName)
       ) : null;
       
@@ -95,8 +95,8 @@ router.get('/', async (req, res) => {
     const Setting = require('../models/Setting');
     const shippingOptionsRecord = await Setting.findOne({ key: 'shipping_options' });
     const shippingOptions = shippingOptionsRecord ? shippingOptionsRecord.value : [];
-    const bostaOption = shippingOptions.find(o => 
-      o.name.includes('بوسطة') || o.name.toLowerCase().includes('bosta')
+    const postOption = shippingOptions.find(o => 
+      o.name.includes('البريد') || o.name.toLowerCase().includes('post')
     ) || shippingOptions[0];
 
     const isCityEqual = (a, b) => {
@@ -106,7 +106,7 @@ router.get('/', async (req, res) => {
     };
 
     const finalFees = fees.map(record => {
-      const cityObj = bostaOption ? (bostaOption.cities || []).find(c => 
+      const cityObj = postOption ? (postOption.cities || []).find(c => 
         isCityEqual(c.city, record.city) || isCityEqual(c.city, record.cityOtherName)
       ) : null;
       

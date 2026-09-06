@@ -303,21 +303,8 @@
                   </div>
                 </div>
               </div>
-              <div class="form-group" id="zone-form-group">
-                <label class="form-label" for="zone">المنطقة *</label>
-                <div class="customer-search-container" id="zone-search-container"
-                  onclick="document.getElementById('zone').focus()" style="position: relative;">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"
-                    style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none;">
-                    <path d="M6 9l6 6 6-6" />
-                  </svg>
-                  <input type="text" class="form-control" id="zone" required placeholder="اختر المنطقة أو ابحث..."
-                    autocomplete="off" style="padding-right: 40px;">
-                  <div class="customer-dropdown" id="zone-dropdown"
-                    style="display: none; position: absolute; top: 100%; right: 0; left: 0; z-index: 1000; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); max-height: 300px; overflow-y: auto;">
-                    <!-- Zones will be injected here -->
-                  </div>
-                </div>
+              <div class="form-group" id="zone-form-group" style="display: none !important;">
+                <input type="hidden" id="zone" value="">
               </div>
             </div>
             <div class="form-group">
@@ -389,9 +376,9 @@
       </div>
     </main>
   </div>
-  <script src="js/api.js"></script>
-  <script src="js/cart.js"></script>
-  <script src="js/checkout.js"></script>
+  <script src="js/api.js?v=2.5.0"></script>
+  <script src="js/cart.js?v=2.5.0"></script>
+  <script src="js/checkout.js?v=2.5.1"></script>
 </body>
 
 </html>

@@ -36,8 +36,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         Cart._save(cartData.items);
         // Save the checkoutToken to localStorage
         localStorage.setItem('sundura_checkout_token', recoverToken);
+        if (cartData.customer) {
+          delete cartData.customer.carrier;
+          delete cartData.customer.zone;
+        }
         // Save customer data draft to localStorage
-        localStorage.setItem('sundura_checkout_draft', JSON.stringify(cartData.customer));
+        localStorage.setItem('sundura_checkout_draft', JSON.stringify(cartData.customer || {}));
       }
     } catch (err) {
       console.error('Failed to recover abandoned cart:', err);
@@ -52,27 +56,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Fetch shipping global settings
   try {
     const settings = await api.getSetting('sundura_global_settings');
-    if (settings) {
-      window._enableBosta = settings.enableBosta !== false;
-      window._enableEgyptPost = settings.enableEgyptPost !== false;
-      window._enableZones = settings.enableZones !== false;
-      window._egyptPostFee = settings.egyptPostFee !== undefined ? Number(settings.egyptPostFee) : 60;
-    } else {
-      window._enableBosta = true;
-      window._enableEgyptPost = true;
-      window._enableZones = true;
-      window._egyptPostFee = 60;
-    }
+    window._enableBosta = false;
+    window._enableEgyptPost = true;
+    window._enableZones = false;
 
     // Load active shipping options
     const options = await api.getSetting('shipping_options');
     window._shippingOptions = options || [];
   } catch (err) {
     console.warn('Failed to load global settings, using defaults', err);
-    window._enableBosta = true;
+    window._enableBosta = false;
     window._enableEgyptPost = true;
-    window._enableZones = true;
-    window._egyptPostFee = 60;
+    window._enableZones = false;
     window._shippingOptions = [];
   }
 
@@ -238,114 +233,39 @@ async function loadCities() {
 }
 
 async function handleGovChange() {
-  const cityId = document.getElementById('government').value;
+  const zoneGroup = document.getElementById('zone-form-group');
   const zoneInput = document.getElementById('zone');
-  if (!zoneInput) return;
-  
-  zoneInput.value = ''; // Clear current selection
-
-  if (window._enableZones === false) {
-    const zoneGroup = document.getElementById('zone-form-group');
-    const zoneInputEl = document.getElementById('zone');
-    if (zoneGroup && zoneInputEl) {
-      zoneGroup.style.display = 'none';
-      zoneInputEl.required = false;
-      zoneInputEl.value = '';
-    }
-    updatePriceSummary();
-    return;
+  if (zoneGroup) zoneGroup.style.display = 'none';
+  if (zoneInput) {
+    zoneInput.value = '';
+    zoneInput.required = false;
   }
-
-  if (cityId) {
-    try {
-      // Fetch zones from API
-      const zones = await api.getZones(cityId);
-      window._currentZones = zones || [];
-    } catch (err) {
-      console.error('Failed to fetch zones:', err);
-      window._currentZones = [];
-    }
-  }
-  
-  renderZoneDropdown();
   updatePriceSummary();
-
-  // Show/Hide Zone Group is handled dynamically inside updatePriceSummary
 }
 
 function renderZoneDropdown() {
   const dropdown = document.getElementById('zone-dropdown');
-  const zoneInput = document.getElementById('zone');
-  const query = zoneInput.value.toLowerCase().trim();
-  
-  if (!window._currentZones || window._currentZones.length === 0) {
-    dropdown.style.display = 'none';
-    return;
-  }
-
-  const filtered = window._currentZones.filter(z => {
-    const zoneLabel = api.formatZoneName(z);
-    return smartMatch(zoneLabel, query);
-  });
-
-  if (filtered.length === 0 && query !== '') {
-    dropdown.innerHTML = '<div style="padding: 10px; color: #94a3b8; text-align: center;">لا توجد مناطق مطابقة</div>';
-  } else {
-    const displayList = filtered.length > 0 ? filtered : window._currentZones;
-    dropdown.innerHTML = displayList.map(z => {
-      const zoneLabel = api.formatZoneName(z);
-      return `
-        <div class="dropdown-item" onclick="selectZone('${zoneLabel.replace(/'/g, "\\'")}')" 
-          style="padding: 10px 16px; cursor: pointer; transition: background 0.2s;"
-          onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
-          ${zoneLabel}
-        </div>
-      `;
-    }).join('');
-  }
+  if (dropdown) dropdown.style.display = 'none';
 }
 
 window.selectZone = function(val) {
   const zoneInput = document.getElementById('zone');
-  zoneInput.value = val;
-  document.getElementById('zone-dropdown').style.display = 'none';
-  if (window.setErrorOnCheckout) window.setErrorOnCheckout(zoneInput, null);
+  if (zoneInput) zoneInput.value = val;
+  const dropdown = document.getElementById('zone-dropdown');
+  if (dropdown) dropdown.style.display = 'none';
   updatePriceSummary();
 };
 
 document.addEventListener('click', (e) => {
   const container = document.getElementById('zone-search-container');
   const dropdown = document.getElementById('zone-dropdown');
-  if (container && !container.contains(e.target)) {
+  if (container && !container.contains(e.target) && dropdown) {
     dropdown.style.display = 'none';
   }
 });
 
-document.getElementById('zone')?.addEventListener('focus', () => {
-  renderZoneDropdown();
-  if (window._currentZones && window._currentZones.length > 0) {
-    document.getElementById('zone-dropdown').style.display = 'block';
-  }
-});
-
-document.getElementById('zone')?.addEventListener('click', () => {
-  renderZoneDropdown();
-  if (window._currentZones && window._currentZones.length > 0) {
-    document.getElementById('zone-dropdown').style.display = 'block';
-  }
-});
-
-document.getElementById('zone')?.addEventListener('input', () => {
-  renderZoneDropdown();
-  if (window._currentZones && window._currentZones.length > 0) {
-    document.getElementById('zone-dropdown').style.display = 'block';
-  }
-});
-
 function getSelectedZoneObject() {
-  const zoneVal = document.getElementById('zone')?.value;
-  if (!zoneVal || !window._currentZones) return null;
-  return window._currentZones.find(z => api.formatZoneName(z) === zoneVal);
+  return null;
 }
 
 function updateShippingMethodNotice(isEgyptPost) {
@@ -355,46 +275,9 @@ function updateShippingMethodNotice(isEgyptPost) {
 function updatePriceSummary() {
   const items = Cart.getItems();
   const subtotal = Cart.getTotal();
-  const cityId = document.getElementById('government').value;
-  const govData = (window._fullShippingData || []).find(s => s._id === cityId);
-  const cityName = govData ? (govData.cityOtherName || govData.city) : '';
-
-  let shippingFee = 0;
-  let resolvedCarrier = 'egyptpost';
-  let isEgyptPost = true;
-
-  if (window._enableBosta && window._enableEgyptPost) {
-    resolvedCarrier = 'bosta';
-    isEgyptPost = false;
-    if (cityName && (!window._currentZones || window._currentZones.length === 0)) {
-      resolvedCarrier = 'egyptpost';
-      isEgyptPost = true;
-    }
-  } else if (window._enableBosta) {
-    resolvedCarrier = 'bosta';
-    isEgyptPost = false;
-  } else {
-    resolvedCarrier = 'egyptpost';
-    isEgyptPost = true;
-  }
-
-  window._selectedCarrier = resolvedCarrier;
-
-  const zoneGroup = document.getElementById('zone-form-group');
-  const zoneInputEl = document.getElementById('zone');
-  if (zoneGroup && zoneInputEl) {
-    if (isEgyptPost || !window._enableZones) {
-      zoneGroup.style.display = 'none';
-      zoneInputEl.required = false;
-    } else {
-      zoneGroup.style.display = 'block';
-      zoneInputEl.required = true;
-    }
-  }
-
   const isCityEqual = (c1, c2) => {
     if (!c1 || !c2) return false;
-    const norm = (s) => s.toLowerCase()
+    const norm = (s) => String(s).toLowerCase()
       .replace(/[أإآا]/g, 'ا')
       .replace(/ة/g, 'ه')
       .replace(/ى/g, 'ي')
@@ -405,29 +288,88 @@ function updatePriceSummary() {
     return norm(c1) === norm(c2);
   };
 
+  const govInputVal = document.getElementById('government') ? document.getElementById('government').value.trim() : '';
+  const searchInputVal = document.getElementById('government-search') ? document.getElementById('government-search').value.trim() : '';
+
+  const govData = (window._fullShippingData || []).find(s => 
+    s._id === govInputVal || 
+    isCityEqual(s.city, govInputVal) || 
+    isCityEqual(s.cityOtherName, govInputVal) ||
+    isCityEqual(s.city, searchInputVal) ||
+    isCityEqual(s.cityOtherName, searchInputVal)
+  );
+  const cityName = govData ? (govData.cityOtherName || govData.city) : (searchInputVal || govInputVal);
+
+  let shippingFee = 0;
+  const isEgyptPost = true;
+  window._selectedCarrier = 'egyptpost';
+
+  const zoneGroup = document.getElementById('zone-form-group');
+  const zoneInputEl = document.getElementById('zone');
+  if (zoneGroup && zoneInputEl) {
+    zoneGroup.style.display = 'none';
+    zoneInputEl.required = false;
+  }
+
+  const DECLARED_GOV_FEES = {
+    'القاهرة': 85,
+    'الجيزة': 85,
+    'الإسكندرية': 85,
+    'الدقهلية': 85,
+    'البحيرة': 85,
+    'القليوبية': 85,
+    'الغربية': 85,
+    'المنوفية': 85,
+    'دمياط': 85,
+    'كفر الشيخ': 85,
+    'الشرقية': 85,
+    'الاسماعيلية': 95,
+    'الإسماعيلية': 95,
+    'السويس': 95,
+    'بورسعيد': 95,
+    'الفيوم': 115,
+    'بني سويف': 110,
+    'المنيا': 110,
+    'اسيوط': 110,
+    'أسيوط': 110,
+    'سوهاج': 130,
+    'قنا': 130,
+    'أسوان': 130,
+    'اسوان': 130,
+    'الأقصر': 130,
+    'الاقصر': 130,
+    'البحر الأحمر': 130,
+    'مرسي مطروح': 135,
+    'مرسى مطروح': 135,
+    'مطروح': 135,
+    'الوادي الجديد': 135,
+    'شمال سيناء': 135,
+    'جنوب سيناء': 135
+  };
+
   if (cityName) {
-    if (isEgyptPost) {
-      const postOption = (window._shippingOptions || []).find(o => 
-        o.name.includes('البريد') || o.name.toLowerCase().includes('post')
-      ) || (window._shippingOptions || [])[0];
-      
-      const cityObj = postOption ? (postOption.cities || []).find(c => 
-        isCityEqual(c.city, cityName) || 
-        isCityEqual(c.city, govData.city) || 
-        isCityEqual(c.city, govData.cityOtherName)
-      ) : null;
-      shippingFee = cityObj ? cityObj.fee : (postOption ? postOption.cost : 80);
+    const postOption = (window._shippingOptions || []).find(o => 
+      o.name.includes('البريد') || o.name.toLowerCase().includes('post')
+    ) || (window._shippingOptions || [])[0];
+    
+    const cityObj = postOption ? (postOption.cities || []).find(c => 
+      isCityEqual(c.city, cityName) || 
+      (govData && (isCityEqual(c.city, govData.city) || isCityEqual(c.city, govData.cityOtherName)))
+    ) : null;
+
+    if (cityObj && cityObj.fee !== undefined && !isNaN(Number(cityObj.fee))) {
+      shippingFee = Number(cityObj.fee);
+    } else if (govData && govData.fee !== undefined && !isNaN(Number(govData.fee))) {
+      shippingFee = Number(govData.fee);
     } else {
-      const bostaOption = (window._shippingOptions || []).find(o => 
-        o.name.includes('بوسطة') || o.name.toLowerCase().includes('bosta')
-      ) || (window._shippingOptions || [])[1] || (window._shippingOptions || [])[0];
-      
-      const cityObj = bostaOption ? (bostaOption.cities || []).find(c => 
-        isCityEqual(c.city, cityName) || 
-        isCityEqual(c.city, govData.city) || 
-        isCityEqual(c.city, govData.cityOtherName)
-      ) : null;
-      shippingFee = cityObj ? cityObj.fee : (bostaOption ? bostaOption.cost : 150);
+      let matchedFee = null;
+      for (const [gov, fee] of Object.entries(DECLARED_GOV_FEES)) {
+        if (isCityEqual(gov, cityName) || (govData && (isCityEqual(gov, govData.city) || isCityEqual(gov, govData.cityOtherName)))) {
+          matchedFee = fee;
+          break;
+        }
+      }
+      shippingFee = matchedFee !== null ? matchedFee : (DECLARED_GOV_FEES[cityName] || 85);
     }
   } else {
     shippingFee = 0;
@@ -486,11 +428,7 @@ function updatePriceSummary() {
     if (cityId) {
       shipEl.textContent = formatPrice(shippingFee);
       if (shipLabelEl) {
-        if (isEgyptPost) {
-          shipLabelEl.innerHTML = `الشحن <span style="color:#b84a20; font-size:0.85rem; font-weight:bold;">(البريد المصري)</span>`;
-        } else {
-          shipLabelEl.innerHTML = `الشحن <span style="color:#00bfa5; font-size:0.85rem; font-weight:bold;">(بوسطة)</span>`;
-        }
+        shipLabelEl.innerHTML = `الشحن <span style="color:#b84a20; font-size:0.85rem; font-weight:bold;">(البريد المصري)</span>`;
       }
     } else {
       shipEl.textContent = '—';
@@ -624,24 +562,6 @@ function setupForm() {
   }
 
   function validateZone() {
-    const zoneGroup = document.getElementById('zone-form-group');
-    if (zoneGroup && zoneGroup.style.display !== 'none') {
-      const val = zoneInput.value.trim();
-      if (!val) {
-        setError(zoneInput, 'من فضلك اختر من القائمه');
-        return false;
-      }
-      
-      // Strict zone validation: if zones exist for this city, the typed value MUST be in the list
-      const zoneOptions = (window._currentZones || []).map(z => api.formatZoneName(z));
-      if (zoneOptions.length > 0) {
-        if (!zoneOptions.includes(val)) {
-          setError(zoneInput, 'من فضلك اختر من القائمه');
-          return false;
-        }
-      }
-    }
-    setError(zoneInput, null);
     return true;
   }
 
@@ -736,12 +656,12 @@ function setupForm() {
         secondPhone: convertArabicDigitsToEnglish(phone2Input.value.trim()),
         address: convertArabicDigitsToEnglish(getCombinedAddress()),
         government: cityName,
-        zone: convertArabicDigitsToEnglish(zone),
+        zone: '',
         notes: convertArabicDigitsToEnglish(document.getElementById('cust-notes').value.trim())
       },
       items,
       paymentMethod: payment.value,
-      carrier: window._selectedCarrier || 'egyptpost',
+      carrier: 'egyptpost',
       shippingFee: window._currentShippingFee !== undefined ? window._currentShippingFee : 0
     };
 
@@ -767,6 +687,19 @@ function setupForm() {
 
 // ── Restore Checkout Draft ──────────────────────────────────
 async function restoreCheckoutDraft() {
+  // Sanitize any old draft data in localStorage
+  try {
+    const rawDraft = localStorage.getItem('sundura_checkout_draft');
+    if (rawDraft) {
+      const parsed = JSON.parse(rawDraft);
+      if (parsed.carrier || parsed.zone) {
+        delete parsed.carrier;
+        delete parsed.zone;
+        localStorage.setItem('sundura_checkout_draft', JSON.stringify(parsed));
+      }
+    }
+  } catch (e) {}
+
   const nameInput = document.getElementById('cust-name');
   const phoneInput = document.getElementById('cust-phone');
   const phone2Input = document.getElementById('cust-phone2');
@@ -806,12 +739,7 @@ async function restoreCheckoutDraft() {
         if (match) {
           govHiddenInput.value = match._id;
           govSearchInput.value = match.cityOtherName || match.city;
-          // Dynamically fetch and fill zones
           await handleGovChange();
-          
-          if (draft.zone && zoneInput) {
-            zoneInput.value = draft.zone;
-          }
         }
       }
     } catch (err) {
@@ -870,7 +798,7 @@ function syncAbandonedCart() {
       addressVillage,
       addressDetail,
       government: cityName,
-      zone,
+      zone: '',
       notes
     };
 

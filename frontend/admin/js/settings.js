@@ -86,10 +86,10 @@ function populateSettingsForm(s) {
   document.getElementById('setting-primary-color-hex').value = (s.primaryColor || '#916C4F').toUpperCase();
 
   // Populate Shipping Switches
-  document.getElementById('setting-enable-bosta').checked = s.enableBosta !== false;
-  document.getElementById('setting-enable-egypt-post').checked = s.enableEgyptPost !== false;
-  document.getElementById('setting-egypt-post-fee').value = s.egyptPostFee !== undefined ? s.egyptPostFee : 60;
-  document.getElementById('setting-enable-zones').checked = s.enableZones !== false;
+  const bostaEl = document.getElementById('setting-enable-bosta'); if (bostaEl) bostaEl.checked = false;
+  const postEl = document.getElementById('setting-enable-egypt-post'); if (postEl) postEl.checked = s.enableEgyptPost !== false;
+  const postFeeEl = document.getElementById('setting-egypt-post-fee'); if (postFeeEl) postFeeEl.value = s.egyptPostFee !== undefined ? s.egyptPostFee : 85;
+  const zonesEl = document.getElementById('setting-enable-zones'); if (zonesEl) zonesEl.checked = s.enableZones !== false;
 
   paymentMethods = s.paymentMethods || [];
   renderPaymentMethods();
@@ -223,10 +223,9 @@ async function saveSettings() {
     paymentNotes: document.getElementById('setting-payment-notes').value.trim(),
     primaryColor: document.getElementById('setting-primary-color').value,
     paymentMethods: paymentMethods,
-    enableBosta: document.getElementById('setting-enable-bosta').checked,
-    enableEgyptPost: document.getElementById('setting-enable-egypt-post').checked,
-    egyptPostFee: parseFloat(document.getElementById('setting-egypt-post-fee').value) || 60,
-    enableZones: document.getElementById('setting-enable-zones').checked
+    enableBosta: false,
+    enableEgyptPost: document.getElementById('setting-enable-egypt-post') ? document.getElementById('setting-enable-egypt-post').checked : true,
+    enableZones: false
   };
 
   try {

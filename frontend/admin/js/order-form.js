@@ -34,7 +34,7 @@ let shippingMap = {};
 let cartItems = []; // [{ product, quantity, selectedOptions, discount }]
 
 function getCarrierInternalValue(name) {
-  if (!name) return 'bosta';
+  if (!name) return 'egyptpost';
   if (name.includes('بوسطة') || name.toLowerCase().includes('bosta')) return 'bosta';
   if (name.includes('البريد') || name.toLowerCase().includes('post')) return 'egyptpost';
   return name;
@@ -47,7 +47,7 @@ function resolveShippingDetails(cityName, zoneName, forcedCarrier) {
     return norm(a) === norm(b);
   };
 
-  let carrier = forcedCarrier || 'bosta';
+  let carrier = forcedCarrier || 'egyptpost';
   let govData = (window._fullShippingData || []).find(s => 
     isCityEqual(s.city, cityName) || isCityEqual(s.cityOtherName, cityName)
   );
@@ -811,7 +811,7 @@ window.handleCityChange = async function() {
 };
 
 window.handleCarrierChange = function() {
-  const carrier = document.getElementById('c-carrier')?.value || 'bosta';
+  const carrier = document.getElementById('c-carrier')?.value || 'egyptpost';
   const isBosta = carrier === 'bosta' || carrier.toLowerCase().includes('bosta') || carrier.includes('بوسطة');
   
   const zoneContainer = document.getElementById('c-zone-container');
@@ -840,7 +840,7 @@ window.recalcSummary = function () {
   const cityName = data ? (data.cityOtherName || data.city) : '';
   const zoneName = document.getElementById('c-zone').value;
 
-  const carrierVal = document.getElementById('c-carrier')?.value || 'bosta';
+  const carrierVal = document.getElementById('c-carrier')?.value || 'egyptpost';
   const shipDetails = resolveShippingDetails(cityName, zoneName, carrierVal);
   const shipping = shipDetails.fee;
 
@@ -880,7 +880,7 @@ window.submitOrder = async function () {
   }
 
   // Resolve carrier first
-  const carrierVal = document.getElementById('c-carrier')?.value || 'bosta';
+  const carrierVal = document.getElementById('c-carrier')?.value || 'egyptpost';
   const shipDetails = resolveShippingDetails(cityName, zone, carrierVal);
   const carrier = shipDetails.carrier;
   const shippingFee = shipDetails.fee;

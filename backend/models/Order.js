@@ -53,7 +53,7 @@ const orderSchema = new mongoose.Schema({
   paidAt: { type: Date },
   archived: { type: Boolean, default: false, index: true },
   status: { type: String, enum: ['pending', 'cancelled', 'ready', 'shipped'], default: 'pending' },
-  carrier: { type: String, enum: ['bosta', 'egyptpost'], default: 'bosta' },
+  carrier: { type: String, enum: ['bosta', 'egyptpost'], default: 'egyptpost' },
   bostaDeliveryId: { type: String },
   bostaTrackingNumber: { type: String },
   processingStatus: { 
