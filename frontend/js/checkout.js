@@ -298,6 +298,7 @@ function updatePriceSummary() {
     isCityEqual(s.city, searchInputVal) ||
     isCityEqual(s.cityOtherName, searchInputVal)
   );
+  const cityId = govInputVal;
   const cityName = govData ? (govData.cityOtherName || govData.city) : (searchInputVal || govInputVal);
 
   let shippingFee = 0;
@@ -425,7 +426,7 @@ function updatePriceSummary() {
 
   const shipLabelEl = document.getElementById('summary-shipping-label');
   if (shipEl) {
-    if (cityId) {
+    if (cityName || cityId) {
       shipEl.textContent = formatPrice(shippingFee);
       if (shipLabelEl) {
         shipLabelEl.innerHTML = `الشحن <span style="color:#b84a20; font-size:0.85rem; font-weight:bold;">(البريد المصري)</span>`;
