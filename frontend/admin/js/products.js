@@ -49,12 +49,13 @@ async function loadProducts() {
     renderProducts(collections);
     
     // Fetch total counts for specific tabs
-    const [activeRes, draftRes] = await Promise.all([
+    const [activeRes, lowRes, draftRes] = await Promise.all([
       api.getProducts(1, 1, true, '', '', '', 'active'),
+      api.getProducts(1, 1, true, '', '', '', 'low_stock'),
       api.getProducts(1, 1, true, '', '', '', 'draft')
     ]);
     
-    updatePaginationInfo(res.total || products.length, activeRes.total, draftRes.total);
+    updatePaginationInfo(res.total || products.length, activeRes.total, lowRes.total, draftRes.total);
     updateBulkActions();
 
   } catch (err) {
@@ -65,7 +66,7 @@ async function loadProducts() {
   }
 }
 
-function updatePaginationInfo(total, countAllTotal, countDraftTotal) {
+function updatePaginationInfo(total, countAllTotal, countLowTotal, countDraftTotal) {
   const infoEl = document.getElementById('pagination-info');
   const prevBtn = document.getElementById('prev-page');
   const nextBtn = document.getElementById('next-page');
@@ -77,9 +78,11 @@ function updatePaginationInfo(total, countAllTotal, countDraftTotal) {
   if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
   
   const countAll = document.getElementById('count-all');
+  const countLow = document.getElementById('count-low');
   const countDraft = document.getElementById('count-draft');
 
   if (countAll && countAllTotal !== undefined) countAll.textContent = countAllTotal;
+  if (countLow && countLowTotal !== undefined) countLow.textContent = countLowTotal;
   if (countDraft && countDraftTotal !== undefined) countDraft.textContent = countDraftTotal;
 
   if (pageDropdown) {

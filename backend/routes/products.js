@@ -76,6 +76,13 @@ router.get('/', async (req, res) => {
       } else if (status === 'active') {
         query.status = 'active';
         query.active = { $ne: false };
+      } else if (status === 'low_stock' || status === 'low') {
+        query.status = 'active';
+        query.active = { $ne: false };
+        query.$or = [
+          { quantity: { $ne: null, $lt: 2 } },
+          { variants: { $elemMatch: { quantity: { $ne: null, $lt: 2 } } } }
+        ];
       }
       // If no status provided, show both active and draft products for admin
     } 
