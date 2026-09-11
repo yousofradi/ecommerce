@@ -279,8 +279,71 @@ function filterEmployeesList() {
   renderEmployeesList(filtered);
 }
 
+function showModalError(msg) {
+  // 1. Trigger global toast notification
+  if (typeof showToast === 'function') {
+    showToast(msg, 'error');
+  }
+
+  // 2. Display prominent floating popup at top of modal
+  let popup = document.getElementById('emp-modal-error-popup');
+  if (!popup) {
+    popup = document.createElement('div');
+    popup.id = 'emp-modal-error-popup';
+    popup.style.cssText = `
+      position: absolute;
+      top: 68px;
+      left: 20px;
+      right: 20px;
+      z-index: 50;
+      background: #fef2f2;
+      border: 1px solid #f87171;
+      color: #991b1b;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      box-shadow: 0 10px 25px -5px rgba(239, 68, 68, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      animation: slideDownFade 0.25s ease;
+    `;
+    const form = document.getElementById('employee-form');
+    if (form) form.appendChild(popup);
+  }
+
+  popup.innerHTML = `
+    <div style="display:flex; align-items:center; gap:8px;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+      <span>${escapeHtml(msg)}</span>
+    </div>
+    <button type="button" onclick="this.parentElement.style.display='none'" style="background:none; border:none; color:#991b1b; font-size:1.3rem; cursor:pointer; padding:0 4px; line-height:1;">✕</button>
+  `;
+  popup.style.display = 'flex';
+
+  // Smoothly scroll modal body to top so user sees the fields that need attention
+  const body = document.querySelector('.emp-modal-body');
+  if (body) body.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // Auto-dismiss after 6 seconds
+  clearTimeout(popup._timer);
+  popup._timer = setTimeout(() => {
+    if (popup) popup.style.display = 'none';
+  }, 6000);
+}
+
+function clearModalError() {
+  const popup = document.getElementById('emp-modal-error-popup');
+  if (popup) popup.style.display = 'none';
+  const errBox = document.getElementById('modal-error-box');
+  if (errBox) errBox.style.display = 'none';
+}
+
 // Modal Handlers
 function openAddEmployeeModal() {
+  clearModalError();
   document.getElementById('modal-title').textContent = 'إضافة موظف جديد';
   document.getElementById('save-emp-text').textContent = 'حفظ الموظف';
   document.getElementById('edit-emp-id').value = '';
@@ -292,7 +355,6 @@ function openAddEmployeeModal() {
   document.getElementById('pwd-required-star').style.display = 'inline';
   document.getElementById('pwd-hint').style.display = 'none';
   document.getElementById('emp-status').value = 'true';
-  document.getElementById('modal-error-box').style.display = 'none';
 
   // Default permissions: all unselected
   setAllPermissions('none');
@@ -303,6 +365,7 @@ function openAddEmployeeModal() {
 }
 
 function openEditEmployeeModal(empId) {
+  clearModalError();
   const emp = allEmployees.find(e => e._id === empId);
   if (!emp) return;
 
@@ -317,7 +380,6 @@ function openEditEmployeeModal(empId) {
   document.getElementById('pwd-required-star').style.display = 'none';
   document.getElementById('pwd-hint').style.display = 'block';
   document.getElementById('emp-status').value = emp.isActive ? 'true' : 'false';
-  document.getElementById('modal-error-box').style.display = 'none';
 
   // Set existing permissions
   const perms = emp.permissions || {};
@@ -345,6 +407,7 @@ function openEditEmployeeModal(empId) {
 }
 
 function closeEmployeeModal() {
+  clearModalError();
   const modal = document.getElementById('employee-modal');
   modal.classList.remove('open');
   document.body.classList.remove('modal-open');
@@ -367,26 +430,22 @@ async function saveEmployee() {
   const username = document.getElementById('emp-username').value.trim();
   const password = document.getElementById('emp-password').value;
   const isActive = document.getElementById('emp-status').value === 'true';
-  const errBox = document.getElementById('modal-error-box');
   const btn = document.getElementById('btn-save-emp');
 
-  errBox.style.display = 'none';
+  clearModalError();
 
   if (!name || (!empId && !username)) {
-    errBox.textContent = 'يرجى استكمال الحقول المطلوبة';
-    errBox.style.display = 'block';
+    showModalError('يرجى استكمال الحقول المطلوبة');
     return;
   }
 
   if (!empId && (!password || password.length < 6)) {
-    errBox.textContent = 'كلمة المرور يجب أن تكون 6 أحرف أو أرقام على الأقل';
-    errBox.style.display = 'block';
+    showModalError('كلمة المرور يجب أن تكون 6 أحرف أو أرقام على الأقل');
     return;
   }
 
   if (empId && password && password.length < 6) {
-    errBox.textContent = 'كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل';
-    errBox.style.display = 'block';
+    showModalError('كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل');
     return;
   }
 
@@ -424,15 +483,16 @@ async function saveEmployee() {
   try {
     if (empId) {
       await api.updateEmployee(empId, payload);
+      if (typeof showToast === 'function') showToast('تم تحديث بيانات الموظف بنجاح');
     } else {
       await api.createEmployee(payload);
+      if (typeof showToast === 'function') showToast('تمت إضافة الموظف بنجاح');
     }
 
     closeEmployeeModal();
     await loadEmployees();
   } catch (err) {
-    errBox.textContent = err.message || 'حدث خطأ أثناء حفظ بيانات الموظف';
-    errBox.style.display = 'block';
+    showModalError(err.message || 'حدث خطأ أثناء حفظ بيانات الموظف');
   } finally {
     btn.disabled = false;
     btn.innerHTML = oldBtnHtml;
