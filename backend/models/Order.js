@@ -36,8 +36,10 @@ const orderSchema = new mongoose.Schema({
     required: true,
     validate: v => v.length > 0
   },
+  subtotal: { type: Number, min: 0 },
   discount: { type: Number, default: 0 },    // total order discount in EGP
   isCustomDiscount: { type: Boolean, default: false }, // true if manually set by admin
+  isCustomShipping: { type: Boolean, default: false }, // true if shipping fee was manually set by admin
   appliedPromotionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Promotion' },
   appliedPromotionName: { type: String },    // The name of the promotion applied
   appliedPromotionRewards: { type: [String], default: [] },

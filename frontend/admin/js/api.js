@@ -143,6 +143,7 @@ const api = {
   },
   getOrder(id) { return this._request(`/orders/${id}`, { admin: true }); },
   getOrderPromotion(id) { return this._request(`/orders/${id}/promotion`, { admin: true }); },
+  evaluatePromotions(cartItems) { return this._request('/promotions/evaluate', { method: 'POST', body: JSON.stringify({ cartItems }) }); },
   updateOrder(id, d) { return this._request(`/orders/${id}`, { method: 'PUT', body: JSON.stringify(d), admin: true }); },
   deleteOrder(id) { return this._request(`/orders/${id}`, { method: 'DELETE', admin: true }); },
   archiveOrders(orderIds) { return this._request('/orders/archive/batch', { method: 'POST', body: JSON.stringify({ orderIds }), admin: true }); },

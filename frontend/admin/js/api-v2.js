@@ -157,6 +157,7 @@ const api = {
   },
   getOrder(id) { return this._request(`/orders/${id}`, { admin: true }); },
   getOrderPromotion(id) { return this._request(`/orders/${id}/promotion`, { admin: true }); },
+  evaluatePromotions(cartItems) { return this._request('/promotions/evaluate', { method: 'POST', body: JSON.stringify({ cartItems }) }); },
   updateOrder(id, d) { return this._request(`/orders/${id}`, { method: 'PUT', body: JSON.stringify(d), admin: true }); },
   deleteOrder(id) { return this._request(`/orders/${id}`, { method: 'DELETE', admin: true }); },
   archiveOrders(orderIds) { return this._request('/orders/archive/batch', { method: 'POST', body: JSON.stringify({ orderIds }), admin: true }); },
@@ -176,6 +177,8 @@ const api = {
 
   // Customers
   getAbandonedCarts(page = 1, limit = 25) { return this._request(`/abandoned-carts?page=${page}&limit=${limit}`, { admin: true }); },
+  getAbandonedCart(id) { return this._request(`/abandoned-carts/${id}`, { admin: true }); },
+  deleteAbandonedCart(id) { return this._request(`/abandoned-carts/${id}`, { method: 'DELETE', admin: true }); },
   getDashboardStats() { return this._request('/stats/dashboard', { admin: true }); },
   getCustomers() { return this._request('/customers', { admin: true }); },
   getCustomer(phone) { return this._request(`/customers/${phone}`, { admin: true }); },

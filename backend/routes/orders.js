@@ -1014,6 +1014,7 @@ router.get('/:orderId/promotion', adminAuth, async (req, res) => {
 
     let rewardText = '';
     let promotion = null;
+    let rewardParts = [];
     if (order.appliedPromotionId || order.appliedPromotionName) {
       if (order.appliedPromotionId) {
         promotion = await Promotion.findById(order.appliedPromotionId).lean();
@@ -1022,7 +1023,6 @@ router.get('/:orderId/promotion', adminAuth, async (req, res) => {
         promotion = await Promotion.findOne({ name: order.appliedPromotionName }).lean();
       }
       if (promotion) {
-        const rewardParts = [];
         if (promotion.discountType === 'PERCENTAGE') rewardParts.push(`خصم ${promotion.discountValue}%`);
         if (promotion.discountType === 'FIXED') rewardParts.push(`خصم ${promotion.discountValue} ج`);
         if (promotion.isFreeShipping) rewardParts.push('شحن مجاني');
@@ -1036,11 +1036,15 @@ router.get('/:orderId/promotion', adminAuth, async (req, res) => {
     }
     const promotionLine = [order.appliedPromotionName, rewardText].filter(Boolean).join(' : ');
 
+    const finalRewards = (Array.isArray(order.appliedPromotionRewards) && order.appliedPromotionRewards.length > 0)
+      ? order.appliedPromotionRewards
+      : rewardParts;
+
     res.json({
       appliedPromotionId: order.appliedPromotionId,
       appliedPromotionName: order.appliedPromotionName,
       rewardText,
-      appliedPromotionRewards: order.appliedPromotionRewards || [],
+      appliedPromotionRewards: finalRewards || [],
       promotion,
       promotionLine
     });
@@ -1065,25 +1069,30 @@ router.get('/:orderId', adminAuth, async (req, res) => {
   }
 });
 
-// PUT /api/orders/:orderId — update order
+// PUT /api/orders/:orderId — edit order details
 router.put('/:orderId', adminAuth, async (req, res) => {
   try {
     const { orderId } = req.params;
-    let updates = req.body;
+    const updates = req.body;
+
     let query = { orderId: orderId };
     if (mongoose.Types.ObjectId.isValid(orderId)) {
       query = { $or: [{ orderId: orderId }, { _id: orderId }] };
     }
+
     const order = await Order.findOne(query);
     if (!order) return res.status(404).json({ error: 'Order not found' });
 
-    // Concurrency Check (Optimistic Concurrency Control)
-    if (updates.updatedAt && order.updatedAt) {
-      const clientTime = new Date(updates.updatedAt).getTime();
-      const serverTime = new Date(order.updatedAt).getTime();
-      // Allow 1 second buffer to prevent precision issues, though millisecond equality is usually exact
-      if (serverTime - clientTime > 1000) {
-        return res.status(409).json({ error: 'conflict' });
+    // 1. Concurrency Check (Optimistic Locking)
+    if (updates.updatedAt) {
+      const incomingTime = new Date(updates.updatedAt).getTime();
+      const existingTime = new Date(order.updatedAt).getTime();
+      // Allow 1 second clock drift / precision leeway
+      if (existingTime - incomingTime > 1000) {
+        return res.status(409).json({ 
+          error: 'conflict', 
+          message: 'تم تعديل هذا الطلب بالفعل بواسطة مستخدم آخر. يرجى تحديث الصفحة للحصول على أحدث البيانات.' 
+        });
       }
     }
 
@@ -1104,19 +1113,22 @@ router.put('/:orderId', adminAuth, async (req, res) => {
     let shippingFee = (updates.shippingFee !== undefined) ? updates.shippingFee : order.shippingFee;
     let discount = (updates.discount !== undefined) ? updates.discount : order.discount;
 
-    let appliedPromotionId = order.appliedPromotionId || null;
-    let appliedPromotionName = order.appliedPromotionName || null;
-    let appliedPromotionRewards = order.appliedPromotionRewards || [];
-    let appliedPromotionRewardText = order.appliedPromotionRewardText || '';
+    let appliedPromotionId = (updates.appliedPromotionId !== undefined) ? updates.appliedPromotionId : (order.appliedPromotionId || null);
+    let appliedPromotionName = (updates.appliedPromotionName !== undefined) ? updates.appliedPromotionName : (order.appliedPromotionName || null);
+    let appliedPromotionRewards = (updates.appliedPromotionRewards !== undefined) ? updates.appliedPromotionRewards : (order.appliedPromotionRewards || []);
+    let appliedPromotionRewardText = (updates.appliedPromotionRewardText !== undefined) ? updates.appliedPromotionRewardText : (order.appliedPromotionRewardText || '');
 
     // Check if the discount is explicitly marked as custom or changed by admin
-    let isCustomDiscount = (updates.isCustomDiscount !== undefined) 
-      ? updates.isCustomDiscount 
-      : (order.isCustomDiscount || (updates.discount !== undefined && updates.discount !== order.discount));
-
-    if (updates.discount !== undefined && updates.discount !== order.discount) {
+    let isCustomDiscount;
+    if (updates.isCustomDiscount !== undefined) {
+      isCustomDiscount = Boolean(updates.isCustomDiscount);
+    } else if (updates.discount !== undefined && updates.discount !== order.discount) {
       isCustomDiscount = true;
+    } else {
+      isCustomDiscount = Boolean(order.isCustomDiscount);
     }
+
+    const isCustomShipping = updates.isCustomShipping !== undefined ? Boolean(updates.isCustomShipping) : Boolean(order.isCustomShipping);
 
     // Evaluate promotions if items changed
     if (updates.items) {
@@ -1130,27 +1142,29 @@ router.put('/:orderId', adminAuth, async (req, res) => {
           appliedPromotionRewardText = promoResult.rewardText || (promoResult.rewardTexts ? promoResult.rewardTexts.join(' و ') : '');
 
           if (!isCustomDiscount) {
-            discount = promoResult.totalDiscount;
+            discount = promoResult.totalDiscount || 0;
           }
 
           if (promoResult.freeShipping) {
-            shippingFee = 0;
+            if (!isCustomShipping) {
+              shippingFee = 0;
+            }
           } else {
-            if (order.appliedPromotionName && order.shippingFee === 0 && (updates.shippingFee === undefined || updates.shippingFee === 0)) {
+            if (order.appliedPromotionName && order.shippingFee === 0 && !isCustomShipping && (updates.shippingFee === undefined || updates.shippingFee === 0)) {
               const resolved = await resolveShippingFeeAndCarrier(updates.customer || order.customer, updates.carrier || order.carrier, undefined);
               shippingFee = resolved.shippingFee;
             }
           }
         } else {
-          appliedPromotionId = null;
-          appliedPromotionName = null;
-          appliedPromotionRewards = [];
-          appliedPromotionRewardText = '';
-
-          if (order.appliedPromotionName && !isCustomDiscount) {
+          // No promotion qualified
+          if (!isCustomDiscount) {
+            appliedPromotionId = null;
+            appliedPromotionName = null;
+            appliedPromotionRewards = [];
+            appliedPromotionRewardText = '';
             discount = 0;
           }
-          if (order.appliedPromotionName && order.shippingFee === 0 && (updates.shippingFee === undefined || updates.shippingFee === 0)) {
+          if (order.appliedPromotionName && order.shippingFee === 0 && !isCustomShipping && (updates.shippingFee === undefined || updates.shippingFee === 0)) {
             const resolved = await resolveShippingFeeAndCarrier(updates.customer || order.customer, updates.carrier || order.carrier, undefined);
             shippingFee = resolved.shippingFee;
           }
@@ -1159,13 +1173,14 @@ router.put('/:orderId', adminAuth, async (req, res) => {
         console.error('Error evaluating promotions on update:', promoErr);
       }
     } else {
-      if (isCustomDiscount) {
+      if (isCustomDiscount && !appliedPromotionName) {
         appliedPromotionId = null;
         appliedPromotionName = null;
       }
     }
 
     updates.isCustomDiscount = isCustomDiscount;
+    updates.isCustomShipping = isCustomShipping;
     updates.appliedPromotionId = appliedPromotionId;
     updates.appliedPromotionName = appliedPromotionName;
     updates.appliedPromotionRewards = appliedPromotionRewards;
@@ -1173,7 +1188,8 @@ router.put('/:orderId', adminAuth, async (req, res) => {
     updates.discount = discount;
     updates.shippingFee = shippingFee;
 
-    const { totalPrice } = calcTotals(items, shippingFee, discount);
+    const { subtotal, totalPrice } = calcTotals(items, shippingFee, discount);
+    updates.subtotal = subtotal;
     updates.totalPrice = totalPrice;
     
     const newPaidAmount = updates.paidAmount !== undefined ? updates.paidAmount : order.paidAmount;

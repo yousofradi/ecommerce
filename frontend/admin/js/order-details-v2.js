@@ -145,6 +145,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           currentOrder.appliedPromotionRewardText = promoInfo.rewardText || currentOrder.appliedPromotionRewardText;
           currentOrder.appliedPromotionRewards = promoInfo.appliedPromotionRewards || currentOrder.appliedPromotionRewards;
           currentOrder.appliedPromotion = promoInfo.promotion || currentOrder.appliedPromotion;
+          if (typeof renderPromoCard === 'function') renderPromoCard();
         }
       } catch (err) {
         console.warn('Failed to load promotion info:', err);
@@ -430,48 +431,7 @@ function renderOrder() {
   }
 
   // Promotions & Gifts Card
-  const promoCard = document.getElementById('promo-info-card');
-  const promoRow = document.getElementById('applied-promo-row');
-  const promoName = document.getElementById('view-applied-promo');
-  const giftsContainer = document.getElementById('free-gifts-container');
-  const giftsList = document.getElementById('free-gifts-list');
-  
-  let hasPromo = false;
-  if (o.appliedPromotionName) {
-    promoRow.style.display = 'flex';
-    
-    // Build reward badges from the stored appliedPromotionRewards array
-    const rewards = Array.isArray(o.appliedPromotionRewards) ? o.appliedPromotionRewards.filter(Boolean) : [];
-    let badgesHtml = '';
-    if (rewards.length > 0) {
-      badgesHtml = rewards.map(r => `<span style="background: #e0e7ff; color: #4338ca; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; white-space:nowrap;">${r}</span>`).join('');
-    }
-    
-    promoRow.innerHTML = `
-      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-        ${badgesHtml}
-      </div>
-      <span style="font-weight:700; color:var(--primary); white-space:nowrap;">${o.appliedPromotionName}</span>
-    `;
-    hasPromo = true;
-  } else {
-    promoRow.style.display = 'none';
-  }
-
-  const freeGifts = (o.items || []).filter(item => item.isFreeGift);
-  if (giftsContainer && giftsList) {
-    if (freeGifts.length > 0) {
-      giftsContainer.style.display = 'block';
-      giftsList.innerHTML = freeGifts.map(g => `<li style="margin-bottom:4px; display:flex; align-items:center; gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> ${g.name} (${g.quantity}x)</li>`).join('');
-      hasPromo = true;
-    } else {
-      giftsContainer.style.display = 'none';
-    }
-  }
-
-  if (promoCard) {
-    promoCard.style.display = hasPromo ? 'block' : 'none';
-  }
+  renderPromoCard();
 
   // Payment
   const paymentLabels = {
@@ -586,15 +546,150 @@ function renderItems() {
   }).join('');
 }
 
+window.renderPromoCard = function () {
+  const o = currentOrder;
+  if (!o) return;
+
+  const promoCard = document.getElementById('promo-info-card');
+  const promoRow = document.getElementById('applied-promo-row');
+  const giftsContainer = document.getElementById('free-gifts-container');
+  const giftsList = document.getElementById('free-gifts-list');
+
+  let hasPromo = false;
+
+  if (o.appliedPromotionName) {
+    if (promoRow) {
+      promoRow.style.display = 'flex';
+
+      const rewards = Array.isArray(o.appliedPromotionRewards) ? o.appliedPromotionRewards.filter(Boolean) : [];
+      let badgesHtml = '';
+      if (rewards.length > 0) {
+        badgesHtml = rewards.map(r => `<span style="background: #e0e7ff; color: #4338ca; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; white-space:nowrap;">${r}</span>`).join('');
+      }
+
+      promoRow.innerHTML = `
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          ${badgesHtml}
+        </div>
+        <span style="font-weight:700; color:var(--primary); white-space:nowrap;">${o.appliedPromotionName}</span>
+      `;
+    }
+    hasPromo = true;
+  } else {
+    if (promoRow) promoRow.style.display = 'none';
+  }
+
+  const freeGifts = (o.items || []).filter(item => item.isFreeGift);
+  if (giftsContainer && giftsList) {
+    if (freeGifts.length > 0) {
+      giftsContainer.style.display = 'block';
+      giftsList.innerHTML = freeGifts.map(g => `<li style="margin-bottom:4px; display:flex; align-items:center; gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> ${g.name} (${g.quantity}x)</li>`).join('');
+      hasPromo = true;
+    } else {
+      giftsContainer.style.display = 'none';
+    }
+  }
+
+  if (promoCard) {
+    promoCard.style.display = hasPromo ? 'block' : 'none';
+  }
+};
+
+let _promoSyncTimeout = null;
+window.syncOrderOffersAndTotals = async function (immediate = false) {
+  const o = currentOrder;
+  if (!o || !o.items) return;
+
+  // 1. Recalculate line items finalPrice and subtotal
+  let subtotal = 0;
+  o.items.forEach(item => {
+    const unitPrice = Number(item.basePrice) || Number(item.unitPrice) || Number(item.price) || 0;
+    const itemDiscount = Number(item.discount) || 0;
+    item.finalPrice = Math.max(0, (unitPrice * item.quantity) - itemDiscount);
+    subtotal += item.finalPrice;
+  });
+  o.subtotal = subtotal;
+
+  // Immediate UI update for basic subtotal
+  updateTotals();
+
+  const runEvaluation = async () => {
+    try {
+      const promoItems = o.items.map(item => ({
+        productId: item.productId,
+        unitPrice: Number(item.basePrice) || Number(item.unitPrice) || Number(item.price) || 0,
+        quantity: item.quantity,
+        isFreeGift: Boolean(item.isFreeGift),
+        selectedOptions: item.selectedOptions || []
+      }));
+
+      const promoResult = await api.evaluatePromotions(promoItems);
+
+      if (promoResult && promoResult.appliedPromotion) {
+        o.appliedPromotionId = promoResult.appliedPromotion._id || null;
+        o.appliedPromotionName = promoResult.appliedPromotion.name;
+        o.appliedPromotionRewards = Array.isArray(promoResult.rewardTexts) ? promoResult.rewardTexts : [];
+        o.appliedPromotionRewardText = promoResult.rewardText || (o.appliedPromotionRewards.join(' و ') || '');
+
+        if (!o.isCustomDiscount) {
+          o.discount = promoResult.totalDiscount || 0;
+        }
+
+        if (promoResult.freeShipping) {
+          if (!o.isCustomShipping) {
+            o.shippingFee = 0;
+          }
+        }
+      } else {
+        // Promotion no longer applies for current items/amounts
+        if (!o.isCustomDiscount) {
+          if (o.appliedPromotionName || o.appliedPromotionId) {
+            o.discount = 0;
+          }
+          o.appliedPromotionId = null;
+          o.appliedPromotionName = null;
+          o.appliedPromotionRewards = [];
+          o.appliedPromotionRewardText = '';
+        }
+
+        // Restore standard shipping fee if shipping was 0 from a promotion
+        if (o.shippingFee === 0 && !o.isCustomShipping && window._fullShippingData && o.customer?.city) {
+          const cityObj = window._fullShippingData.find(s => s.city === o.customer.city || s.cityOtherName === o.customer.city);
+          if (cityObj) {
+            const currentCarrier = o.carrier || 'egyptpost';
+            o.shippingFee = (currentCarrier === 'bosta') ? (cityObj.bostaShippingFee || cityObj.shippingFee || 0) : (cityObj.shippingFee || 0);
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Promotion sync evaluation warning:', err);
+    } finally {
+      updateTotals();
+      renderPromoCard();
+    }
+  };
+
+  if (immediate) {
+    if (_promoSyncTimeout) clearTimeout(_promoSyncTimeout);
+    await runEvaluation();
+  } else {
+    if (_promoSyncTimeout) clearTimeout(_promoSyncTimeout);
+    _promoSyncTimeout = setTimeout(runEvaluation, 100);
+  }
+};
+
 function updateTotals() {
   const o = currentOrder;
   let subtotal = 0;
 
   o.items.forEach(item => {
     // Standardized Absolute Pricing Model: basePrice is the unit price
-    item.finalPrice = Math.max(0, (item.basePrice * item.quantity) - (item.discount || 0));
+    const unitPrice = Number(item.basePrice) || Number(item.unitPrice) || Number(item.price) || 0;
+    const itemDiscount = Number(item.discount) || 0;
+    item.finalPrice = Math.max(0, (unitPrice * item.quantity) - itemDiscount);
     subtotal += item.finalPrice;
   });
+  o.subtotal = subtotal;
 
   o.totalPrice = Math.max(0, subtotal + (o.shippingFee || 0) - (o.discount || 0));
 
@@ -608,9 +703,12 @@ function updateTotals() {
     document.getElementById('sum-discount').textContent = formatPrice(Math.abs(o.discount));
     const label = document.getElementById('sum-discount-label');
     if (label) {
-      label.textContent = o.discount > 0 ? 'خصم الطلب' : 'زيادة في الطلب';
-      if (o.appliedPromotionName && o.discount > 0) {
-        label.textContent += ` (${o.appliedPromotionName})`;
+      if (o.discount > 0) {
+        label.textContent = (o.appliedPromotionName && !o.isCustomDiscount) 
+          ? `خصم العرض (${o.appliedPromotionName})` 
+          : (o.isCustomDiscount ? 'خصم يدوي' : 'خصم الطلب');
+      } else {
+        label.textContent = 'زيادة في الطلب';
       }
       label.style.color = o.discount > 0 ? 'var(--danger)' : '#10b981';
     }
@@ -843,15 +941,14 @@ window.applyCustomerChanges = async function (btn) {
   const phone = document.getElementById('modal-c-phone').value.trim();
   const cityId = document.getElementById('modal-c-gov').value;
   const cityNameFromSearch = document.getElementById('modal-c-gov-search').value.trim();
-  const zone = document.getElementById('modal-c-zone').value;
+  const zone = document.getElementById('modal-c-zone')?.value || '';
 
   const carrier = document.getElementById('modal-c-carrier')?.value || 'egyptpost';
   let govData = (window._fullShippingData || []).find(s => s._id === cityId);
   const cityName = govData ? (govData.cityOtherName || govData.city) : cityNameFromSearch;
 
-  const hasZones = carrier === 'bosta' && window._globalSettings?.enableZones !== false && window._modalZones && window._modalZones.length > 0;
-  if (!name || !phone || !cityName || (hasZones && !zone)) {
-    showToast(hasZones ? 'الاسم ورقم الهاتف والمدينة والمنطقة مطلوبة' : 'الاسم ورقم الهاتف والمدينة مطلوبة', 'error');
+  if (!name || !phone || !cityName) {
+    showToast('الاسم ورقم الهاتف والمدينة مطلوبة', 'error');
     if (btn) {
       btn.disabled = false;
       btn.textContent = 'حفظ التغييرات';
@@ -1026,10 +1123,10 @@ window.moveItem = function (idx, direction) {
 
 window.updateItemQty = function (idx, val) {
   const qty = parseInt(val, 10);
-  if (qty >= 1) {
+  if (qty >= 1 && currentOrder.items[idx]) {
     currentOrder.items[idx].quantity = qty;
-    updateTotals();
     renderItems();
+    syncOrderOffersAndTotals();
     if (window.markAsModified) window.markAsModified();
   }
 };
@@ -1046,8 +1143,8 @@ window.applyItemQty = function (btn) {
   const qty = parseInt(document.getElementById('modal-item-qty').value, 10);
   if (qty >= 1 && currentOrder.items[idx]) {
     currentOrder.items[idx].quantity = qty;
-    updateTotals();
     renderItems();
+    syncOrderOffersAndTotals();
     if (window.markAsModified) window.markAsModified();
   }
   closeModal('item-qty-modal');
@@ -1098,8 +1195,8 @@ window.applyItemDiscount = function (type) {
       item.discount = -val;
     }
     closeModal('item-discount-modal');
-    updateTotals();
     renderItems();
+    syncOrderOffersAndTotals();
     if (window.markAsModified) window.markAsModified();
   }
 };
@@ -1109,37 +1206,67 @@ window.removeItem = function (idx) {
   if (!item) return;
 
   currentOrder.items.splice(idx, 1);
-  updateTotals();
   renderItems();
+  syncOrderOffersAndTotals();
   if (window.markAsModified) window.markAsModified();
 };
 
 window.promptOrderDiscount = function () {
-  openModal('order-discount-modal');
-  document.getElementById('modal-order-discount').value = currentOrder.discount || '';
+  openOrderDiscountModal();
 };
 
 window.openOrderDiscountModal = function () {
   openModal('order-discount-modal');
   const input = document.getElementById('modal-order-discount');
+  const hint = document.getElementById('modal-order-promo-hint');
+  const resetBtn = document.getElementById('modal-btn-reset-promo');
+
   if (input) {
     input.value = currentOrder.discount ? Math.abs(currentOrder.discount) : '';
+  }
+
+  if (hint) {
+    if (currentOrder.appliedPromotionName) {
+      hint.style.display = 'block';
+      hint.innerHTML = `🏷️ العرض المطبق: <strong>${currentOrder.appliedPromotionName}</strong> ${currentOrder.appliedPromotionRewardText ? `(${currentOrder.appliedPromotionRewardText})` : ''} ${currentOrder.isCustomDiscount ? '<br><span style="color:#dc2626;font-size:0.8rem;font-weight:600;">(ملاحظة: تم تطبيق خصم يدوي يتجاوز العرض)</span>' : ''}`;
+    } else {
+      hint.style.display = 'none';
+    }
+  }
+
+  if (resetBtn) {
+    resetBtn.style.display = currentOrder.isCustomDiscount ? 'block' : 'none';
   }
 };
 
 window.applyOrderDiscount = async function (type) {
-  const val = document.getElementById('modal-order-discount').value;
-  const num = Math.abs(parseFloat(val) || 0);
-  
-  if (type === 'increase') {
-    currentOrder.discount = -num;
-  } else {
-    currentOrder.discount = num;
+  if (type === 'reset') {
+    currentOrder.isCustomDiscount = false;
+    currentOrder.discount = 0;
+    closeModal('order-discount-modal');
+    await syncOrderOffersAndTotals(true);
+    renderOrder();
+    if (window.markAsModified) window.markAsModified();
+    return;
   }
 
-  currentOrder.isCustomDiscount = true;
+  const val = document.getElementById('modal-order-discount').value;
+  const num = Math.abs(parseFloat(val) || 0);
+
+  if (type === 'increase') {
+    currentOrder.discount = -num;
+    currentOrder.isCustomDiscount = true;
+  } else {
+    currentOrder.discount = num;
+    currentOrder.isCustomDiscount = (num > 0);
+  }
+
   closeModal('order-discount-modal');
-  updateTotals();
+  if (!currentOrder.isCustomDiscount) {
+    await syncOrderOffersAndTotals(true);
+  } else {
+    updateTotals();
+  }
   renderOrder();
 
   if (window.markAsModified) window.markAsModified();
@@ -1157,6 +1284,7 @@ window.openShippingEditModal = function () {
 window.applyShippingFeeChanges = async function (btn) {
   const val = document.getElementById('modal-shipping-fee').value;
   currentOrder.shippingFee = parseFloat(val) || 0;
+  currentOrder.isCustomShipping = true;
   updateTotals();
   renderOrder();
   closeModal('edit-shipping-modal');
@@ -1199,21 +1327,6 @@ window.saveOrderChanges = async function (silent = false) {
     btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:8px;display:inline-block;vertical-align:middle;"></span> جارٍ الحفظ...';
   }
 
-  // Zone validation
-  const currentCarrier = currentOrder.carrier || 'egyptpost';
-  const hasZones = currentCarrier === 'bosta' && window._globalSettings?.enableZones !== false && window._modalZones && window._modalZones.length > 0;
-  if (hasZones) {
-    const zoneOptions = (window._modalZones || []).map(z => api.formatZoneName(z));
-    if (!zoneOptions.includes(currentOrder.customer.zone)) {
-      showToast('يرجى اختيار منطقة صحيحة من القائمة', 'error');
-      if (!silent && btn) {
-        btn.disabled = false;
-        btn.textContent = 'حفظ التغييرات';
-      }
-      return false;
-    }
-  }
-
   try {
     const updates = {
       items: currentOrder.items.map(item => ({
@@ -1223,10 +1336,14 @@ window.saveOrderChanges = async function (silent = false) {
           label: opt.label
         }))
       })),
+      subtotal: currentOrder.subtotal,
       discount: currentOrder.discount,
-      isCustomDiscount: currentOrder.isCustomDiscount,
+      isCustomDiscount: Boolean(currentOrder.isCustomDiscount),
+      isCustomShipping: Boolean(currentOrder.isCustomShipping),
       appliedPromotionName: currentOrder.appliedPromotionName,
       appliedPromotionId: currentOrder.appliedPromotionId,
+      appliedPromotionRewards: currentOrder.appliedPromotionRewards || [],
+      appliedPromotionRewardText: currentOrder.appliedPromotionRewardText || '',
       shippingFee: currentOrder.shippingFee,
       totalPrice: currentOrder.totalPrice,
       paymentMethod: currentOrder.paymentMethod,
@@ -1239,7 +1356,9 @@ window.saveOrderChanges = async function (silent = false) {
 
     const updatedOrderResponse = await api.updateOrder(currentOrder.orderId, updates);
     currentOrder.forcePaymentWebhook = false; // Reset the flag
-    currentOrder.updatedAt = updatedOrderResponse.updatedAt;
+    if (updatedOrderResponse && typeof updatedOrderResponse === 'object') {
+      Object.assign(currentOrder, updatedOrderResponse);
+    }
 
     if (!silent) {
       showToast('تم حفظ التغييرات بنجاح <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;"><polyline points="20 6 9 17 4 12"/></svg>');
@@ -1546,7 +1665,7 @@ window.addSelectedProducts = function (btn) {
   });
 
   renderItems();
-  updateTotals();
+  syncOrderOffersAndTotals();
   if (window.markAsModified) window.markAsModified();
   closeProductsModal();
 };

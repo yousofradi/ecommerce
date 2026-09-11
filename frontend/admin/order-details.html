@@ -640,23 +640,6 @@
             <option value="egyptpost">البريد المصري (Egypt Post)</option>
           </select>
         </div>
-        <div class="form-group mb-16" id="modal-c-zone-container">
-          <label class="form-label">المنطقة</label>
-          <div id="modal-c-zone-search-container" onclick="document.getElementById('modal-c-zone').focus()"
-            style="position: relative;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"
-              style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none;">
-              <path d="M6 9l6 6 6-6" />
-            </svg>
-            <input type="text" id="modal-c-zone" class="form-control" placeholder="اختر أو ابحث عن المنطقة"
-              autocomplete="off" oninput="renderModalZoneDropdown()" onfocus="renderModalZoneDropdown()"
-              style="padding-right: 40px;">
-            <div id="modal-c-zone-dropdown"
-              style="display: none; position: absolute; top: 100%; right: 0; left: 0; z-index: 1100; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); max-height: 200px; overflow-y: auto;">
-              <!-- Zones will be injected here -->
-            </div>
-          </div>
-        </div>
         <div class="form-group mb-16">
           <label class="form-label">العنوان</label>
           <textarea id="modal-c-address" class="form-control" rows="3" placeholder="العنوان بالتفصيل"></textarea>
@@ -770,12 +753,15 @@
 
   <!-- Order Discount Modal -->
   <div class="modal-overlay" id="order-discount-modal" style="display: none;">
-    <div class="modal-box" style="max-width: 400px; border-radius: 16px;">
+    <div class="modal-box" style="max-width: 420px; border-radius: 16px;">
       <div class="modal-header" style="border:none; padding-bottom:0; display:flex; align-items:center; justify-content:space-between;">
         <h3 style="font-size:1.1rem; color:#1e293b; font-weight:600; margin:0;">تعديل إجمالي الطلب</h3>
         <button type="button" onclick="closeModal('order-discount-modal')" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#64748b; line-height:1;">&times;</button>
       </div>
       <div class="modal-body" style="padding-top:12px;">
+        <div id="modal-order-promo-hint" style="display:none; margin-bottom:12px; padding:10px 14px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; font-size:0.85rem; color:#1e40af; line-height:1.5;">
+          <!-- Will show current promo info if any -->
+        </div>
         <div class="form-group">
           <label style="display:block;margin-bottom:8px;font-size:0.85rem;color:var(--text-muted);">أدخل القيمة (ج.م)</label>
           <div style="position:relative; display:flex; align-items:center;">
@@ -787,14 +773,18 @@
         </div>
       </div>
       <div class="modal-footer"
-        style="border:none; justify-content: flex-start; gap: 12px; flex-direction: row-reverse; padding: 16px 20px;">
-        <button type="button" class="btn"
-          style="background:#ef4444; color:#fff; border-radius:24px; padding:8px 32px; font-weight:600;"
-          onclick="applyOrderDiscount('discount')">خصم</button>
-        <button type="button" class="btn"
-          style="background:#10b981; color:#fff; border-radius:24px; padding:8px 32px; font-weight:600;"
-          onclick="applyOrderDiscount('increase')">زياده</button>
-      </div>
+        style="border:none; display:flex; flex-direction:column; gap:10px; padding: 16px 20px;">
+        <div style="display:flex; justify-content:flex-start; gap:12px; flex-direction:row-reverse; width:100%;">
+          <button type="button" class="btn"
+            style="background:#ef4444; color:#fff; border-radius:24px; padding:8px 32px; font-weight:600; flex:1;"
+            onclick="applyOrderDiscount('discount')">خصم</button>
+          <button type="button" class="btn"
+            style="background:#10b981; color:#fff; border-radius:24px; padding:8px 32px; font-weight:600; flex:1;"
+            onclick="applyOrderDiscount('increase')">زياده</button>
+        </div>
+        <button type="button" class="btn" id="modal-btn-reset-promo"
+          style="background:#f1f5f9; color:#475569; border-radius:20px; padding:8px 16px; font-weight:600; font-size:0.85rem; border:none; width:100%; display:none;"
+          onclick="applyOrderDiscount('reset')">إلغاء الخصم اليدوي والمزامنة مع العروض</button>
       </div>
     </div>
   </div>
@@ -860,9 +850,9 @@
 
 
 
-  <script src="js/api-v2.js?v=20260720_v3"></script>
+  <script src="js/api-v2.js?v=20260720_v4"></script>
   <script src="js/auth-v2.js?v=20260521_v2"></script>
-  <script src="js/order-details-v2.js?v=20260720_v9"></script>
+  <script src="js/order-details-v2.js?v=20260720_v10"></script>
 </body>
 
 </html>

@@ -79,6 +79,20 @@ router.delete('/', adminAuth, async (req, res) => {
   }
 });
 
+// ── 2.9 Get Single Abandoned Cart by ID (Admin) ───────────────
+router.get('/:id', adminAuth, async (req, res) => {
+  try {
+    const cart = await AbandonedCart.findById(req.params.id);
+    if (!cart) {
+      return res.status(404).json({ error: 'Abandoned cart not found' });
+    }
+    res.json(cart);
+  } catch (err) {
+    console.error('Error fetching abandoned cart by ID:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // ── 3. Delete Abandoned Cart by ID (Admin) ────────────────────
 router.delete('/:id', adminAuth, async (req, res) => {
   try {

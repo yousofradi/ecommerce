@@ -103,12 +103,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Background fetch heavy payloads
-    Promise.all([
+    window._initialDataPromise = Promise.all([
       api.getProducts(1, 1000, true).catch(() => []),
       api.getShippingList().catch(() => []),
       api.getCustomers().catch(() => [])
     ]).then(([productsRes, shippingRes, customersRes]) => {
-      const products = (productsRes.products || productsRes).filter(p => p.status !== 'draft');
+      const products = (productsRes.products || productsRes || []).filter(p => p.status !== 'draft');
       allProducts = products;
       allCustomers = customersRes || [];
       window._fullShippingData = shippingRes;
@@ -251,15 +251,44 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function recoverAbandonedCart(cartId) {
   try {
+    // 1. Ensure initial products & shipping data are loaded first
+    if (window._initialDataPromise) {
+      await window._initialDataPromise;
+    }
+    if (!allProducts || allProducts.length === 0) {
+      try {
+        const productsRes = await api.getProducts(1, 1000, true);
+        allProducts = (productsRes.products || productsRes || []).filter(p => p.status !== 'draft');
+      } catch (pe) {
+        console.warn('Failed to load products for cart recovery:', pe);
+      }
+    }
+    if (!window._fullShippingData || window._fullShippingData.length === 0) {
+      try {
+        window._fullShippingData = await api.getShippingList().catch(() => []);
+      } catch (se) {}
+    }
+
+    // 2. Fetch the abandoned cart directly
     let cart = null;
-    let page = 1;
-    let limit = 50;
-    while (!cart && page <= 10) {
-      const res = await api.getAbandonedCarts(page, limit);
-      const carts = res.carts || res || [];
-      cart = carts.find(c => c._id === cartId);
-      if (cart || carts.length < limit) break;
-      page++;
+    try {
+      if (typeof api.getAbandonedCart === 'function') {
+        cart = await api.getAbandonedCart(cartId);
+      }
+    } catch (err) {
+      console.warn('Direct getAbandonedCart failed, trying list search:', err);
+    }
+
+    if (!cart) {
+      let page = 1;
+      let limit = 25;
+      while (!cart && page <= 10) {
+        const res = await api.getAbandonedCarts(page, limit).catch(() => ({}));
+        const carts = res.carts || res || [];
+        cart = carts.find(c => String(c._id) === String(cartId));
+        if (cart || !carts.length || carts.length < limit) break;
+        page++;
+      }
     }
 
     if (!cart) {
@@ -267,7 +296,7 @@ async function recoverAbandonedCart(cartId) {
       return;
     }
 
-    // 1. Populate Customer Fields
+    // 3. Populate Customer Fields
     if (cart.customer) {
       if (document.getElementById('c-name')) document.getElementById('c-name').value = cart.customer.name || '';
       if (document.getElementById('c-phone')) document.getElementById('c-phone').value = cart.customer.phone || '';
@@ -282,34 +311,32 @@ async function recoverAbandonedCart(cartId) {
           x.city === govName || x.cityOtherName === govName
         );
         if (s) {
-          document.getElementById('c-gov').value = s._id;
-          document.getElementById('c-gov-search').value = s.cityOtherName || s.city;
-          
-          // Trigger city change to load zones
+          if (document.getElementById('c-gov')) document.getElementById('c-gov').value = s._id;
+          if (document.getElementById('c-gov-search')) document.getElementById('c-gov-search').value = s.cityOtherName || s.city;
           await handleCityChange();
-          
-          // Set Zone if present
-          if (cart.customer.zone && document.getElementById('c-zone')) {
-            document.getElementById('c-zone').value = cart.customer.zone;
-          }
         }
       }
     }
 
-    // 2. Populate Cart Items
+    // 4. Populate Cart Items
     if (cart.items && cart.items.length > 0) {
       cartItems = [];
       for (const item of cart.items) {
-        const p = allProducts.find(x => x._id === item.productId);
-        if (p) {
-          cartItems.push({
-            product: p,
-            quantity: item.quantity || 1,
-            selectedOptions: item.selectedOptions || [],
-            discount: item.discount || 0,
-            price: item.unitPrice !== undefined ? item.unitPrice : item.basePrice
-          });
-        }
+        const p = (allProducts || []).find(x => String(x._id) === String(item.productId)) || {
+          _id: item.productId,
+          name: item.name || 'منتج',
+          imageUrl: item.imageUrl || '',
+          basePrice: item.basePrice || item.unitPrice || 0,
+          salePrice: item.salePrice || null,
+          variants: []
+        };
+        cartItems.push({
+          product: p,
+          quantity: item.quantity || 1,
+          selectedOptions: item.selectedOptions || [],
+          discount: item.discount || 0,
+          price: (item.unitPrice !== undefined && item.unitPrice !== null) ? item.unitPrice : (item.basePrice || p.basePrice || 0)
+        });
       }
       renderCart();
     }
@@ -337,8 +364,8 @@ async function recoverAbandonedCart(cartId) {
 
     showToast('تم استعادة بيانات السلة المتروكة بنجاح');
   } catch (err) {
-    console.error('Failed to recover abandoned cart:', err);
-    showToast('فشل استعادة بيانات السلة المتروكة', 'error');
+    console.error('Error recovering abandoned cart:', err);
+    showToast('حدث خطأ أثناء استعادة السلة المتروكة', 'error');
   }
 }
 
@@ -777,56 +804,23 @@ function itemTotal(c) {
 }
 
 window.handleCityChange = async function() {
-  const cityId = document.getElementById('c-gov').value;
   const zoneInput = document.getElementById('c-zone');
   const zoneDropdown = document.getElementById('zone-dropdown');
-  if (!zoneInput || !zoneDropdown) return;
-  
-  zoneInput.value = '';
-  zoneDropdown.innerHTML = '';
+  if (zoneInput) zoneInput.value = '';
+  if (zoneDropdown) zoneDropdown.innerHTML = '';
   window._currentCityZones = [];
   window._currentCityZonesList = [];
-
-  if (cityId) {
-    // 1. Try local data first (highly reliable)
-    const localGov = (window._fullShippingData || []).find(s => s._id === cityId);
-    let zones = [];
-    if (localGov && localGov.zones && localGov.zones.length > 0) {
-      zones = localGov.zones;
-    } else {
-      // 2. Fallback to API fetch
-      try {
-        zones = await api.getZones(cityId);
-      } catch (e) {
-        console.error('Failed to load zones', e);
-      }
-    }
-    
-    window._currentCityZonesList = zones || [];
-    window._currentCityZones = (zones || []).map(z => api.formatZoneName(z));
-    renderZoneDropdown(window._currentCityZones);
-  }
   
   window.handleCarrierChange();
 };
 
 window.handleCarrierChange = function() {
-  const carrier = document.getElementById('c-carrier')?.value || 'egyptpost';
-  const isBosta = carrier === 'bosta' || carrier.toLowerCase().includes('bosta') || carrier.includes('بوسطة');
-  
   const zoneContainer = document.getElementById('c-zone-container');
   const zoneInput = document.getElementById('c-zone');
-  if (zoneContainer) {
-    if (isBosta && window._globalSettings?.enableZones !== false && window._currentCityZones && window._currentCityZones.length > 0) {
-      zoneContainer.style.display = 'block';
-      if (zoneInput) zoneInput.required = true;
-    } else {
-      zoneContainer.style.display = 'none';
-      if (zoneInput) {
-        zoneInput.required = false;
-        zoneInput.value = '';
-      }
-    }
+  if (zoneContainer) zoneContainer.style.display = 'none';
+  if (zoneInput) {
+    zoneInput.required = false;
+    zoneInput.value = '';
   }
   
   recalcSummary();
@@ -885,15 +879,7 @@ window.submitOrder = async function () {
   const carrier = shipDetails.carrier;
   const shippingFee = shipDetails.fee;
 
-  // Zone validation
-  const zoneOptions = window._currentCityZones || [];
-  const hasZones = carrier === 'bosta' && window._globalSettings?.enableZones !== false && window._currentCityZones && window._currentCityZones.length > 0;
-  if (!name || !phone || !address || !cityName || (hasZones && !zone)) return showToast('يرجى ملء جميع الحقول المطلوبة للعميل', 'error');
-
-  if (hasZones && zoneOptions.length > 0 && !zoneOptions.includes(zone)) {
-    showToast('يرجى اختيار منطقة صحيحة من القائمة', 'error');
-    return;
-  }
+  if (!name || !phone || !address || !cityName) return showToast('يرجى ملء جميع الحقول المطلوبة للعميل', 'error');
 
   const btn = document.getElementById('submit-btn');
   if (btn) {
