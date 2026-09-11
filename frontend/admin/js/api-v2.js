@@ -175,7 +175,7 @@ const api = {
   },
 
   // Customers
-  getAbandonedCarts(page = 1, limit = 50) { return this._request(`/abandoned-carts?page=${page}&limit=${limit}`, { admin: true }); },
+  getAbandonedCarts(page = 1, limit = 25) { return this._request(`/abandoned-carts?page=${page}&limit=${limit}`, { admin: true }); },
   getDashboardStats() { return this._request('/stats/dashboard', { admin: true }); },
   getCustomers() { return this._request('/customers', { admin: true }); },
   getCustomer(phone) { return this._request(`/customers/${phone}`, { admin: true }); },

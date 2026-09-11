@@ -154,7 +154,7 @@ const api = {
   shipOrdersBulk(orderIds) { return this._request('/orders/bulk/ship', { method: 'POST', body: JSON.stringify({ orderIds }), admin: true }); },
 
   // Abandoned Carts
-  getAbandonedCarts(page = 1, limit = 50) { return this._request(`/abandoned-carts?page=${page}&limit=${limit}`, { admin: true }); },
+  getAbandonedCarts(page = 1, limit = 25) { return this._request(`/abandoned-carts?page=${page}&limit=${limit}`, { admin: true }); },
   getAbandonedCart(id) { return this._request(`/abandoned-carts/${id}`, { admin: true }); },
   deleteAbandonedCart(id) { return this._request(`/abandoned-carts/${id}`, { method: 'DELETE', admin: true }); },
   deleteAllAbandonedCarts() { return this._request('/abandoned-carts', { method: 'DELETE', admin: true }); },

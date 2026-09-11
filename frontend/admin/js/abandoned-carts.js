@@ -1,11 +1,19 @@
 let allCarts = [];
+let currentPage = 1;
+let currentLimit = 25;
+let totalPages = 1;
+let totalCount = 0;
 
 document.addEventListener('DOMContentLoaded', async () => {
   // Check auth
-  const ok = await api.checkAdmin();
-  if (!ok) {
-    window.location.href = 'login';
-    return;
+  if (typeof requireAdmin === 'function') {
+    if (!requireAdmin()) return;
+  } else {
+    const ok = await api.checkAdmin();
+    if (!ok) {
+      window.location.href = 'login';
+      return;
+    }
   }
 
   // Remove is-loading from body and show layout
@@ -15,26 +23,100 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (layout) layout.style.display = 'block';
   if (spinner) spinner.style.display = 'none';
 
-  await loadAbandonedCarts();
+  await loadAbandonedCarts(1);
 });
 
-async function loadAbandonedCarts() {
+async function loadAbandonedCarts(page = 1) {
+  currentPage = page;
   const tbody = document.getElementById('carts-tbody');
+  if (tbody) {
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center" style="padding:32px;"><div class="spinner"></div></td></tr>`;
+  }
+
   try {
-    const res = await api.getAbandonedCarts();
-    allCarts = res.carts || res || [];
+    const res = await api.getAbandonedCarts(currentPage, currentLimit);
+    if (res && res.carts) {
+      allCarts = res.carts;
+      totalPages = res.totalPages || 1;
+      totalCount = res.totalCount !== undefined ? res.totalCount : allCarts.length;
+    } else {
+      allCarts = Array.isArray(res) ? res : [];
+      totalPages = Math.ceil(allCarts.length / currentLimit) || 1;
+      totalCount = allCarts.length;
+    }
+
     renderCarts(allCarts);
+    updatePaginationUI();
   } catch (err) {
     console.error('Failed to load abandoned carts:', err);
-    tbody.innerHTML = `<tr><td colspan="6" class="text-center" style="padding:24px; color:#ef4444; font-weight:bold;">فشل في تحميل السلات المتروكة</td></tr>`;
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center" style="padding:24px; color:#ef4444; font-weight:bold;">فشل في تحميل السلات المتروكة</td></tr>`;
+    }
+  }
+}
+
+function updatePaginationUI() {
+  const paginationInfo = document.getElementById('pagination-info');
+  const countAll = document.getElementById('count-all');
+  const curPageDisp = document.getElementById('current-page-display');
+  const totalPagesDisp = document.getElementById('total-pages-display');
+  const prevBtn = document.getElementById('prev-page');
+  const nextBtn = document.getElementById('next-page');
+  const dropdown = document.getElementById('page-dropdown');
+
+  if (paginationInfo) paginationInfo.textContent = totalCount;
+  if (countAll) countAll.textContent = totalCount;
+  if (curPageDisp) curPageDisp.textContent = currentPage;
+  if (totalPagesDisp) totalPagesDisp.textContent = totalPages;
+
+  if (prevBtn) {
+    const isFirstPage = currentPage <= 1;
+    prevBtn.disabled = isFirstPage;
+    prevBtn.style.opacity = isFirstPage ? '0.4' : '1';
+    prevBtn.style.cursor = isFirstPage ? 'not-allowed' : 'pointer';
+    prevBtn.style.pointerEvents = isFirstPage ? 'none' : 'auto';
+  }
+
+  if (nextBtn) {
+    const isLastPage = currentPage >= totalPages;
+    nextBtn.disabled = isLastPage;
+    nextBtn.style.opacity = isLastPage ? '0.4' : '1';
+    nextBtn.style.cursor = isLastPage ? 'not-allowed' : 'pointer';
+    nextBtn.style.pointerEvents = isLastPage ? 'none' : 'auto';
+  }
+
+  if (dropdown) {
+    dropdown.innerHTML = '';
+    for (let i = 1; i <= totalPages; i++) {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = i;
+      if (i === currentPage) opt.selected = true;
+      dropdown.appendChild(opt);
+    }
+  }
+}
+
+function changePage(delta) {
+  const targetPage = currentPage + delta;
+  goToPage(targetPage);
+}
+
+function goToPage(page) {
+  const targetPage = parseInt(page, 10);
+  if (isNaN(targetPage) || targetPage < 1 || targetPage > totalPages || targetPage === currentPage) {
+    return;
+  }
+  loadAbandonedCarts(targetPage);
+  const tableWrap = document.querySelector('.carts-table-wrap');
+  if (tableWrap) {
+    tableWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 }
 
 function renderCarts(list) {
   const tbody = document.getElementById('carts-tbody');
-  const countAll = document.getElementById('count-all');
-  
-  if (countAll) countAll.textContent = list.length;
+  if (!tbody) return;
 
   if (list.length === 0) {
     tbody.innerHTML = `<tr><td colspan="6" class="text-center" style="padding:48px 24px; color:#64748b;">لا توجد سلات متروكة حالياً</td></tr>`;
@@ -166,19 +248,28 @@ function confirmCart(cartId, event) {
 
 async function deleteCart(id, event) {
   if (event) event.stopPropagation();
-  const ok = await showConfirmModal('حذف السلة المتروكة', 'هل أنت متأكد من رغبتك في حذف هذه السلة المتروكة؟ لا يمكن استعادتها بعد الحذف.');
+  const ok = typeof showConfirmModal === 'function'
+    ? await showConfirmModal('حذف السلة المتروكة', 'هل أنت متأكد من رغبتك في حذف هذه السلة المتروكة؟ لا يمكن استعادتها بعد الحذف.')
+    : confirm('هل أنت متأكد من رغبتك في حذف هذه السلة المتروكة؟');
   if (!ok) return;
 
   try {
     await api.deleteAbandonedCart(id);
-    showToast('تم حذف السلة المتروكة بنجاح');
+    if (typeof showToast === 'function') {
+      showToast('تم حذف السلة المتروكة بنجاح');
+    }
     
-    // Remove from UI list
-    allCarts = allCarts.filter(c => c._id !== id);
-    renderCarts(allCarts);
+    // Refresh page
+    if (allCarts.length === 1 && currentPage > 1) {
+      await loadAbandonedCarts(currentPage - 1);
+    } else {
+      await loadAbandonedCarts(currentPage);
+    }
   } catch (err) {
     console.error('Failed to delete cart:', err);
-    showToast(err.message || 'فشل في حذف السلة المتروكة', 'error');
+    if (typeof showToast === 'function') {
+      showToast(err.message || 'فشل في حذف السلة المتروكة', 'error');
+    }
   }
 }
 
@@ -190,18 +281,22 @@ function handleRowClick(event, cartId) {
 }
 
 async function deleteAllCarts() {
-  const ok = await showConfirmModal('حذف جميع السلات المتروكة', 'هل أنت متأكد من رغبتك في حذف جميع السلات المتروكة؟ لا يمكن التراجع عن هذا الإجراء.');
+  const ok = typeof showConfirmModal === 'function'
+    ? await showConfirmModal('حذف جميع السلات المتروكة', 'هل أنت متأكد من رغبتك في حذف جميع السلات المتروكة؟ لا يمكن التراجع عن هذا الإجراء.')
+    : confirm('هل أنت متأكد من رغبتك في حذف جميع السلات المتروكة؟');
   if (!ok) return;
 
   try {
     await api.deleteAllAbandonedCarts();
-    showToast('تم حذف جميع السلات المتروكة بنجاح');
+    if (typeof showToast === 'function') {
+      showToast('تم حذف جميع السلات المتروكة بنجاح');
+    }
     
-    // Clear from UI
-    allCarts = [];
-    renderCarts(allCarts);
+    await loadAbandonedCarts(1);
   } catch (err) {
     console.error('Failed to delete all carts:', err);
-    showToast(err.message || 'فشل في حذف السلات المتروكة', 'error');
+    if (typeof showToast === 'function') {
+      showToast(err.message || 'فشل في حذف السلات المتروكة', 'error');
+    }
   }
 }
