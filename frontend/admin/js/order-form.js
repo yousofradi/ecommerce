@@ -80,6 +80,12 @@ function resolveShippingDetails(cityName, zoneName, forcedCarrier) {
 document.addEventListener('DOMContentLoaded', async () => {
   if (!requireAdmin()) return;
 
+  const urlParams = new URLSearchParams(window.location.search);
+  const recoverCartId = urlParams.get('recoverCartId');
+  const preloadedCartPromise = (recoverCartId && typeof api.getAbandonedCart === 'function')
+    ? api.getAbandonedCart(recoverCartId).catch(() => null)
+    : null;
+
   document.body.classList.add('is-loading');
 
   try {
@@ -102,20 +108,27 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
-    // Background fetch heavy payloads
-    window._initialDataPromise = Promise.all([
-      api.getProducts(1, 1000, true).catch(() => []),
-      api.getShippingList().catch(() => []),
-      api.getCustomers().catch(() => [])
-    ]).then(([productsRes, shippingRes, customersRes]) => {
+    // Parallel non-blocking background fetch
+    window._shippingPromise = api.getShippingList().then(shippingRes => {
+      window._fullShippingData = shippingRes;
+      return shippingRes;
+    }).catch(() => []);
+
+    window._productsPromise = api.getProducts(1, 1000, true).then(productsRes => {
       const products = (productsRes.products || productsRes || []).filter(p => p.status !== 'draft');
       allProducts = products;
-      allCustomers = customersRes || [];
-      window._fullShippingData = shippingRes;
       if (typeof window.renderModalProducts === 'function') {
         window.renderModalProducts();
       }
-    });
+      return products;
+    }).catch(() => []);
+
+    // Customers payload is heavy and only used for existing customer search autocomplete
+    api.getCustomers().then(customersRes => {
+      allCustomers = customersRes || [];
+    }).catch(() => []);
+
+    window._initialDataPromise = Promise.all([window._shippingPromise, window._productsPromise]);
 
     const carrierSelect = document.getElementById('c-carrier');
     if (carrierSelect && window._shippingOptions && window._shippingOptions.length > 0) {
@@ -247,44 +260,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   const urlParams = new URLSearchParams(window.location.search);
   const recoverCartId = urlParams.get('recoverCartId');
   if (recoverCartId) {
-    await recoverAbandonedCart(recoverCartId);
+    await recoverAbandonedCart(recoverCartId, preloadedCartPromise);
   }
 });
 
-async function recoverAbandonedCart(cartId) {
+async function recoverAbandonedCart(cartId, preloadedCartPromise) {
   try {
-    // 1. Ensure initial products & shipping data are loaded first
-    if (window._initialDataPromise) {
-      await window._initialDataPromise;
-    }
-    if (!allProducts || allProducts.length === 0) {
-      try {
-        const productsRes = await api.getProducts(1, 1000, true);
-        allProducts = (productsRes.products || productsRes || []).filter(p => p.status !== 'draft');
-      } catch (pe) {
-        console.warn('Failed to load products for cart recovery:', pe);
-      }
-    }
-    if (!window._fullShippingData || window._fullShippingData.length === 0) {
-      try {
-        window._fullShippingData = await api.getShippingList().catch(() => []);
-      } catch (se) {}
-    }
-
-    // 2. Fetch the abandoned cart directly
-    let cart = null;
-    try {
-      if (typeof api.getAbandonedCart === 'function') {
-        cart = await api.getAbandonedCart(cartId);
-      }
-    } catch (err) {
-      console.warn('Direct getAbandonedCart failed, trying list search:', err);
+    // 1. Fetch the abandoned cart immediately without waiting for heavy background payloads
+    let cart = preloadedCartPromise ? await preloadedCartPromise : null;
+    if (!cart && typeof api.getAbandonedCart === 'function') {
+      cart = await api.getAbandonedCart(cartId).catch(() => null);
     }
 
     if (!cart) {
       let page = 1;
       let limit = 25;
-      while (!cart && page <= 10) {
+      while (!cart && page <= 5) {
         const res = await api.getAbandonedCarts(page, limit).catch(() => ({}));
         const carts = res.carts || res || [];
         cart = carts.find(c => String(c._id) === String(cartId));
@@ -294,11 +285,12 @@ async function recoverAbandonedCart(cartId) {
     }
 
     if (!cart) {
+      document.body.classList.remove('is-loading');
       showToast('السلة المتروكة غير موجودة أو تم حذفها', 'error');
       return;
     }
 
-    // 3. Populate Customer Fields
+    // 2. Populate Customer Fields INSTANTLY
     if (cart.customer) {
       if (document.getElementById('c-name')) document.getElementById('c-name').value = cart.customer.name || '';
       if (document.getElementById('c-phone')) document.getElementById('c-phone').value = cart.customer.phone || '';
@@ -306,77 +298,13 @@ async function recoverAbandonedCart(cartId) {
       if (document.getElementById('c-address')) document.getElementById('c-address').value = cart.customer.address || '';
       if (document.getElementById('c-notes')) document.getElementById('c-notes').value = cart.customer.notes || '';
 
-      // Populate Governorate / City
       const rawGov = (cart.customer.government || cart.customer.city || cart.customer.addressCity || '').trim();
-      const shippingList = Array.isArray(window._fullShippingData) ? window._fullShippingData : [];
-
-      const normalizeArabic = (str) => {
-        if (!str) return '';
-        return str.toString()
-          .replace(/[أإآا]/g, 'ا')
-          .replace(/ة/g, 'ه')
-          .replace(/ى/g, 'ي')
-          .replace(/[\u064B-\u065F]/g, '')
-          .replace(/\s+/g, '')
-          .toLowerCase()
-          .trim();
-      };
-
-      const isMatch = (cityName, query) => {
-        if (!cityName || !query) return false;
-        const a = normalizeArabic(cityName);
-        const b = normalizeArabic(query);
-        return a === b || a.includes(b) || b.includes(a);
-      };
-
-      let matchedCity = null;
-
-      if (rawGov) {
-        // 1. By ID
-        matchedCity = shippingList.find(x => String(x._id) === String(rawGov));
-        // 2. By exact normalized city or cityOtherName
-        if (!matchedCity) {
-          matchedCity = shippingList.find(x => 
-            normalizeArabic(x.city) === normalizeArabic(rawGov) || 
-            normalizeArabic(x.cityOtherName) === normalizeArabic(rawGov)
-          );
-        }
-        // 3. By partial match
-        if (!matchedCity) {
-          matchedCity = shippingList.find(x => 
-            isMatch(x.city, rawGov) || 
-            isMatch(x.cityOtherName, rawGov)
-          );
-        }
-      }
-
-      // 4. If still not matched, try to infer from full address string
-      if (!matchedCity && cart.customer.address) {
-        matchedCity = shippingList.find(x => 
-          isMatch(cart.customer.address, x.city) || 
-          isMatch(cart.customer.address, x.cityOtherName)
-        );
-      }
-
-      if (matchedCity) {
-        const cityDisplayName = matchedCity.cityOtherName || matchedCity.city;
-        if (typeof window.selectGov === 'function') {
-          window.selectGov(matchedCity._id, cityDisplayName);
-        } else {
-          const govInput = document.getElementById('c-gov');
-          const searchInput = document.getElementById('c-gov-search');
-          if (govInput) govInput.value = matchedCity._id;
-          if (searchInput) searchInput.value = cityDisplayName;
-          await handleCityChange();
-        }
-      } else if (rawGov) {
-        // If not found in shipping list, still display the raw city name so it is never empty
-        const searchInput = document.getElementById('c-gov-search');
-        if (searchInput) searchInput.value = rawGov;
+      if (rawGov && document.getElementById('c-gov-search')) {
+        document.getElementById('c-gov-search').value = rawGov;
       }
     }
 
-    // 4. Populate Cart Items
+    // 3. Populate Cart Items INSTANTLY from the cart snapshot
     if (cart.items && cart.items.length > 0) {
       cartItems = [];
       for (const item of cart.items) {
@@ -420,8 +348,84 @@ async function recoverAbandonedCart(cartId) {
       window.markAsModified();
     }
 
+    // Release loading screen immediately so the UI is responsive in < 300ms!
+    document.body.classList.remove('is-loading');
     showToast('تم استعادة بيانات السلة المتروكة بنجاح');
+
+    // 4. Background: Match Governorate & Shipping accurately as soon as shipping data arrives
+    (async () => {
+      if (!window._fullShippingData || window._fullShippingData.length === 0) {
+        if (window._shippingPromise) {
+          await window._shippingPromise;
+        } else {
+          window._fullShippingData = await api.getShippingList().catch(() => []);
+        }
+      }
+
+      const shippingList = Array.isArray(window._fullShippingData) ? window._fullShippingData : [];
+      if (!shippingList.length || !cart.customer) return;
+
+      const rawGov = (cart.customer.government || cart.customer.city || cart.customer.addressCity || '').trim();
+
+      const normalizeArabic = (str) => {
+        if (!str) return '';
+        return str.toString()
+          .replace(/[أإآا]/g, 'ا')
+          .replace(/ة/g, 'ه')
+          .replace(/ى/g, 'ي')
+          .replace(/[\u064B-\u065F]/g, '')
+          .replace(/\s+/g, '')
+          .toLowerCase()
+          .trim();
+      };
+
+      const isMatch = (cityName, query) => {
+        if (!cityName || !query) return false;
+        const a = normalizeArabic(cityName);
+        const b = normalizeArabic(query);
+        return a === b || a.includes(b) || b.includes(a);
+      };
+
+      let matchedCity = null;
+      if (rawGov) {
+        matchedCity = shippingList.find(x => String(x._id) === String(rawGov)) ||
+          shippingList.find(x => normalizeArabic(x.city) === normalizeArabic(rawGov) || normalizeArabic(x.cityOtherName) === normalizeArabic(rawGov)) ||
+          shippingList.find(x => isMatch(x.city, rawGov) || isMatch(x.cityOtherName, rawGov));
+      }
+
+      if (!matchedCity && cart.customer.address) {
+        matchedCity = shippingList.find(x => isMatch(cart.customer.address, x.city) || isMatch(cart.customer.address, x.cityOtherName));
+      }
+
+      if (matchedCity) {
+        const cityDisplayName = matchedCity.cityOtherName || matchedCity.city;
+        if (typeof window.selectGov === 'function') {
+          window.selectGov(matchedCity._id, cityDisplayName);
+        } else {
+          const govInput = document.getElementById('c-gov');
+          const searchInput = document.getElementById('c-gov-search');
+          if (govInput) govInput.value = matchedCity._id;
+          if (searchInput) searchInput.value = cityDisplayName;
+          await handleCityChange();
+        }
+      }
+
+      // If products load, enrich product objects with fresh active data
+      if (window._productsPromise) {
+        await window._productsPromise;
+        let changed = false;
+        cartItems.forEach(ci => {
+          const fullP = (allProducts || []).find(p => String(p._id) === String(ci.product._id));
+          if (fullP && ci.product !== fullP) {
+            ci.product = fullP;
+            changed = true;
+          }
+        });
+        if (changed) renderCart();
+      }
+    })();
   } catch (err) {
+    document.body.classList.remove('is-loading');
     console.error('Error recovering abandoned cart:', err);
     showToast('حدث خطأ أثناء استعادة السلة المتروكة', 'error');
   }
