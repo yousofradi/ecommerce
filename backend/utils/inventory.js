@@ -1,5 +1,6 @@
 const Product = require('../models/Product');
 const cache = require('./cache');
+const { sendWhatsAppMessage } = require('./whatsapp');
 
 async function clearStorefrontProductCaches() {
   try {
@@ -24,7 +25,9 @@ async function adjustStock(productId, selectedOptions, quantityDiff) {
     return;
   }
 
+  const previousQuantity = product.quantity;
   let changed = false;
+  let variantAlertData = null;
 
   // 1. Handle variants if selectedOptions are provided and product has variants
   if (selectedOptions && selectedOptions.length > 0 && product.variants && product.variants.length > 0) {
@@ -44,9 +47,34 @@ async function adjustStock(productId, selectedOptions, quantityDiff) {
     });
 
     if (variant && variant.quantity !== null && variant.quantity !== undefined && variant.quantity !== "") {
-      const nextQuantity = Math.max(0, Number(variant.quantity) + quantityDiff);
+      const prevVarQty = Number(variant.quantity);
+      const nextQuantity = Math.max(0, prevVarQty + quantityDiff);
       variant.quantity = nextQuantity;
       changed = true;
+
+      if (quantityDiff < 0) {
+        const comboStr = variant.combination instanceof Map
+          ? Array.from(variant.combination.values()).join(' / ')
+          : Object.values(variant.combination || {}).join(' / ');
+        const varPrice = (variant.salePrice && variant.salePrice < variant.price) ? variant.salePrice : (variant.price || (product.salePrice || product.basePrice));
+
+        if (nextQuantity === 0 && prevVarQty > 0) {
+          variant.active = false;
+          variantAlertData = {
+            type: 'zero',
+            name: `${product.name} (${comboStr})`,
+            price: varPrice,
+            quantity: 0
+          };
+        } else if (nextQuantity > 0 && nextQuantity < 3 && (prevVarQty >= 3 || prevVarQty > nextQuantity)) {
+          variantAlertData = {
+            type: 'low',
+            name: `${product.name} (${comboStr})`,
+            price: varPrice,
+            quantity: nextQuantity
+          };
+        }
+      }
     }
   }
 
@@ -66,6 +94,41 @@ async function adjustStock(productId, selectedOptions, quantityDiff) {
         return sum + (isNaN(q) ? 0 : Math.max(0, q));
       }, 0);
       changed = true;
+    }
+  }
+
+  // 4. Threshold checks and WhatsApp Alerts on stock deduction (quantityDiff < 0)
+  if (changed && quantityDiff < 0) {
+    const effectivePrice = (product.salePrice && product.salePrice < product.basePrice) ? product.salePrice : product.basePrice;
+
+    // Case 1: Product count reached 0 -> Archive product & send alert
+    if (product.quantity !== null && product.quantity <= 0) {
+      product.quantity = 0;
+      product.status = 'draft';
+      product.active = false;
+      if (Array.isArray(product.variants)) {
+        product.variants.forEach(v => { v.active = false; });
+      }
+
+      const zeroMsg = `🚨 تنبيه: نفاد المخزون وتمت أرشفة المنتج\n\n📦 اسم المنتج: ${product.name}\n💰 السعر: ${effectivePrice} ج.م\n🔢 الكمية المتبقية: 0\n📁 الحالة: تم نقل المنتج إلى الأرشيف تلقائياً`;
+      sendWhatsAppMessage(zeroMsg);
+    }
+    // Case 2: Product count went below 3 (1 or 2) -> Send low stock alert
+    else if (product.quantity !== null && product.quantity > 0 && product.quantity < 3) {
+      if (previousQuantity === null || previousQuantity >= 3 || previousQuantity > product.quantity) {
+        const lowMsg = `⚠️ تنبيه: اقتراب نفاد المخزون (قليل)\n\n📦 اسم المنتج: ${product.name}\n💰 السعر: ${effectivePrice} ج.م\n🔢 الكمية المتبقية: ${product.quantity}`;
+        sendWhatsAppMessage(lowMsg);
+      }
+    }
+    // Case 3: Specific variant alert if total product wasn't already alerted as 0
+    else if (variantAlertData) {
+      if (variantAlertData.type === 'zero') {
+        const varMsg = `🚨 تنبيه: نفاد مخزون المتغير\n\n📦 اسم المنتج: ${variantAlertData.name}\n💰 السعر: ${variantAlertData.price} ج.م\n🔢 الكمية: 0`;
+        sendWhatsAppMessage(varMsg);
+      } else if (variantAlertData.type === 'low') {
+        const varMsg = `⚠️ تنبيه: اقتراب نفاد مخزون المتغير (قليل)\n\n📦 اسم المنتج: ${variantAlertData.name}\n💰 السعر: ${variantAlertData.price} ج.م\n🔢 الكمية المتبقية: ${variantAlertData.quantity}`;
+        sendWhatsAppMessage(varMsg);
+      }
     }
   }
 

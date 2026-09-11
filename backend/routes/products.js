@@ -80,8 +80,8 @@ router.get('/', async (req, res) => {
         query.status = 'active';
         query.active = { $ne: false };
         query.$or = [
-          { quantity: { $ne: null, $lt: 2 } },
-          { variants: { $elemMatch: { quantity: { $ne: null, $lt: 2 } } } }
+          { quantity: { $ne: null, $gt: 0, $lt: 3 } },
+          { variants: { $elemMatch: { quantity: { $ne: null, $gt: 0, $lt: 3 } } } }
         ];
       }
       // If no status provided, show both active and draft products for admin
@@ -407,6 +407,15 @@ router.put('/:id', adminAuth, async (req, res) => {
           const q = parseInt(v.quantity);
           return sum + (isNaN(q) ? 0 : Math.max(0, q));
         }, 0);
+      }
+    }
+
+    // When product count reaches 0, automatically archive
+    if (body.quantity === 0) {
+      body.active = false;
+      body.status = 'draft';
+      if (Array.isArray(body.variants)) {
+        body.variants.forEach(v => { v.active = false; });
       }
     }
 
