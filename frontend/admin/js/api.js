@@ -181,10 +181,69 @@ const api = {
     });
   },
 
-  // Auth check
+  // Auth check & Employee Management
+  async login(username, password) {
+    return this._request('/employees/login', {
+      method: 'POST',
+      body: JSON.stringify({ username, password })
+    });
+  },
+
+  async getMe() {
+    return this._request('/employees/me', { admin: true });
+  },
+
+  getEmployees() {
+    return this._request('/employees', { admin: true });
+  },
+
+  createEmployee(data) {
+    return this._request('/employees', {
+      method: 'POST',
+      body: JSON.stringify(data),
+      admin: true
+    });
+  },
+
+  updateEmployee(id, data) {
+    return this._request(`/employees/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+      admin: true
+    });
+  },
+
+  deleteEmployee(id) {
+    return this._request(`/employees/${id}`, {
+      method: 'DELETE',
+      admin: true
+    });
+  },
+
+  toggleEmployeeStatus(id) {
+    return this._request(`/employees/${id}/toggle-status`, {
+      method: 'PATCH',
+      admin: true
+    });
+  },
+
   async checkAdmin() {
-    try { await this._request('/orders', { admin: true }); return true; }
-    catch { return false; }
+    try {
+      const res = await this.getMe();
+      if (res && res.user) {
+        localStorage.setItem('adminUser', JSON.stringify(res.user));
+        localStorage.setItem('adminPermissions', JSON.stringify(res.user.permissions || {}));
+        return true;
+      }
+      return false;
+    } catch {
+      try {
+        await this._request('/orders?limit=1', { admin: true });
+        return true;
+      } catch {
+        return false;
+      }
+    }
   },
 
   // File Upload

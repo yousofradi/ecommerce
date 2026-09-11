@@ -1,3 +1,183 @@
+function getAdminUser() {
+  try {
+    return JSON.parse(localStorage.getItem('adminUser') || '{}');
+  } catch {
+    return {};
+  }
+}
+
+function getAdminPermissions() {
+  try {
+    return JSON.parse(localStorage.getItem('adminPermissions') || '{}');
+  } catch {
+    return {};
+  }
+}
+
+function isSuperAdmin() {
+  const user = getAdminUser();
+  return user.role === 'superadmin' || user.isSuperAdmin === true;
+}
+
+function getPermissionForSection(section) {
+  if (isSuperAdmin()) return 'full';
+  const perms = getAdminPermissions();
+  return perms[section] || 'none';
+}
+
+function getCurrentPageSection() {
+  const path = window.location.pathname.toLowerCase();
+  if (path.endsWith('/') || path.includes('/index')) return 'dashboard';
+  if (path.includes('order-details') || path.includes('order-form') || path.includes('orders')) return 'orders';
+  if (path.includes('abandoned-cart')) return 'abandoned_carts';
+  if (path.includes('customer-details') || path.includes('customers')) return 'customers';
+  if (path.includes('product-form') || path.includes('products')) return 'products';
+  if (path.includes('collection-form') || path.includes('collections')) return 'collections';
+  if (path.includes('homepage')) return 'homepage';
+  if (path.includes('promotions')) return 'promotions';
+  if (path.includes('expenses')) return 'expenses';
+  if (path.includes('shipment')) return 'shipment';
+  if (path.includes('webhooks')) return 'webhooks';
+  if (path.includes('whatsapp')) return 'whatsapp';
+  if (path.includes('settings')) return 'settings';
+  if (path.includes('employees')) return 'employees';
+  return 'dashboard';
+}
+
+function filterSidebarNavigation() {
+  const nav = document.querySelector('.admin-nav');
+  if (!nav) return;
+
+  const linkToSection = {
+    '/': 'dashboard',
+    'index': 'dashboard',
+    'index.html': 'dashboard',
+    'orders': 'orders',
+    'abandoned-carts': 'abandoned_carts',
+    'customers': 'customers',
+    'products': 'products',
+    'collections': 'collections',
+    'homepage': 'homepage',
+    'promotions': 'promotions',
+    'expenses': 'expenses',
+    'settings': 'settings',
+    'shipment': 'shipment',
+    'webhooks': 'webhooks',
+    'whatsapp': 'whatsapp',
+    'employees': 'employees'
+  };
+
+  // Inject Employees link into sidebar if not already present
+  if (!nav.querySelector('a[href="employees"]')) {
+    const empLink = document.createElement('a');
+    empLink.href = 'employees';
+    if (window.location.pathname.includes('employees')) empLink.className = 'active';
+    empLink.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+        <circle cx="9" cy="7" r="4"></circle>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+      </svg>
+      الموظفون والصلاحيات
+    `;
+    const dropdown = nav.querySelector('.admin-nav-dropdown-container');
+    const logoutBtn = nav.querySelector('.logout');
+    if (dropdown) {
+      nav.insertBefore(empLink, dropdown);
+    } else if (logoutBtn) {
+      nav.insertBefore(empLink, logoutBtn);
+    } else {
+      nav.appendChild(empLink);
+    }
+  }
+
+  // Check all sidebar links
+  nav.querySelectorAll('a').forEach(link => {
+    if (link.classList.contains('logout')) return;
+    const rawHref = link.getAttribute('href') || '';
+    const cleanHref = rawHref.replace(/^(\.\/|\/)/, '').replace(/\.html$/, '');
+    const section = linkToSection[cleanHref] || linkToSection[rawHref];
+    if (section) {
+      const perm = getPermissionForSection(section);
+      if (perm === 'none') {
+        link.style.display = 'none';
+      }
+    }
+  });
+
+  // Check dropdown container: if all child links are hidden, hide dropdown container
+  const dropdown = nav.querySelector('.admin-nav-dropdown-container');
+  if (dropdown) {
+    const dropdownLinks = dropdown.querySelectorAll('.admin-nav-dropdown-content a');
+    let hasVisibleChild = false;
+    dropdownLinks.forEach(link => {
+      if (link.style.display !== 'none') hasVisibleChild = true;
+    });
+    if (!hasVisibleChild) {
+      dropdown.style.display = 'none';
+    }
+  }
+}
+
+function enforcePermissionsUI() {
+  const currentSection = getCurrentPageSection();
+  const currentPerm = getPermissionForSection(currentSection);
+
+  // 1. If user has NO permission for this section, block page!
+  if (currentPerm === 'none') {
+    document.body.classList.remove('is-loading');
+    const layout = document.querySelector('.admin-layout') || document.body;
+    const main = document.querySelector('.admin-main') || layout;
+    if (main) {
+      main.innerHTML = `
+        <div style="min-height:70vh;display:flex;align-items:center;justify-content:center;padding:40px 20px;text-align:center;">
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:40px;max-width:500px;box-shadow:0 10px 25px -5px rgba(0,0,0,0.05);margin:auto;">
+            <div style="width:64px;height:64px;background:#fef2f2;color:#ef4444;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px auto;">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+            </div>
+            <h2 style="font-size:1.4rem;font-weight:700;color:#1e293b;margin-bottom:10px;">عفواً، ليس لديك صلاحية للوصول</h2>
+            <p style="color:#64748b;font-size:0.95rem;line-height:1.6;margin-bottom:24px;">تم حجب هذا القسم عن حسابك بناءً على الصلاحيات المحددة لك من قبل إدارة المتجر.</p>
+            <a href="/" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;text-decoration:none;border-radius:10px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+              العودة للرئيسية
+            </a>
+          </div>
+        </div>
+      `;
+    }
+  } else if (currentPerm === 'read') {
+    // 2. Read-only mode restrictions
+    const banner = document.createElement('div');
+    banner.className = 'admin-readonly-banner';
+    banner.style.cssText = 'background:#fffbeb;border:1px solid #fef3c7;color:#92400e;padding:12px 18px;border-radius:10px;margin-bottom:20px;font-size:0.9rem;font-weight:600;display:flex;align-items:center;gap:10px;box-shadow:0 1px 3px rgba(0,0,0,0.05);';
+    banner.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg> وضع القراءة فقط — يمكنك استعراض هذا القسم فقط دون إجراء تعديلات أو حفظ بيانات.`;
+
+    const container = document.querySelector('.admin-main > div') || document.querySelector('.admin-main');
+    if (container) {
+      container.insertBefore(banner, container.firstChild);
+    }
+
+    // Hide or disable write/action buttons
+    setTimeout(() => {
+      document.querySelectorAll('button[type="submit"], #save-btn, .btn-primary:not(a), .btn-delete, .btn-add, #btn-global-save, #btn-create-order, #add-product-btn, #add-collection-btn, #save-settings-btn, .btn-action-primary').forEach(el => {
+        el.style.display = 'none';
+      });
+      // Disable inputs if on a form page
+      if (window.location.pathname.includes('form') || window.location.pathname.includes('settings')) {
+        document.querySelectorAll('input, select, textarea').forEach(el => {
+          if (!el.classList.contains('search-input') && el.type !== 'search') {
+            el.disabled = true;
+          }
+        });
+      }
+    }, 250);
+  }
+
+  // 3. Sidebar Filtering
+  filterSidebarNavigation();
+}
+
 function requireAdmin() {
   // Security: Prevent admin access on storefront domains
   const storefrontDomains = [];
@@ -23,16 +203,24 @@ function requireAdmin() {
     }
   }
 
+  // Enforce section permissions for current page
+  enforcePermissionsUI();
+
   return true;
 }
+
 function logout() {
   localStorage.removeItem('adminKey');
+  localStorage.removeItem('adminUser');
+  localStorage.removeItem('adminPermissions');
   localStorage.removeItem('loginTimestamp');
   window.location.href = 'login';
 }
 
 // Global UI Helpers
 document.addEventListener('DOMContentLoaded', () => {
+  filterSidebarNavigation();
+
   // Sidebar Toggle (Delegated)
   document.addEventListener('click', (e) => {
     const toggleBtn = e.target.closest('.sidebar-toggle');
