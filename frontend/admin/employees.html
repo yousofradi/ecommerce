@@ -168,7 +168,6 @@
       flex-direction: column;
       flex: 1;
       min-height: 0;
-      height: 100%;
       overflow: hidden;
     }
 
@@ -194,7 +193,7 @@
     }
     /* Clean custom scrollbar for modal body */
     .emp-modal-body::-webkit-scrollbar {
-      width: 6px;
+      width: 7px;
     }
     .emp-modal-body::-webkit-scrollbar-track {
       background: #f8fafc;
@@ -283,27 +282,10 @@
       }
     }
 
-    /* Dedicated Scroll Container for Permissions Table */
+    /* Table container inside perms-box - expands naturally inside main modal */
     .perms-table-scroll-wrap {
-      max-height: 260px;
-      min-height: 180px;
-      overflow-y: auto !important;
-      overflow-x: hidden !important;
-      -webkit-overflow-scrolling: touch;
-      overscroll-behavior: contain;
-    }
-    .perms-table-scroll-wrap::-webkit-scrollbar {
-      width: 5px;
-    }
-    .perms-table-scroll-wrap::-webkit-scrollbar-track {
-      background: #f8fafc;
-    }
-    .perms-table-scroll-wrap::-webkit-scrollbar-thumb {
-      background: #cbd5e1;
-      border-radius: 6px;
-    }
-    .perms-table-scroll-wrap::-webkit-scrollbar-thumb:hover {
-      background: #94a3b8;
+      width: 100%;
+      overflow: visible;
     }
 
     .perms-table {
