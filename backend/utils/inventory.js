@@ -53,23 +53,32 @@ async function adjustStock(productId, selectedOptions, quantityDiff) {
       changed = true;
 
       if (quantityDiff < 0) {
-        const comboStr = variant.combination instanceof Map
-          ? Array.from(variant.combination.values()).join(' / ')
-          : Object.values(variant.combination || {}).join(' / ');
+        const comboEntries = variant.combination instanceof Map
+          ? Array.from(variant.combination.entries())
+          : Object.entries(variant.combination || {});
+
+        const variantDetails = comboEntries.length > 0
+          ? comboEntries.map(([groupName, val]) => `${groupName}: ${val}`).join(' - ')
+          : (selectedOptions && selectedOptions.length > 0
+              ? selectedOptions.map(so => `${so.groupName}: ${so.label}`).join(' - ')
+              : 'افتراضي');
+
         const varPrice = (variant.salePrice && variant.salePrice < variant.price) ? variant.salePrice : (variant.price || (product.salePrice || product.basePrice));
 
         if (nextQuantity === 0 && prevVarQty > 0) {
           variant.active = false;
           variantAlertData = {
             type: 'zero',
-            name: `${product.name} (${comboStr})`,
+            productName: product.name,
+            variantDetails,
             price: varPrice,
             quantity: 0
           };
         } else if (nextQuantity > 0 && nextQuantity < 3 && (prevVarQty >= 3 || prevVarQty > nextQuantity)) {
           variantAlertData = {
             type: 'low',
-            name: `${product.name} (${comboStr})`,
+            productName: product.name,
+            variantDetails,
             price: varPrice,
             quantity: nextQuantity
           };
@@ -113,21 +122,21 @@ async function adjustStock(productId, selectedOptions, quantityDiff) {
       const zeroMsg = `تنبيه: نفاد المخزون وتمت أرشفة المنتج\n\nاسم المنتج: ${product.name}\nالسعر: ${effectivePrice} ج.م\nالكمية المتبقية: 0\nالحالة: تم نقل المنتج إلى الأرشيف تلقائياً`;
       sendWhatsAppMessage(zeroMsg);
     }
-    // Case 2: Product count went below 3 (1 or 2) -> Send low stock alert
-    else if (product.quantity !== null && product.quantity > 0 && product.quantity < 3) {
-      if (previousQuantity === null || previousQuantity >= 3 || previousQuantity > product.quantity) {
-        const lowMsg = `تنبيه: اقتراب نفاد المخزون (قليل)\n\nاسم المنتج: ${product.name}\nالسعر: ${effectivePrice} ج.م\nالكمية المتبقية: ${product.quantity}`;
-        sendWhatsAppMessage(lowMsg);
-      }
-    }
-    // Case 3: Specific variant alert if total product wasn't already alerted as 0
+    // Case 2: Specific variant alert if variant reached 0 or low stock (< 3)
     else if (variantAlertData) {
       if (variantAlertData.type === 'zero') {
-        const varMsg = `تنبيه: نفاد مخزون المتغير\n\nاسم المنتج: ${variantAlertData.name}\nالسعر: ${variantAlertData.price} ج.م\nالكمية: 0`;
+        const varMsg = `تنبيه: نفاد مخزون المتغير\n\nاسم المنتج: ${variantAlertData.productName}\nالمتغير: ${variantAlertData.variantDetails}\nالسعر: ${variantAlertData.price} ج.م\nالكمية: 0`;
         sendWhatsAppMessage(varMsg);
       } else if (variantAlertData.type === 'low') {
-        const varMsg = `تنبيه: اقتراب نفاد مخزون المتغير (قليل)\n\nاسم المنتج: ${variantAlertData.name}\nالسعر: ${variantAlertData.price} ج.م\nالكمية المتبقية: ${variantAlertData.quantity}`;
+        const varMsg = `تنبيه: اقتراب نفاد مخزون المتغير\n\nاسم المنتج: ${variantAlertData.productName}\nالمتغير: ${variantAlertData.variantDetails}\nالسعر: ${variantAlertData.price} ج.م\nالكمية المتبقية: ${variantAlertData.quantity}`;
         sendWhatsAppMessage(varMsg);
+      }
+    }
+    // Case 3: Product count went below 3 (1 or 2) -> Send low stock alert for product without variants
+    else if (product.quantity !== null && product.quantity > 0 && product.quantity < 3) {
+      if (previousQuantity === null || previousQuantity >= 3 || previousQuantity > product.quantity) {
+        const lowMsg = `تنبيه: اقتراب نفاد المخزون\n\nاسم المنتج: ${product.name}\nالسعر: ${effectivePrice} ج.م\nالكمية المتبقية: ${product.quantity}`;
+        sendWhatsAppMessage(lowMsg);
       }
     }
   }
