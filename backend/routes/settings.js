@@ -31,8 +31,11 @@ router.get('/:key', async (req, res) => {
   
   if (!PUBLIC_SETTINGS.includes(key)) {
     // Authenticate Master Admin or active Employee for settings
-    const adminKey = process.env.ADMIN_API_KEY || 'sundura_secret_admin_key';
-    const reqKey = req.headers['x-admin-key'] || req.query.ADMIN_API_KEY || req.query.adminKey || req.query.admin_token;
+    const adminKey = (process.env.ADMIN_API_KEY || 'sundura_secret_admin_key').trim();
+    const authHeader = req.headers['authorization'] || '';
+    const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : null;
+    const rawReqKey = req.headers['x-admin-key'] || bearerToken || req.query.ADMIN_API_KEY || req.query.adminKey || req.query.admin_token || req.query.key;
+    const reqKey = typeof rawReqKey === 'string' ? rawReqKey.trim() : (Array.isArray(rawReqKey) ? rawReqKey[0].trim() : '');
     
     let isAuthorized = (reqKey && reqKey === adminKey);
     if (!isAuthorized && reqKey && reqKey.startsWith('emp_')) {

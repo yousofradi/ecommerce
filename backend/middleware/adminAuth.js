@@ -27,8 +27,11 @@ const ROUTE_SECTION_MAP = [
  * Automatically enforces section-level read/write permissions for employees across all routes.
  */
 const adminAuth = async (req, res, next) => {
-  const key = req.headers['x-admin-key'] || req.query.ADMIN_API_KEY || req.query.adminKey || req.query.key;
-  const adminKey = process.env.ADMIN_API_KEY || 'sundura_secret_admin_key';
+  const authHeader = req.headers['authorization'] || '';
+  const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : null;
+  const rawKey = req.headers['x-admin-key'] || bearerToken || req.query.ADMIN_API_KEY || req.query.adminKey || req.query.admin_token || req.query.key;
+  const key = typeof rawKey === 'string' ? rawKey.trim() : (Array.isArray(rawKey) ? rawKey[0].trim() : '');
+  const adminKey = (process.env.ADMIN_API_KEY || 'sundura_secret_admin_key').trim();
 
   if (!key) {
     return res.status(401).json({ error: 'يرجى تسجيل الدخول للوصول إلى هذه الصفحة' });
@@ -83,7 +86,7 @@ const adminAuth = async (req, res, next) => {
     };
 
     // 3. Automatic Section-Level RBAC Enforcement for Employees
-    const fullPath = ((req.baseUrl || '') + (req.path || '')).toLowerCase();
+    const fullPath = ((req.baseUrl || '') + (req.path || '')).toLowerCase().replace(/\/+$/, '');
 
     // /api/employees/me is always allowed for any authenticated user to check their own profile/session
     if (fullPath === '/api/employees/me') {

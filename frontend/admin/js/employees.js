@@ -504,22 +504,38 @@ async function toggleStatus(empId) {
   try {
     await api.toggleEmployeeStatus(empId);
     await loadEmployees();
+    if (typeof showAdminNotification === 'function') {
+      showAdminNotification('تم تحديث حالة الموظف بنجاح', 'success');
+    }
   } catch (err) {
-    alert('فشل تغيير حالة الموظف: ' + err.message);
+    if (typeof showAdminNotification === 'function') {
+      showAdminNotification('فشل تغيير حالة الموظف: ' + err.message, 'error');
+    } else {
+      alert('فشل تغيير حالة الموظف: ' + err.message);
+    }
   }
 }
 
 // Delete Employee
 async function deleteEmployee(empId, name) {
-  if (!confirm(`هل أنت متأكد من رغبتك في حذف الموظف "${name}" نهائياً؟`)) {
-    return;
-  }
+  const confirmed = typeof window.showConfirmModal === 'function' 
+    ? await window.showConfirmModal('حذف موظف', `هل أنت متأكد من رغبتك في حذف الموظف "${name}" نهائياً؟`, 'danger')
+    : confirm(`هل أنت متأكد من رغبتك في حذف الموظف "${name}" نهائياً؟`);
+
+  if (!confirmed) return;
 
   try {
     await api.deleteEmployee(empId);
     await loadEmployees();
+    if (typeof showAdminNotification === 'function') {
+      showAdminNotification('تم حذف حساب الموظف بنجاح', 'success');
+    }
   } catch (err) {
-    alert('فشل حذف الموظف: ' + err.message);
+    if (typeof showAdminNotification === 'function') {
+      showAdminNotification('فشل حذف الموظف: ' + err.message, 'error');
+    } else {
+      alert('فشل حذف الموظف: ' + err.message);
+    }
   }
 }
 

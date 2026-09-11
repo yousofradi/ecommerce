@@ -79,7 +79,7 @@ const api = {
       const res = await fetch(`${API_BASE}${finalPath}`, { ...opts, headers, signal: controller.signal });
       const data = await res.json();
       if (!res.ok) {
-        if (res.status === 401 && !finalPath.includes('/login')) {
+        if (res.status === 401 && finalPath.includes('/employees/me')) {
           localStorage.removeItem('adminKey');
           localStorage.removeItem('adminUser');
           localStorage.removeItem('adminPermissions');
@@ -395,6 +395,9 @@ const api = {
 
 // ── Toast notification ─────────────────────────────────
 function showToast(msg, type = 'success') {
+  if (typeof showAdminNotification === 'function') {
+    return showAdminNotification(msg, type === 'error' ? 'error' : type === 'success' ? 'success' : 'warning');
+  }
   let container = document.querySelector('.toast-container');
   if (!container) {
     container = document.createElement('div');

@@ -249,6 +249,121 @@ function enforcePermissionsUI() {
       }
     }
 
+// ── Admin Popup Notification (Replaces native browser alert) ─────────────
+function showAdminNotification(message, type = 'warning', title = '') {
+  let container = document.getElementById('admin-popup-notice-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'admin-popup-notice-container';
+    container.style.cssText = `
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 999999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      pointer-events: none;
+      width: 92%;
+      max-width: 480px;
+      direction: rtl;
+    `;
+    document.body.appendChild(container);
+  }
+
+  // Prevent duplicate spam
+  const existing = container.querySelector(`[data-msg="${CSS.escape(message)}"]`);
+  if (existing) {
+    existing.style.transform = 'scale(1.03)';
+    setTimeout(() => { existing.style.transform = 'scale(1)'; }, 200);
+    return;
+  }
+
+  const el = document.createElement('div');
+  el.setAttribute('data-msg', message);
+  el.className = 'admin-popup-notice';
+
+  let iconSvg = '';
+  let borderColor = '#f59e0b';
+  let iconBg = 'rgba(245, 158, 11, 0.15)';
+
+  if (type === 'error') {
+    borderColor = '#ef4444';
+    iconBg = 'rgba(239, 68, 68, 0.15)';
+    iconSvg = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
+  } else if (type === 'success') {
+    borderColor = '#10b981';
+    iconBg = 'rgba(16, 185, 129, 0.15)';
+    iconSvg = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+  } else {
+    // warning / default
+    iconSvg = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`;
+  }
+
+  el.style.cssText = `
+    pointer-events: auto;
+    background: #0f172a;
+    color: #f8fafc;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-right: 5px solid ${borderColor};
+    border-radius: 14px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 18px 45px -8px rgba(0,0,0,0.45), 0 6px 16px rgba(0,0,0,0.25);
+    font-size: 0.94rem;
+    font-weight: 600;
+    line-height: 1.55;
+    animation: popupNoticeSlideDown 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    transition: all 0.25s ease;
+    width: 100%;
+    position: relative;
+    box-sizing: border-box;
+  `;
+
+  el.innerHTML = `
+    <div style="width:38px;height:38px;border-radius:10px;background:${iconBg};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+      ${iconSvg}
+    </div>
+    <div style="flex:1;text-align:right;">
+      ${title ? `<div style="font-size:0.8rem;color:#94a3b8;margin-bottom:2px;font-weight:600;">${title}</div>` : ''}
+      <div>${message}</div>
+    </div>
+    <button type="button" aria-label="إغلاق" style="background:none;border:none;color:#94a3b8;cursor:pointer;padding:6px;display:flex;align-items:center;justify-content:center;border-radius:8px;transition:all 0.2s;" onmouseover="this.style.color='#fff';this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.color='#94a3b8';this.style.background='none'" onclick="this.closest('.admin-popup-notice').remove()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </button>
+  `;
+
+  if (!document.getElementById('popup-notice-style')) {
+    const s = document.createElement('style');
+    s.id = 'popup-notice-style';
+    s.textContent = `
+      @keyframes popupNoticeSlideDown {
+        from { opacity: 0; transform: translateY(-30px) scale(0.95); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+      }
+      @keyframes popupNoticeSlideUp {
+        from { opacity: 1; transform: translateY(0) scale(1); }
+        to { opacity: 0; transform: translateY(-25px) scale(0.95); }
+      }
+    `;
+    document.head.appendChild(s);
+  }
+
+  container.appendChild(el);
+
+  const autoDismiss = setTimeout(() => {
+    el.style.animation = 'popupNoticeSlideUp 0.25s ease forwards';
+    setTimeout(() => el.remove(), 250);
+  }, 4500);
+
+  el.addEventListener('mouseenter', () => clearTimeout(autoDismiss));
+}
+window.showAdminNotification = showAdminNotification;
+
     // Intercept DOM clicks & submits in capturing phase
     if (!window._readonlyEventsBound) {
       window._readonlyEventsBound = true;
@@ -270,7 +385,7 @@ function enforcePermissionsUI() {
             e.preventDefault();
             e.stopPropagation();
             e.stopImmediatePropagation();
-            alert('عفواً، حسابك في وضع القراءة فقط لهذا القسم ولا يملك صلاحية إجراء التعديلات.');
+            showAdminNotification('عفواً، حسابك في وضع القراءة فقط لهذا القسم ولا يملك صلاحية إجراء التعديلات.');
             return false;
           }
         }
@@ -281,7 +396,7 @@ function enforcePermissionsUI() {
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
-        alert('عفواً، حسابك في وضع القراءة فقط لهذا القسم ولا يملك صلاحية حفظ أو تعديل البيانات.');
+        showAdminNotification('عفواً، حسابك في وضع القراءة فقط لهذا القسم ولا يملك صلاحية حفظ أو تعديل البيانات.');
         return false;
       }, true);
     }
@@ -298,7 +413,7 @@ function enforcePermissionsUI() {
         if (document.body.classList.contains('is-readonly-mode') && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
           if (!url.includes('/login') && !url.includes('/logout')) {
             console.warn('Blocked mutating request in read-only mode:', method, url);
-            alert('عفواً، حسابك في وضع القراءة فقط لهذا القسم ولا يملك صلاحية إجراء هذا الإجراء.');
+            showAdminNotification('عفواً، حسابك في وضع القراءة فقط لهذا القسم ولا يملك صلاحية إجراء التعديلات.');
             return new Response(JSON.stringify({
               error: 'عفواً، حسابك في وضع القراءة فقط ولا يملك صلاحية التعديل أو الحفظ'
             }), {
@@ -390,12 +505,14 @@ async function checkEmployeeSessionLiveness() {
       }
     }
   } catch (e) {
-    // If 401 occurred in api.getMe(), api._request already called logout()
+    if (e && e.message && (e.message.includes('401') || e.message.includes('غير مصرح'))) {
+      logout();
+    }
   }
 }
 
-window.addEventListener('focus', checkEmployeeSessionLiveness);
-setInterval(checkEmployeeSessionLiveness, 15000);
+// Periodic check every 30 seconds
+setInterval(checkEmployeeSessionLiveness, 30000);
 
 // Global UI Helpers
 document.addEventListener('DOMContentLoaded', () => {
