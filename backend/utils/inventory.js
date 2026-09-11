@@ -110,23 +110,23 @@ async function adjustStock(productId, selectedOptions, quantityDiff) {
         product.variants.forEach(v => { v.active = false; });
       }
 
-      const zeroMsg = `🚨 تنبيه: نفاد المخزون وتمت أرشفة المنتج\n\n📦 اسم المنتج: ${product.name}\n💰 السعر: ${effectivePrice} ج.م\n🔢 الكمية المتبقية: 0\n📁 الحالة: تم نقل المنتج إلى الأرشيف تلقائياً`;
+      const zeroMsg = `تنبيه: نفاد المخزون وتمت أرشفة المنتج\n\nاسم المنتج: ${product.name}\nالسعر: ${effectivePrice} ج.م\nالكمية المتبقية: 0\nالحالة: تم نقل المنتج إلى الأرشيف تلقائياً`;
       sendWhatsAppMessage(zeroMsg);
     }
     // Case 2: Product count went below 3 (1 or 2) -> Send low stock alert
     else if (product.quantity !== null && product.quantity > 0 && product.quantity < 3) {
       if (previousQuantity === null || previousQuantity >= 3 || previousQuantity > product.quantity) {
-        const lowMsg = `⚠️ تنبيه: اقتراب نفاد المخزون (قليل)\n\n📦 اسم المنتج: ${product.name}\n💰 السعر: ${effectivePrice} ج.م\n🔢 الكمية المتبقية: ${product.quantity}`;
+        const lowMsg = `تنبيه: اقتراب نفاد المخزون (قليل)\n\nاسم المنتج: ${product.name}\nالسعر: ${effectivePrice} ج.م\nالكمية المتبقية: ${product.quantity}`;
         sendWhatsAppMessage(lowMsg);
       }
     }
     // Case 3: Specific variant alert if total product wasn't already alerted as 0
     else if (variantAlertData) {
       if (variantAlertData.type === 'zero') {
-        const varMsg = `🚨 تنبيه: نفاد مخزون المتغير\n\n📦 اسم المنتج: ${variantAlertData.name}\n💰 السعر: ${variantAlertData.price} ج.م\n🔢 الكمية: 0`;
+        const varMsg = `تنبيه: نفاد مخزون المتغير\n\nاسم المنتج: ${variantAlertData.name}\nالسعر: ${variantAlertData.price} ج.م\nالكمية: 0`;
         sendWhatsAppMessage(varMsg);
       } else if (variantAlertData.type === 'low') {
-        const varMsg = `⚠️ تنبيه: اقتراب نفاد مخزون المتغير (قليل)\n\n📦 اسم المنتج: ${variantAlertData.name}\n💰 السعر: ${variantAlertData.price} ج.م\n🔢 الكمية المتبقية: ${variantAlertData.quantity}`;
+        const varMsg = `تنبيه: اقتراب نفاد مخزون المتغير (قليل)\n\nاسم المنتج: ${variantAlertData.name}\nالسعر: ${variantAlertData.price} ج.م\nالكمية المتبقية: ${variantAlertData.quantity}`;
         sendWhatsAppMessage(varMsg);
       }
     }
