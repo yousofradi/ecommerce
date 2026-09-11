@@ -257,8 +257,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   toggleCustomerMode(false);
 
   // Check if recovering an abandoned cart
-  const urlParams = new URLSearchParams(window.location.search);
-  const recoverCartId = urlParams.get('recoverCartId');
   if (recoverCartId) {
     await recoverAbandonedCart(recoverCartId, preloadedCartPromise);
   }
