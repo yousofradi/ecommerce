@@ -294,14 +294,8 @@ function openAddEmployeeModal() {
   document.getElementById('emp-status').value = 'true';
   document.getElementById('modal-error-box').style.display = 'none';
 
-  // Default permissions: orders full, products read, dashboard full
+  // Default permissions: all unselected
   setAllPermissions('none');
-  const dashFull = document.getElementById('cb-full-dashboard');
-  const dashRead = document.getElementById('cb-read-dashboard');
-  if (dashFull && dashRead) {
-    dashFull.checked = true;
-    dashRead.checked = true;
-  }
 
   const modal = document.getElementById('employee-modal');
   modal.classList.add('open');

@@ -634,30 +634,36 @@
 
       <div class="emp-modal-body">
         <!-- Basic Info -->
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:start;">
           <div class="form-group" style="margin:0;">
-            <label class="form-label" style="font-weight:600; font-size:0.88rem; margin-bottom:6px; display:block;">اسم الموظف <span style="color:#ef4444;">*</span></label>
-            <input type="text" id="emp-name" class="form-control" required placeholder="اسم الموظف" style="padding:10px 12px; font-size:0.92rem;">
+            <label class="form-label" style="font-weight:600; font-size:0.86rem; margin-bottom:6px; height:22px; display:flex; align-items:center; gap:4px; white-space:nowrap;">
+              <span>اسم الموظف</span> <span style="color:#ef4444;">*</span>
+            </label>
+            <input type="text" id="emp-name" class="form-control" required placeholder="اسم الموظف" style="height:42px; padding:8px 12px; font-size:0.92rem; box-sizing:border-box;">
           </div>
 
           <div class="form-group" style="margin:0;">
-            <label class="form-label" style="font-weight:600; font-size:0.88rem; margin-bottom:6px; display:block;">اسم المستخدم (Username) <span style="color:#ef4444;">*</span></label>
-            <input type="text" id="emp-username" class="form-control" required placeholder="اسم المستخدم" style="padding:10px 12px; font-size:0.92rem; direction:ltr; text-align:right;">
+            <label class="form-label" style="font-weight:600; font-size:0.86rem; margin-bottom:6px; height:22px; display:flex; align-items:center; gap:4px; white-space:nowrap;">
+              <span>اسم المستخدم</span> <span style="color:#ef4444;">*</span>
+            </label>
+            <input type="text" id="emp-username" class="form-control" required placeholder="اسم المستخدم (Username)" style="height:42px; padding:8px 12px; font-size:0.92rem; direction:ltr; text-align:right; box-sizing:border-box;">
           </div>
         </div>
 
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:start;">
           <div class="form-group" style="margin:0;">
-            <label class="form-label" style="font-weight:600; font-size:0.88rem; margin-bottom:6px; display:block;">
-              كلمة المرور <span id="pwd-required-star" style="color:#ef4444;">*</span>
+            <label class="form-label" style="font-weight:600; font-size:0.86rem; margin-bottom:6px; height:22px; display:flex; align-items:center; gap:4px; white-space:nowrap;">
+              <span>كلمة المرور</span> <span id="pwd-required-star" style="color:#ef4444;">*</span>
             </label>
-            <input type="password" id="emp-password" class="form-control" placeholder="••••••••" style="padding:10px 12px; font-size:0.92rem;">
+            <input type="password" id="emp-password" class="form-control" placeholder="••••••••" style="height:42px; padding:8px 12px; font-size:0.92rem; box-sizing:border-box;">
             <small id="pwd-hint" style="color:#64748b; font-size:0.75rem; display:none; margin-top:4px;">اتركه فارغاً للإبقاء على كلمة المرور الحالية</small>
           </div>
 
           <div class="form-group" style="margin:0;">
-            <label class="form-label" style="font-weight:600; font-size:0.88rem; margin-bottom:6px; display:block;">حالة الحساب</label>
-            <select id="emp-status" class="form-control" style="padding:10px 12px; font-size:0.92rem;">
+            <label class="form-label" style="font-weight:600; font-size:0.86rem; margin-bottom:6px; height:22px; display:flex; align-items:center; gap:4px; white-space:nowrap;">
+              <span>حالة الحساب</span>
+            </label>
+            <select id="emp-status" class="form-control" style="height:42px; padding:8px 12px; font-size:0.92rem; box-sizing:border-box;">
               <option value="true">نشط (يمكنه الدخول)</option>
               <option value="false">معطل (موقوف مؤقتاً)</option>
             </select>
