@@ -148,30 +148,137 @@ function enforcePermissionsUI() {
     }
   } else if (currentPerm === 'read') {
     // 2. Read-only mode restrictions
-    const banner = document.createElement('div');
-    banner.className = 'admin-readonly-banner';
-    banner.style.cssText = 'background:#fffbeb;border:1px solid #fef3c7;color:#92400e;padding:12px 18px;border-radius:10px;margin-bottom:20px;font-size:0.9rem;font-weight:600;display:flex;align-items:center;gap:10px;box-shadow:0 1px 3px rgba(0,0,0,0.05);';
-    banner.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg> وضع القراءة فقط — يمكنك استعراض هذا القسم فقط دون إجراء تعديلات أو حفظ بيانات.`;
+    document.body.classList.add('is-readonly-mode');
 
-    const container = document.querySelector('.admin-main > div') || document.querySelector('.admin-main');
-    if (container) {
-      container.insertBefore(banner, container.firstChild);
+    if (!document.getElementById('readonly-css')) {
+      const style = document.createElement('style');
+      style.id = 'readonly-css';
+      style.textContent = `
+        /* Permanent CSS hiding for all action and mutating elements in read-only mode */
+        body.is-readonly-mode .admin-readonly-hidden,
+        body.is-readonly-mode button[type="submit"],
+        body.is-readonly-mode .btn-create-emp,
+        body.is-readonly-mode .btn-create,
+        body.is-readonly-mode .btn-save,
+        body.is-readonly-mode .btn-add,
+        body.is-readonly-mode .btn-delete,
+        body.is-readonly-mode .btn-del,
+        body.is-readonly-mode .btn-edit,
+        body.is-readonly-mode .preset-btn,
+        body.is-readonly-mode .btn-primary:not(a[href^="http"]):not(a[href*=".html"]):not(a[href="/"]),
+        body.is-readonly-mode .action-btn:not(.btn-view):not(.btn-preview),
+        body.is-readonly-mode [onclick*="delete"],
+        body.is-readonly-mode [onclick*="Delete"],
+        body.is-readonly-mode [onclick*="remove"],
+        body.is-readonly-mode [onclick*="Remove"],
+        body.is-readonly-mode [onclick*="edit"],
+        body.is-readonly-mode [onclick*="Edit"],
+        body.is-readonly-mode [onclick*="save"],
+        body.is-readonly-mode [onclick*="Save"],
+        body.is-readonly-mode [onclick*="toggle"],
+        body.is-readonly-mode [onclick*="Toggle"],
+        body.is-readonly-mode [onclick*="openAdd"],
+        body.is-readonly-mode [onclick*="openEdit"],
+        body.is-readonly-mode [onclick*="create"],
+        body.is-readonly-mode [onclick*="Create"],
+        body.is-readonly-mode #save-btn,
+        body.is-readonly-mode #btn-save,
+        body.is-readonly-mode #btn-save-emp,
+        body.is-readonly-mode #btn-global-save,
+        body.is-readonly-mode #btn-create-order,
+        body.is-readonly-mode #add-product-btn,
+        body.is-readonly-mode #add-collection-btn,
+        body.is-readonly-mode #save-settings-btn {
+          display: none !important;
+          visibility: hidden !important;
+          pointer-events: none !important;
+        }
+
+        body.is-readonly-mode input:not([type="search"]):not(#emp-search):not(.search-input):not(#order-search):not(#product-search),
+        body.is-readonly-mode select:not(.filter-select):not(.table-filter):not(#status-filter):not(#channel-filter),
+        body.is-readonly-mode textarea {
+          pointer-events: none !important;
+          opacity: 0.75 !important;
+          cursor: not-allowed !important;
+          background-color: #f8fafc !important;
+        }
+      `;
+      document.head.appendChild(style);
     }
 
-    // Hide or disable write/action buttons
-    setTimeout(() => {
-      document.querySelectorAll('button[type="submit"], #save-btn, .btn-primary:not(a), .btn-delete, .btn-add, #btn-global-save, #btn-create-order, #add-product-btn, #add-collection-btn, #save-settings-btn, .btn-action-primary').forEach(el => {
-        el.style.display = 'none';
-      });
-      // Disable inputs if on a form page
-      if (window.location.pathname.includes('form') || window.location.pathname.includes('settings')) {
-        document.querySelectorAll('input, select, textarea').forEach(el => {
-          if (!el.classList.contains('search-input') && el.type !== 'search') {
-            el.disabled = true;
-          }
-        });
+    if (!document.querySelector('.admin-readonly-banner')) {
+      const banner = document.createElement('div');
+      banner.className = 'admin-readonly-banner';
+      banner.style.cssText = 'background:#fffbeb;border:1px solid #fef3c7;color:#92400e;padding:12px 18px;border-radius:10px;margin-bottom:20px;font-size:0.9rem;font-weight:600;display:flex;align-items:center;gap:10px;box-shadow:0 1px 3px rgba(0,0,0,0.05);';
+      banner.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg> وضع القراءة فقط — يمكنك استعراض هذا القسم فقط دون إجراء أي تعديلات أو حذف أو حفظ بيانات.`;
+
+      const container = document.querySelector('.admin-main > div') || document.querySelector('.admin-main');
+      if (container) {
+        container.insertBefore(banner, container.firstChild);
       }
-    }, 250);
+    }
+
+    // Intercept DOM clicks & submits in capturing phase
+    if (!window._readonlyEventsBound) {
+      window._readonlyEventsBound = true;
+
+      document.addEventListener('click', (e) => {
+        if (!document.body.classList.contains('is-readonly-mode')) return;
+        const target = e.target.closest('button, .action-btn, a[onclick], [onclick]');
+        if (target) {
+          const onclickAttr = target.getAttribute('onclick') || '';
+          const isMutating = target.type === 'submit' || 
+            target.classList.contains('btn-del') || 
+            target.classList.contains('btn-delete') || 
+            target.classList.contains('btn-edit') || 
+            target.classList.contains('btn-create-emp') ||
+            target.classList.contains('preset-btn') ||
+            /delete|remove|save|edit|toggle|add|create/i.test(onclickAttr);
+
+          if (isMutating) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            alert('عفواً، حسابك في وضع القراءة فقط لهذا القسم ولا يملك صلاحية إجراء التعديلات.');
+            return false;
+          }
+        }
+      }, true);
+
+      document.addEventListener('submit', (e) => {
+        if (!document.body.classList.contains('is-readonly-mode')) return;
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        alert('عفواً، حسابك في وضع القراءة فقط لهذا القسم ولا يملك صلاحية حفظ أو تعديل البيانات.');
+        return false;
+      }, true);
+    }
+
+    // Intercept client-side fetch API for mutating requests
+    if (!window._readonlyFetchIntercepted) {
+      window._readonlyFetchIntercepted = true;
+      const originalFetch = window.fetch;
+      window.fetch = async function(...args) {
+        const options = args[1] || {};
+        const method = (options.method || 'GET').toUpperCase();
+        const url = typeof args[0] === 'string' ? args[0] : (args[0]?.url || '');
+
+        if (document.body.classList.contains('is-readonly-mode') && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
+          if (!url.includes('/login') && !url.includes('/logout')) {
+            console.warn('Blocked mutating request in read-only mode:', method, url);
+            alert('عفواً، حسابك في وضع القراءة فقط لهذا القسم ولا يملك صلاحية إجراء هذا الإجراء.');
+            return new Response(JSON.stringify({
+              error: 'عفواً، حسابك في وضع القراءة فقط ولا يملك صلاحية التعديل أو الحفظ'
+            }), {
+              status: 403,
+              headers: { 'Content-Type': 'application/json' }
+            });
+          }
+        }
+        return originalFetch.apply(this, args);
+      };
+    }
   }
 
   // 3. Sidebar Filtering
