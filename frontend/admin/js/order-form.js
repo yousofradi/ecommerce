@@ -305,16 +305,72 @@ async function recoverAbandonedCart(cartId) {
       if (document.getElementById('c-notes')) document.getElementById('c-notes').value = cart.customer.notes || '';
 
       // Populate Governorate / City
-      const govName = cart.customer.government;
-      if (govName) {
-        const s = (window._fullShippingData || []).find(x => 
-          x.city === govName || x.cityOtherName === govName
+      const rawGov = (cart.customer.government || cart.customer.city || cart.customer.addressCity || '').trim();
+      const shippingList = Array.isArray(window._fullShippingData) ? window._fullShippingData : [];
+
+      const normalizeArabic = (str) => {
+        if (!str) return '';
+        return str.toString()
+          .replace(/[أإآا]/g, 'ا')
+          .replace(/ة/g, 'ه')
+          .replace(/ى/g, 'ي')
+          .replace(/[\u064B-\u065F]/g, '')
+          .replace(/\s+/g, '')
+          .toLowerCase()
+          .trim();
+      };
+
+      const isMatch = (cityName, query) => {
+        if (!cityName || !query) return false;
+        const a = normalizeArabic(cityName);
+        const b = normalizeArabic(query);
+        return a === b || a.includes(b) || b.includes(a);
+      };
+
+      let matchedCity = null;
+
+      if (rawGov) {
+        // 1. By ID
+        matchedCity = shippingList.find(x => String(x._id) === String(rawGov));
+        // 2. By exact normalized city or cityOtherName
+        if (!matchedCity) {
+          matchedCity = shippingList.find(x => 
+            normalizeArabic(x.city) === normalizeArabic(rawGov) || 
+            normalizeArabic(x.cityOtherName) === normalizeArabic(rawGov)
+          );
+        }
+        // 3. By partial match
+        if (!matchedCity) {
+          matchedCity = shippingList.find(x => 
+            isMatch(x.city, rawGov) || 
+            isMatch(x.cityOtherName, rawGov)
+          );
+        }
+      }
+
+      // 4. If still not matched, try to infer from full address string
+      if (!matchedCity && cart.customer.address) {
+        matchedCity = shippingList.find(x => 
+          isMatch(cart.customer.address, x.city) || 
+          isMatch(cart.customer.address, x.cityOtherName)
         );
-        if (s) {
-          if (document.getElementById('c-gov')) document.getElementById('c-gov').value = s._id;
-          if (document.getElementById('c-gov-search')) document.getElementById('c-gov-search').value = s.cityOtherName || s.city;
+      }
+
+      if (matchedCity) {
+        const cityDisplayName = matchedCity.cityOtherName || matchedCity.city;
+        if (typeof window.selectGov === 'function') {
+          window.selectGov(matchedCity._id, cityDisplayName);
+        } else {
+          const govInput = document.getElementById('c-gov');
+          const searchInput = document.getElementById('c-gov-search');
+          if (govInput) govInput.value = matchedCity._id;
+          if (searchInput) searchInput.value = cityDisplayName;
           await handleCityChange();
         }
+      } else if (rawGov) {
+        // If not found in shipping list, still display the raw city name so it is never empty
+        const searchInput = document.getElementById('c-gov-search');
+        if (searchInput) searchInput.value = rawGov;
       }
     }
 
@@ -829,10 +885,11 @@ window.handleCarrierChange = function() {
 window.recalcSummary = function () {
   let subtotal = 0;
   cartItems.forEach(c => subtotal += itemTotal(c));
-  const cityId = document.getElementById('c-gov').value;
-  const data = (window._fullShippingData || []).find(s => s._id === cityId);
-  const cityName = data ? (data.cityOtherName || data.city) : '';
-  const zoneName = document.getElementById('c-zone').value;
+  const cityId = document.getElementById('c-gov')?.value || '';
+  const searchCityName = document.getElementById('c-gov-search')?.value.trim() || '';
+  const data = (window._fullShippingData || []).find(s => s._id === cityId || s.city === cityId || s.cityOtherName === cityId);
+  const cityName = data ? (data.cityOtherName || data.city) : searchCityName;
+  const zoneName = document.getElementById('c-zone')?.value || '';
 
   const carrierVal = document.getElementById('c-carrier')?.value || 'egyptpost';
   const shipDetails = resolveShippingDetails(cityName, zoneName, carrierVal);
@@ -856,11 +913,11 @@ window.submitOrder = async function () {
   const name = document.getElementById('c-name').value.trim();
   const phone = document.getElementById('c-phone').value.trim();
   const address = document.getElementById('c-address').value.trim();
-  const cityId = document.getElementById('c-gov').value;
-  const zone = document.getElementById('c-zone').value;
+  const cityId = document.getElementById('c-gov')?.value || '';
+  const zone = document.getElementById('c-zone')?.value || '';
   
-  const govData = (window._fullShippingData || []).find(s => s._id === cityId);
-  const cityName = govData ? (govData.cityOtherName || govData.city) : '';
+  const govData = (window._fullShippingData || []).find(s => s._id === cityId || s.city === cityId || s.cityOtherName === cityId);
+  const cityName = govData ? (govData.cityOtherName || govData.city) : (document.getElementById('c-gov-search')?.value.trim() || '');
 
 
   // Arabic-only name validation
