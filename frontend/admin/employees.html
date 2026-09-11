@@ -224,9 +224,11 @@
       border-radius: 14px;
       overflow: hidden;
       background: #ffffff;
+      display: flex;
+      flex-direction: column;
     }
     .perms-box-header {
-      padding: 12px 18px;
+      padding: 12px 16px;
       background: #ffffff;
       border-bottom: 1px solid #e2e8f0;
       display: flex;
@@ -234,6 +236,7 @@
       justify-content: space-between;
       gap: 12px;
       flex-wrap: nowrap;
+      flex-shrink: 0;
     }
     .perms-preset-group {
       display: flex;
@@ -244,9 +247,9 @@
     .preset-btn {
       background: #f8fafc;
       border: 1px solid #cbd5e1;
-      padding: 6px 14px;
-      border-radius: 8px;
-      font-size: 0.82rem;
+      padding: 5px 12px;
+      border-radius: 7px;
+      font-size: 0.8rem;
       font-weight: 600;
       color: #334155;
       cursor: pointer;
@@ -265,7 +268,7 @@
       .perms-box-header {
         flex-direction: column;
         align-items: stretch;
-        gap: 10px;
+        gap: 8px;
       }
       .perms-preset-group {
         width: 100%;
@@ -279,20 +282,56 @@
         font-size: 0.75rem;
       }
     }
+
+    /* Dedicated Scroll Container for Permissions Table */
+    .perms-table-scroll-wrap {
+      max-height: 260px;
+      min-height: 180px;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+    }
+    .perms-table-scroll-wrap::-webkit-scrollbar {
+      width: 5px;
+    }
+    .perms-table-scroll-wrap::-webkit-scrollbar-track {
+      background: #f8fafc;
+    }
+    .perms-table-scroll-wrap::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 6px;
+    }
+    .perms-table-scroll-wrap::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
     .perms-table {
       width: 100%;
       border-collapse: collapse;
       text-align: right;
+      table-layout: fixed;
     }
     .perms-table thead th {
-      padding: 14px 20px;
-      font-size: 0.95rem;
+      position: sticky;
+      top: 0;
+      background: #f8fafc;
+      z-index: 5;
+      padding: 10px 14px;
+      font-size: 0.88rem;
       font-weight: 700;
-      color: #0f172a;
+      color: #1e293b;
       border-bottom: 1px solid #e2e8f0;
+      white-space: nowrap;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
     }
-    .perms-table thead th.col-full, .perms-table thead th.col-read {
-      width: 120px;
+    .perms-table thead th.col-full {
+      width: 100px;
+      text-align: center;
+      color: #334155;
+    }
+    .perms-table thead th.col-read {
+      width: 90px;
       text-align: center;
       color: #334155;
     }
@@ -307,25 +346,30 @@
       background: #f8fafc;
     }
     .perms-table td {
-      padding: 14px 20px;
-      font-size: 0.95rem;
+      padding: 10px 14px;
+      font-size: 0.9rem;
       vertical-align: middle;
     }
     .perms-table td.col-check {
       text-align: center;
-      width: 120px;
+      padding: 10px 4px;
     }
     .section-title-cell {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       font-weight: 600;
       color: #1e293b;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .section-icon {
       color: #64748b;
       display: flex;
       align-items: center;
+      flex-shrink: 0;
     }
 
     /* Custom Checkbox (matching green checkmark in image) */
@@ -650,7 +694,7 @@
               </div>
             </div>
 
-            <div style="overflow-x:auto;">
+            <div class="perms-table-scroll-wrap">
               <table class="perms-table">
                 <thead>
                   <tr>
