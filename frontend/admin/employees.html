@@ -137,7 +137,7 @@
       opacity: 0;
       visibility: hidden;
       transition: all 0.25s ease;
-      overscroll-behavior: contain;
+      overflow-y: auto;
     }
     .modal-backdrop.open {
       opacity: 1;
@@ -148,8 +148,8 @@
       border-radius: 20px;
       width: 100%;
       max-width: 680px;
-      height: 90vh;
-      max-height: 90vh;
+      height: 88vh;
+      max-height: 88vh;
       display: flex;
       flex-direction: column;
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
@@ -157,18 +157,10 @@
       transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
       overflow: hidden;
       position: relative;
+      margin: auto;
     }
     .modal-backdrop.open .emp-modal-dialog {
       transform: translateY(0) scale(1);
-    }
-
-    /* Modal Form flex container to allow body scrolling */
-    #employee-form {
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      min-height: 0;
-      overflow: hidden;
     }
 
     .emp-modal-header {
@@ -183,9 +175,10 @@
     .emp-modal-body {
       padding: 22px 24px;
       overflow-y: auto !important;
+      overflow-x: hidden !important;
       -webkit-overflow-scrolling: touch;
       overscroll-behavior: contain;
-      flex: 1;
+      flex: 1 1 0px;
       min-height: 0;
       display: flex;
       flex-direction: column;
@@ -193,17 +186,18 @@
     }
     /* Clean custom scrollbar for modal body */
     .emp-modal-body::-webkit-scrollbar {
-      width: 7px;
+      width: 8px;
     }
     .emp-modal-body::-webkit-scrollbar-track {
-      background: #f8fafc;
+      background: #f1f5f9;
+      border-radius: 4px;
     }
     .emp-modal-body::-webkit-scrollbar-thumb {
-      background: #cbd5e1;
-      border-radius: 10px;
+      background: #94a3b8;
+      border-radius: 4px;
     }
     .emp-modal-body::-webkit-scrollbar-thumb:hover {
-      background: #94a3b8;
+      background: #64748b;
     }
 
     .emp-modal-footer {
@@ -624,85 +618,83 @@
 
   <!-- Add/Edit Employee Modal -->
   <div class="modal-backdrop" id="employee-modal" onclick="if(event.target===this) closeEmployeeModal()">
-    <div class="emp-modal-dialog">
+    <form class="emp-modal-dialog" id="employee-form" onsubmit="event.preventDefault(); saveEmployee();">
       <div class="emp-modal-header">
         <h2 id="modal-title" style="margin:0; font-size:1.25rem; font-weight:700; color:#1e293b;">إضافة موظف جديد</h2>
         <button type="button" onclick="closeEmployeeModal()" style="background:none; border:none; color:#94a3b8; font-size:1.4rem; cursor:pointer; padding:4px;">✕</button>
       </div>
 
-      <form id="employee-form" onsubmit="event.preventDefault(); saveEmployee();">
-        <input type="hidden" id="edit-emp-id">
+      <input type="hidden" id="edit-emp-id">
 
-        <div class="emp-modal-body">
-          <!-- Basic Info -->
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
-            <div class="form-group" style="margin:0;">
-              <label class="form-label" style="font-weight:600; font-size:0.88rem; margin-bottom:6px; display:block;">اسم الموظف <span style="color:#ef4444;">*</span></label>
-              <input type="text" id="emp-name" class="form-control" required placeholder="اسم الموظف" style="padding:10px 12px; font-size:0.92rem;">
-            </div>
-
-            <div class="form-group" style="margin:0;">
-              <label class="form-label" style="font-weight:600; font-size:0.88rem; margin-bottom:6px; display:block;">اسم المستخدم (Username) <span style="color:#ef4444;">*</span></label>
-              <input type="text" id="emp-username" class="form-control" required placeholder="اسم المستخدم" style="padding:10px 12px; font-size:0.92rem; direction:ltr; text-align:right;">
-            </div>
+      <div class="emp-modal-body">
+        <!-- Basic Info -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label" style="font-weight:600; font-size:0.88rem; margin-bottom:6px; display:block;">اسم الموظف <span style="color:#ef4444;">*</span></label>
+            <input type="text" id="emp-name" class="form-control" required placeholder="اسم الموظف" style="padding:10px 12px; font-size:0.92rem;">
           </div>
 
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
-            <div class="form-group" style="margin:0;">
-              <label class="form-label" style="font-weight:600; font-size:0.88rem; margin-bottom:6px; display:block;">
-                كلمة المرور <span id="pwd-required-star" style="color:#ef4444;">*</span>
-              </label>
-              <input type="password" id="emp-password" class="form-control" placeholder="••••••••" style="padding:10px 12px; font-size:0.92rem;">
-              <small id="pwd-hint" style="color:#64748b; font-size:0.75rem; display:none; margin-top:4px;">اتركه فارغاً للإبقاء على كلمة المرور الحالية</small>
-            </div>
-
-            <div class="form-group" style="margin:0;">
-              <label class="form-label" style="font-weight:600; font-size:0.88rem; margin-bottom:6px; display:block;">حالة الحساب</label>
-              <select id="emp-status" class="form-control" style="padding:10px 12px; font-size:0.92rem;">
-                <option value="true">نشط (يمكنه الدخول)</option>
-                <option value="false">معطل (موقوف مؤقتاً)</option>
-              </select>
-            </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label" style="font-weight:600; font-size:0.88rem; margin-bottom:6px; display:block;">اسم المستخدم (Username) <span style="color:#ef4444;">*</span></label>
+            <input type="text" id="emp-username" class="form-control" required placeholder="اسم المستخدم" style="padding:10px 12px; font-size:0.92rem; direction:ltr; text-align:right;">
           </div>
-
-          <!-- Permissions Table (Matching user screenshot) -->
-          <div class="perms-box">
-            <div class="perms-box-header">
-              <div style="font-weight:700; color:#0f172a; font-size:1.05rem;">الصلاحيات</div>
-              <div class="perms-preset-group">
-                <button type="button" class="preset-btn" onclick="setAllPermissions('full')">تحديد الكل كاملة</button>
-                <button type="button" class="preset-btn" onclick="setAllPermissions('read')">تحديد الكل قراءة</button>
-                <button type="button" class="preset-btn" onclick="setAllPermissions('none')">إلغاء الكل</button>
-              </div>
-            </div>
-
-            <div class="perms-table-scroll-wrap">
-              <table class="perms-table">
-                <thead>
-                  <tr>
-                    <th>متجر</th>
-                    <th class="col-full">صلاحية كاملة</th>
-                    <th class="col-read">قراءة فقط</th>
-                  </tr>
-                </thead>
-                <tbody id="permissions-tbody">
-                  <!-- Rows injected via JS -->
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div id="modal-error-box" style="display:none; color:#ef4444; background:#fef2f2; border:1px solid #fecaca; padding:10px 14px; border-radius:8px; font-size:0.88rem;"></div>
         </div>
 
-        <div class="emp-modal-footer">
-          <button type="button" class="action-btn" onclick="closeEmployeeModal()" style="padding:9px 18px;">إلغاء</button>
-          <button type="submit" class="btn-create-emp" id="btn-save-emp" style="padding:9px 22px;">
-            <span id="save-emp-text">حفظ الموظف</span>
-          </button>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label" style="font-weight:600; font-size:0.88rem; margin-bottom:6px; display:block;">
+              كلمة المرور <span id="pwd-required-star" style="color:#ef4444;">*</span>
+            </label>
+            <input type="password" id="emp-password" class="form-control" placeholder="••••••••" style="padding:10px 12px; font-size:0.92rem;">
+            <small id="pwd-hint" style="color:#64748b; font-size:0.75rem; display:none; margin-top:4px;">اتركه فارغاً للإبقاء على كلمة المرور الحالية</small>
+          </div>
+
+          <div class="form-group" style="margin:0;">
+            <label class="form-label" style="font-weight:600; font-size:0.88rem; margin-bottom:6px; display:block;">حالة الحساب</label>
+            <select id="emp-status" class="form-control" style="padding:10px 12px; font-size:0.92rem;">
+              <option value="true">نشط (يمكنه الدخول)</option>
+              <option value="false">معطل (موقوف مؤقتاً)</option>
+            </select>
+          </div>
         </div>
-      </form>
-    </div>
+
+        <!-- Permissions Table (Matching user screenshot) -->
+        <div class="perms-box">
+          <div class="perms-box-header">
+            <div style="font-weight:700; color:#0f172a; font-size:1.05rem;">الصلاحيات</div>
+            <div class="perms-preset-group">
+              <button type="button" class="preset-btn" onclick="setAllPermissions('full')">تحديد الكل كاملة</button>
+              <button type="button" class="preset-btn" onclick="setAllPermissions('read')">تحديد الكل قراءة</button>
+              <button type="button" class="preset-btn" onclick="setAllPermissions('none')">إلغاء الكل</button>
+            </div>
+          </div>
+
+          <div class="perms-table-scroll-wrap">
+            <table class="perms-table">
+              <thead>
+                <tr>
+                  <th>متجر</th>
+                  <th class="col-full">صلاحية كاملة</th>
+                  <th class="col-read">قراءة فقط</th>
+                </tr>
+              </thead>
+              <tbody id="permissions-tbody">
+                <!-- Rows injected via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="modal-error-box" style="display:none; color:#ef4444; background:#fef2f2; border:1px solid #fecaca; padding:10px 14px; border-radius:8px; font-size:0.88rem;"></div>
+      </div>
+
+      <div class="emp-modal-footer">
+        <button type="button" class="action-btn" onclick="closeEmployeeModal()" style="padding:9px 18px;">إلغاء</button>
+        <button type="submit" class="btn-create-emp" id="btn-save-emp" style="padding:9px 22px;">
+          <span id="save-emp-text">حفظ الموظف</span>
+        </button>
+      </div>
+    </form>
   </div>
 
   <script src="js/api-v2.js?v=20260515_v2"></script>
