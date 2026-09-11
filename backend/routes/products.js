@@ -80,8 +80,8 @@ router.get('/', async (req, res) => {
         query.status = 'active';
         query.active = { $ne: false };
         query.$or = [
-          { quantity: { $ne: null, $gt: 0, $lt: 3 } },
-          { variants: { $elemMatch: { quantity: { $ne: null, $gt: 0, $lt: 3 } } } }
+          { quantity: { $in: [1, 2, '1', '2'] } },
+          { $and: [{ quantity: { $type: 'number' } }, { quantity: { $gte: 1, $lte: 2 } }] }
         ];
       }
       // If no status provided, show both active and draft products for admin
@@ -411,7 +411,7 @@ router.put('/:id', adminAuth, async (req, res) => {
     }
 
     // When product count reaches 0, automatically archive
-    if (body.quantity === 0) {
+    if (body.quantity !== undefined && body.quantity !== null && Number(body.quantity) === 0) {
       body.active = false;
       body.status = 'draft';
       if (Array.isArray(body.variants)) {

@@ -39,6 +39,16 @@ async function loadProducts() {
     let products = res.products || res;
     totalPages = res.totalPages || 1;
 
+    // Strict guard for low_stock: only active products with quantity 1 or 2
+    if (statusParam === 'low_stock') {
+      products = products.filter(p => {
+        const isInactive = p.status === 'draft' || p.active === false;
+        if (isInactive) return false;
+        const q = Number(p.quantity);
+        return !isNaN(q) && (q === 1 || q === 2);
+      });
+    }
+
     if (!products.length) {
       tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted" style="padding:40px">لا توجد منتجات مطابقة للبحث</td></tr>';
       updatePaginationInfo(0);
