@@ -112,7 +112,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       allProducts = products;
       allCustomers = customersRes || [];
       window._fullShippingData = shippingRes;
-      renderProductsModal(); // Ensure modal is ready with products
+      if (typeof window.renderModalProducts === 'function') {
+        window.renderModalProducts();
+      }
     });
 
     const carrierSelect = document.getElementById('c-carrier');
@@ -635,6 +637,7 @@ window.renderModalProducts = function () {
     `;
   }).join('');
 };
+window.renderProductsModal = window.renderModalProducts;
 
 window.addSelectedProducts = function () {
   if (modalSelectedProducts.size === 0 && modalSelectedVariants.size === 0) {
