@@ -178,11 +178,19 @@ function enforcePermissionsUI() {
   filterSidebarNavigation();
 }
 
+const AUTH_SESSION_VERSION = 'v2_rbac_2026';
+
 function requireAdmin() {
   // Security: Prevent admin access on storefront domains
   const storefrontDomains = [];
   if (storefrontDomains.includes(window.location.hostname)) {
     window.location.href = '/';
+    return false;
+  }
+
+  // Force all users to login again if session version does not match
+  if (localStorage.getItem('adminSessionVersion') !== AUTH_SESSION_VERSION) {
+    logout();
     return false;
   }
 
@@ -214,6 +222,7 @@ function logout() {
   localStorage.removeItem('adminUser');
   localStorage.removeItem('adminPermissions');
   localStorage.removeItem('loginTimestamp');
+  localStorage.removeItem('adminSessionVersion');
   window.location.href = 'login';
 }
 

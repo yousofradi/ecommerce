@@ -271,4 +271,17 @@ router.delete('/:id', adminAuth, requirePermission('employees', 'full'), async (
   }
 });
 
+/**
+ * POST /api/employees/force-logout-all
+ * Invalidate all employee active tokens in the database.
+ */
+router.post('/force-logout-all', adminAuth, async (req, res) => {
+  try {
+    await Employee.updateMany({}, { $set: { token: null, tokenExpiresAt: null } });
+    res.json({ message: 'تم تسجيل خروج جميع الموظفين بنجاح' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

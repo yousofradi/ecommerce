@@ -131,9 +131,18 @@
 
   <script src="js/api-v2.js?v=20260515_v2"></script>
   <script>
-    // If already logged in, redirect
-    if (localStorage.getItem('adminKey')) {
+    const AUTH_SESSION_VERSION = 'v2_rbac_2026';
+
+    // If already logged in with valid session version, redirect
+    if (localStorage.getItem('adminKey') && localStorage.getItem('adminSessionVersion') === AUTH_SESSION_VERSION) {
       window.location.href = 'index';
+    } else {
+      // Wipe any outdated or legacy session
+      localStorage.removeItem('adminKey');
+      localStorage.removeItem('adminUser');
+      localStorage.removeItem('adminPermissions');
+      localStorage.removeItem('loginTimestamp');
+      localStorage.removeItem('adminSessionVersion');
     }
 
     function togglePasswordVisibility() {
@@ -169,6 +178,7 @@
           localStorage.setItem('adminUser', JSON.stringify(res.user || {}));
           localStorage.setItem('adminPermissions', JSON.stringify(res.user.permissions || {}));
           localStorage.setItem('loginTimestamp', Date.now().toString());
+          localStorage.setItem('adminSessionVersion', AUTH_SESSION_VERSION);
 
           // Decide target redirect page
           const perms = res.user.permissions || {};
