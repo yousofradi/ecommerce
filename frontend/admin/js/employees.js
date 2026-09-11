@@ -305,6 +305,7 @@ function openAddEmployeeModal() {
 
   const modal = document.getElementById('employee-modal');
   modal.classList.add('open');
+  document.body.classList.add('modal-open');
 }
 
 function openEditEmployeeModal(empId) {
@@ -346,12 +347,24 @@ function openEditEmployeeModal(empId) {
 
   const modal = document.getElementById('employee-modal');
   modal.classList.add('open');
+  document.body.classList.add('modal-open');
 }
 
 function closeEmployeeModal() {
   const modal = document.getElementById('employee-modal');
   modal.classList.remove('open');
+  document.body.classList.remove('modal-open');
 }
+
+// Close on Escape key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const modal = document.getElementById('employee-modal');
+    if (modal && modal.classList.contains('open')) {
+      closeEmployeeModal();
+    }
+  }
+});
 
 // Save Employee (Create or Update)
 async function saveEmployee() {
