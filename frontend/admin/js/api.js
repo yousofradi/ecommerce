@@ -35,7 +35,8 @@
   else apply();
 })();
 
-const API_BASE = 'API_URL_PLACEHOLDER';
+window.API_BASE = 'API_URL_PLACEHOLDER';
+const API_BASE = window.API_BASE;
 
 // v1.1.0 - Added seedShipping
 const api = {
@@ -47,12 +48,20 @@ const api = {
     const id = timeoutMs > 0 ? setTimeout(() => controller.abort(), timeoutMs) : null;
 
     const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
-    if (opts.admin) headers['x-admin-key'] = this._adminKey();
+    const currentKey = this._adminKey();
+    if (currentKey) {
+      headers['x-admin-key'] = currentKey;
+    }
     
     // Add cache busting if not explicitly cached
-    if (opts.useCache !== true && (!opts.method || opts.method.toUpperCase() === 'GET')) {
+    const method = (opts.method || 'GET').toUpperCase();
+    if (opts.useCache !== true && method === 'GET') {
       opts.cache = 'no-store';
       path += (path.includes('?') ? '&' : '?') + '_t=' + Date.now();
+    }
+
+    if (currentKey && method === 'GET' && !path.includes('adminKey=')) {
+      path += (path.includes('?') ? '&' : '?') + 'adminKey=' + encodeURIComponent(currentKey);
     }
     
     try {

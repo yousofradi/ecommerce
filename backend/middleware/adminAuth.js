@@ -84,6 +84,11 @@ const adminAuth = async (req, res, next) => {
 
     // 3. Automatic Section-Level RBAC Enforcement for Employees
     const fullPath = ((req.baseUrl || '') + (req.path || '')).toLowerCase();
+
+    // /api/employees/me is always allowed for any authenticated user to check their own profile/session
+    if (fullPath === '/api/employees/me') {
+      return next();
+    }
     
     // Find matching section for current route
     let matchedSection = null;

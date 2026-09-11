@@ -25,9 +25,32 @@ function getPermissionForSection(section) {
   return perms[section] || 'none';
 }
 
+function getFirstPermittedPage() {
+  const perms = getAdminPermissions();
+  if (isSuperAdmin() || perms.dashboard === 'full' || perms.dashboard === 'read') return 'index';
+  const sectionPages = {
+    orders: 'orders',
+    abandoned_carts: 'abandoned-carts',
+    customers: 'customers',
+    products: 'products',
+    collections: 'collections',
+    homepage: 'homepage',
+    promotions: 'promotions',
+    expenses: 'expenses',
+    settings: 'settings',
+    shipment: 'shipment',
+    webhooks: 'webhooks',
+    whatsapp: 'whatsapp',
+    employees: 'employees'
+  };
+  for (const [sec, page] of Object.entries(sectionPages)) {
+    if (perms[sec] === 'full' || perms[sec] === 'read') return page;
+  }
+  return 'index';
+}
+
 function getCurrentPageSection() {
   const path = window.location.pathname.toLowerCase();
-  if (path.endsWith('/') || path.includes('/index')) return 'dashboard';
   if (path.includes('order-details') || path.includes('order-form') || path.includes('orders')) return 'orders';
   if (path.includes('abandoned-cart')) return 'abandoned_carts';
   if (path.includes('customer-details') || path.includes('customers')) return 'customers';
@@ -41,6 +64,7 @@ function getCurrentPageSection() {
   if (path.includes('whatsapp')) return 'whatsapp';
   if (path.includes('settings')) return 'settings';
   if (path.includes('employees')) return 'employees';
+  if (path.endsWith('/') || path.includes('/index') || path === '' || path === '/admin') return 'dashboard';
   return 'dashboard';
 }
 
@@ -124,8 +148,14 @@ function enforcePermissionsUI() {
   const currentSection = getCurrentPageSection();
   const currentPerm = getPermissionForSection(currentSection);
 
-  // 1. If user has NO permission for this section, block page!
+  // 1. If user has NO permission for this section, block page or redirect to permitted page!
   if (currentPerm === 'none') {
+    const firstAllowed = getFirstPermittedPage();
+    if (currentSection === 'dashboard' && firstAllowed !== 'index') {
+      window.location.replace(firstAllowed);
+      return;
+    }
+
     document.body.classList.remove('is-loading');
     const layout = document.querySelector('.admin-layout') || document.body;
     const main = document.querySelector('.admin-main') || layout;
@@ -138,14 +168,15 @@ function enforcePermissionsUI() {
             </div>
             <h2 style="font-size:1.4rem;font-weight:700;color:#1e293b;margin-bottom:10px;">عفواً، ليس لديك صلاحية للوصول</h2>
             <p style="color:#64748b;font-size:0.95rem;line-height:1.6;margin-bottom:24px;">تم حجب هذا القسم عن حسابك بناءً على الصلاحيات المحددة لك من قبل إدارة المتجر.</p>
-            <a href="/" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;text-decoration:none;border-radius:10px;">
+            <a href="${firstAllowed}" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;text-decoration:none;border-radius:10px;">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
-              العودة للرئيسية
+              الانتقال إلى الأقسام المتاحة
             </a>
           </div>
         </div>
       `;
     }
+    return;
   } else if (currentPerm === 'read') {
     // 2. Read-only mode restrictions
     document.body.classList.add('is-readonly-mode');
@@ -339,14 +370,27 @@ async function checkEmployeeSessionLiveness() {
   if (!key || !key.startsWith('emp_')) return;
 
   try {
-    const res = await fetch(`${API_BASE}/employees/me?_t=${Date.now()}`, {
-      headers: { 'x-admin-key': key }
-    });
-    if (res.status === 401) {
-      logout();
+    if (typeof api !== 'undefined' && typeof api.getMe === 'function') {
+      const res = await api.getMe();
+      if (res && res.user) {
+        if (res.user.permissions) {
+          localStorage.setItem('adminPermissions', JSON.stringify(res.user.permissions));
+        }
+        localStorage.setItem('adminUser', JSON.stringify(res.user));
+      }
+    } else {
+      const apiBase = (typeof window !== 'undefined' && window.API_BASE && !window.API_BASE.includes('PLACEHOLDER')) 
+        ? window.API_BASE 
+        : (typeof API_BASE !== 'undefined' && !API_BASE.includes('PLACEHOLDER') ? API_BASE : '/api');
+      const res = await fetch(`${apiBase}/employees/me?_t=${Date.now()}`, {
+        headers: { 'x-admin-key': key }
+      });
+      if (res.status === 401) {
+        logout();
+      }
     }
   } catch (e) {
-    // Ignore offline network errors
+    // If 401 occurred in api.getMe(), api._request already called logout()
   }
 }
 

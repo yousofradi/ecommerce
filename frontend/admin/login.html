@@ -133,9 +133,42 @@
   <script>
     const AUTH_SESSION_VERSION = 'v2_rbac_2026';
 
-    // If already logged in with valid session version, redirect
+    // If already logged in with valid session version, redirect to permitted page
     if (localStorage.getItem('adminKey') && localStorage.getItem('adminSessionVersion') === AUTH_SESSION_VERSION) {
-      window.location.href = 'index';
+      try {
+        const user = JSON.parse(localStorage.getItem('adminUser') || '{}');
+        const perms = JSON.parse(localStorage.getItem('adminPermissions') || '{}');
+        const isSuper = user.role === 'superadmin' || user.isSuperAdmin;
+        if (isSuper || perms.dashboard === 'full' || perms.dashboard === 'read') {
+          window.location.href = 'index';
+        } else {
+          const sectionPages = {
+            orders: 'orders',
+            abandoned_carts: 'abandoned-carts',
+            customers: 'customers',
+            products: 'products',
+            collections: 'collections',
+            homepage: 'homepage',
+            promotions: 'promotions',
+            expenses: 'expenses',
+            settings: 'settings',
+            shipment: 'shipment',
+            webhooks: 'webhooks',
+            whatsapp: 'whatsapp',
+            employees: 'employees'
+          };
+          let targetPage = 'index';
+          for (const [sec, page] of Object.entries(sectionPages)) {
+            if (perms[sec] === 'full' || perms[sec] === 'read') {
+              targetPage = page;
+              break;
+            }
+          }
+          window.location.href = targetPage;
+        }
+      } catch {
+        window.location.href = 'index';
+      }
     } else {
       // Wipe any outdated or legacy session
       localStorage.removeItem('adminKey');

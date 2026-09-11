@@ -4,6 +4,7 @@ const Setting = require('../models/Setting');
 const adminAuth = require('../middleware/adminAuth');
 const cache = require('../utils/cache');
 const Product = require('../models/Product');
+const Employee = require('../models/Employee');
 
 router.post('/clear-cache', adminAuth, async (req, res) => {
   try {
@@ -29,10 +30,23 @@ router.get('/:key', async (req, res) => {
   const { key } = req.params;
   
   if (!PUBLIC_SETTINGS.includes(key)) {
-    // Authenticate admin for sensitive keys
-    const adminKey = process.env.ADMIN_API_KEY;
+    // Authenticate Master Admin or active Employee for settings
+    const adminKey = process.env.ADMIN_API_KEY || 'sundura_secret_admin_key';
     const reqKey = req.headers['x-admin-key'] || req.query.ADMIN_API_KEY || req.query.adminKey || req.query.admin_token;
-    if (adminKey && reqKey !== adminKey) {
+    
+    let isAuthorized = (reqKey && reqKey === adminKey);
+    if (!isAuthorized && reqKey && reqKey.startsWith('emp_')) {
+      try {
+        const employee = await Employee.findOne({ token: reqKey, isActive: true });
+        if (employee && (!employee.tokenExpiresAt || employee.tokenExpiresAt > new Date())) {
+          isAuthorized = true;
+        }
+      } catch (authErr) {
+        console.error('Settings auth check error:', authErr);
+      }
+    }
+
+    if (!isAuthorized) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
   }

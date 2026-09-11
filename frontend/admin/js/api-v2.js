@@ -35,7 +35,8 @@
   else apply();
 })();
 
-const API_BASE = 'API_URL_PLACEHOLDER';
+window.API_BASE = 'API_URL_PLACEHOLDER';
+const API_BASE = window.API_BASE;
 
 // v1.1.0 - Added seedShipping
 const api = {
@@ -54,12 +55,12 @@ const api = {
       headers['Content-Type'] = 'application/json';
     }
 
-    if (opts.admin) {
-      if (method === 'GET') {
+    const currentKey = this._adminKey();
+    if (currentKey) {
+      headers['x-admin-key'] = currentKey;
+      if (method === 'GET' && !finalPath.includes('adminKey=')) {
         const separator = finalPath.includes('?') ? '&' : '?';
-        finalPath += `${separator}adminKey=${this._adminKey()}`;
-      } else {
-        headers['x-admin-key'] = this._adminKey();
+        finalPath += `${separator}adminKey=${encodeURIComponent(currentKey)}`;
       }
     }
 
