@@ -58,7 +58,17 @@ const api = {
     try {
       const res = await fetch(`${API_BASE}${path}`, { ...opts, headers, signal: controller.signal });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      if (!res.ok) {
+        if (res.status === 401 && !path.includes('/login')) {
+          localStorage.removeItem('adminKey');
+          localStorage.removeItem('adminUser');
+          localStorage.removeItem('adminPermissions');
+          localStorage.removeItem('loginTimestamp');
+          localStorage.removeItem('adminSessionVersion');
+          window.location.href = 'login';
+        }
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
       return data;
     } finally {
       if (id) clearTimeout(id);

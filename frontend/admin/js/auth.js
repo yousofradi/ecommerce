@@ -333,6 +333,26 @@ function logout() {
   window.location.href = 'login';
 }
 
+// Session liveness check: forces employee to re-login immediately if permissions or status were changed
+async function checkEmployeeSessionLiveness() {
+  const key = localStorage.getItem('adminKey');
+  if (!key || !key.startsWith('emp_')) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/employees/me?_t=${Date.now()}`, {
+      headers: { 'x-admin-key': key }
+    });
+    if (res.status === 401) {
+      logout();
+    }
+  } catch (e) {
+    // Ignore offline network errors
+  }
+}
+
+window.addEventListener('focus', checkEmployeeSessionLiveness);
+setInterval(checkEmployeeSessionLiveness, 15000);
+
 // Global UI Helpers
 document.addEventListener('DOMContentLoaded', () => {
   filterSidebarNavigation();

@@ -198,8 +198,19 @@ router.put('/:id', adminAuth, requirePermission('employees', 'full'), async (req
     }
 
     if (name) employee.name = name.trim();
-    if (permissions) employee.permissions = permissions;
-    if (typeof isActive === 'boolean') employee.isActive = isActive;
+    if (permissions) {
+      employee.permissions = permissions;
+      // Invalidate existing sessions immediately when permissions change
+      employee.token = null;
+      employee.tokenExpiresAt = null;
+    }
+    if (typeof isActive === 'boolean') {
+      employee.isActive = isActive;
+      if (!isActive) {
+        employee.token = null;
+        employee.tokenExpiresAt = null;
+      }
+    }
 
     if (password && password.trim().length > 0) {
       if (password.trim().length < 6) {
@@ -243,6 +254,7 @@ router.patch('/:id/toggle-status', adminAuth, requirePermission('employees', 'fu
     employee.isActive = !employee.isActive;
     if (!employee.isActive) {
       employee.token = null; // Kick session out immediately
+      employee.tokenExpiresAt = null;
     }
     await employee.save();
 
