@@ -92,6 +92,17 @@ const adminAuth = async (req, res, next) => {
     if (fullPath === '/api/employees/me') {
       return next();
     }
+
+    // Shared read-only endpoints needed across multiple sections
+    // e.g. GET /api/shipping/list is needed by Orders (creation, editing, details), Abandoned Carts, and Customer addresses
+    if (req.method.toUpperCase() === 'GET' && fullPath === '/api/shipping/list') {
+      return next();
+    }
+
+    // GET /api/customers is needed for customer autocomplete in Orders creation form
+    if (req.method.toUpperCase() === 'GET' && fullPath === '/api/customers' && req.adminUser.permissions?.orders && req.adminUser.permissions.orders !== 'none') {
+      return next();
+    }
     
     // Find matching section for current route
     let matchedSection = null;
