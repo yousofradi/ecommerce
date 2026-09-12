@@ -41,58 +41,58 @@ async function sendWebhookInner(event, data, options = {}) {
       const webhooks = await Webhook.find({ active: true, events: event });
       console.log(`[Webhook] Found ${webhooks.length} active webhooks for event: ${event}`);
 
-    if (webhooks.length > 0) {
-      // Calculate subamount if needed
-      const subamount = data.totalPrice - data.shippingFee;
+      if (webhooks.length > 0) {
+        // Calculate subamount if needed
+        const subamount = data.totalPrice - data.shippingFee;
 
-      // Map product items
-      const products = (data.items || []).map(item => ({
-        "name": item.name,
-        "count": item.quantity,
-        "price": item.finalPrice / item.quantity,
-        "value option": (item.selectedOptions || []).map(o => o.label).join(' / ') || ""
-      }));
+        // Map product items
+        const products = (data.items || []).map(item => ({
+          "name": item.name,
+          "count": item.quantity,
+          "price": item.finalPrice / item.quantity,
+          "value option": (item.selectedOptions || []).map(o => o.label).join(' / ') || ""
+        }));
 
-      const rawPayload = {
-        "Order ID": data.orderId,
-        "Name": data.customer.name,
-        "Phone": data.customer.phone,
-        "Second Phone": data.customer.secondPhone || "",
-        "Address": data.customer.address,
-        "Zone" : data.customer.zone || "",
-        "Gov-ar": data.customer.government,
-        "Gov-en": cityMap[data.customer.government] || data.customer.government,
-        "notes": data.customer.notes || "",
-        "subamount": subamount,
-        "shipment-amount": data.shippingFee,
-        "total amount": data.totalPrice,
-        "paid amount": data.paidAmount || 0,
-        "remaining amount": data.totalPrice - (data.paidAmount || 0),
-        "products": products,
-        "Month": new Date().toLocaleString('en-US', { month: 'long' }),
-        "month_number": new Date().getMonth() + 1
-      };
+        const rawPayload = {
+          "Order ID": data.orderId,
+          "Name": data.customer.name,
+          "Phone": data.customer.phone,
+          "Second Phone": data.customer.secondPhone || "",
+          "Address": data.customer.address,
+          "Zone": data.customer.zone || "",
+          "Gov-ar": data.customer.government,
+          "Gov-en": cityMap[data.customer.government] || data.customer.government,
+          "notes": data.customer.notes || "",
+          "subamount": subamount,
+          "shipment-amount": data.shippingFee,
+          "total amount": data.totalPrice,
+          "paid amount": data.paidAmount || 0,
+          "remaining amount": data.totalPrice - (data.paidAmount || 0),
+          "products": products,
+          "Month": new Date().toLocaleString('en-US', { month: 'long' }),
+          "month_number": new Date().getMonth() + 1
+        };
 
-      const payload = JSON.stringify({
-        event,
-        timestamp: new Date().toISOString(),
-        data: rawPayload
-      });
-
-      const promises = webhooks.map(wh => {
-        console.log(`[Webhook] Sending payload to ${wh.url}...`);
-        return fetch(wh.url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: payload,
-          signal: AbortSignal.timeout(5000)
-        }).catch(err => {
-          console.error(`Failed to send webhook to ${wh.url}:`, err.message);
+        const payload = JSON.stringify({
+          event,
+          timestamp: new Date().toISOString(),
+          data: rawPayload
         });
-      });
 
-      await Promise.all(promises);
-    }
+        const promises = webhooks.map(wh => {
+          console.log(`[Webhook] Sending payload to ${wh.url}...`);
+          return fetch(wh.url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: payload,
+            signal: AbortSignal.timeout(5000)
+          }).catch(err => {
+            console.error(`Failed to send webhook to ${wh.url}:`, err.message);
+          });
+        });
+
+        await Promise.all(promises);
+      }
     } // Close if (!skipHttp)
 
     if (skipWa) return;
