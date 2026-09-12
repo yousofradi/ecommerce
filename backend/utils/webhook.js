@@ -142,7 +142,7 @@ async function sendWebhookInner(event, data, options = {}) {
               if (normPayment.includes('انستا') || normPayment.includes('insta')) {
                 accountHolder = 'دينا علي  (دينا ع** م*** ا****** ق**** )';
               } else if (normPayment.includes('فودافون') || normPayment.includes('vodafone')) {
-                accountHolder = 'دينا علي محمد  (Dina A**  M******)';
+                accountHolder = 'دينا علي محمد  \n(Dina A**  M******)';
               }
 
               customerMessage = `مرحباً ${data.customer.name}
