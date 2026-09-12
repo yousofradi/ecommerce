@@ -284,7 +284,7 @@ window.updateTotalPrice = function(isRecursive = false) {
       }
     }
 
-    if (currentStock !== null && !isNaN(currentStock) && isFinite(currentStock)) {
+    if (currentStock !== null && !isNaN(currentStock) && isFinite(currentStock) && currentStock < 10) {
       stockEl.style.display = 'inline-flex';
       stockEl.innerHTML = `المخزون : <span class="stock-amount">${currentStock}</span>`;
       if (currentStock <= 3 && currentStock > 0) {
