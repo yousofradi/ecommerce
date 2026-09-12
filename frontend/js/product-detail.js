@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const params = new URLSearchParams(window.location.search);
   let productId = params.get('id');
   let handle = params.get('handle') || params.get('name');
-  
+
   // Fallback: extract handle or ID from path /product/VALUE
   if (!productId && !handle) {
     const pathParts = window.location.pathname.split('/').filter(Boolean);
@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
       currentProduct = await api.getProduct(productId);
     }
-    
+
     document.title = `${currentProduct.name} | `;
     document.getElementById('breadcrumb-name').textContent = currentProduct.name;
     document.getElementById('breadcrumb-container').classList.remove('hidden');
@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     detail.classList.remove('hidden');
     detail.classList.add('fade-in');
     renderProduct(currentProduct);
-    
+
     if (currentProduct.collectionId) {
       loadRelatedProducts(currentProduct.collectionId, currentProduct._id);
     } else if (currentProduct.collectionIds && currentProduct.collectionIds.length > 0) {
@@ -138,21 +138,21 @@ function renderProduct(p) {
         </div>
       ` : ''}
     </div>`;
-    
-    // Preload gallery images to avoid delay on switch
-    if (images.length > 1) {
-      images.forEach(img => {
-        const pImg = new Image();
-        pImg.src = api.optimizeImageUrl(img, 800);
-      });
-    }
 
-    updateTotalPrice();
+  // Preload gallery images to avoid delay on switch
+  if (images.length > 1) {
+    images.forEach(img => {
+      const pImg = new Image();
+      pImg.src = api.optimizeImageUrl(img, 800);
+    });
+  }
+
+  updateTotalPrice();
 }
 
-window.updateTotalPrice = function(isRecursive = false) {
+window.updateTotalPrice = function (isRecursive = false) {
   if (!currentProduct) return;
-  
+
   const selectedOptionsMap = {};
   const selectedOptionsList = [];
   let optionsOriginalTotal = 0;
@@ -164,7 +164,7 @@ window.updateTotalPrice = function(isRecursive = false) {
     if (selected) {
       const label = selected.value;
       const optVal = group.values.find(v => v.label === label) || { label };
-      
+
       selectedOptionsMap[group.name] = label;
       selectedOptionsList.push({ groupName: group.name, label });
 
@@ -196,7 +196,7 @@ window.updateTotalPrice = function(isRecursive = false) {
       if (!v.combination) return false;
       const combo = v.combination instanceof Map ? Object.fromEntries(v.combination) : v.combination;
       const comboKeys = Object.keys(combo);
-      
+
       return Object.entries(selectedOptionsMap).every(([key, val]) => {
         const keyClean = key.trim().toLowerCase();
         const valClean = val.trim().toLowerCase();
@@ -236,12 +236,12 @@ window.updateTotalPrice = function(isRecursive = false) {
       isAvailable = currentProduct.quantity === null || currentProduct.quantity === undefined || currentProduct.quantity === "" || Number(currentProduct.quantity) > 0;
     }
   }
-  
+
   const hasDiscount = finalSalePrice < finalBasePrice;
   const salePriceEl = document.getElementById('display-sale-price');
   const originalPriceEl = document.getElementById('display-original-price');
   const addBtn = document.querySelector('.detail-add-btn');
-  
+
   if (salePriceEl) salePriceEl.textContent = formatPrice(finalSalePrice);
   if (originalPriceEl) {
     if (hasDiscount) {
@@ -286,7 +286,7 @@ window.updateTotalPrice = function(isRecursive = false) {
 
     if (currentStock !== null && !isNaN(currentStock) && isFinite(currentStock) && currentStock < 10) {
       stockEl.style.display = 'inline-flex';
-      stockEl.innerHTML = `المخزون : <span class="stock-amount">${currentStock}</span>`;
+      stockEl.innerHTML = `المتبقي : <span class="stock-amount">${currentStock}</span>`;
       if (currentStock <= 3 && currentStock > 0) {
         stockEl.classList.add('is-low');
       } else {
@@ -327,13 +327,13 @@ window.updateTotalPrice = function(isRecursive = false) {
   }
 };
 
-window.updateDisabledOptions = function(currentSelections) {
+window.updateDisabledOptions = function (currentSelections) {
   if (!currentProduct || !currentProduct.variants || currentProduct.variants.length === 0) return false;
 
   let selectionChanged = false;
 
-  const activeVariants = currentProduct.variants.filter(v => 
-    v.active !== false && 
+  const activeVariants = currentProduct.variants.filter(v =>
+    v.active !== false &&
     (v.quantity === null || v.quantity === undefined || v.quantity === "" || Number(v.quantity) > 0)
   );
 
@@ -349,7 +349,7 @@ window.updateDisabledOptions = function(currentSelections) {
         if (!variant.combination) return false;
         const combo = variant.combination instanceof Map ? Object.fromEntries(variant.combination) : variant.combination;
         const comboKeys = Object.keys(combo);
-        
+
         // 1. Must match this value
         const groupNameClean = group.name.trim().toLowerCase();
         const valueLabelClean = v.label.trim().toLowerCase();
@@ -361,7 +361,7 @@ window.updateDisabledOptions = function(currentSelections) {
           if (ogi === gi) return true; // Skip current group
           const selectedInOther = currentSelections[otherGroup.name];
           if (!selectedInOther) return true; // If nothing selected in other group, it's fine
-          
+
           const otherGroupNameClean = otherGroup.name.trim().toLowerCase();
           const otherMatchKey = comboKeys.find(k => k.trim().toLowerCase() === otherGroupNameClean);
           if (!otherMatchKey) return false;
@@ -393,7 +393,7 @@ window.updateDisabledOptions = function(currentSelections) {
 
 
 
-window.switchMainImage = function(index) {
+window.switchMainImage = function (index) {
   const images = getImages(currentProduct);
   const mainImg = document.getElementById('main-product-img');
   if (mainImg && images[index]) {
@@ -405,7 +405,7 @@ window.switchMainImage = function(index) {
   });
 };
 
-window.switchMainImageByOffset = function(offset) {
+window.switchMainImageByOffset = function (offset) {
   const images = getImages(currentProduct);
   const mainImg = document.getElementById('main-product-img');
   if (!mainImg) return;
@@ -416,7 +416,7 @@ window.switchMainImageByOffset = function(offset) {
   switchMainImage(newIndex);
 };
 
-window.changeQty = function(delta) {
+window.changeQty = function (delta) {
   const input = document.getElementById('qty-input');
   if (!input) return;
   const max = input.max ? parseInt(input.max) : Infinity;
@@ -429,12 +429,12 @@ window.changeQty = function(delta) {
   input.value = selectedQty;
 };
 
-window.addProductToCart = function() {
+window.addProductToCart = function () {
   if (!currentProduct) return;
 
   const selectedOptionsMap = {};
   const selectedOptionsList = [];
-  
+
   (currentProduct.options || []).forEach((group, gi) => {
     const selected = document.querySelector(`input[name="opt_${gi}"]:checked`);
     if (selected) {
@@ -454,7 +454,7 @@ window.addProductToCart = function() {
   }
 
   const itemToSave = { ...currentProduct };
-  
+
   // Calculate prices using the same logic as updateTotalPrice
   let optionsOriginalTotal = 0;
   let optionsSaleTotal = 0;
@@ -529,15 +529,18 @@ function renderRelatedProductCard(p) {
   const hasDiscount = p.salePrice && p.salePrice < p.basePrice;
   const productLink = `/product/${p.handle || p._id}`;
   const hasOptions = p.options && p.options.length > 0;
-  
+
   const pJson = JSON.stringify({
     _id: p._id, name: p.name, basePrice: p.basePrice, salePrice: p.salePrice,
     images: p.images, imageUrl: p.imageUrl, options: p.options, quantity: p.quantity
   }).replace(/"/g, '&quot;');
 
-  const btnHtml = hasOptions 
+  const btnHtml = hasOptions
     ? `<a href="${productLink}" class="btn btn-secondary btn-block" style="margin-top:8px;text-align:center;padding:6px;font-size:0.9rem">حدد اختيارك</a>`
     : `<button class="btn btn-primary btn-block" style="margin-top:8px;padding:6px;font-size:0.9rem" data-product="${pJson}" onclick="quickAddToCart(event, this)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg><span>أضف للسلة</span></button>`;
+
+  const hasLowStock = p.quantity !== null && p.quantity !== undefined && p.quantity !== '' && !isNaN(Number(p.quantity)) && Number(p.quantity) < 10;
+  const stockHtml = hasLowStock ? `<div class="card-stock-badge">المتبقي : ${Number(p.quantity)}</div>` : '';
 
   return `
     <div class="store-product-card" style="display:flex;flex-direction:column;">
@@ -552,6 +555,7 @@ function renderRelatedProductCard(p) {
             <span class="store-price-sale">${formatPrice(salePrice)}</span>
             ${hasDiscount ? `<span class="store-price-original">${formatPrice(p.basePrice)}</span>` : ''}
           </div>
+          ${stockHtml}
         </div>
       </a>
       <div style="padding: 0 12px 12px; margin-top:auto;">
@@ -560,7 +564,7 @@ function renderRelatedProductCard(p) {
     </div>`;
 }
 
-window.quickAddToCart = function(event, btn) {
+window.quickAddToCart = function (event, btn) {
   event.preventDefault();
   event.stopPropagation();
   let p;
@@ -572,11 +576,11 @@ window.quickAddToCart = function(event, btn) {
   }
   const isUnlimited = p.quantity === null || p.quantity === undefined;
   if (!isUnlimited && p.quantity <= 0) {
-    if(window.showToast) window.showToast('عذراً، المنتج غير متوفر حالياً', 'error');
+    if (window.showToast) window.showToast('عذراً، المنتج غير متوفر حالياً', 'error');
     else alert('عذراً، المنتج غير متوفر حالياً');
     return;
   }
-  if(window.Cart) {
+  if (window.Cart) {
     window.Cart.addItem(p);
     window.Cart.openCart();
   }

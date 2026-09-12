@@ -317,6 +317,14 @@
   text-decoration: line-through;
 }
 
+.card-stock-badge {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #dc2626;
+  margin-top: 4px;
+  line-height: 1.2;
+}
+
 .discount-badge {
   position: absolute;
   top: 10px;
@@ -537,7 +545,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 20px;
+  /* margin-bottom: 20px;**/
 }
 
 .detail-price-sale {
@@ -1118,22 +1126,29 @@ button:active,
   background: #fff;
   border-top: 1px solid #f1f5f9;
 }
+
 .sticky-cat-bar {
-  padding: 8px 0 12px; /* Increased bottom padding to prevent text clipping */
+  padding: 8px 0 12px;
+  /* Increased bottom padding to prevent text clipping */
   width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: none; /* Firefox */
+  scrollbar-width: none;
+  /* Firefox */
 }
+
 .sticky-cat-bar::-webkit-scrollbar {
-  display: none; /* Safari and Chrome */
+  display: none;
+  /* Safari and Chrome */
 }
+
 .sticky-cat-track {
   display: flex;
   width: max-content;
   gap: 12px;
   padding: 0 6px;
 }
+
 .cat-badge {
   display: flex;
   flex-direction: column;
@@ -1144,6 +1159,7 @@ button:active,
   width: max-content;
   flex-shrink: 0;
 }
+
 .cat-badge-img-wrapper {
   width: 52px;
   height: 52px;
@@ -1154,14 +1170,16 @@ button:active,
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
   flex-shrink: 0;
 }
+
 .cat-badge-img-wrapper img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
+
 .cat-badge-name {
   font-size: 0.7rem;
   color: #475569;
