@@ -552,6 +552,26 @@
   text-decoration: line-through;
 }
 
+.product-detail-stock {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #475569;
+  margin-top: -10px;
+  margin-bottom: 20px;
+}
+
+.product-detail-stock .stock-amount {
+  font-weight: 700;
+  color: var(--primary, #6b4f3b);
+}
+
+.product-detail-stock.is-low .stock-amount {
+  color: #dc2626;
+}
+
 
 /* ── Options (Square Style) ── */
 .radio-options {

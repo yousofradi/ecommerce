@@ -111,6 +111,7 @@ function renderProduct(p) {
           <span class="detail-price-sale" id="display-sale-price">${formatPrice(salePrice)}</span>
           ${hasDiscount ? `<span class="detail-price-original" id="display-original-price">${formatPrice(p.basePrice)}</span>` : ''}
         </div>
+        <div id="product-stock-display" class="product-detail-stock" style="display:none;"></div>
         ${optionsHTML}
         
         <div class="product-purchase-row">
@@ -265,6 +266,52 @@ window.updateTotalPrice = function(isRecursive = false) {
     }
   }
 
+  // Update stock display
+  const stockEl = document.getElementById('product-stock-display');
+  if (stockEl) {
+    let currentStock = null;
+    if (matchingVariant) {
+      if (matchingVariant.quantity !== null && matchingVariant.quantity !== undefined && matchingVariant.quantity !== '') {
+        currentStock = Number(matchingVariant.quantity);
+      }
+    } else if (!currentProduct.variants || currentProduct.variants.length === 0) {
+      if (currentProduct.quantity !== null && currentProduct.quantity !== undefined && currentProduct.quantity !== '') {
+        currentStock = Number(currentProduct.quantity);
+      }
+    } else {
+      if (currentProduct.quantity !== null && currentProduct.quantity !== undefined && currentProduct.quantity !== '') {
+        currentStock = Number(currentProduct.quantity);
+      }
+    }
+
+    if (currentStock !== null && !isNaN(currentStock) && isFinite(currentStock)) {
+      stockEl.style.display = 'inline-flex';
+      stockEl.innerHTML = `المخزون : <span class="stock-amount">${currentStock}</span>`;
+      if (currentStock <= 3 && currentStock > 0) {
+        stockEl.classList.add('is-low');
+      } else {
+        stockEl.classList.remove('is-low');
+      }
+    } else {
+      stockEl.style.display = 'none';
+      stockEl.innerHTML = '';
+    }
+
+    // Set max on quantity input if stock is finite and positive
+    const qtyInput = document.getElementById('qty-input');
+    if (qtyInput) {
+      if (currentStock !== null && !isNaN(currentStock) && isFinite(currentStock) && currentStock > 0) {
+        qtyInput.max = currentStock;
+        if (parseInt(qtyInput.value) > currentStock) {
+          qtyInput.value = currentStock;
+          selectedQty = currentStock;
+        }
+      } else {
+        qtyInput.removeAttribute('max');
+      }
+    }
+  }
+
   // Update image if variant has one, otherwise use product main image
   const targetImg = variantImg || (currentProduct.images && currentProduct.images[0]) || currentProduct.imageUrl;
   if (targetImg) {
@@ -371,7 +418,14 @@ window.switchMainImageByOffset = function(offset) {
 
 window.changeQty = function(delta) {
   const input = document.getElementById('qty-input');
-  selectedQty = Math.max(1, (parseInt(input.value) || 1) + delta);
+  if (!input) return;
+  const max = input.max ? parseInt(input.max) : Infinity;
+  let next = (parseInt(input.value) || 1) + delta;
+  next = Math.max(1, next);
+  if (!isNaN(max) && max > 0) {
+    next = Math.min(next, max);
+  }
+  selectedQty = next;
   input.value = selectedQty;
 };
 
