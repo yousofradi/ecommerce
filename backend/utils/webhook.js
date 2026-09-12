@@ -134,11 +134,22 @@ async function sendWebhookInner(event, data, options = {}) {
               const subtotal = data.totalPrice - data.shippingFee;
               const carrierName = data.carrier === 'egyptpost' ? 'البريد المصري' : 'بوسطة';
 
+              const normPayment = `${data.paymentMethod || ''} ${selectedPaymentMethod?.label || ''} ${selectedPaymentMethod?.id || ''}`
+                .toLowerCase()
+                .replace(/[أإآ]/g, 'ا');
+
+              let accountHolder = '';
+              if (normPayment.includes('انستا') || normPayment.includes('insta')) {
+                accountHolder = 'دينا علي  (دينا ع** م*** ا****** ق**** )';
+              } else if (normPayment.includes('فودافون') || normPayment.includes('vodafone')) {
+                accountHolder = 'دينا علي محمد  (Dina A**  M******)';
+              }
+
               customerMessage = `مرحباً ${data.customer.name}
 
 رقم الطلب: ${data.orderId}
 إجمالي المبلغ: ${data.totalPrice} EGP
-طريقة الدفع: ${data.paymentMethod}${paymentNumber ? `\nرقم الدفع: ${paymentNumber}` : ''}
+طريقة الدفع: ${data.paymentMethod}${paymentNumber ? `\nرقم الدفع: ${paymentNumber}` : ''}${accountHolder ? `\nب اسم : ${accountHolder}` : ''}
 
 ${settings.paymentNotes || ''}
 
