@@ -735,15 +735,25 @@ window.openCustomerModal = function () {
     zoneContainer.style.display = window._globalSettings?.enableZones === false ? 'none' : 'block';
   }
 
-  document.getElementById('modal-c-zone').value = currentOrder.customer.zone || '';
-  document.getElementById('modal-c-address').value = currentOrder.customer.address || '';
-  document.getElementById('modal-c-notes').value = currentOrder.customer.notes || '';
+  const zoneInput = document.getElementById('modal-c-zone');
+  if (zoneInput) {
+    zoneInput.value = currentOrder.customer.zone || '';
+  }
+  const addressInput = document.getElementById('modal-c-address');
+  if (addressInput) {
+    addressInput.value = currentOrder.customer.address || '';
+  }
+  const notesInput = document.getElementById('modal-c-notes');
+  if (notesInput) {
+    notesInput.value = currentOrder.customer.notes || '';
+  }
 
   openModal('customer-modal');
 
   // Load the zones in the background without blocking the UI
   handleModalCityChange(true).then(() => {
-    document.getElementById('modal-c-zone').value = currentOrder.customer.zone || '';
+    const zInp = document.getElementById('modal-c-zone');
+    if (zInp) zInp.value = currentOrder.customer.zone || '';
   });
 };
 
@@ -787,7 +797,9 @@ window.handleModalCarrierChange = function () {
 
 window.renderModalZoneDropdown = function () {
   const dropdown = document.getElementById('modal-c-zone-dropdown');
-  const query = document.getElementById('modal-c-zone').value.trim();
+  const zoneInput = document.getElementById('modal-c-zone');
+  if (!dropdown || !zoneInput) return;
+  const query = zoneInput.value.trim();
 
   if (!window._modalZones || window._modalZones.length === 0) {
     dropdown.style.display = 'none';
@@ -795,7 +807,6 @@ window.renderModalZoneDropdown = function () {
   }
 
   // Prevent dropdown from opening if the zone input field is not currently focused by the user
-  const zoneInput = document.getElementById('modal-c-zone');
   if (document.activeElement !== zoneInput) {
     dropdown.style.display = 'none';
     return;
@@ -824,14 +835,15 @@ window.renderModalZoneDropdown = function () {
 
 window.selectModalZone = function (val) {
   const zoneInput = document.getElementById('modal-c-zone');
-  zoneInput.value = val;
-  document.getElementById('modal-c-zone-dropdown').style.display = 'none';
+  if (zoneInput) zoneInput.value = val;
+  const dropdown = document.getElementById('modal-c-zone-dropdown');
+  if (dropdown) dropdown.style.display = 'none';
 };
 
 document.addEventListener('click', (e) => {
   const container = document.getElementById('modal-c-zone-search-container');
   const dropdown = document.getElementById('modal-c-zone-dropdown');
-  if (container && !container.contains(e.target)) {
+  if (container && dropdown && !container.contains(e.target)) {
     dropdown.style.display = 'none';
   }
 
