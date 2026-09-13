@@ -3,6 +3,7 @@ let showingArchived = false;
 
 document.addEventListener('DOMContentLoaded', () => {
   if (!requireAdmin()) return;
+  syncLimitUI();
   document.body.classList.add('is-loading');
   loadOrders();
 });
@@ -10,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
 let allOrdersData = [];
 let currentFilter = 'all';
 let currentPage = 1;
-let currentLimit = 30;
+let currentLimit = parseInt(localStorage.getItem('admin_orders_limit')) || 20;
 let totalPages = 1;
 
 let paymentMethodsCache = [];
@@ -151,6 +152,61 @@ window.goToPage = function(page) {
   currentPage = parseInt(page) || 1;
   loadOrders();
 };
+
+function syncLimitUI() {
+  const labelEl = document.getElementById('current-limit-label');
+  if (labelEl) labelEl.textContent = currentLimit.toString();
+
+  document.querySelectorAll('.limit-option').forEach(el => {
+    if (parseInt(el.getAttribute('data-limit')) === currentLimit) {
+      el.classList.add('active');
+    } else {
+      el.classList.remove('active');
+    }
+  });
+}
+
+window.toggleOrdersLimitMenu = function(event) {
+  if (event) event.stopPropagation();
+  const menu = document.getElementById('orders-limit-menu');
+  const arrow = document.getElementById('orders-limit-arrow');
+  if (!menu) return;
+  const isShow = menu.classList.contains('show');
+  if (isShow) {
+    menu.classList.remove('show');
+    if (arrow) arrow.style.transform = 'rotate(0deg)';
+  } else {
+    menu.classList.add('show');
+    if (arrow) arrow.style.transform = 'rotate(180deg)';
+  }
+};
+
+window.setOrdersLimit = function(limit) {
+  limit = parseInt(limit) || 20;
+  currentLimit = limit;
+  try {
+    localStorage.setItem('admin_orders_limit', limit);
+  } catch (e) {}
+  syncLimitUI();
+
+  const menu = document.getElementById('orders-limit-menu');
+  const arrow = document.getElementById('orders-limit-arrow');
+  if (menu) menu.classList.remove('show');
+  if (arrow) arrow.style.transform = 'rotate(0deg)';
+
+  currentPage = 1;
+  loadOrders();
+};
+
+document.addEventListener('click', (e) => {
+  const wrapper = document.getElementById('orders-limit-wrapper');
+  const menu = document.getElementById('orders-limit-menu');
+  const arrow = document.getElementById('orders-limit-arrow');
+  if (menu && wrapper && !wrapper.contains(e.target)) {
+    menu.classList.remove('show');
+    if (arrow) arrow.style.transform = 'rotate(0deg)';
+  }
+});
 
 window.updateFilterCounts = function (totalCount = 0) {
   // Update the badge of the currently active tab
