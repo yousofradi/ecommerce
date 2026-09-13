@@ -98,6 +98,18 @@
         padding: 4px 8px;
         font-size: 0.8rem;
       }
+
+      .orders-limit-btn {
+        min-width: 52px;
+        height: 28px;
+        padding: 2px 6px;
+        font-size: 0.85rem;
+      }
+
+      .pagination-bar {
+        padding: 10px 8px !important;
+        gap: 6px !important;
+      }
     }
 
     .order-tab {
@@ -606,11 +618,11 @@
               </table>
             </div>
 
-            <div
-              style="display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-top:1px solid #f1f5f9; background:#fff; flex-wrap:wrap; gap:12px;">
-              <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
-                <div style="display:inline-flex; align-items:center; gap:8px;" id="orders-limit-container">
-                  <span style="font-size:0.9rem; color:#334155; font-weight:500;">عدد الطلبات</span>
+            <div class="pagination-bar"
+              style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-top:1px solid #f1f5f9; background:#fff; flex-wrap:nowrap; gap:8px; width:100%; box-sizing:border-box;">
+              <div style="display:flex; flex-direction:column; align-items:flex-start; gap:2px; flex-shrink:0;">
+                <div style="display:inline-flex; align-items:center; gap:6px;" id="orders-limit-container">
+                  <span style="font-size:0.85rem; color:#334155; font-weight:500; white-space:nowrap;">عدد الطلبات</span>
                   <div style="position:relative; display:inline-block;" id="orders-limit-wrapper">
                     <button type="button" class="orders-limit-btn" id="orders-limit-btn" onclick="toggleOrdersLimitMenu(event)" style="direction:ltr;">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" id="orders-limit-arrow" style="transition:transform 0.2s;">
@@ -626,24 +638,24 @@
                     </div>
                   </div>
                 </div>
-                <div style="font-size:0.85rem; color:#64748b;">
+                <div style="font-size:0.75rem; color:#64748b; white-space:nowrap; padding-right:2px;">
                   (الإجمالي: <span id="pagination-info" style="font-weight:600; color:#0f172a;">0</span>)
                 </div>
               </div>
-              <div style="display:flex; align-items:center; gap:12px;">
+              <div style="display:flex; align-items:center; gap:4px; flex-shrink:0;">
                 <button onclick="changePage(-1)" id="prev-page" class="btn btn-sm"
-                  style="display:flex; align-items:center; gap:6px;">
+                  style="display:flex; align-items:center; gap:3px; padding:4px 6px; font-size:0.82rem; white-space:nowrap;">
                   السابق
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="9 18 15 12 9 6"></polyline>
                   </svg>
                 </button>
                 <select id="page-dropdown" onchange="goToPage(this.value)"
-                  style="border:1px solid #e2e8f0; border-radius:6px; padding:4px 8px; appearance:none; text-align:center; min-width:50px;"></select>
+                  style="border:1px solid #e2e8f0; border-radius:6px; padding:3px 5px; appearance:none; text-align:center; min-width:38px; font-size:0.82rem; background:#fff;"></select>
                 <button onclick="changePage(1)" id="next-page" class="btn btn-sm"
-                  style="display:flex; align-items:center; gap:6px;">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  style="display:flex; align-items:center; gap:3px; padding:4px 6px; font-size:0.82rem; white-space:nowrap;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="15 18 9 12 15 6"></polyline>
                   </svg>

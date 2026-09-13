@@ -364,6 +364,18 @@
               <!-- Pagination Bar -->
               <div class="pagination-bar"
                 style="display:flex; justify-content:space-between; align-items:center; padding:12px 10px; border-top:1px solid #e2e8f0; background:#f8fafc; font-size:0.85rem; flex-wrap:nowrap; gap:6px; width:100%; box-sizing:border-box;">
+                <div style="display:flex; align-items:center; gap:5px; flex-shrink:0; white-space:nowrap;">
+                  <span style="color:#64748b; font-size:0.82rem;">أظهر</span>
+                  <select id="items-per-page" onchange="changeLimit(this.value)"
+                    style="border:1px solid #e2e8f0; border-radius:6px; padding:3px 6px; appearance:none; text-align:center; min-width:48px; font-size:0.85rem; background:#fff;">
+                    <option value="20">20</option>
+                    <option value="30">30</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                  </select>
+                  <span style="color:#64748b; font-size:0.82rem;">المنتجات</span>
+                </div>
+
                 <div style="display:flex; align-items:center; gap:4px; flex-shrink:0;">
                   <button id="prev-page" onclick="changePage(-1)"
                     style="background:none; border:none; color:var(--primary, #0f766e); font-weight:600; cursor:pointer; display:flex; align-items:center; gap:3px; padding:4px; font-size:0.85rem; white-space:nowrap;">
@@ -383,18 +395,6 @@
                     </svg>
                     التالي
                   </button>
-                </div>
-
-                <div style="display:flex; align-items:center; gap:5px; flex-shrink:0; white-space:nowrap;">
-                  <span style="color:#64748b; font-size:0.82rem;">أظهر</span>
-                  <select id="items-per-page" onchange="changeLimit(this.value)"
-                    style="border:1px solid #e2e8f0; border-radius:6px; padding:3px 6px; appearance:none; text-align:center; min-width:48px; font-size:0.85rem; background:#fff;">
-                    <option value="20">20</option>
-                    <option value="30">30</option>
-                    <option value="50">50</option>
-                    <option value="100">100</option>
-                  </select>
-                  <span style="color:#64748b; font-size:0.82rem;">المنتجات</span>
                 </div>
               </div>
             </div>
