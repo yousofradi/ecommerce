@@ -274,6 +274,14 @@ router.post('/public/:orderId/transfer-info', async (req, res) => {
     
     await order.save();
     console.log(`Saved transfer info for order ${req.params.orderId}`);
+
+    // Trigger webhook and WhatsApp notifications when transfer screenshot is uploaded
+    if (transferScreenshot && typeof transferScreenshot === 'string' && transferScreenshot.trim()) {
+      sendWebhook('order.created', order.toObject()).catch(err => {
+        console.error('Failed to trigger webhook on transfer screenshot upload:', err);
+      });
+    }
+
     res.json({ success: true, order });
   } catch (err) {
     res.status(500).json({ error: 'Failed to update transfer info' });
