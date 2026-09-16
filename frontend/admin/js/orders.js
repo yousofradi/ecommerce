@@ -329,9 +329,9 @@ function renderOrders(orders) {
           <div style="font-weight:600; color:#1e293b;">${o.customer?.name || 'بدون اسم'}</div>
           <div style="font-size:0.85rem; color:#64748b; margin-top:2px;">${o.customer?.government || ''}</div>
           <div style="font-size:0.85rem; margin-top:4px;">
-            ${o.carrier === 'egyptpost' 
-              ? `<span style="display:inline-block; padding:3px 8px; border-radius:6px; background:#fee2e2; color:#dc2626; font-size:0.75rem; font-weight:700;">البريد المصري</span>`
-              : `<span style="display:inline-block; padding:3px 8px; border-radius:6px; background:#e0f2fe; color:#0369a1; font-size:0.75rem; font-weight:700;">بوسطة${o.bostaTrackingNumber ? ` (#${o.bostaTrackingNumber})` : ''}</span>`
+            ${(o.transferScreenshot && typeof o.transferScreenshot === 'string' && o.transferScreenshot.trim() !== '')
+              ? `<span style="display:inline-block; padding:3px 8px; border-radius:6px; background:#dcfce7; color:#16a34a; font-size:0.75rem; font-weight:700;">مراجعة التحويل</span>`
+              : `<span style="display:inline-block; padding:3px 8px; border-radius:6px; background:#fee2e2; color:#dc2626; font-size:0.75rem; font-weight:700;">لا يوجد تحويل</span>`
             }
           </div>
         </td>

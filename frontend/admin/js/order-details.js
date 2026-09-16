@@ -301,11 +301,15 @@ function renderOrder() {
   if (!currentOrder) return;
 
   const o = currentOrder;
-  document.getElementById('page-order-id').textContent = `تعديل الطلب #${o.orderId}`;
+  const displayId = (o.orderId || '').replace(/^Order-|^Scoop-/i, '');
+  const pageOrderEl = document.getElementById('page-order-id');
+  if (pageOrderEl) {
+    pageOrderEl.innerHTML = `<span dir="ltr" style="font-weight:700; color:#0ea5e9; font-size:1.15rem;">#${displayId}</span>`;
+  }
 
   if (o.status === 'cancelled') {
     document.getElementById('cancel-order-btn')?.style.display === 'none';
-    document.getElementById('page-order-id').innerHTML += ' <span class="badge badge-danger">ملغي</span>';
+    if (pageOrderEl) pageOrderEl.innerHTML += ' <span class="badge badge-danger" style="margin-right:6px; font-size:0.75rem;">ملغي</span>';
   }
 
   // Ready button visibility and action toggle
@@ -322,7 +326,7 @@ function renderOrder() {
     }
   }
   if (o.status === 'ready') {
-    document.getElementById('page-order-id').innerHTML += ' <span class="badge badge-success" style="background:#0f766e; color:#fff; padding: 4px 12px; border-radius: 12px; font-size: 0.8rem; margin-right:8px;">جاهز</span>';
+    if (pageOrderEl) pageOrderEl.innerHTML += ' <span class="badge badge-success" style="background:#0f766e; color:#fff; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; margin-right:6px;">جاهز</span>';
   }
 
   // Customer Info Consolidated
