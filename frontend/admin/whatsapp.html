@@ -164,14 +164,37 @@
             </div>
           </div>
 
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label class="form-label">نوع المستلم *</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <label class="trigger-item" id="card-type-merchant" style="border-color: #0f766e; background: #f0fdf4; padding: 12px 16px; border-width: 2px;">
+                <input type="radio" name="w-recipient-type" value="merchant" checked onchange="handleRecipientTypeChange()" style="accent-color:#0f766e; width:18px; height:18px;">
+                <div>
+                  <span style="font-weight:700; color:#1e293b; font-size:0.95rem; display:block;">التاجر (إشعار الإدارة)</span>
+                  <small style="color:#64748b; font-size:0.8rem;">إدخال رقم هاتف محدد لاستلام التنبيهات</small>
+                </div>
+              </label>
+              <label class="trigger-item" id="card-type-customer" style="padding: 12px 16px; border-width: 1px;">
+                <input type="radio" name="w-recipient-type" value="customer" onchange="handleRecipientTypeChange()" style="accent-color:#0f766e; width:18px; height:18px;">
+                <div>
+                  <span style="font-weight:700; color:#1e293b; font-size:0.95rem; display:block;">العميل (رسالة تأكيد للعميل)</span>
+                  <small style="color:#64748b; font-size:0.8rem;">يؤخذ الرقم تلقائياً من بيانات الطلب</small>
+                </div>
+              </label>
+            </div>
+          </div>
+
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
             <div class="form-group">
               <label class="form-label">مفتاح الـ API Key *</label>
               <input type="text" id="w-apikey" class="form-control" placeholder="API Key" dir="ltr">
             </div>
-            <div class="form-group">
-              <label class="form-label">رقم المستلم (التاجر) *</label>
+            <div class="form-group" id="w-number-group">
+              <label class="form-label" id="w-number-label">رقم المستلم (التاجر) *</label>
               <input type="text" id="w-number" class="form-control" placeholder="201012345678" dir="ltr">
+              <div id="w-customer-notice" style="display:none; padding:10px 12px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; color:#1e40af; font-size:0.85rem; font-weight:600; line-height:1.5;">
+                ✓ سيتم الإرسال لرقم العميل من بيانات الطلب مع الفاتورة. في حال عدم وجود واتساب على الرقم الأول يتم تجربة الرقم الثاني، أو تحويل الإشعار للتاجر.
+              </div>
             </div>
           </div>
 
@@ -222,6 +245,29 @@
     const CONFIG_KEY = 'whatsapp_configs';
     let editingIdx = -1;
 
+    function handleRecipientTypeChange() {
+      const type = document.querySelector('input[name="w-recipient-type"]:checked')?.value || 'merchant';
+      const numberInput = document.getElementById('w-number');
+      const numberLabel = document.getElementById('w-number-label');
+      const customerNotice = document.getElementById('w-customer-notice');
+      const cardMerchant = document.getElementById('card-type-merchant');
+      const cardCustomer = document.getElementById('card-type-customer');
+
+      if (type === 'customer') {
+        numberInput.style.display = 'none';
+        numberLabel.textContent = 'رقم المستلم';
+        customerNotice.style.display = 'block';
+        if (cardMerchant) { cardMerchant.style.borderColor = '#e2e8f0'; cardMerchant.style.background = '#fff'; cardMerchant.style.borderWidth = '1px'; }
+        if (cardCustomer) { cardCustomer.style.borderColor = '#0f766e'; cardCustomer.style.background = '#f0fdf4'; cardCustomer.style.borderWidth = '2px'; }
+      } else {
+        numberInput.style.display = 'block';
+        numberLabel.textContent = 'رقم المستلم (التاجر) *';
+        customerNotice.style.display = 'none';
+        if (cardMerchant) { cardMerchant.style.borderColor = '#0f766e'; cardMerchant.style.background = '#f0fdf4'; cardMerchant.style.borderWidth = '2px'; }
+        if (cardCustomer) { cardCustomer.style.borderColor = '#e2e8f0'; cardCustomer.style.background = '#fff'; cardCustomer.style.borderWidth = '1px'; }
+      }
+    }
+
     document.addEventListener('DOMContentLoaded', async () => {
       if (!requireAdmin()) return;
       try {
@@ -242,11 +288,20 @@
 
         tbody.innerHTML = configs.map((c, idx) => {
           const isActive = c.isActive !== false;
+          const isCustomer = c.recipientType === 'customer';
           return `
           <tr style="border-bottom:1px solid #f1f5f9; opacity: ${isActive ? '1' : '0.6'}">
             <td style="padding:16px">
-              <div style="font-weight:600; color:#1e293b">${c.instance}</div>
-              <div style="font-size:0.8rem; color:#64748b">${c.number}</div>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span style="font-weight:600; color:#1e293b">${c.instance}</span>
+                ${isCustomer 
+                  ? `<span style="display:inline-block; padding:2px 8px; border-radius:10px; background:#eff6ff; color:#1d4ed8; font-size:0.75rem; font-weight:700;">العميل</span>`
+                  : `<span style="display:inline-block; padding:2px 8px; border-radius:10px; background:#f0fdf4; color:#15803d; font-size:0.75rem; font-weight:700;">التاجر</span>`
+                }
+              </div>
+              <div style="font-size:0.8rem; color:#64748b" ${!isCustomer ? 'dir="ltr"' : ''}>
+                ${isCustomer ? 'تلقائي من بيانات الطلب' : (c.number || '—')}
+              </div>
             </td>
             <td style="padding:16px">
               <div style="display:flex; gap:4px; flex-wrap:wrap">
@@ -278,12 +333,16 @@
       const instance = document.getElementById('w-instance').value.trim();
       const apikey = document.getElementById('w-apikey').value.trim();
       const number = document.getElementById('w-number').value.trim();
+      const recipientType = document.querySelector('input[name="w-recipient-type"]:checked')?.value || 'merchant';
       
       const triggerChecks = document.querySelectorAll('.w-trigger-check:checked');
       const triggers = Array.from(triggerChecks).map(cb => cb.value);
 
-      if (!baseUrl || !instance || !apikey || !number) {
+      if (!baseUrl || !instance || !apikey) {
         return showToast('يرجى ملء جميع الحقول المطلوبة', 'error');
+      }
+      if (recipientType === 'merchant' && !number) {
+        return showToast('يرجى إدخال رقم المستلم (التاجر)', 'error');
       }
       if (triggers.length === 0) {
         return showToast('يرجى اختيار حدث واحد على الأقل', 'error');
@@ -294,7 +353,14 @@
         console.log('[WhatsApp] Loaded configs:', rawConfigs);
         let configs = Array.isArray(rawConfigs) ? rawConfigs : [];
         
-        const newConfig = { baseUrl, instance, apikey, number, triggers };
+        const newConfig = { 
+          baseUrl, 
+          instance, 
+          apikey, 
+          recipientType,
+          number: recipientType === 'merchant' ? number : '', 
+          triggers 
+        };
         if (editingIdx !== -1) {
           newConfig.isActive = configs[editingIdx].isActive; // Preserve active state
           configs[editingIdx] = newConfig;
@@ -360,6 +426,11 @@
         document.getElementById('w-apikey').value = conf.apikey || '';
         document.getElementById('w-number').value = conf.number || '';
         
+        const type = conf.recipientType || 'merchant';
+        const radio = document.querySelector(`input[name="w-recipient-type"][value="${type}"]`);
+        if (radio) radio.checked = true;
+        handleRecipientTypeChange();
+
         document.querySelectorAll('.w-trigger-check').forEach(cb => cb.checked = false);
         (conf.triggers || []).forEach(t => {
           const cb = document.querySelector(`.w-trigger-check[value="${t}"]`);
@@ -381,6 +452,11 @@
       document.getElementById('w-instance').value = '';
       document.getElementById('w-apikey').value = '';
       document.getElementById('w-number').value = '';
+      
+      const defaultRadio = document.querySelector(`input[name="w-recipient-type"][value="merchant"]`);
+      if (defaultRadio) defaultRadio.checked = true;
+      handleRecipientTypeChange();
+
       document.querySelectorAll('.w-trigger-check').forEach(cb => cb.checked = false);
       
       document.getElementById('w-submit-btn').textContent = '+ إضافة الإعدادات';

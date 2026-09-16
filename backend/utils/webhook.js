@@ -110,13 +110,178 @@ async function sendWebhookInner(event, data, options = {}) {
       if (waConfigSetting && Array.isArray(waConfigSetting.value)) {
         const configs = waConfigSetting.value;
 
+        // Helper to format WhatsApp phone numbers (Egypt)
+        const formatWaNumber = (raw) => {
+          if (!raw) return '';
+          let clean = String(raw).replace(/\D/g, '').replace(/^0+/, '');
+          if (!clean) return '';
+          if (!clean.startsWith('20')) clean = '20' + clean;
+          return clean;
+        };
+
+        // Helper to send WhatsApp messages via Evolution API
+        const sendWaMessage = async (cleanBaseUrl, instance, apikey, targetNumber, messageText, mediaBase64, orderId) => {
+          const waPayload = {
+            number: targetNumber,
+            delay: 1,
+            linkPreview: false,
+            mentionsEveryOne: false
+          };
+
+          let finalWaUrl = '';
+          if (mediaBase64) {
+            finalWaUrl = `${cleanBaseUrl}/message/sendMedia/${instance}`;
+            waPayload.mediatype = 'image';
+            waPayload.mediaType = 'image';
+            waPayload.mimetype = 'image/png';
+            waPayload.caption = messageText;
+            waPayload.media = mediaBase64.replace(/\s/g, '');
+            waPayload.fileName = `invoice-${orderId}.png`;
+          } else {
+            finalWaUrl = `${cleanBaseUrl}/message/sendText/${instance}`;
+            waPayload.text = messageText;
+          }
+
+          console.log(`[WhatsApp] Sending to ${finalWaUrl} (target: ${targetNumber})`);
+          const res = await fetch(finalWaUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': apikey
+            },
+            body: JSON.stringify(waPayload)
+          });
+
+          const rawText = await res.text();
+          let json = null;
+          try {
+            json = JSON.parse(rawText);
+          } catch (e) {}
+
+          // Fallback: If sendMedia failed but NOT because number is missing from WhatsApp, retry with sendText
+          if (!res.ok && mediaBase64) {
+            const isNoWa = res.status === 400 && (rawText.includes('"exists":false') || rawText.includes('"exists": false'));
+            if (!isNoWa) {
+              console.warn(`[WhatsApp] sendMedia failed (${res.status}), trying sendText fallback for ${targetNumber}...`);
+              try {
+                const textRes = await fetch(`${cleanBaseUrl}/message/sendText/${instance}`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', 'apikey': apikey },
+                  body: JSON.stringify({ number: targetNumber, delay: 1, text: messageText })
+                });
+                const textRaw = await textRes.text();
+                let textJson = null;
+                try { textJson = JSON.parse(textRaw); } catch (e) {}
+                if (textRes.ok) {
+                  return { ok: true, status: textRes.status, json: textJson, text: textRaw };
+                }
+              } catch (textErr) {
+                console.warn('[WhatsApp] sendText fallback error:', textErr.message);
+              }
+            }
+          }
+
+          return { ok: res.ok, status: res.status, json, text: rawText };
+        };
+
+        // Cache invoice media generation across configs (for order.paid)
+        let cachedInvoiceMedia = null;
+        let triedInvoiceGeneration = false;
+        const getInvoiceMedia = async () => {
+          if (triedInvoiceGeneration) return cachedInvoiceMedia;
+          triedInvoiceGeneration = true;
+          const snapKey = process.env.SNAPRENDER_API_KEY;
+          if (!snapKey || event !== 'order.paid') return null;
+          try {
+            const innerHtml = await generateInvoiceInnerHtml(data, settings, { includeImages: true });
+            const fullHtml = `<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 500px;
+    background: #ffffff;
+    font-family: 'Cairo', Arial, sans-serif !important;
+    font-weight: 500;
+    display: inline-block;
+  }
+  h1, h2, h3, h4, th, strong, b, .notes-title, .footer, .grand, .green, .red, .label-column { font-weight: 600 !important; }
+  .invoice {
+    width: 500px;
+    margin: 0;
+    direction: rtl;
+    padding: 10px 5px;
+    height: fit-content;
+  }
+  .customer-table { width: 100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 7px; }
+  .customer-table td { border: 1px solid #000; font-size: 10px; font-weight: 600; text-align: center; padding: 4px; }
+  .label-column { width: 25%; }
+  .value-column { width: 75%; }
+  .order-section { border: 1px solid #000; }
+  .items-table { width: 100%; border-collapse: collapse; }
+  .items-table thead { background: #f5ede0; }
+  .items-table th, .items-table td { padding: 6px 6px; font-weight: 600; font-size: 12px; text-align: center; border-bottom: 1px solid #a6a5a5; }
+  .items-table td:first-child, .items-table th:first-child { text-align: right; }
+  .summary { background: #f5ede0; padding: 1px 6px; }
+  .row { display: flex; justify-content: space-between; font-size: 13px; margin: 2px; }
+  .grand { border-top: 2px solid #4a2c0a; font-weight: 700; margin-top: 4px; padding-top: 4px; }
+  .paid-box { background: #e8f5ed; padding: 1px 6px; }
+  .green { color: #1a7a45; font-weight: 700; }
+  .red { color: #b84a20; font-weight: 700; }
+  .notes-section { padding: 4px 6px; font-size: 11px; background: #f5ede0; }
+  .notes-title { font-weight: 700; color: #b84a20; text-decoration: underline; padding-bottom: 2px; }
+  .footer { background: #4a2c0a; color: #fff; text-align: center; padding: 7px; font-weight: 700; font-size: 13px; }
+</style>
+</head>
+<body>${innerHtml}</body>
+</html>`;
+
+            const snapRes = await fetch('https://app.snap-render.com/v1/screenshot', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-API-Key': snapKey
+              },
+              body: JSON.stringify({
+                html: fullHtml,
+                type: 'png',
+                width: 500,
+                height: 200,
+                full_page: true,
+                fullPage: true,
+                omitBackground: true,
+                selector: '.invoice',
+                wait: 1000,
+                deviceScaleFactor: 2
+              }),
+              signal: AbortSignal.timeout(10000)
+            });
+
+            if (snapRes.ok) {
+              const buffer = await snapRes.arrayBuffer();
+              cachedInvoiceMedia = Buffer.from(buffer).toString('base64');
+            } else {
+              const errTxt = await snapRes.text();
+              console.warn('[WhatsApp] SnapRender failed:', errTxt);
+            }
+          } catch (err) {
+            console.error('[WhatsApp] Image generation error:', err.message);
+          }
+          return cachedInvoiceMedia;
+        };
+
         for (const conf of configs) {
           const triggers = Array.isArray(conf.triggers) ? conf.triggers : (conf.trigger ? [conf.trigger] : []);
           const isActive = conf.isActive !== false; // true by default
           const shouldSend = isActive && triggers.includes(event);
+          const isCustomer = conf.recipientType === 'customer';
 
-          if (shouldSend && conf.baseUrl && conf.instance && conf.apikey && conf.number) {
-
+          if (shouldSend && conf.baseUrl && conf.instance && conf.apikey && (isCustomer || conf.number)) {
             const baseRemaining = data.totalPrice - (data.paidAmount || 0);
             let codFee = 0;
             if (baseRemaining > 0) {
@@ -125,27 +290,36 @@ async function sendWebhookInner(event, data, options = {}) {
             const displayRemaining = baseRemaining > 0 ? (baseRemaining + codFee) : 0;
             const remainingText = baseRemaining > 0 ? `الدفع عند الاستلام : ${displayRemaining} EGP` : `مدفوع بالكامل`;
 
-            // 1. Prepare Customer Message (for the wa.me link)
+            // 1. Prepare Customer Message
             let customerMessage = '';
 
             if (event === 'order.created') {
-              const selectedPaymentMethod = (settings.paymentMethods || []).find(m => m.label === data.paymentMethod);
-              const paymentNumber = selectedPaymentMethod ? selectedPaymentMethod.number : '';
-              const subtotal = data.totalPrice - data.shippingFee;
-              const carrierName = data.carrier === 'egyptpost' ? 'البريد المصري' : 'بوسطة';
+              const hasTransferScreenshot = !!(data.transferScreenshot && typeof data.transferScreenshot === 'string' && data.transferScreenshot.trim());
 
-              const normPayment = `${data.paymentMethod || ''} ${selectedPaymentMethod?.label || ''} ${selectedPaymentMethod?.id || ''}`
-                .toLowerCase()
-                .replace(/[أإآ]/g, 'ا');
+              if (hasTransferScreenshot) {
+                customerMessage = `مرحباً ${data.customer.name}
 
-              let accountHolder = '';
-              if (normPayment.includes('انستا') || normPayment.includes('insta')) {
-                accountHolder = 'دينا علي  (دينا ع** م*** ا****** ق**** )';
-              } else if (normPayment.includes('فودافون') || normPayment.includes('vodafone')) {
-                accountHolder = 'دينا علي محمد  \n(Dina A**  M******)';
-              }
+رقم الطلب: ${data.orderId}
+إجمالي المبلغ: ${data.totalPrice} EGP
+جاري مراجعة الطلب وهنبعتلك الفاتورة اول ميتأكد 
 
-              customerMessage = `مرحباً ${data.customer.name}
+شكراً لثقتك بنا ♡`;
+              } else {
+                const selectedPaymentMethod = (settings.paymentMethods || []).find(m => m.label === data.paymentMethod);
+                const paymentNumber = selectedPaymentMethod ? selectedPaymentMethod.number : '';
+
+                const normPayment = `${data.paymentMethod || ''} ${selectedPaymentMethod?.label || ''} ${selectedPaymentMethod?.id || ''}`
+                  .toLowerCase()
+                  .replace(/[أإآ]/g, 'ا');
+
+                let accountHolder = '';
+                if (normPayment.includes('انستا') || normPayment.includes('insta')) {
+                  accountHolder = 'دينا علي  (دينا ع** م*** ا****** ق**** )';
+                } else if (normPayment.includes('فودافون') || normPayment.includes('vodafone')) {
+                  accountHolder = 'دينا علي محمد  \n(Dina A**  M******)';
+                }
+
+                customerMessage = `مرحباً ${data.customer.name}
 
 رقم الطلب: ${data.orderId}
 إجمالي المبلغ: ${data.totalPrice} EGP
@@ -154,9 +328,8 @@ async function sendWebhookInner(event, data, options = {}) {
 ${settings.paymentNotes || ''}
 
 شكراً لثقتك بنا ♡`;
+              }
             } else {
-              const subtotal = data.totalPrice - data.shippingFee;
-              const carrierName = data.carrier === 'egyptpost' ? 'البريد المصري' : 'بوسطة';
               customerMessage = `شكراً لشرائك من متجر ${brandName} ♡
 
 رقم الأوردر : ${data.orderId}
@@ -167,14 +340,8 @@ ${remainingText}
 شكراً لثقتك بنا ♡`;
             }
 
-            // 2. Generate WhatsApp Link for the customer
-            let cleanCustomerPhone = data.customer.phone.replace(/\D/g, '');
-            // Strip leading zeros
-            cleanCustomerPhone = cleanCustomerPhone.replace(/^0+/, '');
-            // Prepend 20 if needed
-            if (!cleanCustomerPhone.startsWith('20')) {
-              cleanCustomerPhone = '20' + cleanCustomerPhone;
-            }
+            // 2. Generate WhatsApp Link for the customer (used in merchant notifications)
+            let cleanCustomerPhone = formatWaNumber(data.customer?.phone);
             const whatsappLink = `https://api.whatsapp.com/send?phone=${cleanCustomerPhone}&text=${encodeURIComponent(customerMessage)}`;
 
             // 3. Shorten the Link using Sundura API
@@ -191,8 +358,6 @@ ${remainingText}
                 if (shortenData && shortenData.shortUrl) {
                   shortLink = shortenData.shortUrl;
                 }
-              } else {
-                console.warn('[WhatsApp] Sundura URL shortener returned status:', shortenRes.status);
               }
             } catch (error) {
               console.warn('[WhatsApp] Sundura link shortening failed:', error.message);
@@ -200,7 +365,6 @@ ${remainingText}
 
             // 4. Prepare Owner Message
             let ownerMessage = '';
-            const carrierName = data.carrier === 'egyptpost' ? 'البريد المصري' : 'بوسطة';
             if (event === 'order.created') {
               ownerMessage = `🔔 طلب جديد
 رقم الطلب: ${data.orderId}
@@ -223,215 +387,84 @@ ${shortLink}`;
               ownerMessage = `إشعار طلب: ${event}\nرقم الطلب: ${data.orderId}\nالعميل: ${data.customer.name}`;
             }
 
-            // 5. Attempt Invoice Image Generation (Only for PAID orders)
-            let mediaData = null;
-            const snapKey = process.env.SNAPRENDER_API_KEY;
-            if (snapKey && event === 'order.paid') {
-              try {
-                const innerHtml = await generateInvoiceInnerHtml(data, settings, { includeImages: true });
-                const fullHtml = `
-                  <!DOCTYPE html>
-                  <html dir="rtl" lang="ar">
-                  <head>
-                    <meta charset="UTF-8">
-                    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;600&display=swap" rel="stylesheet">
-                    <style>
-                      * { box-sizing: border-box; }
-                      html, body {
-                        margin: 0;
-                        padding: 0;
-                        width: 500px;
-                        background: #ffffff;
-                        font-family: 'Cairo', Arial, sans-serif !important;
-                        font-weight: 500;
-                        display: inline-block;
-                      }
-                      h1, h2, h3, h4, th, strong, b, .notes-title, .footer, .grand, .green, .red, .label-column { font-weight: 600 !important; }
-                      .invoice {
-                        width: 500px;
-                        margin: 0;
-                        direction: rtl;
-                        padding: 10px 5px;
-                        height: fit-content;
-                      }
-                      .customer-table {
-                        width: 100%;
-                        border-collapse: collapse;
-                        border: 1px solid #000;
-                        margin-bottom: 7px;
-                      }
-                      .customer-table td {
-                        border: 1px solid #000;
-                        font-size: 10px;
-                        font-weight: 600;
-                        text-align: center;
-                        padding: 4px;
-                      }
-                      .label-column { width: 25%; }
-                      .value-column { width: 75%; }
-                      .order-section {
-                        border: 1px solid #000;
-                      }
-                      .items-table {
-                        width: 100%;
-                        border-collapse: collapse;
-                      }
-                      .items-table thead {
-                        background: #f5ede0;
-                      }
-                      .items-table th,
-                      .items-table td {
-                        padding: 6px 6px;
-                        font-weight: 600; 
-                        font-size: 12px;
-                        text-align: center;
-                        border-bottom: 1px solid #a6a5a5;
-                      }
-                      .items-table td:first-child,
-                      .items-table th:first-child {
-                        text-align: right;
-                      }
-                      .summary {
-                        background: #f5ede0;
-                        padding: 1px 6px;
-                      }
-                      .row {
-                        display: flex;
-                        justify-content: space-between;
-                        font-size: 13px;
-                        margin: 2px;
-                      }
-                      .grand {
-                        border-top: 2px solid #4a2c0a;
-                        font-weight: 700;
-                        margin-top: 4px;
-                        padding-top: 4px;
-                      }
-                      .paid-box {
-                        background: #e8f5ed;
-                        padding: 1px 6px;
-                      }
-                      .green {
-                        color: #1a7a45;
-                        font-weight: 700;
-                      }
-                      .red {
-                        color: #b84a20;
-                        font-weight: 700;
-                      }
-                      .notes-section {
-                        padding: 4px 6px;
-                        font-size: 11px;
-                        background: #f5ede0;
-                      }
-                      .notes-title {
-                        font-weight: 700;
-                        color: #b84a20;
-                        text-decoration: underline;
-                        padding-bottom: 2px;
-                      }
-                      .footer {
-                        background: #4a2c0a;
-                        color: #fff;
-                        text-align: center;
-                        padding: 7px;
-                        font-weight: 700;
-                        font-size: 13px;
-                      }
-                    </style>
-                  </head>
-                  <body>${innerHtml}</body>
-                  </html>
-                `;
-
-                const snapRes = await fetch('https://app.snap-render.com/v1/screenshot', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'X-API-Key': snapKey
-                  },
-                  body: JSON.stringify({
-                    html: fullHtml,
-                    type: 'png',
-                    width: 500,
-                    height: 200,
-                    full_page: true,
-                    fullPage: true,
-                    omitBackground: true,
-                    selector: '.invoice',
-                    wait: 1000,
-                    deviceScaleFactor: 2
-                  }),
-                  signal: AbortSignal.timeout(10000)
-                });
-
-                if (snapRes.ok) {
-                  const buffer = await snapRes.arrayBuffer();
-                  mediaData = Buffer.from(buffer).toString('base64');
-                } else {
-                  const errTxt = await snapRes.text();
-                  console.warn('[WhatsApp] SnapRender failed:', errTxt);
-                }
-              } catch (err) {
-                console.error('[WhatsApp] Image generation error:', err.message);
-              }
-            }
-
-            // 6. Send to WhatsApp API
+            // 5. Send to WhatsApp API
             let cleanBaseUrl = conf.baseUrl.trim().replace(/\/+$/, '');
             if (!cleanBaseUrl.startsWith('http')) cleanBaseUrl = `https://${cleanBaseUrl}`;
 
-            let cleanNumber = conf.number.trim().replace(/\D/g, '');
-            // Strip leading zeros or 00 prefix
-            cleanNumber = cleanNumber.replace(/^0+/, '');
+            if (isCustomer) {
+              // ── Recipient is CUSTOMER ──
+              // Customer receives customerMessage (+ invoice if paid)
+              const invoiceMedia = (event === 'order.paid') ? await getInvoiceMedia() : null;
+              const primaryPhone = formatWaNumber(data.customer?.phone);
+              const secondPhone = formatWaNumber(data.customer?.secondPhone);
+              const fallbackMerchantPhone = '201039317393';
 
-            // If it doesn't start with 20, and it's a 10-11 digit number (Egypt), prepend 20
-            if (!cleanNumber.startsWith('20')) {
-              cleanNumber = '20' + cleanNumber;
-            }
+              let sentSuccess = false;
 
-            const waPayload = {
-              number: cleanNumber,
-              delay: 1,
-              linkPreview: false,
-              mentionsEveryOne: false
-            };
-
-            let finalWaUrl = '';
-            if (mediaData) {
-              finalWaUrl = `${cleanBaseUrl}/message/sendMedia/${conf.instance}`;
-              waPayload.mediatype = 'image';
-              waPayload.mediaType = 'image'; // Fallback for some versions
-              waPayload.mimetype = 'image/png';
-              waPayload.caption = ownerMessage;
-              waPayload.media = mediaData.replace(/\s/g, ''); // User snippet uses 'media' field
-              waPayload.fileName = `invoice-${data.orderId}.png`;
-            } else {
-              finalWaUrl = `${cleanBaseUrl}/message/sendText/${conf.instance}`;
-              waPayload.text = ownerMessage;
-            }
-
-            console.log(`[WhatsApp] Sending to ${finalWaUrl}`);
-            console.log(`[WhatsApp] Payload:`, JSON.stringify({ ...waPayload, media: waPayload.media ? (waPayload.media.substring(0, 50) + '...') : null }, null, 2));
-
-            try {
-              const res = await fetch(finalWaUrl, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'apikey': conf.apikey
-                },
-                body: JSON.stringify(waPayload)
-              });
-
-              const json = await res.json();
-              if (!res.ok) {
-                console.error(`[WhatsApp] API Error (${res.status}):`, JSON.stringify(json, null, 2));
-              } else {
-                console.log(`[WhatsApp] Success from ${conf.instance}:`, json.message || 'Sent');
+              // 1. Try Primary Phone
+              if (primaryPhone) {
+                console.log(`[WhatsApp] Sending customer message to primary phone: ${primaryPhone}`);
+                try {
+                  const res1 = await sendWaMessage(cleanBaseUrl, conf.instance, conf.apikey, primaryPhone, customerMessage, invoiceMedia, data.orderId);
+                  if (res1.ok) {
+                    console.log(`[WhatsApp] Successfully sent to customer primary phone: ${primaryPhone}`);
+                    sentSuccess = true;
+                  } else {
+                    console.warn(`[WhatsApp] Primary phone ${primaryPhone} failed (${res1.status}):`, res1.text);
+                  }
+                } catch (err) {
+                  console.warn(`[WhatsApp] Primary phone network failed:`, err.message);
+                }
               }
-            } catch (err) {
-              console.error(`[WhatsApp] Network failed for ${conf.instance}:`, err.message);
+
+              // 2. If primary phone failed or had no WhatsApp, try Secondary Phone
+              if (!sentSuccess && secondPhone && secondPhone !== primaryPhone) {
+                console.log(`[WhatsApp] Trying customer secondary phone: ${secondPhone}`);
+                try {
+                  const res2 = await sendWaMessage(cleanBaseUrl, conf.instance, conf.apikey, secondPhone, customerMessage, invoiceMedia, data.orderId);
+                  if (res2.ok) {
+                    console.log(`[WhatsApp] Successfully sent to customer secondary phone: ${secondPhone}`);
+                    sentSuccess = true;
+                  } else {
+                    console.warn(`[WhatsApp] Secondary phone ${secondPhone} failed (${res2.status}):`, res2.text);
+                  }
+                } catch (err) {
+                  console.warn(`[WhatsApp] Secondary phone network failed:`, err.message);
+                }
+              }
+
+              // 3. Fallback: If customer has no WhatsApp on both numbers, send old owner message to merchant (201039317393)
+              if (!sentSuccess) {
+                console.log(`[WhatsApp] Customer has no WhatsApp on provided numbers. Falling back to merchant at ${fallbackMerchantPhone}`);
+                const fallbackMedia = (event === 'order.paid') ? await getInvoiceMedia() : null;
+                try {
+                  const resFallback = await sendWaMessage(cleanBaseUrl, conf.instance, conf.apikey, fallbackMerchantPhone, ownerMessage, fallbackMedia, data.orderId);
+                  if (resFallback.ok) {
+                    console.log(`[WhatsApp] Fallback message successfully sent to merchant: ${fallbackMerchantPhone}`);
+                  } else {
+                    console.error(`[WhatsApp] Fallback to merchant failed (${resFallback.status}):`, resFallback.text);
+                  }
+                } catch (err) {
+                  console.error(`[WhatsApp] Fallback to merchant network failed:`, err.message);
+                }
+              }
+
+            } else {
+              // ── Recipient is MERCHANT ──
+              let cleanNumber = formatWaNumber(conf.number);
+              if (cleanNumber) {
+                const merchantMedia = (event === 'order.paid') ? await getInvoiceMedia() : null;
+                try {
+                  const resOwner = await sendWaMessage(cleanBaseUrl, conf.instance, conf.apikey, cleanNumber, ownerMessage, merchantMedia, data.orderId);
+                  if (resOwner.ok) {
+                    console.log(`[WhatsApp] Merchant message sent to ${cleanNumber}`);
+                  } else {
+                    console.error(`[WhatsApp] Merchant message failed (${resOwner.status}):`, resOwner.text);
+                  }
+                } catch (err) {
+                  console.error(`[WhatsApp] Network failed for merchant ${cleanNumber}:`, err.message);
+                }
+              }
             }
           }
         }
