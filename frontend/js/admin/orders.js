@@ -10,7 +10,8 @@ document.addEventListener('DOMContentLoaded', () => {
 let allOrdersData = [];
 let currentFilter = 'all';
 let currentPage = 1;
-let currentLimit = parseInt(localStorage.getItem('admin_orders_limit')) || 20;
+const savedLimit = parseInt(localStorage.getItem('admin_orders_limit'));
+let currentLimit = [30, 50, 100, 200].includes(savedLimit) ? savedLimit : 30;
 let totalPages = 1;
 
 async function loadOrders() {
@@ -162,8 +163,8 @@ window.toggleOrdersLimitMenu = function(event) {
 };
 
 window.setOrdersLimit = function(limit) {
-  limit = parseInt(limit) || 20;
-  currentLimit = limit;
+  limit = parseInt(limit) || 30;
+  currentLimit = [30, 50, 100, 200].includes(limit) ? limit : 30;
   try {
     localStorage.setItem('admin_orders_limit', limit);
   } catch (e) {}

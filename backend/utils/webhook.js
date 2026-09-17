@@ -81,12 +81,9 @@ async function sendWebhookInner(event, data, options = {}) {
 
           // Helper to send WhatsApp messages via Evolution API
           const sendWaMessage = async (cleanBaseUrl, instance, apikey, targetNumber, messageText, mediaBase64, orderId) => {
-            // Random message delay between 30 seconds and 1 minute (30,000ms to 60,000ms)
-            const randomDelayMs = Math.floor(Math.random() * (60000 - 30000 + 1)) + 30000;
-
             const waPayload = {
               number: targetNumber,
-              delay: randomDelayMs,
+              delay: 1,
               linkPreview: false,
               mentionsEveryOne: false
             };
@@ -105,7 +102,7 @@ async function sendWebhookInner(event, data, options = {}) {
               waPayload.text = messageText;
             }
 
-            console.log(`[WhatsApp] Sending to ${finalWaUrl} (target: ${targetNumber}, delay: ${Math.round(randomDelayMs / 1000)}s)`);
+            console.log(`[WhatsApp] Sending to ${finalWaUrl} (target: ${targetNumber})`);
             const res = await fetch(finalWaUrl, {
               method: 'POST',
               headers: {
@@ -113,7 +110,7 @@ async function sendWebhookInner(event, data, options = {}) {
                 'apikey': apikey
               },
               body: JSON.stringify(waPayload),
-              signal: AbortSignal.timeout(90000)
+              signal: AbortSignal.timeout(15000)
             });
 
             const rawText = await res.text();
@@ -131,8 +128,8 @@ async function sendWebhookInner(event, data, options = {}) {
                   const textRes = await fetch(`${cleanBaseUrl}/message/sendText/${instance}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'apikey': apikey },
-                    body: JSON.stringify({ number: targetNumber, delay: randomDelayMs, text: messageText }),
-                    signal: AbortSignal.timeout(90000)
+                    body: JSON.stringify({ number: targetNumber, delay: 1, text: messageText }),
+                    signal: AbortSignal.timeout(15000)
                   });
                   const textRaw = await textRes.text();
                   let textJson = null;
@@ -484,9 +481,11 @@ ${shortLink}`;
             let cleanBaseUrl = conf.baseUrl.trim().replace(/\/+$/, '');
             if (!cleanBaseUrl.startsWith('http')) cleanBaseUrl = `https://${cleanBaseUrl}`;
 
-            // The merchant does NOT receive the invoice image when the customer has already received it.
-            // Merchant only receives the invoice image if delivery to customer failed because customer has no WhatsApp.
-            const shouldSendMediaToMerchant = (!customerDeliveryStatus.sent && customerDeliveryStatus.attempted && event === 'order.paid');
+            // The merchant receives the invoice image if:
+            // 1) Direct sending to the customer is disabled/inactive (like the old behavior)
+            // 2) Or if direct sending was attempted but failed because customer has no WhatsApp
+            // (Merchant only skips receiving invoice media when the customer has already received it successfully)
+            const shouldSendMediaToMerchant = (!customerDeliveryStatus.sent && event === 'order.paid');
             const merchantMedia = shouldSendMediaToMerchant ? await getInvoiceMedia() : null;
 
             try {
