@@ -380,8 +380,26 @@ ${remainingText}
               // Fallback to merchant phone 201039317393
               console.log(`[WhatsApp] Customer has no WhatsApp. Falling back to merchant at ${fallbackMerchantPhone}`);
               const fallbackMedia = (event === 'order.paid') ? await getInvoiceMedia() : null;
-              const fallbackNotice = `⚠️ تنبيه: تعذر إرسال ${messageLabel} للعميل لعدم وجود واتساب على أرقامه\n\n`;
-              const fallbackMessage = fallbackNotice + (event === 'order.paid' ? `✅ تم تأكيد الدفع\nرقم الطلب: ${data.orderId}\nاسم العميل: ${data.customer.name}\nاجمالي الطلب: EGP ${data.totalPrice}\n${remainingText}` : `🔔 طلب جديد\nرقم الطلب: ${data.orderId}\nاسم العميل: ${data.customer.name}\nاجمالي الطلب: EGP ${data.totalPrice}`);
+              const fallbackNotice = `⚠️ تعذر إرسال ${messageLabel} للعميل (أرقام العميل ليس عليها واتساب)\n\n`;
+              const fallbackOldMessage = (event === 'order.paid'
+                ? `✅ تم تأكيد الدفع 
+
+رقم الطلب: ${data.orderId}
+اسم العميل: ${data.customer.name}
+اجمالي الطلب: EGP ${data.totalPrice}
+${remainingText}
+
+رابط واتساب للعميل:
+${shortLink}`
+                : `${hasTransferScreenshot ? '📸 الطلب مرفق به اسكرين التحويل' : '🔔 طلب جديد'}
+رقم الطلب: ${data.orderId}
+اسم العميل: ${data.customer.name}
+اجمالي الطلب: EGP ${data.totalPrice}${data.customer.notes ? `\nملاحظات: ${data.customer.notes}` : ''}
+
+رابط واتساب:
+${shortLink}`);
+
+              const fallbackMessage = fallbackNotice + fallbackOldMessage;
 
               try {
                 const resFallback = await sendWaMessage(cleanBaseUrl, customerConf.instance, customerConf.apikey, fallbackMerchantPhone, fallbackMessage, fallbackMedia, data.orderId);
@@ -450,7 +468,11 @@ ${shortLink}`;
             let cleanBaseUrl = conf.baseUrl.trim().replace(/\/+$/, '');
             if (!cleanBaseUrl.startsWith('http')) cleanBaseUrl = `https://${cleanBaseUrl}`;
 
-            const merchantMedia = (event === 'order.paid') ? await getInvoiceMedia() : null;
+            // The merchant does NOT receive the invoice image when the customer has already received it.
+            // Merchant only receives the invoice image if delivery to customer failed because customer has no WhatsApp.
+            const shouldSendMediaToMerchant = (!customerDeliveryStatus.sent && customerDeliveryStatus.attempted && event === 'order.paid');
+            const merchantMedia = shouldSendMediaToMerchant ? await getInvoiceMedia() : null;
+
             try {
               const resOwner = await sendWaMessage(cleanBaseUrl, conf.instance, conf.apikey, cleanNumber, ownerMessage, merchantMedia, data.orderId);
               if (resOwner.ok) {
