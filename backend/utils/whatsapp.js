@@ -24,11 +24,14 @@ async function sendWhatsAppMessage(text) {
         cleanNumber = '20' + cleanNumber;
       }
 
+      // Random message delay between 30 seconds and 1 minute (30,000ms to 60,000ms)
+      const randomDelayMs = Math.floor(Math.random() * (60000 - 30000 + 1)) + 30000;
+
       const finalWaUrl = `${cleanBaseUrl}/message/sendText/${conf.instance}`;
       const waPayload = {
         number: cleanNumber,
         text: text,
-        delay: 1,
+        delay: randomDelayMs,
         linkPreview: false,
         mentionsEveryOne: false
       };
@@ -40,7 +43,7 @@ async function sendWhatsAppMessage(text) {
           'apikey': conf.apikey
         },
         body: JSON.stringify(waPayload),
-        signal: AbortSignal.timeout(10000)
+        signal: AbortSignal.timeout(90000)
       })
       .then(async (res) => {
         if (!res.ok) {

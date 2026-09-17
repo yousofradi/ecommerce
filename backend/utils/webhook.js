@@ -81,9 +81,12 @@ async function sendWebhookInner(event, data, options = {}) {
 
           // Helper to send WhatsApp messages via Evolution API
           const sendWaMessage = async (cleanBaseUrl, instance, apikey, targetNumber, messageText, mediaBase64, orderId) => {
+            // Random message delay between 30 seconds and 1 minute (30,000ms to 60,000ms)
+            const randomDelayMs = Math.floor(Math.random() * (60000 - 30000 + 1)) + 30000;
+
             const waPayload = {
               number: targetNumber,
-              delay: 1,
+              delay: randomDelayMs,
               linkPreview: false,
               mentionsEveryOne: false
             };
@@ -102,14 +105,15 @@ async function sendWebhookInner(event, data, options = {}) {
               waPayload.text = messageText;
             }
 
-            console.log(`[WhatsApp] Sending to ${finalWaUrl} (target: ${targetNumber})`);
+            console.log(`[WhatsApp] Sending to ${finalWaUrl} (target: ${targetNumber}, delay: ${Math.round(randomDelayMs / 1000)}s)`);
             const res = await fetch(finalWaUrl, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
                 'apikey': apikey
               },
-              body: JSON.stringify(waPayload)
+              body: JSON.stringify(waPayload),
+              signal: AbortSignal.timeout(90000)
             });
 
             const rawText = await res.text();
@@ -127,7 +131,8 @@ async function sendWebhookInner(event, data, options = {}) {
                   const textRes = await fetch(`${cleanBaseUrl}/message/sendText/${instance}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'apikey': apikey },
-                    body: JSON.stringify({ number: targetNumber, delay: 1, text: messageText })
+                    body: JSON.stringify({ number: targetNumber, delay: randomDelayMs, text: messageText }),
+                    signal: AbortSignal.timeout(90000)
                   });
                   const textRaw = await textRes.text();
                   let textJson = null;
