@@ -368,19 +368,31 @@ ${remainingText}
               }
             }
 
+            const cleanOrderId = String(data.orderId || '').replace(/^(?:order|ord)[-_]?/i, '').trim();
+            const customerName = data.customer?.name || '';
+
             // Update customer delivery outcome
             if (sentSuccess) {
               customerDeliveryStatus.sent = true;
               customerDeliveryStatus.phone = successPhone;
-              customerDeliveryStatus.statusText = `تم إرسال ${messageLabel} للعميل بنجاح عبر واتساب (${successPhone})`;
+              if (event === 'order.paid') {
+                customerDeliveryStatus.statusText = `✅ تم إرسال الفاتورة للعميل : ${customerName}\nرقم الاوردر : ${cleanOrderId} بنجاح عبر واتساب (${successPhone})`;
+              } else if (hasTransferScreenshot) {
+                customerDeliveryStatus.statusText = `✅ تم إرسال رسالة تأكيد الدفع للعميل : ${customerName}\nرقم الاوردر : ${cleanOrderId} بنجاح عبر واتساب (${successPhone})`;
+              } else {
+                customerDeliveryStatus.statusText = `✅ تم إرسال تفاصيل الطلب للعميل : ${customerName}\nرقم الاوردر : ${cleanOrderId} بنجاح عبر واتساب (${successPhone})`;
+              }
             } else {
               customerDeliveryStatus.sent = false;
-              customerDeliveryStatus.statusText = `تعذر إرسال ${messageLabel} للعميل (أرقام العميل ليس عليها واتساب)`;
+              const failLabel = hasTransferScreenshot
+                ? 'رسالة التحويل'
+                : (event === 'order.paid' ? 'الفاتورة' : 'تفاصيل الطلب');
+              customerDeliveryStatus.statusText = `⚠️ تعذر إرسال ${failLabel} للعميل : ${customerName}\nرقم الاوردر : ${cleanOrderId} (أرقام العميل ليس عليها واتساب)`;
 
               // Fallback to merchant phone 201039317393
               console.log(`[WhatsApp] Customer has no WhatsApp. Falling back to merchant at ${fallbackMerchantPhone}`);
               const fallbackMedia = (event === 'order.paid') ? await getInvoiceMedia() : null;
-              const fallbackNotice = `⚠️ تعذر إرسال ${messageLabel} للعميل (أرقام العميل ليس عليها واتساب)\n\n`;
+              const fallbackNotice = `${customerDeliveryStatus.statusText}\n\n`;
               const fallbackOldMessage = (event === 'order.paid'
                 ? `✅ تم تأكيد الدفع 
 
@@ -419,8 +431,7 @@ ${shortLink}`);
           // Build Owner Message containing confirmation of customer delivery
           let confirmationText = '';
           if (customerDeliveryStatus.statusText) {
-            const icon = customerDeliveryStatus.sent ? '✅' : '⚠️';
-            confirmationText = `\n\n${icon} ${customerDeliveryStatus.statusText}`;
+            confirmationText = `\n\n${customerDeliveryStatus.statusText}`;
           }
 
           let ownerMessage = '';
@@ -428,10 +439,10 @@ ${shortLink}`);
             ownerMessage = `${hasTransferScreenshot ? '📸 الطلب مرفق به اسكرين التحويل' : '🔔 طلب جديد'}
 رقم الطلب: ${data.orderId}
 اسم العميل: ${data.customer.name}
-اجمالي الطلب: EGP ${data.totalPrice}`;
+اجمالي الطلب: EGP ${data.totalPrice}${data.customer.notes ? `\nملاحظات: ${data.customer.notes}` : ''}
 
-            if (data.customer.notes) ownerMessage += `\nملاحظات: ${data.customer.notes}`;
-            ownerMessage += `\n\nرابط واتساب:\n${shortLink}`;
+رابط واتساب:
+${shortLink}`;
             if (confirmationText) ownerMessage += confirmationText;
           } else if (event === 'order.paid') {
             ownerMessage = `✅ تم تأكيد الدفع 
