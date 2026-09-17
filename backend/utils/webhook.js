@@ -381,11 +381,11 @@ ${remainingText}
               customerDeliveryStatus.sent = true;
               customerDeliveryStatus.phone = successPhone;
               if (event === 'order.paid') {
-                customerDeliveryStatus.statusText = `✅ تم إرسال الفاتورة للعميل : ${customerName}\nرقم الاوردر : ${cleanOrderId} بنجاح عبر واتساب (${successPhone})`;
+                customerDeliveryStatus.statusText = `✅ تم إرسال الفاتورة للعميل `;
               } else if (hasTransferScreenshot) {
-                customerDeliveryStatus.statusText = `✅ تم إرسال رسالة تأكيد الدفع للعميل : ${customerName}\nرقم الاوردر : ${cleanOrderId} بنجاح عبر واتساب (${successPhone})`;
+                customerDeliveryStatus.statusText = `✅ تم إرسال رسالة جاري مراجعة الدفع للعميل `;
               } else {
-                customerDeliveryStatus.statusText = `✅ تم إرسال تفاصيل الطلب للعميل : ${customerName}\nرقم الاوردر : ${cleanOrderId} بنجاح عبر واتساب (${successPhone})`;
+                customerDeliveryStatus.statusText = `✅ تم إرسال تأكيد الطلب للعميل `;
               }
             } else {
               customerDeliveryStatus.sent = false;
