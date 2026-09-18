@@ -38,7 +38,7 @@ app.use(compression()); // gzip all responses
 // ── CORS Configuration ──────────────────────────────────
 const corsOptions = {
   origin: true, // Reflect request origin
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-admin-key'],
   exposedHeaders: ['Content-Disposition'],
   credentials: true,
