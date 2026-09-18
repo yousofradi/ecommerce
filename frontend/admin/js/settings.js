@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       populateSettingsForm(settings);
     }
   } catch (err) {
+    console.error('Failed to load settings:', err);
     showToast('فشل تحميل الإعدادات', 'error');
   } finally {
     document.body.classList.remove('is-loading');
@@ -69,21 +70,26 @@ function updateBranding(name) {
 }
 
 function populateSettingsForm(s) {
-  document.getElementById('setting-store-name').value = s.storeName || '';
-  document.getElementById('setting-store-name-ar').value = s.storeNameAr || '';
-  document.getElementById('setting-store-logo').value = s.storeLogo || '';
-  document.getElementById('setting-store-favicon').value = s.storeFavicon || '';
-  document.getElementById('setting-store-preview').value = s.storePreview || '';
-  document.getElementById('setting-store-url').value = s.storeUrl || '';
-  document.getElementById('setting-invoice-prefix').value = s.invoicePrefix || '';
-  document.getElementById('setting-social-fb').value = s.socialFb || '';
-  document.getElementById('setting-social-ig').value = s.socialIg || '';
-  document.getElementById('setting-social-tt').value = s.socialTt || '';
-  document.getElementById('setting-social-tg').value = s.socialTg || '';
-  document.getElementById('setting-social-wa').value = s.socialWa || '';
-  document.getElementById('setting-payment-notes').value = s.paymentNotes || '';
-  document.getElementById('setting-primary-color').value = s.primaryColor || '#916C4F';
-  document.getElementById('setting-primary-color-hex').value = (s.primaryColor || '#916C4F').toUpperCase();
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val !== undefined && val !== null ? val : '';
+  };
+
+  setVal('setting-store-name', s.storeName);
+  setVal('setting-store-name-ar', s.storeNameAr);
+  setVal('setting-store-logo', s.storeLogo);
+  setVal('setting-store-favicon', s.storeFavicon);
+  setVal('setting-store-preview', s.storePreview);
+  setVal('setting-store-url', s.storeUrl);
+  setVal('setting-invoice-prefix', s.invoicePrefix);
+  setVal('setting-social-fb', s.socialFb);
+  setVal('setting-social-ig', s.socialIg);
+  setVal('setting-social-tt', s.socialTt);
+  setVal('setting-social-tg', s.socialTg);
+  setVal('setting-social-wa', s.socialWa);
+  setVal('setting-payment-notes', s.paymentNotes);
+  setVal('setting-primary-color', s.primaryColor || '#916C4F');
+  setVal('setting-primary-color-hex', (s.primaryColor || '#916C4F').toUpperCase());
 
   // Populate Shipping Switches
   const bostaEl = document.getElementById('setting-enable-bosta'); if (bostaEl) bostaEl.checked = false;
@@ -101,10 +107,12 @@ function populateSettingsForm(s) {
 }
 
 function updateImagePreview(targetId, previewId, placeholderId) {
-  const url = document.getElementById(targetId).value;
+  const target = document.getElementById(targetId);
   const preview = document.getElementById(previewId);
   const placeholder = document.getElementById(placeholderId);
+  if (!target || !preview) return;
 
+  const url = target.value;
   if (url) {
     preview.src = url;
     preview.style.display = 'block';
@@ -207,25 +215,31 @@ function renderPaymentMethods() {
 }
 
 async function saveSettings() {
+  const getVal = (id, def = '') => {
+    const el = document.getElementById(id);
+    return el ? el.value.trim() : def;
+  };
+
   const settings = {
-    storeName: document.getElementById('setting-store-name').value.trim(),
-    storeNameAr: document.getElementById('setting-store-name-ar').value.trim(),
-    storeLogo: document.getElementById('setting-store-logo').value.trim(),
-    storeFavicon: document.getElementById('setting-store-favicon').value.trim(),
-    storePreview: document.getElementById('setting-store-preview').value.trim(),
-    storeUrl: document.getElementById('setting-store-url').value.trim(),
-    invoicePrefix: document.getElementById('setting-invoice-prefix').value.trim(),
-    socialFb: document.getElementById('setting-social-fb').value.trim(),
-    socialIg: document.getElementById('setting-social-ig').value.trim(),
-    socialTt: document.getElementById('setting-social-tt').value.trim(),
-    socialTg: document.getElementById('setting-social-tg').value.trim(),
-    socialWa: document.getElementById('setting-social-wa').value.trim(),
-    paymentNotes: document.getElementById('setting-payment-notes').value.trim(),
-    primaryColor: document.getElementById('setting-primary-color').value,
+    storeName: getVal('setting-store-name'),
+    storeNameAr: getVal('setting-store-name-ar'),
+    storeLogo: getVal('setting-store-logo'),
+    storeFavicon: getVal('setting-store-favicon'),
+    storePreview: getVal('setting-store-preview'),
+    storeUrl: getVal('setting-store-url'),
+    invoicePrefix: getVal('setting-invoice-prefix'),
+    socialFb: getVal('setting-social-fb'),
+    socialIg: getVal('setting-social-ig'),
+    socialTt: getVal('setting-social-tt'),
+    socialTg: getVal('setting-social-tg'),
+    socialWa: getVal('setting-social-wa'),
+    paymentNotes: getVal('setting-payment-notes'),
+    primaryColor: document.getElementById('setting-primary-color') ? document.getElementById('setting-primary-color').value : '#916C4F',
     paymentMethods: paymentMethods,
     enableBosta: false,
     enableEgyptPost: document.getElementById('setting-enable-egypt-post') ? document.getElementById('setting-enable-egypt-post').checked : true,
-    enableZones: false
+    egyptPostFee: document.getElementById('setting-egypt-post-fee') ? (parseFloat(document.getElementById('setting-egypt-post-fee').value) || 85) : 85,
+    enableZones: document.getElementById('setting-enable-zones') ? document.getElementById('setting-enable-zones').checked : false
   };
 
   try {
