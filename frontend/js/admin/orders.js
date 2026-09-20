@@ -11,7 +11,7 @@ let allOrdersData = [];
 let currentFilter = 'all';
 let currentPage = 1;
 const savedLimit = parseInt(localStorage.getItem('admin_orders_limit'));
-let currentLimit = [30, 50, 100, 200].includes(savedLimit) ? savedLimit : 30;
+let currentLimit = [50, 150, 250, 350].includes(savedLimit) ? savedLimit : 50;
 let totalPages = 1;
 
 async function loadOrders() {
@@ -163,8 +163,8 @@ window.toggleOrdersLimitMenu = function(event) {
 };
 
 window.setOrdersLimit = function(limit) {
-  limit = parseInt(limit) || 30;
-  currentLimit = [30, 50, 100, 200].includes(limit) ? limit : 30;
+  limit = parseInt(limit) || 50;
+  currentLimit = [50, 150, 250, 350].includes(limit) ? limit : 50;
   try {
     localStorage.setItem('admin_orders_limit', limit);
   } catch (e) {}
