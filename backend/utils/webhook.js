@@ -280,7 +280,8 @@ ${settings.paymentNotes || ''}
           } else {
             customerMessage = `شكراً لشرائك من متجر ${brandName} ♡
 
-رقم الأوردر : ${data.orderId}
+رقم الأوردر : ${data.orderId} 
+اسم العميل : ${data.customer.name} 
 المبلغ الاجمالي : ${data.totalPrice} EGP
 تم الدفع : ${data.paidAmount || 0} EGP
 ${remainingText}
