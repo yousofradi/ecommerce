@@ -150,8 +150,7 @@ async function sendWebhookInner(event, data, options = {}) {
           getInvoiceMedia = async () => {
             if (triedInvoiceGeneration) return cachedInvoiceMedia;
             triedInvoiceGeneration = true;
-            const snapKey = process.env.SNAPRENDER_API_KEY;
-            if (!snapKey || event !== 'order.paid') return null;
+            if (event !== 'order.paid') return null;
             try {
               const innerHtml = await generateInvoiceInnerHtml(data, settings, { includeImages: true });
               const fullHtml = `<!DOCTYPE html>
@@ -201,33 +200,31 @@ async function sendWebhookInner(event, data, options = {}) {
 <body>${innerHtml}</body>
 </html>`;
 
-              const snapRes = await fetch('https://app.snap-render.com/v1/screenshot', {
+              const RENDER_API_URL = 'https://invoice-api-wybe.onrender.com/api/render';
+
+              const renderRes = await fetch(RENDER_API_URL, {
                 method: 'POST',
                 headers: {
-                  'Content-Type': 'application/json',
-                  'X-API-Key': snapKey
+                  'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                   html: fullHtml,
-                  type: 'png',
                   width: 500,
                   height: 200,
-                  full_page: true,
                   fullPage: true,
                   omitBackground: true,
                   selector: '.invoice',
-                  wait: 1000,
                   deviceScaleFactor: 2
                 }),
-                signal: AbortSignal.timeout(10000)
+                signal: AbortSignal.timeout(30000)
               });
 
-              if (snapRes.ok) {
-                const buffer = await snapRes.arrayBuffer();
+              if (renderRes.ok) {
+                const buffer = await renderRes.arrayBuffer();
                 cachedInvoiceMedia = Buffer.from(buffer).toString('base64');
               } else {
-                const errTxt = await snapRes.text();
-                console.warn('[WhatsApp] SnapRender failed:', errTxt);
+                const errorData = await renderRes.text();
+                console.warn('[WhatsApp] Render API Rendering failed:', errorData);
               }
             } catch (err) {
               console.error('[WhatsApp] Image generation error:', err.message);

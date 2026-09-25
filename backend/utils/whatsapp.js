@@ -12,9 +12,13 @@ async function sendWhatsAppMessage(text) {
     if (!waConfigSetting || !Array.isArray(waConfigSetting.value)) return;
 
     const configs = waConfigSetting.value;
+    const sentNumbers = new Set();
+
     for (const conf of configs) {
       const isActive = conf.isActive !== false;
-      if (!isActive || !conf.baseUrl || !conf.instance || !conf.apikey || !conf.number) continue;
+      // Only send inventory/system alerts to merchant/owner configs, NOT customer configs
+      if (!isActive || conf.recipientType === 'customer') continue;
+      if (!conf.baseUrl || !conf.instance || !conf.apikey || !conf.number) continue;
 
       let cleanBaseUrl = conf.baseUrl.trim().replace(/\/+$/, '');
       if (!cleanBaseUrl.startsWith('http')) cleanBaseUrl = `https://${cleanBaseUrl}`;
@@ -23,6 +27,12 @@ async function sendWhatsAppMessage(text) {
       if (!cleanNumber.startsWith('20')) {
         cleanNumber = '20' + cleanNumber;
       }
+
+      // Deduplicate: avoid sending identical message multiple times to the exact same phone number
+      if (sentNumbers.has(cleanNumber)) {
+        continue;
+      }
+      sentNumbers.add(cleanNumber);
 
       const finalWaUrl = `${cleanBaseUrl}/message/sendText/${conf.instance}`;
       const waPayload = {

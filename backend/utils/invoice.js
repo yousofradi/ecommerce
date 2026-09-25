@@ -24,7 +24,7 @@ async function generateInvoiceInnerHtml(order, settings, options = {}) {
       const buf = fs.readFileSync(logoPath);
       logoSrc = `data:image/webp;base64,${buf.toString('base64')}`;
     }
-  } catch (e) {}
+  } catch (e) { }
 
   const isCompact = order.items.length > 11;
   const imgSize = isCompact ? 18 : 24;
@@ -166,7 +166,7 @@ async function generateInvoiceInnerHtml(order, settings, options = {}) {
   let remtext = `المتبقي عند الاستلام (+${codFee} ج رسوم)`;
   let remainingValue = `${displayRemaining} ج`;
   if (remaining === 0) {
-    remtext = 'مدفوع بالكامل';
+    remtext = 'المتبقي';
     remainingValue = 'مدفوع بالكامل';
   }
 

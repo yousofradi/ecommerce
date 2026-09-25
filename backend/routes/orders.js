@@ -1104,15 +1104,47 @@ router.put('/:orderId', adminAuth, async (req, res) => {
       }
     }
 
-    // Handle stock adjustment if items changed and order is not cancelled
+    // Handle stock adjustment only for actual difference between old and new items if order is not cancelled
     if (updates.items && order.status !== 'cancelled') {
-      // 1. Restore old stock
-      for (const item of order.items) {
-        await adjustStock(item.productId, item.selectedOptions, item.quantity);
+      const getItemKey = (item) => {
+        const prodId = String(item.productId || '');
+        const opts = (item.selectedOptions || [])
+          .map(o => `${(o.groupName || '').trim().toLowerCase()}:${(o.label || '').trim().toLowerCase()}`)
+          .sort()
+          .join('|');
+        return `${prodId}__${opts}`;
+      };
+
+      const oldMap = new Map();
+      for (const item of (order.items || [])) {
+        const key = getItemKey(item);
+        const existing = oldMap.get(key) || { item, quantity: 0 };
+        existing.quantity += Number(item.quantity) || 0;
+        oldMap.set(key, existing);
       }
-      // 2. Deduct new stock
-      for (const item of updates.items) {
-        await adjustStock(item.productId, item.selectedOptions, -item.quantity);
+
+      const newMap = new Map();
+      for (const item of (updates.items || [])) {
+        const key = getItemKey(item);
+        const existing = newMap.get(key) || { item, quantity: 0 };
+        existing.quantity += Number(item.quantity) || 0;
+        newMap.set(key, existing);
+      }
+
+      const allKeys = new Set([...oldMap.keys(), ...newMap.keys()]);
+      for (const key of allKeys) {
+        const oldEntry = oldMap.get(key);
+        const newEntry = newMap.get(key);
+        const oldQty = oldEntry ? oldEntry.quantity : 0;
+        const newQty = newEntry ? newEntry.quantity : 0;
+        const diff = newQty - oldQty;
+
+        if (diff !== 0) {
+          const sampleItem = (newEntry && newEntry.item) || (oldEntry && oldEntry.item);
+          // diff > 0 means items were added, so deduct from stock (-diff)
+          // diff < 0 means items were removed, so restore to stock (-diff is positive)
+          await adjustStock(sampleItem.productId, sampleItem.selectedOptions, -diff);
+        }
       }
     }
 
