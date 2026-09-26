@@ -685,12 +685,14 @@ function syncVariants() {
   variants = combinations.map((combo, comboIdx) => {
     if (newVariants[comboIdx] !== null) {
       const existing = newVariants[comboIdx];
+      const qty = (existing.quantity !== null && existing.quantity !== undefined && existing.quantity !== '') ? Number(existing.quantity) : null;
       return {
         ...existing,
         combination: combo,
         price: Number(existing.price) || defaultPrice,
         salePrice: existing.salePrice !== null ? (Number(existing.salePrice) || 0) : null,
-        quantity: existing.quantity !== null ? (Number(existing.quantity) || 0) : null
+        quantity: qty,
+        active: (qty !== null && qty === 0) ? false : true
       };
     }
 
@@ -883,6 +885,12 @@ window.updateVariantField = function (idx, field, val) {
   }
 
   if (field === 'quantity') {
+    const q = variants[idx].quantity;
+    if (q !== null && Number(q) === 0) {
+      variants[idx].active = false;
+    } else if (q === null || Number(q) > 0) {
+      variants[idx].active = true;
+    }
     updateTotalQuantityFromVariants();
   }
 
@@ -898,6 +906,13 @@ window.bulkUpdateGroup = function (parentVal, field, val) {
   variants.forEach(v => {
     if (v.combination[firstGroupName] === parentVal) {
       v[field] = numericVal;
+      if (field === 'quantity') {
+        if (v.quantity !== null && Number(v.quantity) === 0) {
+          v.active = false;
+        } else if (v.quantity === null || Number(v.quantity) > 0) {
+          v.active = true;
+        }
+      }
     }
   });
 
@@ -1060,10 +1075,15 @@ async function saveProduct(e) {
     })) : [],
     variants: document.getElementById('enable-variants').checked ? (function() {
       normalizeCombinations();
-      return variants.map(v => ({
-        ...v,
-        combination: v.combination
-      }));
+      return variants.map(v => {
+        const qty = (v.quantity !== null && v.quantity !== undefined && v.quantity !== '') ? Number(v.quantity) : null;
+        return {
+          ...v,
+          combination: v.combination,
+          quantity: qty,
+          active: (qty !== null && qty === 0) ? false : true
+        };
+      });
     })() : []
   };
 
@@ -1206,15 +1226,16 @@ function populateProductForm(p) {
       }
     }
 
+    const varQty = (v.quantity !== null && v.quantity !== undefined && v.quantity !== '') ? Number(v.quantity) : null;
     return {
       _id: variantId,
       combination: combo,
       price: Number(v.price || 0),
       salePrice: (v.salePrice !== null && v.salePrice !== undefined) ? Number(v.salePrice) : null,
       cost: (v.cost !== null && v.cost !== undefined) ? Number(v.cost) : null,
-      quantity: (v.quantity !== null && v.quantity !== undefined) ? Number(v.quantity) : null,
+      quantity: varQty,
       imageUrl: v.imageUrl || '',
-      active: v.active !== false
+      active: (varQty !== null && varQty === 0) ? false : true
     };
   });
 

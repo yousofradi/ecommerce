@@ -98,8 +98,9 @@ async function adjustStock(productId, selectedOptions, quantityDiff) {
 
         const varPrice = (variant.salePrice && variant.salePrice < variant.price) ? variant.salePrice : (variant.price || (product.salePrice || product.basePrice));
 
-        if (nextQuantity === 0 && prevVarQty > 0) {
-          variant.active = false;
+      if (nextQuantity === 0) {
+        variant.active = false;
+        if (quantityDiff < 0 && prevVarQty > 0) {
           variantAlertData = {
             type: 'zero',
             productName: product.name,
@@ -107,7 +108,10 @@ async function adjustStock(productId, selectedOptions, quantityDiff) {
             price: varPrice,
             quantity: 0
           };
-        } else if (nextQuantity > 0 && nextQuantity < 3 && (prevVarQty >= 3 || prevVarQty > nextQuantity)) {
+        }
+      } else if (nextQuantity > 0) {
+        variant.active = true;
+        if (quantityDiff < 0 && nextQuantity < 3 && (prevVarQty >= 3 || prevVarQty > nextQuantity)) {
           variantAlertData = {
             type: 'low',
             productName: product.name,
@@ -116,6 +120,7 @@ async function adjustStock(productId, selectedOptions, quantityDiff) {
             quantity: nextQuantity
           };
         }
+      }
       }
     }
   }
@@ -139,7 +144,14 @@ async function adjustStock(productId, selectedOptions, quantityDiff) {
     }
   }
 
-  // 4. Threshold checks and WhatsApp Alerts on stock deduction (quantityDiff < 0)
+  // 4. Threshold checks and WhatsApp Alerts
+  if (changed && quantityDiff > 0) {
+    if (product.quantity > 0 && (product.status === 'draft' || product.active === false)) {
+      product.active = true;
+      product.status = 'active';
+    }
+  }
+
   if (changed && quantityDiff < 0) {
     const effectivePrice = (product.salePrice && product.salePrice < product.basePrice) ? product.salePrice : product.basePrice;
 

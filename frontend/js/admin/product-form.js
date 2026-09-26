@@ -772,6 +772,14 @@ window.updateVariantField = function (idx, field, val) {
   } else {
     variants[idx][field] = val;
   }
+  if (field === 'quantity') {
+    const q = variants[idx].quantity;
+    if (q !== null && Number(q) === 0) {
+      variants[idx].active = false;
+    } else if (q === null || Number(q) > 0) {
+      variants[idx].active = true;
+    }
+  }
   if (window.markAsModified) window.markAsModified();
 }
 

@@ -329,14 +329,34 @@ router.post('/', adminAuth, async (req, res) => {
     // Process images if they are from Google Drive
     await processDriveImages(body);
 
-    // Auto-sync overall product quantity with sum of variant quantities
+    // Auto-sync variant active status with quantities & overall product quantity
     if (Array.isArray(body.variants) && body.variants.length > 0) {
+      body.variants.forEach(v => {
+        if (v.quantity !== null && v.quantity !== undefined && v.quantity !== "") {
+          const q = parseInt(v.quantity);
+          v.quantity = isNaN(q) ? null : Math.max(0, q);
+          v.active = (v.quantity === 0) ? false : true;
+        } else {
+          v.quantity = null;
+          v.active = true;
+        }
+      });
+
       const hasVariantQuantities = body.variants.some(v => v.quantity !== null && v.quantity !== undefined && v.quantity !== "");
       if (hasVariantQuantities) {
         body.quantity = body.variants.reduce((sum, v) => {
           const q = parseInt(v.quantity);
           return sum + (isNaN(q) ? 0 : Math.max(0, q));
         }, 0);
+      }
+    }
+
+    // When product count reaches 0, automatically archive
+    if (body.quantity !== undefined && body.quantity !== null && Number(body.quantity) === 0) {
+      body.active = false;
+      body.status = 'draft';
+      if (Array.isArray(body.variants)) {
+        body.variants.forEach(v => { v.active = false; });
       }
     }
 
@@ -373,34 +393,20 @@ router.put('/:id', adminAuth, async (req, res) => {
     const existingProduct = await Product.findById(req.params.id).lean();
     if (!existingProduct) return res.status(404).json({ error: 'Product not found' });
 
-    // If product is being archived (deactivated/draft), set its quantity to 0 and sync active boolean
-    if (body.status === 'draft' || body.active === false) {
-      body.active = false;
-      body.status = 'draft';
-      body.quantity = 0;
-      if (Array.isArray(body.variants)) {
-        body.variants.forEach(v => {
-          v.quantity = 0;
-          v.active = false;
-        });
-      }
-    } else if (body.status === 'active' || body.active === true) {
-      body.active = true;
-      body.status = 'active';
-      // If we are reactivating a previously archived product, set quantity to null (infinity)
-      if (existingProduct.status === 'draft' || existingProduct.active === false) {
-        body.quantity = null;
-        if (Array.isArray(body.variants)) {
-          body.variants.forEach(v => {
-            v.quantity = null;
-            v.active = true;
-          });
+    // Sync variant active status with variant quantities
+    if (Array.isArray(body.variants) && body.variants.length > 0) {
+      body.variants.forEach(v => {
+        if (v.quantity !== null && v.quantity !== undefined && v.quantity !== "") {
+          const q = parseInt(v.quantity);
+          v.quantity = isNaN(q) ? null : Math.max(0, q);
+          v.active = (v.quantity === 0) ? false : true;
+        } else {
+          v.quantity = null;
+          v.active = true;
         }
-      }
-    }
+      });
 
-    // Auto-sync overall product quantity with sum of variant quantities
-    if (Array.isArray(body.variants) && body.variants.length > 0 && body.status !== 'draft' && body.active !== false) {
+      // Auto-sync overall product quantity with sum of variant quantities
       const hasVariantQuantities = body.variants.some(v => v.quantity !== null && v.quantity !== undefined && v.quantity !== "");
       if (hasVariantQuantities) {
         body.quantity = body.variants.reduce((sum, v) => {
@@ -410,7 +416,17 @@ router.put('/:id', adminAuth, async (req, res) => {
       }
     }
 
-    // When product count reaches 0, automatically archive
+    // State handling
+    if (body.status === 'draft' || body.active === false) {
+      body.active = false;
+      body.status = 'draft';
+      // If explicitly marked draft and overall count was not given or > 0, retain quantities but mark inactive
+    } else if (body.status === 'active' || body.active === true) {
+      body.active = true;
+      body.status = 'active';
+    }
+
+    // When product overall count reaches 0, automatically archive
     if (body.quantity !== undefined && body.quantity !== null && Number(body.quantity) === 0) {
       body.active = false;
       body.status = 'draft';

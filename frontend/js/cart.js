@@ -186,11 +186,20 @@ Cart.renderSlideCart = function (skipEvaluate = false) {
   function getAvailable(item) {
     if (item.selectedOptions && item.selectedOptions.length > 0 && item.variants && item.variants.length > 0) {
       const v = item.variants.find(v => {
-        return item.selectedOptions.every(so => v.combination[so.groupName] === so.label);
+        if (!v || !v.combination) return false;
+        const combo = v.combination instanceof Map ? Object.fromEntries(v.combination) : (v.combination || {});
+        const comboKeys = Object.keys(combo);
+        return item.selectedOptions.every(so => {
+          const groupNameClean = (so.groupName || '').trim().toLowerCase();
+          const labelClean = (so.label || '').trim().toLowerCase();
+          const matchKey = comboKeys.find(k => k.trim().toLowerCase() === groupNameClean);
+          if (!matchKey) return false;
+          return (combo[matchKey] || '').trim().toLowerCase() === labelClean;
+        });
       });
-      return (v && v.quantity !== null && v.quantity !== undefined) ? v.quantity : Infinity;
+      return (v && v.quantity !== null && v.quantity !== undefined && v.quantity !== "") ? Number(v.quantity) : Infinity;
     }
-    return (item.availableQuantity !== null && item.availableQuantity !== undefined) ? item.availableQuantity : Infinity;
+    return (item.availableQuantity !== null && item.availableQuantity !== undefined && item.availableQuantity !== "") ? Number(item.availableQuantity) : Infinity;
   }
 
 

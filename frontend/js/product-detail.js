@@ -216,7 +216,9 @@ window.updateTotalPrice = function (isRecursive = false) {
     finalBasePrice = matchingVariant.price;
     finalSalePrice = matchingVariant.salePrice !== null ? matchingVariant.salePrice : matchingVariant.price;
     variantImg = matchingVariant.imageUrl;
-    isAvailable = matchingVariant.active !== false && (matchingVariant.quantity === null || matchingVariant.quantity === undefined || matchingVariant.quantity === "" || Number(matchingVariant.quantity) > 0);
+    const isZeroStock = (matchingVariant.quantity !== null && matchingVariant.quantity !== undefined && matchingVariant.quantity !== "" && Number(matchingVariant.quantity) <= 0);
+    const hasPositiveStock = (matchingVariant.quantity !== null && matchingVariant.quantity !== undefined && matchingVariant.quantity !== "" && Number(matchingVariant.quantity) > 0);
+    isAvailable = !isZeroStock && (hasPositiveStock || matchingVariant.active !== false);
   } else {
     const hasVariants = currentProduct.variants && currentProduct.variants.length > 0;
     if (hasVariants) {
@@ -332,10 +334,13 @@ window.updateDisabledOptions = function (currentSelections) {
 
   let selectionChanged = false;
 
-  const activeVariants = currentProduct.variants.filter(v =>
-    v.active !== false &&
-    (v.quantity === null || v.quantity === undefined || v.quantity === "" || Number(v.quantity) > 0)
-  );
+  const activeVariants = currentProduct.variants.filter(v => {
+    const isZeroStock = (v.quantity !== null && v.quantity !== undefined && v.quantity !== "" && Number(v.quantity) <= 0);
+    if (isZeroStock) return false;
+    const hasPositiveStock = (v.quantity !== null && v.quantity !== undefined && v.quantity !== "" && Number(v.quantity) > 0);
+    if (hasPositiveStock) return true;
+    return v.active !== false;
+  });
 
   (currentProduct.options || []).forEach((group, gi) => {
     let hasCheckedAndEnabled = false;
