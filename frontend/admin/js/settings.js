@@ -237,9 +237,9 @@ async function saveSettings() {
     primaryColor: document.getElementById('setting-primary-color') ? document.getElementById('setting-primary-color').value : '#916C4F',
     paymentMethods: paymentMethods,
     enableBosta: false,
-    enableEgyptPost: document.getElementById('setting-enable-egypt-post') ? document.getElementById('setting-enable-egypt-post').checked : true,
-    egyptPostFee: document.getElementById('setting-egypt-post-fee') ? (parseFloat(document.getElementById('setting-egypt-post-fee').value) || 85) : 85,
-    enableZones: document.getElementById('setting-enable-zones') ? document.getElementById('setting-enable-zones').checked : false
+    enableEgyptPost: document.getElementById('setting-enable-egypt-post') ? document.getElementById('setting-enable-egypt-post').checked : (originalSettings.enableEgyptPost !== undefined ? originalSettings.enableEgyptPost : true),
+    egyptPostFee: document.getElementById('setting-egypt-post-fee') ? (parseFloat(document.getElementById('setting-egypt-post-fee').value) || 85) : (originalSettings.egyptPostFee !== undefined ? originalSettings.egyptPostFee : 85),
+    enableZones: false
   };
 
   try {
