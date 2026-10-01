@@ -38,7 +38,7 @@ const adminAuth = async (req, res, next) => {
   }
 
   // 1. Check Master Admin Key
-  if (key === adminKey || key === 'sundura_secret_admin_key' || key === 'loli_secret_admin_key') {
+  if (key === adminKey || key === 'sundura_secret_admin_key') {
     req.adminUser = {
       id: 'superadmin',
       name: 'المدير العام',
