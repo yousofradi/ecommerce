@@ -35,12 +35,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Restore items to cart
         Cart._save(cartData.items);
         // Save the checkoutToken to localStorage
-        localStorage.setItem('loli_checkout_token', recoverToken);
+        localStorage.setItem('sundura_checkout_token', recoverToken);
         if (cartData.customer) {
           delete cartData.customer.carrier;
         }
         // Save customer data draft to localStorage
-        localStorage.setItem('loli_checkout_draft', JSON.stringify(cartData.customer || {}));
+        localStorage.setItem('sundura_checkout_draft', JSON.stringify(cartData.customer || {}));
       }
     } catch (err) {
       console.error('Failed to recover abandoned cart:', err);
@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Fetch shipping global settings
   try {
-    const settings = await api.getSetting('loli_global_settings');
+    const settings = (await api.getSetting('sundura_global_settings').catch(() => null)) || (await api.getSetting('loli_global_settings').catch(() => null));
     window._enableBosta = false;
     window._enableEgyptPost = true;
 
@@ -95,7 +95,7 @@ async function loadPaymentMethods() {
   const container = document.getElementById('payment-methods-checkout');
   if (!container) return;
   try {
-    const settings = await api.getSetting('loli_global_settings');
+    const settings = (await api.getSetting('sundura_global_settings').catch(() => null)) || (await api.getSetting('loli_global_settings').catch(() => null));
     const methods = settings ? (settings.paymentMethods || []) : [];
     
     if (methods.length === 0) {
@@ -625,11 +625,13 @@ function setupForm() {
       const order = await api.createOrder(orderData);
       
       // Cleanup abandoned cart token and draft
-      const token = localStorage.getItem('loli_checkout_token');
+      const token = localStorage.getItem('sundura_checkout_token') || localStorage.getItem('loli_checkout_token');
       if (token) {
         api.deleteAbandonedCartByToken(token).catch(err => console.warn(err));
+        localStorage.removeItem('sundura_checkout_token');
         localStorage.removeItem('loli_checkout_token');
       }
+      localStorage.removeItem('sundura_checkout_draft');
       localStorage.removeItem('loli_checkout_draft');
 
       Cart.clear();
@@ -645,12 +647,12 @@ function setupForm() {
 async function restoreCheckoutDraft() {
   // Sanitize any old draft data in localStorage
   try {
-    const rawDraft = localStorage.getItem('loli_checkout_draft');
+    const rawDraft = localStorage.getItem('sundura_checkout_draft') || localStorage.getItem('loli_checkout_draft');
     if (rawDraft) {
       const parsed = JSON.parse(rawDraft);
       if (parsed.carrier) {
         delete parsed.carrier;
-        localStorage.setItem('loli_checkout_draft', JSON.stringify(parsed));
+        localStorage.setItem('sundura_checkout_draft', JSON.stringify(parsed));
       }
     }
   } catch (e) {}
@@ -665,7 +667,7 @@ async function restoreCheckoutDraft() {
   const govHiddenInput = document.getElementById('government');
   const notesInput = document.getElementById('cust-notes');
 
-  const draftStr = localStorage.getItem('loli_checkout_draft');
+  const draftStr = localStorage.getItem('sundura_checkout_draft') || localStorage.getItem('loli_checkout_draft');
   if (draftStr) {
     try {
       const draft = JSON.parse(draftStr);
@@ -722,10 +724,10 @@ function syncAbandonedCart() {
   
   clearTimeout(syncTimeout);
   syncTimeout = setTimeout(async () => {
-    let token = localStorage.getItem('loli_checkout_token');
+    let token = localStorage.getItem('sundura_checkout_token') || localStorage.getItem('loli_checkout_token');
     if (!token) {
       token = 'chk_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-      localStorage.setItem('loli_checkout_token', token);
+      localStorage.setItem('sundura_checkout_token', token);
     }
 
     const name = document.getElementById('cust-name')?.value.trim() || '';
@@ -754,7 +756,7 @@ function syncAbandonedCart() {
       notes
     };
 
-    localStorage.setItem('loli_checkout_draft', JSON.stringify(draft));
+    localStorage.setItem('sundura_checkout_draft', JSON.stringify(draft));
 
     const items = Cart.getItems();
     // Do not sync to DB if cart is empty

@@ -26,22 +26,18 @@ router.get('/paymentMethods', async (req, res) => {
 });
 
 router.get('/:key', async (req, res) => {
-  const PUBLIC_SETTINGS = [
-    'loli_homepage_sections', 'loli_global_settings',
-    'sundura_homepage_sections', 'sundura_global_settings',
-    'shipping_options'
-  ];
+  const PUBLIC_SETTINGS = ['sundura_homepage_sections', 'sundura_global_settings', 'shipping_options'];
   const { key } = req.params;
   
   if (!PUBLIC_SETTINGS.includes(key)) {
     // Authenticate Master Admin or active Employee for settings
-    const adminKey = (process.env.ADMIN_API_KEY || 'loli_secret_admin_key').trim();
+    const adminKey = (process.env.ADMIN_API_KEY || 'sundura_secret_admin_key').trim();
     const authHeader = req.headers['authorization'] || '';
     const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : null;
     const rawReqKey = req.headers['x-admin-key'] || bearerToken || req.query.ADMIN_API_KEY || req.query.adminKey || req.query.admin_token || req.query.key;
     const reqKey = typeof rawReqKey === 'string' ? rawReqKey.trim() : (Array.isArray(rawReqKey) ? rawReqKey[0].trim() : '');
     
-    let isAuthorized = (reqKey && (reqKey === adminKey || reqKey === 'sundura_secret_admin_key'));
+    let isAuthorized = (reqKey && reqKey === adminKey);
     if (!isAuthorized && reqKey && reqKey.startsWith('emp_')) {
       try {
         const employee = await Employee.findOne({ token: reqKey, isActive: true });
@@ -68,22 +64,11 @@ router.get('/:key', async (req, res) => {
       if (cached) return res.json(cached);
     }
 
-    let setting = await Setting.findOne({ key });
-    if (!setting && (key === 'loli_homepage_sections' || key === 'sundura_homepage_sections')) {
-      setting = await Setting.findOne({ key: 'sundura_homepage_sections' });
-    }
-    if (!setting && (key === 'loli_global_settings' || key === 'sundura_global_settings')) {
-      setting = await Setting.findOne({ key: { $in: ['sundura_global_settings', 'admin_global_settings'] } });
-    }
-    let value = setting ? setting.value : null;
-    if (value && typeof value === 'object') {
-      if (typeof value.storeLogo === 'string' && (value.storeLogo.includes('sundura') || value.storeLogo.includes('wuiltstore') || value.storeLogo.includes('cmo1'))) {
-        value.storeLogo = '/assets/logo.webp';
-      }
-    }
+    const setting = await Setting.findOne({ key });
+    const value = setting ? setting.value : null;
     
     if (!bypassCache) {
-      const ttl = (key === 'loli_homepage_sections' || key === 'sundura_homepage_sections') ? null : undefined;
+      const ttl = key === 'sundura_homepage_sections' ? null : undefined;
       await cache.set(cacheKey, value, ttl);
     }
     res.json(value);
@@ -94,15 +79,9 @@ router.get('/:key', async (req, res) => {
 
 router.post('/:key', adminAuth, async (req, res) => {
   try {
-    let saveVal = req.body.value;
-    if (saveVal && typeof saveVal === 'object' && typeof saveVal.storeLogo === 'string') {
-      if (saveVal.storeLogo.includes('sundura') || saveVal.storeLogo.includes('wuiltstore') || saveVal.storeLogo.includes('cmo1')) {
-        saveVal.storeLogo = '/assets/logo.webp';
-      }
-    }
     const setting = await Setting.findOneAndUpdate(
       { key: req.params.key },
-      { value: saveVal },
+      { value: req.body.value },
       { upsert: true, new: true }
     );
     
@@ -140,6 +119,13 @@ router.post('/:key', adminAuth, async (req, res) => {
               let updated = false;
               if (!isNaN(newFee) && record.fee !== newFee) {
                 record.fee = newFee;
+                updated = true;
+              }
+              if (cityObj.zones && Array.isArray(cityObj.zones)) {
+                record.zones = cityObj.zones;
+                updated = true;
+              }
+              if (updated) {
                 await record.save();
               }
             }
@@ -148,6 +134,10 @@ router.post('/:key', adminAuth, async (req, res) => {
           // Clear Redis cache so `/api/shipping` immediately reflects the new fees!
           try {
             await redis.del(SHIPPING_CACHE_KEY);
+            const keys = await redis.keys('storefront:shipping:zones:*');
+            if (keys && keys.length > 0) {
+              await redis.del(keys);
+            }
           } catch (err) {
             console.error('[Redis] Shipping list cache clear failed:', err.message);
           }

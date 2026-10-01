@@ -25,6 +25,7 @@ function normalizeCustomerDigits(cust) {
   if (cust.phone) cust.phone = convertArabicDigitsToEnglish(cust.phone);
   if (cust.secondPhone) cust.secondPhone = convertArabicDigitsToEnglish(cust.secondPhone);
   if (cust.address) cust.address = convertArabicDigitsToEnglish(cust.address);
+  if (cust.zone) cust.zone = convertArabicDigitsToEnglish(cust.zone);
   if (cust.notes) cust.notes = convertArabicDigitsToEnglish(cust.notes);
   return cust;
 }
@@ -294,7 +295,7 @@ router.get('/bulk/download-pdf', adminAuth, async (req, res) => {
   try {
     const orders = await Order.find({ archived: { $ne: true }, status: { $ne: 'cancelled' }, paidAmount: { $gt: 0 } }).sort({ createdAt: 1 });
     const Setting = require('../models/Setting');
-    const globalSettings = await Setting.findOne({ key: 'loli_global_settings' });
+    const globalSettings = await Setting.findOne({ key: 'sundura_global_settings' });
     const settings = globalSettings ? globalSettings.value : {};
 
     let pagesHtml = '';
@@ -422,7 +423,7 @@ router.get('/bulk/invoice-html', adminAuth, async (req, res) => {
   try {
     const orders = await Order.find({ archived: { $ne: true }, status: { $ne: 'cancelled' }, paidAmount: { $gt: 0 } }).sort({ createdAt: -1 });
     const Setting = require('../models/Setting');
-    const globalSettings = await Setting.findOne({ key: 'loli_global_settings' });
+    const globalSettings = await Setting.findOne({ key: 'sundura_global_settings' });
     const settings = globalSettings ? globalSettings.value : {};
 
     let pagesHtml = '';
@@ -531,7 +532,7 @@ router.get('/:orderId/download-image', adminAuth, async (req, res) => {
     if (!order) return res.status(404).send('Order not found');
 
     const Setting = require('../models/Setting');
-    const globalSettings = await Setting.findOne({ key: 'loli_global_settings' });
+    const globalSettings = await Setting.findOne({ key: 'sundura_global_settings' });
     const settings = globalSettings ? globalSettings.value : {};
 
     const innerHtml = await generateInvoiceInnerHtml(order, settings);
@@ -634,7 +635,7 @@ router.get('/:orderId/invoice', adminAuth, async (req, res) => {
     if (!order) return res.status(404).send('Order not found');
 
     const Setting = require('../models/Setting');
-    const globalSettings = await Setting.findOne({ key: 'loli_global_settings' });
+    const globalSettings = await Setting.findOne({ key: 'sundura_global_settings' });
     const settings = globalSettings ? globalSettings.value : {};
 
     const innerHtml = await generateInvoiceInnerHtml(order, settings);

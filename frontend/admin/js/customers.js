@@ -11,7 +11,7 @@ async function loadCustomers() {
   try {
     const [custRes, settingsRes] = await Promise.all([
       api.getCustomers(),
-      api.getSetting('loli_global_settings').catch(() => ({}))
+      api.getSetting('sundura_global_settings').catch(() => ({}))
     ]);
     allCustomers = custRes;
     window._globalSettings = settingsRes || {};
@@ -52,6 +52,7 @@ function renderCustomers(customers) {
         </td>
         <td class="hide-mobile">
           <div style="color:#1e293b;">${c.government || '—'}</div>
+          ${window._globalSettings?.enableZones !== false && c.zone ? `<div style="font-size:0.8rem; color:#64748b; margin-top:2px;">${c.zone}</div>` : ''}
         </td>
         <td class="hide-mobile">${c.orderCount} طلب</td>
         <td class="hide-mobile" style="color:#64748b;">${lastOrderDate}</td>

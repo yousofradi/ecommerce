@@ -63,7 +63,7 @@ async function sendWebhookInner(event, data, options = {}) {
         const { generateInvoiceInnerHtml } = require('./invoice');
 
         const waConfigSetting = await Setting.findOne({ key: 'whatsapp_configs' });
-        const globalSettings = await Setting.findOne({ key: 'loli_global_settings' });
+        const globalSettings = (await Setting.findOne({ key: 'sundura_global_settings' })) || (await Setting.findOne({ key: 'loli_global_settings' }));
         const settings = globalSettings ? globalSettings.value : {};
         const brandName = settings.storeNameAr || settings.storeName || 'متجرنا';
 

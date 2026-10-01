@@ -31,7 +31,7 @@ async function loadOrders() {
     
     const [ordersRes, globalSettings, adminSettings] = await Promise.all([
       api.getOrders(showingArchived, currentPage, currentLimit, currentFilter, query),
-      api.getSetting('loli_global_settings').catch(() => null),
+      api.getSetting('sundura_global_settings').catch(() => api.getSetting('loli_global_settings').catch(() => null)),
       api.getSetting('admin_global_settings').catch(() => null)
     ]);
     

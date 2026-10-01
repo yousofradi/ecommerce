@@ -1,16 +1,6 @@
 // ── Immediate Branding Removed (Static Branding applied) ──────────
-const RAW_API_BASE = 'API_URL_PLACEHOLDER';
-const getNormalizedApiBase = () => {
-  let raw = (typeof window !== 'undefined' && window.API_BASE && window.API_BASE !== 'API_URL_PLACEHOLDER')
-    ? window.API_BASE
-    : RAW_API_BASE;
-  if (!raw || raw.includes('API_URL_PLACEHOLDER')) {
-    raw = 'https://onlinestore-api-hju3.onrender.com/api';
-  }
-  const clean = raw.trim().replace(/\/+$/, '');
-  return clean.endsWith('/api') ? clean : `${clean}/api`;
-};
-const API_BASE = getNormalizedApiBase();
+const API_BASE = 'API_URL_PLACEHOLDER';
+
 
 const api = {
   _adminKey() { return localStorage.getItem('adminKey') || ''; },
@@ -46,9 +36,7 @@ const api = {
         path += (path.includes('?') ? '&' : '?') + '_t=' + Date.now();
       }
 
-      const base = getNormalizedApiBase();
-      const fullUrl = `${base}${path}`.replace('/api/api/', '/api/');
-      const res = await fetch(fullUrl, { ...opts, headers });
+      const res = await fetch(`${API_BASE}${path}`, { ...opts, headers });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
 
@@ -143,6 +131,7 @@ const api = {
   // Shipping
   getShipping() { return this._request('/shipping', { useCache: true }); },
   getPublicShipping() { return this.getShipping(); },
+  getZones(cityId) { return this._request(`/shipping/zones/${cityId}`, { useCache: true }); },
   getShippingList() { return this._request('/shipping/list', { admin: true }); },
   createShipping(d) { return this._request('/shipping', { method: 'POST', body: JSON.stringify(d), admin: true }); },
   updateShipping(id, d) { return this._request(`/shipping/${id}`, { method: 'PUT', body: JSON.stringify(d), admin: true }); },
@@ -264,6 +253,24 @@ const api = {
       formData.append('deleteAll', deleteAll);
       xhr.send(formData);
     });
+  },
+
+  formatZoneName(z) {
+    if (!z) return '';
+    const main = (z.zoneOtherName || z.otherName || z.name || '').trim();
+    const dist = (z.districtOtherName || z.districtName || '').trim();
+    
+    const normalize = (s) => s.toLowerCase()
+      .replace(/[أإآا]/g, 'ا')
+      .replace(/ة/g, 'ه')
+      .replace(/ى/g, 'ي')
+      .replace(/\s+/g, '')
+      .trim();
+
+    if (dist && normalize(dist) !== normalize(main)) {
+      return `${main} - ${dist}`;
+    }
+    return main;
   }
 };
 
@@ -554,7 +561,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Populate WhatsApp link globally
   const waLink = document.getElementById('nav-wa-link');
   if (waLink) {
-    api.getSetting('loli_global_settings').then(settings => {
+    api.getSetting('sundura_global_settings').then(settings => {
       if (settings && settings.socialWa) {
         let waNumber = settings.socialWa.replace(/[^0-9]/g, '');
         if (waNumber.startsWith('01')) waNumber = '2' + waNumber;
@@ -582,7 +589,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const renderBlock = (list) => list.map(c => `
           <a href="/collection/${c.urlName || c._id}" class="cat-badge">
             <div class="cat-badge-img-wrapper">
-              <img src="${api.optimizeImageUrl(c.imageUrl, 100) || '/assets/logo.webp?v=20260927_v3'}" alt="${c.name}" loading="lazy" decoding="async">
+              <img src="${api.optimizeImageUrl(c.imageUrl, 100) || '/assets/logo.webp'}" alt="${c.name}" loading="lazy" decoding="async">
             </div>
             <span class="cat-badge-name">${c.name}</span>
           </a>

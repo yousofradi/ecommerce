@@ -161,10 +161,11 @@ function renderCarts(list) {
     // Secondary phone if present
     const phone2Str = cart.customer?.secondPhone ? `<div style="font-size:0.8rem; color:#64748b; margin-top:2px;">هاتف إضافي: ${cart.customer.secondPhone}</div>` : '';
 
-    // Governorate
+    // Governorate & Zone
     const gov = cart.customer?.government || '';
+    const zone = cart.customer?.zone || '';
     const address = cart.customer?.address || '';
-    let addressDisplay = `<div style="font-weight:600; color:#334155;">${gov}</div>`;
+    let addressDisplay = `<div style="font-weight:600; color:#334155;">${gov} ${zone ? ` - ${zone}` : ''}</div>`;
     if (address) {
       addressDisplay += `<div class="hide-mobile" style="font-size:0.8rem; color:#64748b; margin-top:4px; max-width:250px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${address}">${address}</div>`;
     }
@@ -233,7 +234,8 @@ function filterCarts() {
     const name = (cart.customer?.name || '').toLowerCase();
     const phone = (cart.customer?.phone || '').toLowerCase();
     const gov = (cart.customer?.government || '').toLowerCase();
-    return name.includes(query) || phone.includes(query) || gov.includes(query);
+    const zone = (cart.customer?.zone || '').toLowerCase();
+    return name.includes(query) || phone.includes(query) || gov.includes(query) || zone.includes(query);
   });
 
   renderCarts(filtered);
