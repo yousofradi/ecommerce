@@ -1,5 +1,6 @@
 const Collection = require('../models/Collection');
 const { optimizeCloudinaryUrl } = require('../utils/cloudinary');
+const cache = require('../utils/cache');
 
 exports.getCollections = async (req, res) => {
   try {
@@ -40,6 +41,10 @@ exports.createCollection = async (req, res) => {
   try {
     const collection = new Collection(req.body);
     await collection.save();
+    try {
+      await cache.del('storefront:collections:list');
+      await cache.delPattern('storefront:collection:*').catch(() => {});
+    } catch (cErr) {}
     res.status(201).json(collection);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -48,8 +53,19 @@ exports.createCollection = async (req, res) => {
 
 exports.updateCollection = async (req, res) => {
   try {
+    const existing = await Collection.findById(req.params.id).lean();
+    if (!existing) return res.status(404).json({ error: 'Collection not found' });
+
     const collection = await Collection.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
-    if (!collection) return res.status(404).json({ error: 'Collection not found' });
+
+    try {
+      await cache.del('storefront:collections:list');
+      await cache.del(`storefront:collection:id:${req.params.id}`);
+      if (existing.urlName) await cache.del(`storefront:collection:id:${existing.urlName}`);
+      if (collection.urlName) await cache.del(`storefront:collection:id:${collection.urlName}`);
+      await cache.delPattern('storefront:collection:*').catch(() => {});
+    } catch (cErr) {}
+
     res.json(collection);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -60,6 +76,14 @@ exports.deleteCollection = async (req, res) => {
   try {
     const collection = await Collection.findByIdAndDelete(req.params.id);
     if (!collection) return res.status(404).json({ error: 'Collection not found' });
+
+    try {
+      await cache.del('storefront:collections:list');
+      await cache.del(`storefront:collection:id:${req.params.id}`);
+      if (collection.urlName) await cache.del(`storefront:collection:id:${collection.urlName}`);
+      await cache.delPattern('storefront:collection:*').catch(() => {});
+    } catch (cErr) {}
+
     res.json({ message: 'Collection deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -71,7 +95,18 @@ exports.deleteCollectionsBatch = async (req, res) => {
     const { collectionIds } = req.body;
     if (!Array.isArray(collectionIds)) return res.status(400).json({ error: 'collectionIds must be an array' });
     
+    const collections = await Collection.find({ _id: { $in: collectionIds } }).select('urlName').lean();
     await Collection.deleteMany({ _id: { $in: collectionIds } });
+
+    try {
+      await cache.del('storefront:collections:list');
+      for (const c of collections) {
+        await cache.del(`storefront:collection:id:${c._id}`);
+        if (c.urlName) await cache.del(`storefront:collection:id:${c.urlName}`);
+      }
+      await cache.delPattern('storefront:collection:*').catch(() => {});
+    } catch (cErr) {}
+
     res.json({ message: 'Collections deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -91,6 +126,12 @@ exports.reorderCollectionsBatch = async (req, res) => {
       }
     }));
     await Collection.bulkWrite(ops);
+
+    try {
+      await cache.del('storefront:collections:list');
+      await cache.delPattern('storefront:collection:*').catch(() => {});
+    } catch (cErr) {}
+
     res.json({ message: 'Collections reordered' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to reorder collections' });

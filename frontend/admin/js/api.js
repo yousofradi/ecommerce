@@ -73,8 +73,13 @@ const api = {
       path += (path.includes('?') ? '&' : '?') + '_t=' + Date.now();
     }
 
-    if (currentKey && method === 'GET' && !path.includes('adminKey=')) {
-      path += (path.includes('?') ? '&' : '?') + 'adminKey=' + encodeURIComponent(currentKey);
+    if (currentKey && method === 'GET') {
+      if (!path.includes('adminKey=')) {
+        path += (path.includes('?') ? '&' : '?') + 'adminKey=' + encodeURIComponent(currentKey);
+      }
+      if (!path.includes('admin=')) {
+        path += (path.includes('?') ? '&' : '?') + 'admin=true';
+      }
     }
     
     const base = getNormalizedApiBase();
@@ -140,8 +145,8 @@ const api = {
   },
 
   // Collections
-  getCollections() { return this._request('/collections', { useCache: false }); },
-  getCollection(id) { return this._request(`/collections/${id}`); },
+  getCollections() { return this._request('/collections', { useCache: false, admin: true }); },
+  getCollection(id) { return this._request(`/collections/${id}`, { useCache: false, admin: true }); },
   createCollection(d) { return this._request('/collections', { method: 'POST', body: JSON.stringify(d), admin: true }); },
   updateCollection(id, d) { return this._request(`/collections/${id}`, { method: 'PUT', body: JSON.stringify(d), admin: true }); },
   deleteCollection(id) { return this._request(`/collections/${id}`, { method: 'DELETE', admin: true }); },
