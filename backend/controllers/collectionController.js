@@ -16,15 +16,24 @@ exports.getCollections = async (req, res) => {
 
 exports.getCollection = async (req, res) => {
   try {
-    const { id } = req.params;
+    const rawId = req.params.id;
+    let decodedId = rawId;
+    try { decodedId = decodeURIComponent(rawId); } catch (e) {}
     let collection;
     
     // Check if ID is a valid MongoDB ObjectId
-    if (id.match(/^[0-9a-fA-F]{24}$/)) {
-      collection = await Collection.findById(id).lean();
+    if (decodedId.match(/^[0-9a-fA-F]{24}$/)) {
+      collection = await Collection.findById(decodedId).lean();
     } else {
-      // Otherwise search by handle/urlName
-      collection = await Collection.findOne({ urlName: id }).lean();
+      // Otherwise search by handle/urlName or name
+      collection = await Collection.findOne({
+        $or: [
+          { urlName: decodedId },
+          { urlName: rawId },
+          { name: decodedId },
+          { name: rawId }
+        ]
+      }).lean();
     }
 
     if (!collection) return res.status(404).json({ error: 'Collection not found' });
@@ -43,6 +52,7 @@ exports.createCollection = async (req, res) => {
     await collection.save();
     try {
       await cache.del('storefront:collections:list');
+      await cache.clearPrefix('storefront:collection:').catch(() => {});
       await cache.delPattern('storefront:collection:*').catch(() => {});
     } catch (cErr) {}
     res.status(201).json(collection);
@@ -61,8 +71,15 @@ exports.updateCollection = async (req, res) => {
     try {
       await cache.del('storefront:collections:list');
       await cache.del(`storefront:collection:id:${req.params.id}`);
-      if (existing.urlName) await cache.del(`storefront:collection:id:${existing.urlName}`);
-      if (collection.urlName) await cache.del(`storefront:collection:id:${collection.urlName}`);
+      if (existing.urlName) {
+        await cache.del(`storefront:collection:id:${existing.urlName}`);
+        await cache.del(`storefront:collection:id:${encodeURIComponent(existing.urlName)}`);
+      }
+      if (collection.urlName) {
+        await cache.del(`storefront:collection:id:${collection.urlName}`);
+        await cache.del(`storefront:collection:id:${encodeURIComponent(collection.urlName)}`);
+      }
+      await cache.clearPrefix('storefront:collection:').catch(() => {});
       await cache.delPattern('storefront:collection:*').catch(() => {});
     } catch (cErr) {}
 
@@ -81,6 +98,7 @@ exports.deleteCollection = async (req, res) => {
       await cache.del('storefront:collections:list');
       await cache.del(`storefront:collection:id:${req.params.id}`);
       if (collection.urlName) await cache.del(`storefront:collection:id:${collection.urlName}`);
+      await cache.clearPrefix('storefront:collection:').catch(() => {});
       await cache.delPattern('storefront:collection:*').catch(() => {});
     } catch (cErr) {}
 
@@ -104,6 +122,7 @@ exports.deleteCollectionsBatch = async (req, res) => {
         await cache.del(`storefront:collection:id:${c._id}`);
         if (c.urlName) await cache.del(`storefront:collection:id:${c.urlName}`);
       }
+      await cache.clearPrefix('storefront:collection:').catch(() => {});
       await cache.delPattern('storefront:collection:*').catch(() => {});
     } catch (cErr) {}
 
@@ -129,6 +148,7 @@ exports.reorderCollectionsBatch = async (req, res) => {
 
     try {
       await cache.del('storefront:collections:list');
+      await cache.clearPrefix('storefront:collection:').catch(() => {});
       await cache.delPattern('storefront:collection:*').catch(() => {});
     } catch (cErr) {}
 

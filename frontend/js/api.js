@@ -89,7 +89,9 @@ const api = {
   // Collections
   getCollections() { return this._request('/collections', { useCache: true }); },
   getCollection(id) {
-    return this._request(`/collections/${id}`);
+    let cleanId = id;
+    try { cleanId = decodeURIComponent(id); } catch(e) {}
+    return this._request(`/collections/${encodeURIComponent(cleanId)}`, { useCache: false });
   },
   createCollection(d) { return this._request('/collections', { method: 'POST', body: JSON.stringify(d), admin: true }); },
   updateCollection(id, d) { return this._request(`/collections/${id}`, { method: 'PUT', body: JSON.stringify(d), admin: true }); },

@@ -14,7 +14,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const pathParts = window.location.pathname.split('/').filter(Boolean);
     const lastPart = pathParts.length > 0 ? pathParts[pathParts.length - 1] : '';
     if (lastPart && lastPart !== 'collection' && lastPart !== 'collection.html') {
-      slug = lastPart;
+      try {
+        slug = decodeURIComponent(lastPart);
+      } catch (e) {
+        slug = lastPart;
+      }
     }
   }
   

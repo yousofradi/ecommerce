@@ -51,6 +51,18 @@ const cache = {
     } catch (err) {
       console.error(`[Redis] Clear prefix ${prefix} failed:`, err.message);
     }
+  },
+
+  async delPattern(pattern) {
+    try {
+      const keys = await redis.keys(pattern);
+      if (keys && keys.length > 0) {
+        await redis.del(...keys);
+        console.log(`[Redis] 🧹 Cleared ${keys.length} keys with pattern ${pattern}`);
+      }
+    } catch (err) {
+      console.error(`[Redis] Del pattern ${pattern} failed:`, err.message);
+    }
   }
 };
 
