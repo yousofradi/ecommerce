@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="/assets/favicon.png">
+  <link rel="icon" href="/assets/favicon.png?v=20260927_v3">
   <title>إتمام الشراء | </title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -35,8 +35,9 @@
     }
 
     .radio-option input[type="radio"]:checked+label {
-      background: var(--primary-light) !important;
-      border-color: #d1d5db;
+      background: #fff !important;
+      border-color: var(--primary, #916C4F) !important;
+      box-shadow: 0 0 0 1px var(--primary, #916C4F);
     }
 
     /* Professional Collapsible Summary */
@@ -232,7 +233,7 @@
             style="width: 24px; height: 24px; color: var(--text-muted);">
             <path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6" />
           </svg></a>
-        <a href="/" class="store-logo-link"><img src="/assets/logo.webp" alt="SunduraShop Logo"
+        <a href="/" class="store-logo-link"><img src="/assets/logo.webp?v=20260927_v3" alt="LoliShop Logo"
             class="store-logo-img"></a>
 
         <div class="header-icons">
@@ -302,9 +303,6 @@
                     <!-- Cities will be injected here -->
                   </div>
                 </div>
-              </div>
-              <div class="form-group" id="zone-form-group" style="display: none !important;">
-                <input type="hidden" id="zone" value="">
               </div>
             </div>
             <div class="form-group">
@@ -378,7 +376,7 @@
   </div>
   <script src="js/api.js?v=2.5.0"></script>
   <script src="js/cart.js?v=2.5.0"></script>
-  <script src="js/checkout.js?v=2.5.2"></script>
+  <script src="js/checkout.js?v=2.5.4"></script>
 </body>
 
 </html>

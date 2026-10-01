@@ -31,7 +31,7 @@ async function loadOrders() {
     
     const [ordersRes, globalSettings, adminSettings] = await Promise.all([
       api.getOrders(showingArchived, currentPage, currentLimit, currentFilter, query),
-      api.getSetting('sundura_global_settings').catch(() => null),
+      api.getSetting('loli_global_settings').catch(() => null),
       api.getSetting('admin_global_settings').catch(() => null)
     ]);
     
@@ -48,7 +48,7 @@ async function loadOrders() {
       updateFilterCounts(allOrdersData.length);
     }
     
-    // Webhook uses sundura_global_settings for paymentMethods and paymentNotes
+    // Webhook uses loli_global_settings for paymentMethods and paymentNotes
     if (globalSettings) {
       paymentMethodsCache = globalSettings.paymentMethods || [];
       paymentNotesCache = globalSettings.paymentNotes || '';
@@ -278,10 +278,17 @@ function renderOrders(orders) {
 
       let pmAr = o.paymentMethod === 'vodafone_cash' ? 'فودافون كاش' : (o.paymentMethod === 'instapay' ? 'إنستاباي' : o.paymentMethod);
       let paymentNumberStr = '';
+      let paymentHolderStr = '';
       if (paymentMethodsCache && Array.isArray(paymentMethodsCache)) {
-        const matchedPM = paymentMethodsCache.find(m => m.label === o.paymentMethod || m.label === pmAr);
-        if (matchedPM && matchedPM.number) {
-          paymentNumberStr = `\r\nرقم الدفع: ${matchedPM.number}`;
+        const matchedPM = paymentMethodsCache.find(m => m.label === o.paymentMethod || m.label === pmAr || m.id === o.paymentMethod);
+        if (matchedPM) {
+          if (matchedPM.number) {
+            paymentNumberStr = `\r\nرقم الدفع: ${matchedPM.number}`;
+          }
+          const holder = matchedPM.accountHolder || matchedPM.recipientName;
+          if (holder) {
+            paymentHolderStr = `\r\nب اسم : ${holder}`;
+          }
         }
       }
       let safeNotes = paymentNotesCache ? paymentNotesCache.replace(/\r?\n/g, '\r\n') : '';
@@ -291,7 +298,7 @@ function renderOrders(orders) {
         '',
         `رقم الطلب: ${o.orderId}`,
         `إجمالي المبلغ: ${o.totalPrice} EGP`,
-        `طريقة الدفع: ${pmAr}${paymentNumberStr}${pnStr}`,
+        `طريقة الدفع: ${pmAr}${paymentNumberStr}${paymentHolderStr}${pnStr}`,
         '',
         `شكراً لثقتك بنا ♡`
       ].join('\r\n');

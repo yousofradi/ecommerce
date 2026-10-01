@@ -35,13 +35,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Restore items to cart
         Cart._save(cartData.items);
         // Save the checkoutToken to localStorage
-        localStorage.setItem('sundura_checkout_token', recoverToken);
+        localStorage.setItem('loli_checkout_token', recoverToken);
         if (cartData.customer) {
           delete cartData.customer.carrier;
-          delete cartData.customer.zone;
         }
         // Save customer data draft to localStorage
-        localStorage.setItem('sundura_checkout_draft', JSON.stringify(cartData.customer || {}));
+        localStorage.setItem('loli_checkout_draft', JSON.stringify(cartData.customer || {}));
       }
     } catch (err) {
       console.error('Failed to recover abandoned cart:', err);
@@ -55,10 +54,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Fetch shipping global settings
   try {
-    const settings = await api.getSetting('sundura_global_settings');
+    const settings = await api.getSetting('loli_global_settings');
     window._enableBosta = false;
     window._enableEgyptPost = true;
-    window._enableZones = false;
 
     // Load active shipping options
     const options = await api.getSetting('shipping_options');
@@ -67,13 +65,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.warn('Failed to load global settings, using defaults', err);
     window._enableBosta = false;
     window._enableEgyptPost = true;
-    window._enableZones = false;
     window._shippingOptions = [];
   }
-
-  // Zone visibility will be handled by updatePriceSummary
-  const zoneGroup = document.getElementById('zone-form-group');
-  const zoneInputEl = document.getElementById('zone');
 
   // Evaluate promotions for checkout
   try {
@@ -102,7 +95,7 @@ async function loadPaymentMethods() {
   const container = document.getElementById('payment-methods-checkout');
   if (!container) return;
   try {
-    const settings = await api.getSetting('sundura_global_settings');
+    const settings = await api.getSetting('loli_global_settings');
     const methods = settings ? (settings.paymentMethods || []) : [];
     
     if (methods.length === 0) {
@@ -117,27 +110,39 @@ async function loadPaymentMethods() {
 
     const paymentNotes = settings ? (settings.paymentNotes || '') : '';
 
-    container.innerHTML = methods.map((m, idx) => `
+    container.innerHTML = methods.map((m, idx) => {
+      const owner = m.accountHolder || m.recipientName || m.accountOwner || '';
+      return `
       <div class="radio-option">
         <input type="radio" name="payment" id="pay-${m.id}" value="${m.label}" ${idx === 0 ? 'checked' : ''}>
-        <label for="pay-${m.id}" style="justify-content: space-between; padding: 12px 16px; border-radius:12px; border-width:1.5px;">
-          <div style="display:flex; align-items:center; gap:10px;">
-            <div style="width:28px; height:28px; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0;">
-               ${m.logo ? `<img src="${m.logo}" style="max-width:100%; max-height:100%; object-fit:contain;">` : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'}
+        <label for="pay-${m.id}" style="display:flex; flex-direction:column; padding: 14px 16px; border-radius:12px; border-width:1.5px; width:100%; box-sizing:border-box; cursor:pointer;">
+          <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="width:36px; height:36px; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0; background:#f8fafc; border-radius:50%; border:1px solid #e2e8f0;">
+                 ${m.logo ? `<img src="${m.logo}" style="max-width:100%; max-height:100%; object-fit:contain;">` : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'}
+              </div>
+              <span style="font-weight:700; font-size:0.95rem; color:var(--text-main);">${m.label}</span>
             </div>
-            <span style="font-weight:700; font-size:0.9rem; color:var(--text-main);">${m.label}</span>
+            
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button type="button" class="btn-copy-payment" onclick="event.preventDefault(); copyToClipboard('${m.number}', this)" style="background:var(--primary, #916C4F); color:#fff; border:none; border-radius:6px; padding:5px 12px; font-size:0.8rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:5px; transition:all 0.2s;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  <span>نسخ</span>
+              </button>
+              <span dir="ltr" style="font-size: 0.9rem; font-weight: 800; color: #111827;">${m.number}</span>
+            </div>
           </div>
-          
-          <div style="display:flex; align-items:center; gap:8px;">
-            <button type="button" class="btn-copy-payment" onclick="event.preventDefault(); copyToClipboard('${m.number}', this)" style="background:var(--primary, #916C4F); color:#fff; border:none; border-radius:6px; padding:4px 10px; font-size:0.75rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                <span>نسخ</span>
-            </button>
-            <span dir="ltr" style="font-size: 0.85rem; font-weight: 800; color: #111827;">${m.number}</span>
-          </div>
+
+          ${owner ? `
+            <div style="width:100%; margin-top:10px; padding:7px 12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:6px; font-size:0.85rem; box-sizing:border-box;">
+              <span style="color:#64748b; font-weight:600;">الرقم ب اسم :</span>
+              <strong style="color:var(--text-main, #1e293b); font-weight:800;">${owner}</strong>
+            </div>
+          ` : ''}
         </label>
       </div>
-    `).join('');
+    `;
+    }).join('');
 
     // Add global copy function
     window.copyToClipboard = (text, btn) => {
@@ -233,39 +238,7 @@ async function loadCities() {
 }
 
 async function handleGovChange() {
-  const zoneGroup = document.getElementById('zone-form-group');
-  const zoneInput = document.getElementById('zone');
-  if (zoneGroup) zoneGroup.style.display = 'none';
-  if (zoneInput) {
-    zoneInput.value = '';
-    zoneInput.required = false;
-  }
   updatePriceSummary();
-}
-
-function renderZoneDropdown() {
-  const dropdown = document.getElementById('zone-dropdown');
-  if (dropdown) dropdown.style.display = 'none';
-}
-
-window.selectZone = function(val) {
-  const zoneInput = document.getElementById('zone');
-  if (zoneInput) zoneInput.value = val;
-  const dropdown = document.getElementById('zone-dropdown');
-  if (dropdown) dropdown.style.display = 'none';
-  updatePriceSummary();
-};
-
-document.addEventListener('click', (e) => {
-  const container = document.getElementById('zone-search-container');
-  const dropdown = document.getElementById('zone-dropdown');
-  if (container && !container.contains(e.target) && dropdown) {
-    dropdown.style.display = 'none';
-  }
-});
-
-function getSelectedZoneObject() {
-  return null;
 }
 
 function updateShippingMethodNotice(isEgyptPost) {
@@ -304,13 +277,6 @@ function updatePriceSummary() {
   let shippingFee = 0;
   const isEgyptPost = true;
   window._selectedCarrier = 'egyptpost';
-
-  const zoneGroup = document.getElementById('zone-form-group');
-  const zoneInputEl = document.getElementById('zone');
-  if (zoneGroup && zoneInputEl) {
-    zoneGroup.style.display = 'none';
-    zoneInputEl.required = false;
-  }
 
   const DECLARED_GOV_FEES = {
     'القاهرة': 85,
@@ -376,7 +342,7 @@ function updatePriceSummary() {
     shippingFee = 0;
   }
 
-  // Update Shipping Notice under the zone dropdown
+  // Update Shipping Notice
   updateShippingMethodNotice(isEgyptPost);
 
   let totalDiscount = 0;
@@ -473,7 +439,6 @@ function setupForm() {
   const addressDetailInput = document.getElementById('cust-address-detail');
   const govSearchInput = document.getElementById('government-search');
   const govHiddenInput = document.getElementById('government');
-  const zoneInput = document.getElementById('zone');
 
   function getCombinedAddress() {
     const city = addressCityInput ? addressCityInput.value.trim() : '';
@@ -562,27 +527,9 @@ function setupForm() {
     return true;
   }
 
-  function validateZone() {
-    return true;
-  }
-
-  // Real-time validation listeners
-  if (nameInput) nameInput.addEventListener('input', validateName);
-  if (phoneInput) phoneInput.addEventListener('input', validatePhone);
-  if (phone2Input) phone2Input.addEventListener('input', validatePhone2);
-  if (addressCityInput) addressCityInput.addEventListener('input', validateAddress);
-  if (addressVillageInput) addressVillageInput.addEventListener('input', validateAddress);
-  if (addressDetailInput) addressDetailInput.addEventListener('input', validateAddress);
-
   govSearchInput.addEventListener('blur', () => {
     setTimeout(() => {
       validateGov();
-    }, 200);
-  });
-
-  zoneInput.addEventListener('blur', () => {
-    setTimeout(() => {
-      validateZone();
     }, 200);
   });
 
@@ -595,8 +542,7 @@ function setupForm() {
     const isPhone2Valid = validatePhone2();
     const isGovValid = validateGov();
     const isAddressValid = validateAddress();
-    const isZoneValid = validateZone();
-    const isValid = isNameValid && isPhoneValid && isPhone2Valid && isGovValid && isAddressValid && isZoneValid;
+    const isValid = isNameValid && isPhoneValid && isPhone2Valid && isGovValid && isAddressValid;
 
     if (!isValid) {
       const firstInvalid = form.querySelector('.invalid');
@@ -644,7 +590,6 @@ function setupForm() {
     const cityId = govHiddenInput.value;
     const govData = (window._fullShippingData || []).find(s => s._id === cityId);
     const cityName = govData ? (govData.cityOtherName || govData.city) : '';
-    const zone = zoneInput.value;
 
     const items = Cart.getItems().map(item => {
       const effectiveBase = (item.salePrice && item.salePrice < item.basePrice) ? item.salePrice : item.basePrice;
@@ -668,7 +613,6 @@ function setupForm() {
         secondPhone: convertArabicDigitsToEnglish(phone2Input.value.trim()),
         address: convertArabicDigitsToEnglish(getCombinedAddress()),
         government: cityName,
-        zone: '',
         notes: convertArabicDigitsToEnglish(document.getElementById('cust-notes').value.trim())
       },
       items,
@@ -681,12 +625,12 @@ function setupForm() {
       const order = await api.createOrder(orderData);
       
       // Cleanup abandoned cart token and draft
-      const token = localStorage.getItem('sundura_checkout_token');
+      const token = localStorage.getItem('loli_checkout_token');
       if (token) {
         api.deleteAbandonedCartByToken(token).catch(err => console.warn(err));
-        localStorage.removeItem('sundura_checkout_token');
+        localStorage.removeItem('loli_checkout_token');
       }
-      localStorage.removeItem('sundura_checkout_draft');
+      localStorage.removeItem('loli_checkout_draft');
 
       Cart.clear();
       window.location.href = `payment?id=${order.orderId}`;
@@ -701,13 +645,12 @@ function setupForm() {
 async function restoreCheckoutDraft() {
   // Sanitize any old draft data in localStorage
   try {
-    const rawDraft = localStorage.getItem('sundura_checkout_draft');
+    const rawDraft = localStorage.getItem('loli_checkout_draft');
     if (rawDraft) {
       const parsed = JSON.parse(rawDraft);
-      if (parsed.carrier || parsed.zone) {
+      if (parsed.carrier) {
         delete parsed.carrier;
-        delete parsed.zone;
-        localStorage.setItem('sundura_checkout_draft', JSON.stringify(parsed));
+        localStorage.setItem('loli_checkout_draft', JSON.stringify(parsed));
       }
     }
   } catch (e) {}
@@ -720,10 +663,9 @@ async function restoreCheckoutDraft() {
   const addressDetailInput = document.getElementById('cust-address-detail');
   const govSearchInput = document.getElementById('government-search');
   const govHiddenInput = document.getElementById('government');
-  const zoneInput = document.getElementById('zone');
   const notesInput = document.getElementById('cust-notes');
 
-  const draftStr = localStorage.getItem('sundura_checkout_draft');
+  const draftStr = localStorage.getItem('loli_checkout_draft');
   if (draftStr) {
     try {
       const draft = JSON.parse(draftStr);
@@ -780,10 +722,10 @@ function syncAbandonedCart() {
   
   clearTimeout(syncTimeout);
   syncTimeout = setTimeout(async () => {
-    let token = localStorage.getItem('sundura_checkout_token');
+    let token = localStorage.getItem('loli_checkout_token');
     if (!token) {
       token = 'chk_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-      localStorage.setItem('sundura_checkout_token', token);
+      localStorage.setItem('loli_checkout_token', token);
     }
 
     const name = document.getElementById('cust-name')?.value.trim() || '';
@@ -798,7 +740,6 @@ function syncAbandonedCart() {
     const cityId = document.getElementById('government')?.value || '';
     const govData = (window._fullShippingData || []).find(s => s._id === cityId);
     const cityName = govData ? (govData.cityOtherName || govData.city) : '';
-    const zone = document.getElementById('zone')?.value || '';
     const notes = document.getElementById('cust-notes')?.value.trim() || '';
 
     const draft = {
@@ -810,11 +751,10 @@ function syncAbandonedCart() {
       addressVillage,
       addressDetail,
       government: cityName,
-      zone: '',
       notes
     };
 
-    localStorage.setItem('sundura_checkout_draft', JSON.stringify(draft));
+    localStorage.setItem('loli_checkout_draft', JSON.stringify(draft));
 
     const items = Cart.getItems();
     // Do not sync to DB if cart is empty

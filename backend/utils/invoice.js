@@ -11,7 +11,7 @@ function num(val) {
 }
 
 async function generateInvoiceInnerHtml(order, settings, options = {}) {
-  const brandName = settings.storeNameAr || settings.storeName || 'سندورة';
+  const brandName = settings.storeNameAr || settings.storeName || 'لولي';
   const Product = require('../models/Product');
   const fs = require('fs');
   const path = require('path');
@@ -305,7 +305,7 @@ async function generateInvoiceInnerHtml(order, settings, options = {}) {
 
 <tr>
 <td class="label-column">العنوان</td>
-<td class="value-column">${safe(order.customer.government)}${order.customer.zone ? ` - ${safe(order.customer.zone)}` : ''} - ${safe(order.customer.address)}</td>
+<td class="value-column">${safe(order.customer.government)} - ${safe(order.customer.address)}</td>
 </tr>
 
 </tbody>

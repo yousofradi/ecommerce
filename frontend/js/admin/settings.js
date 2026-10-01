@@ -1,4 +1,4 @@
-const SETTINGS_KEY = 'sundura_global_settings';
+const SETTINGS_KEY = 'loli_global_settings';
 let originalSettings = null;
 let paymentMethods = [];
 
@@ -123,6 +123,8 @@ function addPaymentMethod() {
         id,
         label: '',
         number: '',
+        accountHolder: '',
+        recipientName: '',
         logo: ''
     });
     renderPaymentMethods();
@@ -151,7 +153,12 @@ async function handlePaymentLogoUpload(input, id) {
 
 function updatePaymentMethod(id, field, value) {
     const method = paymentMethods.find(m => m.id === id);
-    if (method) method[field] = value;
+    if (method) {
+        method[field] = value;
+        if (field === 'accountHolder') {
+            method.recipientName = value;
+        }
+    }
     if (window.markAsModified) window.markAsModified();
 }
 
@@ -160,30 +167,40 @@ function renderPaymentMethods() {
     if (!container) return;
     
     container.innerHTML = paymentMethods.map(m => `
-        <div class="admin-card" style="margin:0; border:1px solid #e2e8f0; background:#f8fafc; padding:20px; border-radius:16px; position:relative;">
-            <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:20px;">
-                <!-- Right: Logo (Circular Shape) -->
-                <div style="width:70px; height:70px; background:#fff; border:2px solid #e2e8f0; border-radius:50%; display:flex; align-items:center; justify-content:center; overflow:hidden; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
-                    ${m.logo ? `<img src="${m.logo}" style="max-width:100%; max-height:100%; object-fit:contain;">` : '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'}
+        <div class="admin-card" style="margin:0; border:1px solid #e2e8f0; background:#f8fafc; padding:16px; border-radius:12px; position:relative;">
+            <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:14px;">
+                <!-- Right: Logo & Change Button -->
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <div style="width:50px; height:50px; background:#fff; border:1.5px solid #e2e8f0; border-radius:50%; display:flex; align-items:center; justify-content:center; overflow:hidden; box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.1);">
+                        ${m.logo ? `<img src="${m.logo}" style="max-width:100%; max-height:100%; object-fit:contain;">` : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'}
+                    </div>
+
+                    <button class="btn-change-shape" onclick="document.getElementById('pay-logo-${m.id}').click()" style="width:60px; height:36px; background:#f1f5f9; color:#475569; border:1px solid #e2e8f0; border-radius:8px; font-size:0.75rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center;">
+                        تغيير
+                    </button>
+                    <input type="file" id="pay-logo-${m.id}" style="display:none" accept="image/*" onchange="handlePaymentLogoUpload(this, '${m.id}')">
                 </div>
 
-                <!-- Middle: Change Button (Grey Rectangular Shape) -->
-                <button class="btn-change-shape" onclick="document.getElementById('pay-logo-${m.id}').click()" style="width:70px; height:44px; background:#f1f5f9; color:#475569; border:1.5px solid #e2e8f0; border-radius:10px; font-size:0.8rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s;">
-                    تغيير
-                </button>
-                <input type="file" id="pay-logo-${m.id}" style="display:none" accept="image/*" onchange="handlePaymentLogoUpload(this, '${m.id}')">
-
-                <!-- Left: Delete Button (Red Square Shape) -->
-                <button class="btn-delete-shape" onclick="removePaymentMethod('${m.id}')" style="width:44px; height:44px; background:#fee2e2; border:1.5px solid #ef4444; border-radius:12px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s;" title="حذف">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                <!-- Left: Delete Button -->
+                <button class="btn-delete-shape" onclick="removePaymentMethod('${m.id}')" style="width:36px; height:36px; background:#fee2e2; border:1px solid #ef4444; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer;" title="حذف">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                 </button>
             </div>
 
-            <div class="form-group mb-12">
-                <input type="text" class="form-control" value="${m.label}" oninput="updatePaymentMethod('${m.id}', 'label', this.value)" placeholder="اسم الوسيلة (مثال: فودافون كاش)" style="font-weight:700; text-align:center;">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:12px;">
+                <div class="form-group mb-0">
+                    <label style="display:block; font-size:0.75rem; color:#64748b; font-weight:700; margin-bottom:4px; text-align:right;">اسم وسيلة الدفع</label>
+                    <input type="text" class="form-control" value="${m.label || ''}" oninput="updatePaymentMethod('${m.id}', 'label', this.value)" placeholder="اسم وسيلة الدفع" style="font-weight:700; text-align:center; padding:8px; font-size:0.85rem;">
+                </div>
+                <div class="form-group mb-0">
+                    <label style="display:block; font-size:0.75rem; color:#64748b; font-weight:700; margin-bottom:4px; text-align:right;">رقم التحويل</label>
+                    <input type="text" class="form-control" value="${m.number || ''}" oninput="updatePaymentMethod('${m.id}', 'number', this.value)" placeholder="رقم التحويل" style="text-align:center; font-family:monospace; font-size:0.85rem; padding:8px;">
+                </div>
             </div>
+
             <div class="form-group mb-0">
-                <input type="text" class="form-control" value="${m.number}" oninput="updatePaymentMethod('${m.id}', 'number', this.value)" placeholder="الرقم أو الحساب" style="text-align:center; font-family:monospace; font-size:1.1rem;">
+                <label style="display:block; font-size:0.75rem; color:#64748b; font-weight:700; margin-bottom:4px; text-align:right;">(صاحب الحساب/المحفظة)</label>
+                <input type="text" class="form-control" value="${m.accountHolder || m.recipientName || ''}" oninput="updatePaymentMethod('${m.id}', 'accountHolder', this.value)" placeholder="(صاحب الحساب/المحفظة)" style="text-align:center; padding:8px; font-size:0.85rem;">
             </div>
         </div>
     `).join('');

@@ -2,16 +2,22 @@
 (function () {
   const cachedName = localStorage.getItem('admin_store_name');
   const cachedColor = localStorage.getItem('admin_primary_color');
-  const cachedLogo = localStorage.getItem('admin_store_logo');
+  let cachedLogo = localStorage.getItem('admin_store_logo') || localStorage.getItem('loli_store_logo');
+  if (cachedLogo && (cachedLogo.includes('sundura') || cachedLogo.includes('wuiltstore') || cachedLogo.includes('cmo1') || cachedLogo.includes('/uploads/'))) {
+    localStorage.removeItem('admin_store_logo');
+    localStorage.removeItem('loli_store_logo');
+    localStorage.removeItem('sundura_store_logo');
+    cachedLogo = null;
+  }
   const cachedUrl = localStorage.getItem('admin_store_url');
 
 
   const apply = () => {
     if (cachedName || true) { // Always execute
-      document.querySelectorAll('.store-name-text').forEach(el => el.textContent = 'SunduraShop');
+      document.querySelectorAll('.store-name-text').forEach(el => el.textContent = 'LoliShop');
       if (document.title.includes('—')) {
         const parts = document.title.split('—');
-        document.title = parts[0].trim() + ' — SunduraShop';
+        document.title = parts[0].trim() + ' — LoliShop';
       }
     }
     if (cachedColor) {
@@ -21,11 +27,10 @@
       style.textContent = `.admin-nav a.active { background: ${cachedColor}15 !important; color: ${cachedColor} !important; } .admin-nav a.active svg { color: ${cachedColor} !important; }`;
       if (!document.getElementById('dynamic-primary-style')) document.head.appendChild(style);
     }
-    if (cachedLogo) {
-      document.querySelectorAll('.store-logo-img, img[src*="cmo1fsgmc060f01lwhwpn6ga7"]').forEach(img => img.src = cachedLogo || '/assets/logo.webp');
-      const loginLogo = document.getElementById('login-brand-logo');
-      if (loginLogo) loginLogo.innerHTML = `<img src="${cachedLogo || '/assets/logo.webp'}" style="max-height:100%; max-width:150px; display:block; margin:0 auto;">`;
-    }
+    const activeLogo = cachedLogo || '/assets/logo.webp?v=20260927_v3';
+    document.querySelectorAll('.store-logo-img').forEach(img => img.src = activeLogo);
+    const loginLogo = document.getElementById('login-brand-logo');
+    if (loginLogo) loginLogo.innerHTML = `<img src="${activeLogo}" style="max-height:100%; max-width:150px; display:block; margin:0 auto;">`;
     if (cachedUrl) {
       document.querySelectorAll('.admin-store-preview').forEach(a => a.href = cachedUrl);
     }
@@ -36,7 +41,15 @@
 })();
 
 window.API_BASE = 'API_URL_PLACEHOLDER';
-const API_BASE = window.API_BASE;
+const getNormalizedApiBase = () => {
+  let raw = window.API_BASE || 'API_URL_PLACEHOLDER';
+  if (!raw || raw.includes('API_URL_PLACEHOLDER')) {
+    raw = 'https://onlinestore-api-hju3.onrender.com/api';
+  }
+  const clean = raw.trim().replace(/\/+$/, '');
+  return clean.endsWith('/api') ? clean : `${clean}/api`;
+};
+const API_BASE = getNormalizedApiBase();
 
 // v1.1.0 - Added seedShipping
 const api = {
@@ -70,13 +83,15 @@ const api = {
       finalPath += `${separator}_t=${Date.now()}`;
     }
 
-    if (API_BASE === 'API_URL' + '_PLACEHOLDER') {
+    const base = getNormalizedApiBase();
+    if (base === 'API_URL' + '_PLACEHOLDER') {
       if (id) clearTimeout(id);
-      console.error(`CRITICAL: API URL is not configured (Value: ${API_BASE})`);
+      console.error(`CRITICAL: API URL is not configured (Value: ${base})`);
       throw new Error('خطأ في تهيئة الاتصال بالخادم. يرجى مراجعة الإعدادات.');
     }
     try {
-      const res = await fetch(`${API_BASE}${finalPath}`, { ...opts, headers, signal: controller.signal });
+      const fullUrl = `${base}${finalPath}`.replace('/api/api/', '/api/');
+      const res = await fetch(fullUrl, { ...opts, headers, signal: controller.signal });
       const data = await res.json();
       if (!res.ok) {
         if (res.status === 401 && finalPath.includes('/employees/me')) {
@@ -187,7 +202,6 @@ const api = {
   // Shipping
   getShipping() { return this._request('/shipping', { useCache: false }); },
   getPublicShipping() { return this._request('/shipping', { useCache: false }); },
-  getZones(cityId) { return this._request(`/shipping/zones/${cityId}`, { useCache: false }); },
   getShippingList() { return this._request('/shipping/list', { admin: true, useCache: false }); },
   createShipping(d) { return this._request('/shipping', { method: 'POST', body: JSON.stringify(d), admin: true }); },
   updateShipping(id, d) { return this._request(`/shipping/${id}`, { method: 'PUT', body: JSON.stringify(d), admin: true }); },
@@ -283,7 +297,8 @@ const api = {
   uploadFile(file, onProgress, prefix) {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
-      xhr.open('POST', `${API_BASE}/upload`, true);
+      const base = getNormalizedApiBase();
+      xhr.open('POST', `${base}/upload`, true);
       xhr.setRequestHeader('x-admin-key', this._adminKey());
 
       if (onProgress && xhr.upload) {
@@ -375,24 +390,6 @@ const api = {
       body: JSON.stringify({ orderIds }),
       admin: true
     });
-  },
-
-  formatZoneName(z) {
-    if (!z) return '';
-    const main = (z.zoneOtherName || z.otherName || z.name || '').trim();
-    const dist = (z.districtOtherName || z.districtName || '').trim();
-    
-    const normalize = (s) => s.toLowerCase()
-      .replace(/[أإآا]/g, 'ا')
-      .replace(/ة/g, 'ه')
-      .replace(/ى/g, 'ي')
-      .replace(/\s+/g, '')
-      .trim();
-
-    if (dist && normalize(dist) !== normalize(main)) {
-      return `${main} - ${dist}`;
-    }
-    return main;
   }
 };
 
@@ -548,12 +545,15 @@ document.addEventListener('DOMContentLoaded', () => {
 // ── Settings Loader ──────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   try {
-    const settings = await api.getSetting('sundura_global_settings');
+    const settings = await api.getSetting('loli_global_settings');
     if (settings) {
       // 1. Logo
       if (settings.storeLogo) {
-        localStorage.setItem('sundura_store_logo', settings.storeLogo);
-        document.querySelectorAll('.store-logo-img, img[src*="cmo1fsgmc060f01lwhwpn6ga7"]').forEach(img => {
+        if (!settings.storeLogo || settings.storeLogo.includes('sundura') || settings.storeLogo.includes('wuiltstore') || settings.storeLogo.includes('cmo1') || settings.storeLogo.includes('/uploads/')) {
+          settings.storeLogo = '/assets/logo.webp?v=20260927_v3';
+        }
+        localStorage.setItem('loli_store_logo', settings.storeLogo);
+        document.querySelectorAll('.store-logo-img').forEach(img => {
           img.src = settings.storeLogo;
           img.style.opacity = '1';
         });
@@ -565,10 +565,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       // 1.1 Store URL & Name Caching
-      if (settings.storeUrl) localStorage.setItem('sundura_store_url', settings.storeUrl);
+      if (settings.storeUrl) localStorage.setItem('loli_store_url', settings.storeUrl);
       if (settings.storeName) {
-        localStorage.setItem('sundura_store_name', settings.storeName);
-        document.querySelectorAll('.store-name-text').forEach(el => el.textContent = 'SunduraShop');
+        localStorage.setItem('loli_store_name', settings.storeName);
+        document.querySelectorAll('.store-name-text').forEach(el => el.textContent = 'LoliShop');
       }
 
       if (settings.storeUrl) {
@@ -596,22 +596,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         for (const sep of separators) {
           if (document.title.includes(sep)) {
             const parts = document.title.split(sep);
-            document.title = parts[0].trim() + ' ' + sep + ' SunduraShop';
+            document.title = parts[0].trim() + ' ' + sep + ' LoliShop';
             updated = true;
             break;
           }
         }
         if (!updated) {
-          document.title = 'SunduraShop';
+          document.title = 'LoliShop';
         }
 
         const adminBrand = document.querySelector('.admin-brand-title');
-        if (adminBrand) adminBrand.textContent = 'SunduraShop';
+        if (adminBrand) adminBrand.textContent = 'LoliShop';
 
         // Update any generic placeholders in the DOM
         document.querySelectorAll('.store-name-text').forEach(el => {
-          if (el.tagName === 'INPUT') el.value = 'SunduraShop';
-          else el.textContent = 'SunduraShop';
+          if (el.tagName === 'INPUT') el.value = 'LoliShop';
+          else el.textContent = 'LoliShop';
         });
 
         // 3.1 SEO Meta Tags
@@ -705,7 +705,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       // 7. Custom Color Palette
       if (settings.primaryColor) {
-        localStorage.setItem('sundura_primary_color', settings.primaryColor);
+        localStorage.setItem('loli_primary_color', settings.primaryColor);
         applyColorPalette(settings.primaryColor);
       }
 

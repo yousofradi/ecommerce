@@ -63,7 +63,7 @@ async function sendWebhookInner(event, data, options = {}) {
         const { generateInvoiceInnerHtml } = require('./invoice');
 
         const waConfigSetting = await Setting.findOne({ key: 'whatsapp_configs' });
-        const globalSettings = await Setting.findOne({ key: 'sundura_global_settings' });
+        const globalSettings = await Setting.findOne({ key: 'loli_global_settings' });
         const settings = globalSettings ? globalSettings.value : {};
         const brandName = settings.storeNameAr || settings.storeName || 'متجرنا';
 
@@ -253,19 +253,22 @@ async function sendWebhookInner(event, data, options = {}) {
 
 شكراً لثقتك بنا ♡`;
             } else {
-              const selectedPaymentMethod = (settings.paymentMethods || []).find(m => m.label === data.paymentMethod);
-              const paymentNumber = selectedPaymentMethod ? selectedPaymentMethod.number : '';
-
-              const normPayment = `${data.paymentMethod || ''} ${selectedPaymentMethod?.label || ''} ${selectedPaymentMethod?.id || ''}`
+              const normPayment = (data.paymentMethod || '')
                 .toLowerCase()
                 .replace(/[أإآ]/g, 'ا');
 
-              let accountHolder = '';
-              if (normPayment.includes('انستا') || normPayment.includes('insta')) {
-                accountHolder = 'دينا علي  (دينا ع** م*** ا****** ق**** )';
-              } else if (normPayment.includes('فودافون') || normPayment.includes('vodafone')) {
-                accountHolder = 'دينا علي محمد  \n(Dina A**  M******)';
-              }
+              const selectedPaymentMethod = (settings.paymentMethods || []).find(m => {
+                const normLabel = (m.label || '').toLowerCase().replace(/[أإآ]/g, 'ا');
+                const normId = (m.id || '').toLowerCase();
+                return m.label === data.paymentMethod || 
+                       m.id === data.paymentMethod ||
+                       (normPayment.includes('فودافون') && (normLabel.includes('فودافون') || normId.includes('vodafone'))) ||
+                       (normPayment.includes('vodafone') && (normLabel.includes('فودافون') || normId.includes('vodafone'))) ||
+                       (normPayment.includes('انستا') && (normLabel.includes('انستا') || normId.includes('insta'))) ||
+                       (normPayment.includes('insta') && (normLabel.includes('انستا') || normId.includes('insta')));
+              });
+              const paymentNumber = selectedPaymentMethod ? selectedPaymentMethod.number : '';
+              const accountHolder = selectedPaymentMethod ? (selectedPaymentMethod.accountHolder || selectedPaymentMethod.recipientName || '') : '';
 
               customerMessage = `مرحباً ${data.customer.name}
 
@@ -293,10 +296,11 @@ ${remainingText}
           let cleanCustomerPhone = formatWaNumber(data.customer?.phone);
           const whatsappLink = `https://api.whatsapp.com/send?phone=${cleanCustomerPhone}&text=${encodeURIComponent(customerMessage)}`;
 
-          // Shorten the Link using Sundura API
+          // Shorten the Link using URL shortener
           let shortLink = whatsappLink;
           try {
-            const shortenRes = await fetch('https://url.sundura.workers.dev/api/shorten', {
+            const shortenerUrl = process.env.URL_SHORTENER_URL || 'https://url.sundura.workers.dev/api/shorten';
+            const shortenRes = await fetch(shortenerUrl, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ url: whatsappLink }),
@@ -309,7 +313,7 @@ ${remainingText}
               }
             }
           } catch (error) {
-            console.warn('[WhatsApp] Sundura link shortening failed:', error.message);
+            console.warn('[WhatsApp] Link shortening failed:', error.message);
           }
 
           // Filter customer configs
@@ -525,7 +529,6 @@ ${shortLink}`;
           "Phone": data.customer?.phone || "",
           "Second Phone": data.customer?.secondPhone || "",
           "Address": data.customer?.address || "",
-          "Zone": data.customer?.zone || "",
           "Gov-ar": data.customer?.government || "",
           "Gov-en": cityMap[data.customer?.government] || data.customer?.government || "",
           "notes": data.customer?.notes || "",

@@ -1,5 +1,5 @@
 /** Homepage — renders sections from homepage builder config */
-const STORAGE_KEY = 'sundura_homepage_sections';
+const STORAGE_KEY = 'loli_homepage_sections';
 
 document.addEventListener('DOMContentLoaded', async () => {
   const content = document.getElementById('home-content');
@@ -121,7 +121,7 @@ function renderCollectionSection(s, collections) {
     const lazyAttr = idx < 4 ? '' : 'loading="lazy"';
     return `
             <a href="${link}" class="cat-item">
-              <img src="${img || '/assets/logo.webp'}" alt="${c.name}" ${lazyAttr} onerror="this.onerror=null; this.style.background='#f5efe9';">
+              <img src="${img || '/assets/logo.webp?v=20260927_v3'}" alt="${c.name}" ${lazyAttr} onerror="this.onerror=null; this.style.background='#f5efe9';">
               ${s.showNames !== false ? `<div class="cat-label">${c.name}</div>` : ''}
             </a>`;
   }).join('')}
