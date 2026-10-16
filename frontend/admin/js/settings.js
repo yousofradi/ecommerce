@@ -257,9 +257,28 @@ async function saveSettings() {
     await api.updateSetting(SETTINGS_KEY, settings);
     originalSettings = JSON.parse(JSON.stringify(settings));
     
-    // Immediately update preview links in the current page
+    // Immediately update caches and DOM in the current page
+    if (settings.storeLogo) {
+      localStorage.setItem('sundura_store_logo', settings.storeLogo);
+      localStorage.setItem('admin_store_logo', settings.storeLogo);
+      document.querySelectorAll('.store-logo-img, img[src*="cmo1fsgmc060f01lwhwpn6ga7"]').forEach(img => {
+        img.onerror = function () { this.onerror = null; this.src = '/assets/logo.webp'; };
+        img.src = settings.storeLogo;
+      });
+    }
+    if (settings.storeFavicon) localStorage.setItem('sundura_store_favicon', settings.storeFavicon);
+    if (settings.storePreview) localStorage.setItem('sundura_store_preview', settings.storePreview);
+    if (settings.storeName) {
+      localStorage.setItem('sundura_store_name', settings.storeName);
+      localStorage.setItem('admin_store_name', settings.storeName);
+    }
+    if (settings.primaryColor) {
+      localStorage.setItem('sundura_primary_color', settings.primaryColor);
+      localStorage.setItem('admin_primary_color', settings.primaryColor);
+    }
     if (settings.storeUrl) {
       localStorage.setItem('sundura_store_url', settings.storeUrl);
+      localStorage.setItem('admin_store_url', settings.storeUrl);
       document.querySelectorAll('.admin-store-preview').forEach(a => {
         a.href = settings.storeUrl;
       });

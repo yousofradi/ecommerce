@@ -1,4 +1,93 @@
-// ── Immediate Branding Removed (Static Branding applied) ──────────
+// ── Immediate Branding Application ──────────────────────────
+(function () {
+  const fallbackLogo = '/assets/logo.webp';
+  const fallbackFavicon = '/assets/favicon.png';
+  const fallbackPreview = '/assets/og.png';
+
+  const cachedLogo = localStorage.getItem('sundura_store_logo') || localStorage.getItem('admin_store_logo');
+  const cachedFavicon = localStorage.getItem('sundura_store_favicon');
+  const cachedPreview = localStorage.getItem('sundura_store_preview');
+  const cachedName = localStorage.getItem('sundura_store_name') || localStorage.getItem('admin_store_name');
+  const cachedColor = localStorage.getItem('sundura_primary_color') || localStorage.getItem('admin_primary_color');
+
+  const apply = () => {
+    // 1. Logo with asset fallback
+    const logoSrc = cachedLogo || fallbackLogo;
+    document.querySelectorAll('.store-logo-img, img[src*="cmo1fsgmc060f01lwhwpn6ga7"]').forEach(img => {
+      img.onerror = function () {
+        if (this.src !== fallbackLogo && !this.src.endsWith(fallbackLogo)) {
+          this.onerror = null;
+          this.src = fallbackLogo;
+        }
+      };
+      if (img.src !== logoSrc) {
+        img.src = logoSrc;
+      }
+    });
+
+    const loginLogo = document.getElementById('login-brand-logo');
+    if (loginLogo && cachedLogo) {
+      loginLogo.innerHTML = `<img src="${cachedLogo}" onerror="this.onerror=null;this.src='${fallbackLogo}';" style="max-height:100%; max-width:150px; display:block; margin:0 auto;">`;
+    }
+
+    // 2. Favicon with asset fallback
+    if (cachedFavicon) {
+      let link = document.querySelector("link[rel~='icon']");
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        document.head.appendChild(link);
+      }
+      link.href = cachedFavicon;
+    }
+
+    // 3. Site Preview (OG Image)
+    if (cachedPreview) {
+      const updateMeta = (attr, val, content) => {
+        let el = document.querySelector(`meta[${attr}="${val}"]`);
+        if (!el) {
+          el = document.createElement('meta');
+          el.setAttribute(attr, val);
+          document.head.appendChild(el);
+        }
+        el.content = content;
+      };
+      updateMeta('property', 'og:image', cachedPreview);
+      updateMeta('name', 'twitter:image', cachedPreview);
+    }
+
+    // 4. Store Name & Title
+    if (cachedName) {
+      document.querySelectorAll('.store-name-text').forEach(el => {
+        if (el.tagName === 'INPUT') el.value = cachedName;
+        else el.textContent = cachedName;
+      });
+      document.querySelectorAll('.store-logo-img').forEach(img => {
+        img.alt = `${cachedName} Logo`;
+      });
+      const separators = ['|', '—', '-'];
+      for (const sep of separators) {
+        if (document.title.includes(sep)) {
+          const parts = document.title.split(sep);
+          document.title = parts[0].trim() + ' ' + sep + ' ' + cachedName;
+          break;
+        }
+      }
+    }
+
+    // 5. Primary Color
+    if (cachedColor) {
+      document.documentElement.style.setProperty('--primary', cachedColor);
+    }
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', apply);
+  } else {
+    apply();
+  }
+})();
+
 const API_BASE = 'API_URL_PLACEHOLDER';
 
 
@@ -560,19 +649,156 @@ document.addEventListener('DOMContentLoaded', () => {
     }).catch(err => console.error('Failed to track visitor', err));
   }
 
-  // Populate WhatsApp link globally
-  const waLink = document.getElementById('nav-wa-link');
-  if (waLink) {
-    api.getSetting('sundura_global_settings').then(settings => {
-      if (settings && settings.socialWa) {
-        let waNumber = settings.socialWa.replace(/[^0-9]/g, '');
-        if (waNumber.startsWith('01')) waNumber = '2' + waNumber;
-        waLink.href = `https://wa.me/${waNumber}`;
-      } else {
-        waLink.style.display = 'none';
+  // ── Store Settings & Branding Loader ──────────────────
+  const fallbackLogo = '/assets/logo.webp';
+  const fallbackFavicon = '/assets/favicon.png';
+  const fallbackPreview = '/assets/og.png';
+
+  api.getSetting('sundura_global_settings').then(settings => {
+    if (!settings) throw new Error('Settings not found');
+
+    // 1. Logo from settings (fallback to assets/logo.webp)
+    const logoUrl = settings.storeLogo || fallbackLogo;
+    if (settings.storeLogo) {
+      localStorage.setItem('sundura_store_logo', settings.storeLogo);
+    } else {
+      localStorage.removeItem('sundura_store_logo');
+    }
+
+    document.querySelectorAll('.store-logo-img, img[src*="cmo1fsgmc060f01lwhwpn6ga7"]').forEach(img => {
+      img.onerror = function () {
+        if (this.src !== fallbackLogo && !this.src.endsWith(fallbackLogo)) {
+          this.onerror = null;
+          this.src = fallbackLogo;
+        }
+      };
+      img.src = logoUrl;
+      if (img.style) img.style.opacity = '1';
+    });
+
+    const loginLogo = document.getElementById('login-brand-logo');
+    if (loginLogo) {
+      loginLogo.innerHTML = `<img src="${logoUrl}" onerror="this.onerror=null;this.src='${fallbackLogo}';" style="max-height:100%; max-width:150px; display:block; margin:0 auto;">`;
+    }
+
+    // 2. Favicon (fallback to assets/favicon.png)
+    const faviconUrl = settings.storeFavicon || fallbackFavicon;
+    if (settings.storeFavicon) {
+      localStorage.setItem('sundura_store_favicon', settings.storeFavicon);
+    } else {
+      localStorage.removeItem('sundura_store_favicon');
+    }
+    let favLink = document.querySelector("link[rel~='icon']");
+    if (!favLink) {
+      favLink = document.createElement('link');
+      favLink.rel = 'icon';
+      document.head.appendChild(favLink);
+    }
+    favLink.href = faviconUrl;
+
+    // 3. Site Preview (OG Image) (fallback to assets/og.png)
+    const previewUrl = settings.storePreview || fallbackPreview;
+    if (settings.storePreview) {
+      localStorage.setItem('sundura_store_preview', settings.storePreview);
+    } else {
+      localStorage.removeItem('sundura_store_preview');
+    }
+    const updateMeta = (attr, val, content) => {
+      let el = document.querySelector(`meta[${attr}="${val}"]`);
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute(attr, val);
+        document.head.appendChild(el);
       }
-    }).catch(err => console.error('Failed to load WhatsApp link', err));
-  }
+      el.content = content;
+    };
+    updateMeta('property', 'og:image', previewUrl);
+    updateMeta('name', 'twitter:image', previewUrl);
+
+    // 4. Store Name & Titles
+    if (settings.storeName) {
+      localStorage.setItem('sundura_store_name', settings.storeName);
+      if (settings.storeNameAr) {
+        localStorage.setItem('sundura_store_name_ar', settings.storeNameAr);
+      }
+      document.querySelectorAll('.store-name-text').forEach(el => {
+        if (el.tagName === 'INPUT') el.value = settings.storeName;
+        else el.textContent = settings.storeName;
+      });
+      document.querySelectorAll('.store-logo-img').forEach(img => {
+        img.alt = `${settings.storeName} Logo`;
+      });
+      const separators = ['|', '—', '-'];
+      for (const sep of separators) {
+        if (document.title.includes(sep)) {
+          const parts = document.title.split(sep);
+          document.title = parts[0].trim() + ' ' + sep + ' ' + settings.storeName;
+          break;
+        }
+      }
+      updateMeta('property', 'og:title', settings.storeName);
+      updateMeta('name', 'twitter:title', settings.storeName);
+
+      const footerCopy = document.querySelector('.footer-bottom-bar');
+      if (footerCopy && footerCopy.textContent.includes('©')) {
+        footerCopy.innerHTML = `© ${new Date().getFullYear()} ${settings.storeName}. جميع الحقوق محفوظة.`;
+      }
+    }
+
+    // 5. Contact Numbers & Social Links
+    const waLink = document.getElementById('nav-wa-link');
+    if (settings.socialWa) {
+      let waNumber = settings.socialWa.replace(/[^0-9]/g, '');
+      if (waNumber.startsWith('01')) waNumber = '2' + waNumber;
+      const waUrl = `https://wa.me/${waNumber}`;
+      document.querySelectorAll('a[href*="wa.me"], #nav-wa-link').forEach(link => {
+        link.href = waUrl;
+        link.style.display = '';
+      });
+    } else if (waLink) {
+      waLink.style.display = 'none';
+    }
+
+    if (settings.socialTg) {
+      document.querySelectorAll('a[href*="t.me"], #nav-tg-link').forEach(link => {
+        link.href = settings.socialTg;
+      });
+    }
+    if (settings.socialFb) {
+      document.querySelectorAll('a[href*="facebook.com"]').forEach(link => {
+        if (!link.classList.contains('no-brand-sync')) link.href = settings.socialFb;
+      });
+    }
+    if (settings.socialIg) {
+      document.querySelectorAll('a[href*="instagram.com"]').forEach(link => {
+        if (!link.classList.contains('no-brand-sync')) link.href = settings.socialIg;
+      });
+    }
+    if (settings.socialTt) {
+      document.querySelectorAll('a[href*="tiktok.com"]').forEach(link => {
+        if (!link.classList.contains('no-brand-sync')) link.href = settings.socialTt;
+      });
+    }
+
+    // 6. Primary Color
+    if (settings.primaryColor) {
+      localStorage.setItem('sundura_primary_color', settings.primaryColor);
+      document.documentElement.style.setProperty('--primary', settings.primaryColor);
+    }
+  }).catch(err => {
+    console.warn('Failed to load store settings, using assets fallback:', err);
+    // Explicit asset fallback if API fails
+    document.querySelectorAll('.store-logo-img, img[src*="cmo1fsgmc060f01lwhwpn6ga7"]').forEach(img => {
+      img.onerror = null;
+      img.src = fallbackLogo;
+    });
+    let favLink = document.querySelector("link[rel~='icon']");
+    if (favLink) favLink.href = fallbackFavicon;
+    let ogMeta = document.querySelector('meta[property="og:image"]');
+    if (ogMeta) ogMeta.content = fallbackPreview;
+    let twMeta = document.querySelector('meta[name="twitter:image"]');
+    if (twMeta) twMeta.content = fallbackPreview;
+  });
 
   // Inject sticky category bar globally
   const excludedPaths = ['/cart', '/checkout', '/order-success'];

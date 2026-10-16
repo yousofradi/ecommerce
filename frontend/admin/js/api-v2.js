@@ -1,9 +1,9 @@
 // ── Immediate Branding Application ──────────────────────────
 (function () {
-  const cachedName = localStorage.getItem('admin_store_name');
-  const cachedColor = localStorage.getItem('admin_primary_color');
-  const cachedLogo = localStorage.getItem('admin_store_logo');
-  const cachedUrl = localStorage.getItem('admin_store_url');
+  const cachedName = localStorage.getItem('sundura_store_name') || localStorage.getItem('admin_store_name');
+  const cachedColor = localStorage.getItem('sundura_primary_color') || localStorage.getItem('admin_primary_color');
+  const cachedLogo = localStorage.getItem('sundura_store_logo') || localStorage.getItem('admin_store_logo');
+  const cachedUrl = localStorage.getItem('sundura_store_url') || localStorage.getItem('admin_store_url');
 
 
   const apply = () => {
@@ -22,9 +22,15 @@
       if (!document.getElementById('dynamic-primary-style')) document.head.appendChild(style);
     }
     if (cachedLogo) {
-      document.querySelectorAll('.store-logo-img, img[src*="cmo1fsgmc060f01lwhwpn6ga7"]').forEach(img => img.src = cachedLogo || '/assets/logo.webp');
+      document.querySelectorAll('.store-logo-img, img[src*="cmo1fsgmc060f01lwhwpn6ga7"]').forEach(img => {
+        img.onerror = function () {
+          this.onerror = null;
+          this.src = '/assets/logo.webp';
+        };
+        img.src = cachedLogo || '/assets/logo.webp';
+      });
       const loginLogo = document.getElementById('login-brand-logo');
-      if (loginLogo) loginLogo.innerHTML = `<img src="${cachedLogo || '/assets/logo.webp'}" style="max-height:100%; max-width:150px; display:block; margin:0 auto;">`;
+      if (loginLogo) loginLogo.innerHTML = `<img src="${cachedLogo || '/assets/logo.webp'}" onerror="this.onerror=null;this.src='/assets/logo.webp';" style="max-height:100%; max-width:150px; display:block; margin:0 auto;">`;
     }
     if (cachedUrl) {
       document.querySelectorAll('.admin-store-preview').forEach(a => a.href = cachedUrl);
@@ -556,17 +562,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     const settings = await api.getSetting('sundura_global_settings');
     if (settings) {
       // 1. Logo
+      const fallbackLogo = '/assets/logo.webp';
+      const logoUrl = settings.storeLogo || fallbackLogo;
       if (settings.storeLogo) {
         localStorage.setItem('sundura_store_logo', settings.storeLogo);
-        document.querySelectorAll('.store-logo-img, img[src*="cmo1fsgmc060f01lwhwpn6ga7"]').forEach(img => {
-          img.src = settings.storeLogo;
-          img.style.opacity = '1';
-        });
+        localStorage.setItem('admin_store_logo', settings.storeLogo);
+      }
+      document.querySelectorAll('.store-logo-img, img[src*="cmo1fsgmc060f01lwhwpn6ga7"]').forEach(img => {
+        img.onerror = function () {
+          if (this.src !== fallbackLogo && !this.src.endsWith(fallbackLogo)) {
+            this.onerror = null;
+            this.src = fallbackLogo;
+          }
+        };
+        img.src = logoUrl;
+        if (img.style) img.style.opacity = '1';
+      });
 
-        const loginLogo = document.getElementById('login-brand-logo');
-        if (loginLogo) {
-          loginLogo.innerHTML = `<img src="${settings.storeLogo}" style="max-height:100%; max-width:150px; display:block; margin:0 auto;">`;
-        }
+      const loginLogo = document.getElementById('login-brand-logo');
+      if (loginLogo) {
+        loginLogo.innerHTML = `<img src="${logoUrl}" onerror="this.onerror=null;this.src='${fallbackLogo}';" style="max-height:100%; max-width:150px; display:block; margin:0 auto;">`;
       }
 
       // 1.1 Store URL & Name Caching
@@ -731,6 +746,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   } catch (err) {
     console.error('Failed to load global settings', err);
+    document.querySelectorAll('.store-logo-img, img[src*="cmo1fsgmc060f01lwhwpn6ga7"]').forEach(img => {
+      img.onerror = null;
+      img.src = '/assets/logo.webp';
+    });
   }
 });
 
