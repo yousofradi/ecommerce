@@ -17,14 +17,18 @@ async function generateInvoiceInnerHtml(order, settings, options = {}) {
   const path = require('path');
   const includeImages = options.includeImages === true;
 
-  let logoSrc = '/assets/logo.webp';
+  let fallbackLogo = '/assets/logo.webp';
   try {
     const logoPath = path.join(__dirname, '../../frontend/assets/logo.webp');
     if (fs.existsSync(logoPath)) {
       const buf = fs.readFileSync(logoPath);
-      logoSrc = `data:image/webp;base64,${buf.toString('base64')}`;
+      fallbackLogo = `data:image/webp;base64,${buf.toString('base64')}`;
     }
   } catch (e) { }
+
+  const logoSrc = (settings && settings.storeLogo && String(settings.storeLogo).trim())
+    ? String(settings.storeLogo).trim()
+    : fallbackLogo;
 
   const isCompact = order.items.length > 11;
   const imgSize = isCompact ? 18 : 24;
@@ -286,7 +290,7 @@ async function generateInvoiceInnerHtml(order, settings, options = {}) {
   <div style="display: flex; justify-content: space-between; align-items: center; font-weight: bold; padding: 4px 0; font-size: 13px;">
     <span style="width: 100px; text-align: right;">${safe(order.orderId)}</span>
     <span style="flex: 1; text-align: center; display: flex; justify-content: center; align-items: center;">
-      <img src="${logoSrc}" style="height: 28px; width: auto; display: block;" alt="Logo" />
+      <img src="${logoSrc}" onerror="this.onerror=null; this.src='${fallbackLogo}';" style="height: 28px; width: auto; display: block;" alt="Logo" />
     </span>
     <span style="width: 100px; text-align: left;">${dateStr}</span>
   </div>
