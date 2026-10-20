@@ -200,7 +200,7 @@ async function sendWebhookInner(event, data, options = {}) {
 <body>${innerHtml}</body>
 </html>`;
 
-              const RENDER_API_URL = 'https://invoice-api-wybe.onrender.com/api/render';
+              const RENDER_API_URL = 'https://sundura-invoice-api.onrender.com/api/render';
 
               const renderRes = await fetch(RENDER_API_URL, {
                 method: 'POST',
@@ -260,12 +260,12 @@ async function sendWebhookInner(event, data, options = {}) {
               const selectedPaymentMethod = (settings.paymentMethods || []).find(m => {
                 const normLabel = (m.label || '').toLowerCase().replace(/[أإآ]/g, 'ا');
                 const normId = (m.id || '').toLowerCase();
-                return m.label === data.paymentMethod || 
-                       m.id === data.paymentMethod ||
-                       (normPayment.includes('فودافون') && (normLabel.includes('فودافون') || normId.includes('vodafone'))) ||
-                       (normPayment.includes('vodafone') && (normLabel.includes('فودافون') || normId.includes('vodafone'))) ||
-                       (normPayment.includes('انستا') && (normLabel.includes('انستا') || normId.includes('insta'))) ||
-                       (normPayment.includes('insta') && (normLabel.includes('انستا') || normId.includes('insta')));
+                return m.label === data.paymentMethod ||
+                  m.id === data.paymentMethod ||
+                  (normPayment.includes('فودافون') && (normLabel.includes('فودافون') || normId.includes('vodafone'))) ||
+                  (normPayment.includes('vodafone') && (normLabel.includes('فودافون') || normId.includes('vodafone'))) ||
+                  (normPayment.includes('انستا') && (normLabel.includes('انستا') || normId.includes('insta'))) ||
+                  (normPayment.includes('insta') && (normLabel.includes('انستا') || normId.includes('insta')));
               });
               const paymentNumber = selectedPaymentMethod ? selectedPaymentMethod.number : '';
               const accountHolder = selectedPaymentMethod ? (selectedPaymentMethod.accountHolder || selectedPaymentMethod.recipientName || '') : '';
