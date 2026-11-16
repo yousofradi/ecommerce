@@ -106,7 +106,8 @@ async function adjustStock(productId, selectedOptions, quantityDiff) {
             productName: product.name,
             variantDetails,
             price: varPrice,
-            quantity: 0
+            quantity: 0,
+            imageUrl: variant.imageUrl || product.imageUrl || (product.images && product.images[0]) || ''
           };
         }
       } else if (nextQuantity > 0) {
@@ -117,7 +118,8 @@ async function adjustStock(productId, selectedOptions, quantityDiff) {
             productName: product.name,
             variantDetails,
             price: varPrice,
-            quantity: nextQuantity
+            quantity: nextQuantity,
+            imageUrl: variant.imageUrl || product.imageUrl || (product.images && product.images[0]) || ''
           };
         }
       }
@@ -154,6 +156,7 @@ async function adjustStock(productId, selectedOptions, quantityDiff) {
 
   if (changed && quantityDiff < 0) {
     const effectivePrice = (product.salePrice && product.salePrice < product.basePrice) ? product.salePrice : product.basePrice;
+    const productImg = product.imageUrl || (product.images && product.images[0]) || '';
 
     // Case 1: Product count reached 0 -> Archive product & send alert
     if (product.quantity !== null && product.quantity <= 0) {
@@ -167,19 +170,20 @@ async function adjustStock(productId, selectedOptions, quantityDiff) {
       const alertKey = `prod:zero:${product._id}`;
       if (shouldSendAlert(alertKey)) {
         const zeroMsg = `تنبيه: نفاد المخزون وتمت أرشفة المنتج\n\nاسم المنتج: ${product.name}\nالسعر: ${effectivePrice} ج.م\nالكمية المتبقية: 0\nالحالة: تم نقل المنتج إلى الأرشيف تلقائياً`;
-        sendWhatsAppMessage(zeroMsg);
+        sendWhatsAppMessage(zeroMsg, productImg);
       }
     }
     // Case 2: Specific variant alert if variant reached 0 or low stock (< 3)
     else if (variantAlertData) {
       const alertKey = `var:${variantAlertData.type}:${productId}:${variantAlertData.variantDetails}`;
       if (shouldSendAlert(alertKey)) {
+        const varImg = variantAlertData.imageUrl || productImg;
         if (variantAlertData.type === 'zero') {
-          const varMsg = `تنبيه: نفاد مخزون المتغير\n\nاسم المنتج: ${variantAlertData.productName}\nالمتغير: ${variantAlertData.variantDetails}\nالسعر: ${variantAlertData.price} ج.م\nالكمية: 0`;
-          sendWhatsAppMessage(varMsg);
+          const varMsg = `تنبيه: نفاد مخزون المتغير\n\nاسم المنتج: ${variantAlertData.productName}\n${variantAlertData.variantDetails}\nالسعر: ${variantAlertData.price} ج.م\nالكمية: 0`;
+          sendWhatsAppMessage(varMsg, varImg);
         } else if (variantAlertData.type === 'low') {
-          const varMsg = `تنبيه: اقتراب نفاد مخزون المتغير\n\nاسم المنتج: ${variantAlertData.productName}\nالمتغير: ${variantAlertData.variantDetails}\nالسعر: ${variantAlertData.price} ج.م\nالكمية المتبقية: ${variantAlertData.quantity}`;
-          sendWhatsAppMessage(varMsg);
+          const varMsg = `تنبيه: اقتراب نفاد مخزون المتغير\n\nاسم المنتج: ${variantAlertData.productName}\n${variantAlertData.variantDetails}\nالسعر: ${variantAlertData.price} ج.م\nالكمية المتبقية: ${variantAlertData.quantity}`;
+          sendWhatsAppMessage(varMsg, varImg);
         }
       }
     }
@@ -189,7 +193,7 @@ async function adjustStock(productId, selectedOptions, quantityDiff) {
         const alertKey = `prod:low:${product._id}`;
         if (shouldSendAlert(alertKey)) {
           const lowMsg = `تنبيه: اقتراب نفاد المخزون\n\nاسم المنتج: ${product.name}\nالسعر: ${effectivePrice} ج.م\nالكمية المتبقية: ${product.quantity}`;
-          sendWhatsAppMessage(lowMsg);
+          sendWhatsAppMessage(lowMsg, productImg);
         }
       }
     }
