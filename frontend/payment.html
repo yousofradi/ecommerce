@@ -237,6 +237,9 @@
         if (notes) {
           waMessage += `ملاحظات التحويل : ${notes}\n\n`;
         }
+        if (transferScreenshotUrl) {
+          waMessage += `صورة التحويل : ${transferScreenshotUrl}\n\n`;
+        }
         waMessage += `يرجى مراجعة التحويل وتأكيد الطلب`;
         
         sessionStorage.setItem('waMessage_' + currentOrder.orderId, waMessage);

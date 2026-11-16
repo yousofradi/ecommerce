@@ -54,6 +54,9 @@ async function sendWebhookInner(event, data, options = {}) {
     let cachedInvoiceMedia = null;
     let triedInvoiceGeneration = false;
     let getInvoiceMedia = async () => null;
+    let cachedScreenshotMedia = null;
+    let triedScreenshotGeneration = false;
+    let getScreenshotMedia = async () => null;
     let fallbackSentToMerchant = false;
 
     // ── Phase 1: WhatsApp Customer Notification (Executed first to determine delivery status) ──
@@ -80,7 +83,7 @@ async function sendWebhookInner(event, data, options = {}) {
           };
 
           // Helper to send WhatsApp messages via Evolution API
-          const sendWaMessage = async (cleanBaseUrl, instance, apikey, targetNumber, messageText, mediaBase64, orderId) => {
+          const sendWaMessage = async (cleanBaseUrl, instance, apikey, targetNumber, messageText, mediaObjOrBase64, orderId) => {
             const waPayload = {
               number: targetNumber,
               delay: 1,
@@ -89,14 +92,21 @@ async function sendWebhookInner(event, data, options = {}) {
             };
 
             let finalWaUrl = '';
-            if (mediaBase64) {
+            if (mediaObjOrBase64) {
               finalWaUrl = `${cleanBaseUrl}/message/sendMedia/${instance}`;
               waPayload.mediatype = 'image';
               waPayload.mediaType = 'image';
-              waPayload.mimetype = 'image/png';
               waPayload.caption = messageText;
-              waPayload.media = mediaBase64.replace(/\s/g, '');
-              waPayload.fileName = `invoice-${orderId}.png`;
+
+              if (typeof mediaObjOrBase64 === 'object' && mediaObjOrBase64 !== null && mediaObjOrBase64.media) {
+                waPayload.media = typeof mediaObjOrBase64.media === 'string' ? mediaObjOrBase64.media.replace(/\s/g, '') : mediaObjOrBase64.media;
+                waPayload.mimetype = mediaObjOrBase64.mimetype || 'image/jpeg';
+                waPayload.fileName = mediaObjOrBase64.fileName || `media-${orderId}.jpg`;
+              } else {
+                waPayload.mimetype = 'image/png';
+                waPayload.media = String(mediaObjOrBase64).replace(/\s/g, '');
+                waPayload.fileName = `invoice-${orderId}.png`;
+              }
             } else {
               finalWaUrl = `${cleanBaseUrl}/message/sendText/${instance}`;
               waPayload.text = messageText;
@@ -120,7 +130,7 @@ async function sendWebhookInner(event, data, options = {}) {
             } catch (e) { }
 
             // Fallback: If sendMedia failed but NOT because number is missing from WhatsApp, retry with sendText
-            if (!res.ok && mediaBase64) {
+            if (!res.ok && mediaObjOrBase64) {
               const isNoWa = res.status === 400 && (rawText.includes('"exists":false') || rawText.includes('"exists": false'));
               if (!isNoWa) {
                 console.warn(`[WhatsApp] sendMedia failed (${res.status}), trying sendText fallback for ${targetNumber}...`);
@@ -232,6 +242,108 @@ async function sendWebhookInner(event, data, options = {}) {
             return cachedInvoiceMedia;
           };
 
+          // Cache screenshot media preparation across configs (when transferScreenshot is present)
+          getScreenshotMedia = async () => {
+            if (triedScreenshotGeneration) return cachedScreenshotMedia;
+            triedScreenshotGeneration = true;
+            if (!hasTransferScreenshot) return null;
+
+            try {
+              const fs = require('fs');
+              const path = require('path');
+              const screenshotUrl = String(data.transferScreenshot).trim();
+              if (!screenshotUrl) return null;
+
+              // 1. Base64 / Data URL
+              if (screenshotUrl.startsWith('data:image/')) {
+                const parts = screenshotUrl.split(',');
+                const meta = parts[0];
+                const base64Data = parts[1];
+                const mimeMatch = meta.match(/data:(.*?);base64/);
+                const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+                const ext = mime.includes('png') ? '.png' : (mime.includes('webp') ? '.webp' : '.jpg');
+                cachedScreenshotMedia = {
+                  media: base64Data,
+                  mimetype: mime,
+                  fileName: `screenshot-${data.orderId || 'order'}${ext}`
+                };
+                return cachedScreenshotMedia;
+              }
+
+              // 2. Check if file is stored locally in uploads/
+              const uploadsDir = path.join(__dirname, '../uploads');
+              let localFilePath = null;
+
+              if (screenshotUrl.includes('/uploads/')) {
+                const filename = screenshotUrl.split('/uploads/').pop().split('?')[0];
+                const candidate = path.join(uploadsDir, filename);
+                if (fs.existsSync(candidate)) {
+                  localFilePath = candidate;
+                }
+              } else if (!screenshotUrl.startsWith('http://') && !screenshotUrl.startsWith('https://')) {
+                const candidate = path.join(uploadsDir, path.basename(screenshotUrl));
+                if (fs.existsSync(candidate)) {
+                  localFilePath = candidate;
+                }
+              }
+
+              if (localFilePath) {
+                const fileBuffer = await fs.promises.readFile(localFilePath);
+                const ext = path.extname(localFilePath).toLowerCase();
+                const mimeTypes = {
+                  '.jpg': 'image/jpeg',
+                  '.jpeg': 'image/jpeg',
+                  '.png': 'image/png',
+                  '.webp': 'image/webp'
+                };
+                cachedScreenshotMedia = {
+                  media: fileBuffer.toString('base64'),
+                  mimetype: mimeTypes[ext] || 'image/jpeg',
+                  fileName: `screenshot-${data.orderId || 'order'}${ext || '.jpg'}`
+                };
+                return cachedScreenshotMedia;
+              }
+
+              // 3. Remote URL (e.g. R2, Cloudinary, S3)
+              if (screenshotUrl.startsWith('http://') || screenshotUrl.startsWith('https://')) {
+                try {
+                  const res = await fetch(screenshotUrl, { signal: AbortSignal.timeout(15000) });
+                  if (res.ok) {
+                    const buffer = await res.arrayBuffer();
+                    const contentType = res.headers.get('content-type') || 'image/jpeg';
+                    let ext = '.jpg';
+                    if (contentType.includes('png')) ext = '.png';
+                    else if (contentType.includes('webp')) ext = '.webp';
+
+                    cachedScreenshotMedia = {
+                      media: Buffer.from(buffer).toString('base64'),
+                      mimetype: contentType.split(';')[0].trim(),
+                      fileName: `screenshot-${data.orderId || 'order'}${ext}`
+                    };
+                    return cachedScreenshotMedia;
+                  }
+                } catch (fetchErr) {
+                  console.warn('[WhatsApp] Could not fetch remote screenshot into buffer, falling back to direct URL:', fetchErr.message);
+                }
+
+                // Fallback: pass URL directly to Evolution API sendMedia
+                let ext = '.jpg';
+                if (screenshotUrl.toLowerCase().endsWith('.png')) ext = '.png';
+                else if (screenshotUrl.toLowerCase().endsWith('.webp')) ext = '.webp';
+
+                cachedScreenshotMedia = {
+                  media: screenshotUrl,
+                  mimetype: ext === '.png' ? 'image/png' : (ext === '.webp' ? 'image/webp' : 'image/jpeg'),
+                  fileName: `screenshot-${data.orderId || 'order'}${ext}`
+                };
+                return cachedScreenshotMedia;
+              }
+            } catch (err) {
+              console.error('[WhatsApp] Screenshot media preparation error:', err.message);
+            }
+            return null;
+          };
+
           // Calculate amounts
           const baseRemaining = (data.totalPrice || 0) - (data.paidAmount || 0);
           let codFee = 0;
@@ -330,7 +442,9 @@ ${remainingText}
             let cleanBaseUrl = customerConf.baseUrl.trim().replace(/\/+$/, '');
             if (!cleanBaseUrl.startsWith('http')) cleanBaseUrl = `https://${cleanBaseUrl}`;
 
-            const invoiceMedia = (event === 'order.paid') ? await getInvoiceMedia() : null;
+            const customerMedia = (event === 'order.paid')
+              ? await getInvoiceMedia()
+              : (hasTransferScreenshot ? await getScreenshotMedia() : null);
             const primaryPhone = formatWaNumber(data.customer?.phone);
             const secondPhone = formatWaNumber(data.customer?.secondPhone);
             const fallbackMerchantPhone = '201039317393';
@@ -342,7 +456,7 @@ ${remainingText}
             if (primaryPhone) {
               console.log(`[WhatsApp] Sending customer message to primary phone: ${primaryPhone}`);
               try {
-                const res1 = await sendWaMessage(cleanBaseUrl, customerConf.instance, customerConf.apikey, primaryPhone, customerMessage, invoiceMedia, data.orderId);
+                const res1 = await sendWaMessage(cleanBaseUrl, customerConf.instance, customerConf.apikey, primaryPhone, customerMessage, customerMedia, data.orderId);
                 if (res1.ok) {
                   console.log(`[WhatsApp] Successfully sent to customer primary phone: ${primaryPhone}`);
                   sentSuccess = true;
@@ -359,7 +473,7 @@ ${remainingText}
             if (!sentSuccess && secondPhone && secondPhone !== primaryPhone) {
               console.log(`[WhatsApp] Trying customer secondary phone: ${secondPhone}`);
               try {
-                const res2 = await sendWaMessage(cleanBaseUrl, customerConf.instance, customerConf.apikey, secondPhone, customerMessage, invoiceMedia, data.orderId);
+                const res2 = await sendWaMessage(cleanBaseUrl, customerConf.instance, customerConf.apikey, secondPhone, customerMessage, customerMedia, data.orderId);
                 if (res2.ok) {
                   console.log(`[WhatsApp] Successfully sent to customer secondary phone: ${secondPhone}`);
                   sentSuccess = true;
@@ -395,8 +509,15 @@ ${remainingText}
 
               // Fallback to merchant phone 201039317393
               console.log(`[WhatsApp] Customer has no WhatsApp. Falling back to merchant at ${fallbackMerchantPhone}`);
-              const fallbackMedia = (event === 'order.paid') ? await getInvoiceMedia() : null;
+              const fallbackMedia = (event === 'order.paid')
+                ? await getInvoiceMedia()
+                : (hasTransferScreenshot ? await getScreenshotMedia() : null);
               const fallbackNotice = `${customerDeliveryStatus.statusText}\n\n`;
+              const transferDetails = hasTransferScreenshot ? [
+                data.transferNumber ? `رقم التحويل: ${data.transferNumber}` : '',
+                data.transferNotes ? `ملاحظات التحويل: ${data.transferNotes}` : ''
+              ].filter(Boolean).join('\n') : '';
+
               const fallbackOldMessage = (event === 'order.paid'
                 ? `✅ تم تأكيد الدفع 
 
@@ -410,7 +531,7 @@ ${shortLink}`
                 : `${hasTransferScreenshot ? '📸 الطلب مرفق به اسكرين التحويل' : '🔔 طلب جديد'}
 رقم الطلب: ${data.orderId}
 اسم العميل: ${data.customer.name}
-اجمالي الطلب: EGP ${data.totalPrice}${data.customer.notes ? `\nملاحظات: ${data.customer.notes}` : ''}
+اجمالي الطلب: EGP ${data.totalPrice}${data.customer.notes ? `\nملاحظات: ${data.customer.notes}` : ''}${transferDetails ? `\n${transferDetails}` : ''}
 
 رابط واتساب:
 ${shortLink}`);
@@ -440,10 +561,15 @@ ${shortLink}`);
 
           let ownerMessage = '';
           if (event === 'order.created') {
+            const transferDetails = hasTransferScreenshot ? [
+              data.transferNumber ? `رقم التحويل: ${data.transferNumber}` : '',
+              data.transferNotes ? `ملاحظات التحويل: ${data.transferNotes}` : ''
+            ].filter(Boolean).join('\n') : '';
+
             ownerMessage = `${hasTransferScreenshot ? '📸 الطلب مرفق به اسكرين التحويل' : '🔔 طلب جديد'}
 رقم الطلب: ${data.orderId}
 اسم العميل: ${data.customer.name}
-اجمالي الطلب: EGP ${data.totalPrice}${data.customer.notes ? `\nملاحظات: ${data.customer.notes}` : ''}
+اجمالي الطلب: EGP ${data.totalPrice}${data.customer.notes ? `\nملاحظات: ${data.customer.notes}` : ''}${transferDetails ? `\n${transferDetails}` : ''}
 
 رابط واتساب:
 ${shortLink}`;
@@ -483,12 +609,16 @@ ${shortLink}`;
             let cleanBaseUrl = conf.baseUrl.trim().replace(/\/+$/, '');
             if (!cleanBaseUrl.startsWith('http')) cleanBaseUrl = `https://${cleanBaseUrl}`;
 
-            // The merchant receives the invoice image if:
-            // 1) Direct sending to the customer is disabled/inactive (like the old behavior)
-            // 2) Or if direct sending was attempted but failed because customer has no WhatsApp
-            // (Merchant only skips receiving invoice media when the customer has already received it successfully)
-            const shouldSendMediaToMerchant = (!customerDeliveryStatus.sent && event === 'order.paid');
-            const merchantMedia = shouldSendMediaToMerchant ? await getInvoiceMedia() : null;
+            // The merchant receives media if:
+            // 1) For order.paid: customer direct sending was disabled or failed, so send invoice media to merchant
+            // 2) For transfer screenshot: always attach the uploaded screenshot image with the message
+            const shouldSendInvoiceToMerchant = (!customerDeliveryStatus.sent && event === 'order.paid');
+            let merchantMedia = null;
+            if (shouldSendInvoiceToMerchant) {
+              merchantMedia = await getInvoiceMedia();
+            } else if (hasTransferScreenshot) {
+              merchantMedia = await getScreenshotMedia();
+            }
 
             try {
               const resOwner = await sendWaMessage(cleanBaseUrl, conf.instance, conf.apikey, cleanNumber, ownerMessage, merchantMedia, data.orderId);
