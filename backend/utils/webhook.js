@@ -4,6 +4,7 @@
  */
 const Webhook = require('../models/Webhook');
 const cityMap = require('./cityMap');
+const { getImageAsPngBase64 } = require('./imageHelper');
 
 const helpers = {
   async httpRequest({ method, url, qs, body, headers, timeout }) {
@@ -37,7 +38,8 @@ async function sendWebhookInner(event, data, options = {}) {
     const skipHttp = options.whatsappOnly === true;
     const skipWa = options.webhookOnly === true;
 
-    const hasTransferScreenshot = !!(data.transferScreenshot && typeof data.transferScreenshot === 'string' && data.transferScreenshot.trim());
+    const hasTransferScreenshot = !!(data && data.transferScreenshot && typeof data.transferScreenshot === 'string' && data.transferScreenshot.trim());
+    console.log(`[Webhook] sendWebhook triggered for event: ${event}, order: ${data?.orderId}, hasScreenshot: ${hasTransferScreenshot}`);
     const messageLabel = (event === 'order.paid')
       ? 'الفاتورة'
       : (hasTransferScreenshot ? 'رسالة التحويل' : 'تفاصيل الطلب');
@@ -82,8 +84,8 @@ async function sendWebhookInner(event, data, options = {}) {
             return clean;
           };
 
-          // Helper to send WhatsApp messages via Evolution API
-          const sendWaMessage = async (cleanBaseUrl, instance, apikey, targetNumber, messageText, mediaObjOrBase64, orderId) => {
+          // Helper to send WhatsApp messages via Evolution API (matches invoice method: PNG Base64)
+          const sendWaMessage = async (cleanBaseUrl, instance, apikey, targetNumber, messageText, mediaBase64, orderId) => {
             const waPayload = {
               number: targetNumber,
               delay: 1,
@@ -92,27 +94,20 @@ async function sendWebhookInner(event, data, options = {}) {
             };
 
             let finalWaUrl = '';
-            if (mediaObjOrBase64) {
+            if (mediaBase64 && typeof mediaBase64 === 'string' && mediaBase64.trim()) {
               finalWaUrl = `${cleanBaseUrl}/message/sendMedia/${instance}`;
               waPayload.mediatype = 'image';
               waPayload.mediaType = 'image';
+              waPayload.mimetype = 'image/png';
               waPayload.caption = messageText;
-
-              if (typeof mediaObjOrBase64 === 'object' && mediaObjOrBase64 !== null && mediaObjOrBase64.media) {
-                waPayload.media = typeof mediaObjOrBase64.media === 'string' ? mediaObjOrBase64.media.replace(/\s/g, '') : mediaObjOrBase64.media;
-                waPayload.mimetype = mediaObjOrBase64.mimetype || 'image/jpeg';
-                waPayload.fileName = mediaObjOrBase64.fileName || `media-${orderId}.jpg`;
-              } else {
-                waPayload.mimetype = 'image/png';
-                waPayload.media = String(mediaObjOrBase64).replace(/\s/g, '');
-                waPayload.fileName = `invoice-${orderId}.png`;
-              }
+              waPayload.media = mediaBase64.replace(/\s/g, '');
+              waPayload.fileName = `${hasTransferScreenshot ? 'screenshot' : 'invoice'}-${orderId || 'order'}.png`;
             } else {
               finalWaUrl = `${cleanBaseUrl}/message/sendText/${instance}`;
               waPayload.text = messageText;
             }
 
-            console.log(`[WhatsApp] Sending to ${finalWaUrl} (target: ${targetNumber})`);
+            console.log(`[WhatsApp] Sending to ${finalWaUrl} (target: ${targetNumber}, hasMedia: ${!!mediaBase64})`);
             const res = await fetch(finalWaUrl, {
               method: 'POST',
               headers: {
@@ -243,105 +238,21 @@ async function sendWebhookInner(event, data, options = {}) {
           };
 
           // Cache screenshot media preparation across configs (when transferScreenshot is present)
+          // Uses the exact same method as invoice: converts to PNG and returns a pure Base64 string!
           getScreenshotMedia = async () => {
             if (triedScreenshotGeneration) return cachedScreenshotMedia;
             triedScreenshotGeneration = true;
             if (!hasTransferScreenshot) return null;
 
             try {
-              const fs = require('fs');
-              const path = require('path');
               const screenshotUrl = String(data.transferScreenshot).trim();
-              if (!screenshotUrl) return null;
-
-              // 1. Base64 / Data URL
-              if (screenshotUrl.startsWith('data:image/')) {
-                const parts = screenshotUrl.split(',');
-                const meta = parts[0];
-                const base64Data = parts[1];
-                const mimeMatch = meta.match(/data:(.*?);base64/);
-                const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
-                const ext = mime.includes('png') ? '.png' : (mime.includes('webp') ? '.webp' : '.jpg');
-                cachedScreenshotMedia = {
-                  media: base64Data,
-                  mimetype: mime,
-                  fileName: `screenshot-${data.orderId || 'order'}${ext}`
-                };
-                return cachedScreenshotMedia;
-              }
-
-              // 2. Check if file is stored locally in uploads/
-              const uploadsDir = path.join(__dirname, '../uploads');
-              let localFilePath = null;
-
-              if (screenshotUrl.includes('/uploads/')) {
-                const filename = screenshotUrl.split('/uploads/').pop().split('?')[0];
-                const candidate = path.join(uploadsDir, filename);
-                if (fs.existsSync(candidate)) {
-                  localFilePath = candidate;
-                }
-              } else if (!screenshotUrl.startsWith('http://') && !screenshotUrl.startsWith('https://')) {
-                const candidate = path.join(uploadsDir, path.basename(screenshotUrl));
-                if (fs.existsSync(candidate)) {
-                  localFilePath = candidate;
-                }
-              }
-
-              if (localFilePath) {
-                const fileBuffer = await fs.promises.readFile(localFilePath);
-                const ext = path.extname(localFilePath).toLowerCase();
-                const mimeTypes = {
-                  '.jpg': 'image/jpeg',
-                  '.jpeg': 'image/jpeg',
-                  '.png': 'image/png',
-                  '.webp': 'image/webp'
-                };
-                cachedScreenshotMedia = {
-                  media: fileBuffer.toString('base64'),
-                  mimetype: mimeTypes[ext] || 'image/jpeg',
-                  fileName: `screenshot-${data.orderId || 'order'}${ext || '.jpg'}`
-                };
-                return cachedScreenshotMedia;
-              }
-
-              // 3. Remote URL (e.g. R2, Cloudinary, S3)
-              if (screenshotUrl.startsWith('http://') || screenshotUrl.startsWith('https://')) {
-                try {
-                  const res = await fetch(screenshotUrl, { signal: AbortSignal.timeout(15000) });
-                  if (res.ok) {
-                    const buffer = await res.arrayBuffer();
-                    const contentType = res.headers.get('content-type') || 'image/jpeg';
-                    let ext = '.jpg';
-                    if (contentType.includes('png')) ext = '.png';
-                    else if (contentType.includes('webp')) ext = '.webp';
-
-                    cachedScreenshotMedia = {
-                      media: Buffer.from(buffer).toString('base64'),
-                      mimetype: contentType.split(';')[0].trim(),
-                      fileName: `screenshot-${data.orderId || 'order'}${ext}`
-                    };
-                    return cachedScreenshotMedia;
-                  }
-                } catch (fetchErr) {
-                  console.warn('[WhatsApp] Could not fetch remote screenshot into buffer, falling back to direct URL:', fetchErr.message);
-                }
-
-                // Fallback: pass URL directly to Evolution API sendMedia
-                let ext = '.jpg';
-                if (screenshotUrl.toLowerCase().endsWith('.png')) ext = '.png';
-                else if (screenshotUrl.toLowerCase().endsWith('.webp')) ext = '.webp';
-
-                cachedScreenshotMedia = {
-                  media: screenshotUrl,
-                  mimetype: ext === '.png' ? 'image/png' : (ext === '.webp' ? 'image/webp' : 'image/jpeg'),
-                  fileName: `screenshot-${data.orderId || 'order'}${ext}`
-                };
-                return cachedScreenshotMedia;
+              if (screenshotUrl) {
+                cachedScreenshotMedia = await getImageAsPngBase64(screenshotUrl);
               }
             } catch (err) {
               console.error('[WhatsApp] Screenshot media preparation error:', err.message);
             }
-            return null;
+            return cachedScreenshotMedia;
           };
 
           // Calculate amounts
@@ -444,7 +355,7 @@ ${remainingText}
 
             const customerMedia = (event === 'order.paid')
               ? await getInvoiceMedia()
-              : (hasTransferScreenshot ? await getScreenshotMedia() : null);
+              : null;
             const primaryPhone = formatWaNumber(data.customer?.phone);
             const secondPhone = formatWaNumber(data.customer?.secondPhone);
             const fallbackMerchantPhone = '201039317393';

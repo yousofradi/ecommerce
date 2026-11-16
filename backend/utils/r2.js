@@ -1,4 +1,4 @@
-const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+const { S3Client, PutObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
 const sharp = require('sharp');
 const path = require('path');
 
@@ -92,8 +92,37 @@ function isR2Url(url) {
   return url.includes('r2.dev') || url.includes('r2.cloudflarestorage.com') || (process.env.R2_PUBLIC_URL && url.startsWith(process.env.R2_PUBLIC_URL));
 }
 
+/**
+ * Retrieves an image buffer directly from Cloudflare R2 via S3 SDK.
+ * @param {string} keyOrUrl - Either the R2 object key or a public/storage R2 URL.
+ * @returns {Promise<Buffer|null>}
+ */
+async function getBufferFromR2(keyOrUrl) {
+  if (!isR2Configured || !s3Client || !keyOrUrl) return null;
+  try {
+    let key = String(keyOrUrl).trim();
+    if (key.startsWith('http://') || key.startsWith('https://')) {
+      const parsed = new URL(key);
+      key = parsed.pathname.replace(/^\/+/, '');
+    }
+    const command = new GetObjectCommand({
+      Bucket: process.env.R2_BUCKET_NAME,
+      Key: key
+    });
+    const response = await s3Client.send(command);
+    if (response && response.Body) {
+      const byteArray = await response.Body.transformToByteArray();
+      return Buffer.from(byteArray);
+    }
+  } catch (err) {
+    console.warn('[R2] getBufferFromR2 error:', err.message);
+  }
+  return null;
+}
+
 module.exports = {
   isR2Configured,
   uploadToR2,
-  isR2Url
+  isR2Url,
+  getBufferFromR2
 };

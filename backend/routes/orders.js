@@ -277,6 +277,7 @@ router.post('/public/:orderId/transfer-info', async (req, res) => {
 
     // Trigger webhook and WhatsApp notifications when transfer screenshot is uploaded
     if (transferScreenshot && typeof transferScreenshot === 'string' && transferScreenshot.trim()) {
+      console.log(`[Order] Triggering webhook and WhatsApp for transfer screenshot on ${order.orderId}`);
       sendWebhook('order.created', order.toObject()).catch(err => {
         console.error('Failed to trigger webhook on transfer screenshot upload:', err);
       });
